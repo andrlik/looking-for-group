@@ -26,6 +26,9 @@ raven = "*"
 "psycopg2" = "*"
 django-anymail = "*"
 django-storages = "*"
+registration = {git = "https://github.com/ubernostrum/django-registration.git", editable = true}
+django-avatar = "*"
+pwned-passwords-django = "*"
 
 [dev-packages]
 werkzeug = "*"
@@ -47,5 +50,3 @@ pytest-django = "*"
 
 [requires]
 python_version = "3.6"
-
-

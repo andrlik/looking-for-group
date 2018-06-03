@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "22d03cf039d5e47448ce8cdc9bf5823b9d0807dbc664cc92fef69d5c401adfef"
+            "sha256": "04845b7b883c84170153d6d61e0e08da12450c332cf70c6ae3e4cf4df7182061"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -91,6 +91,13 @@
             ],
             "version": "==3.0.4"
         },
+        "confusable-homoglyphs": {
+            "hashes": [
+                "sha256:946a3a65b73117b1853f4ef253f15443502c92e9df1fc7786e868450cb487ffb",
+                "sha256:b86d61ceb8ed350a3defe9eaa99a68eb9b08f89bfbb4ff4e8cbffbffbc26733c"
+            ],
+            "version": "==3.1.1"
+        },
         "coreapi": {
             "hashes": [
                 "sha256:46145fcc1f7017c076a2ef684969b641d18a2991051fddec9458ad3f78ffc1cb",
@@ -142,6 +149,13 @@
                 "sha256:ddab987d14b26731352c01ee69c090a4ebfc9141ed223bef039d79587f22acd9"
             ],
             "version": "==1.0.2"
+        },
+        "django-avatar": {
+            "hashes": [
+                "sha256:19f1a536d226e311da949b726583345a352dc00aec37ff660b974876ab64e9f6"
+            ],
+            "index": "pypi",
+            "version": "==4.1.0"
         },
         "django-compressor": {
             "hashes": [
@@ -341,6 +355,14 @@
             "index": "pypi",
             "version": "==2.7.4"
         },
+        "pwned-passwords-django": {
+            "hashes": [
+                "sha256:3944181fddde4eb496475954f90ad9f604e66dea9fa6db4da08e657252aa9d11",
+                "sha256:ad868e459cf4796a010d93e0538905c1c6bc956fd0d1788d793bdf97bae56703"
+            ],
+            "index": "pypi",
+            "version": "==1.1"
+        },
         "pycparser": {
             "hashes": [
                 "sha256:99a8ca03e29851d96616ad0404b4aad7d9ee16f25c9f9708a11faf2810f7b226"
@@ -384,6 +406,10 @@
             ],
             "index": "pypi",
             "version": "==2.10.6"
+        },
+        "registration": {
+            "editable": true,
+            "git": "https://github.com/ubernostrum/django-registration.git"
         },
         "requests": {
             "hashes": [
@@ -626,7 +652,7 @@
                 "sha256:6bd0f6ad48ec2aa117d3d141940d484deccda84d4fcd884f5c3d93c23ecd8c79",
                 "sha256:8ad8c4783bf61ded74527bffb48ed9b54166685e4230386a9ed9b1279e2df5b1"
             ],
-            "markers": "python_version == '3.3'",
+            "markers": "python_version < '3.4'",
             "version": "==1.1.6"
         },
         "execnet": {
