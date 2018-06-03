@@ -1,0 +1,53 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pytz = "*"
+text-unidecode = "*"
+pillow = "*"
+rcssmin = "*"
+"argon2-cffi" = "*"
+whitenoise = "*"
+redis = "*"
+django = "*"
+django-environ = "*"
+django-model-utils = "*"
+django-allauth = "*"
+django-foundation-formtags = "*"
+django-compressor = "*"
+django-libsass = "*"
+django-redis = "*"
+djangorestframework = "*"
+coreapi = "*"
+waitress = "*"
+raven = "*"
+"psycopg2" = "*"
+django-anymail = "*"
+django-storages = "*"
+
+[dev-packages]
+werkzeug = "*"
+ipdb = "*"
+sphinx = "*"
+"psycopg2" = "*"
+pytest = "*"
+pytest-sugar = "*"
+pytest-cov = "*"
+pytest-xdist = "*"
+"flake8" = "*"
+coverage = "*"
+factory-boy = "*"
+django-test-plus = "*"
+django-debug-toolbar = "*"
+django-extensions = "*"
+django-coverage-plugin = "*"
+pytest-django = "*"
+black = "*"
+
+[requires]
+python_version = "3.6"
+
+[pipenv]
+allow_prereleases = true
