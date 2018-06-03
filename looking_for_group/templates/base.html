@@ -1,4 +1,4 @@
-{% load static i18n compress %}
+{% load static i18n compress avatar_tags cookielaw_tags %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -8,13 +8,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
+    <link rel="apple-touch-icon" href="{% static 'images/Icon@120.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/Icon@180.png' %}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'images/Icon@152.png' %}">
+    <link rel="apple-touch-icon" sizes="167x167" href="{% static 'images/Icon@167.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/Icon@16.png' %}" sizes="16x16">
+    <link rel="icon" type="image/png" href="{% static 'images/Icon@32.png' %}" sizes="32x32">
+    <link rel="icon" type="image/png" href="{% static 'images/Icon@96.png' %}" sizes="96x96">
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
     <![endif]-->
-
-    <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}">
 
     {% block css %}
 
@@ -34,32 +39,32 @@
       <div class="title-bar-title">Menu</div>
     </div>
 
-    <div class="top-bar" id="menu">
-      <div class="top-bar-left hide-for-small-only">
+    <div class="top-bar" data-equalizer="topbar" data-equalizer-on="medium" id="menu">
+      <div class="top-bar-left hide-for-small-only" data-equalizer-watch>
         <ul class="dropdown menu">
-          <li class="menu-text">Looking for Group</li>
+          <li class="menu-text"><img height="30" width="30" src="{% static 'images/Icon@120.png' %}" />&nbsp;&nbsp;Looking for Group</li>
         </ul>
       </div>
 
-      <div class="top-bar-right">
-        <ul class="vertical medium-horizontal menu">
-          <li> <a href="{% url 'home' %}">Home</a></li>
-          <li><a href="{% url 'about' %}">About</a></li>
+      <div class="top-bar-right" data-equalizer-watch="topbar">
+        <ul class="vertical medium-horizontal menu" data-equalizer="menu">
+          <li data-equalizer-watch="menu"> <a href="{% url 'home' %}">Home</a></li>
+          <li data-equalizer-watch="menu"><a href="{% url 'about' %}">About</a></li>
           {% if request.user.is_authenticated %}
-            <li>
+          <li data-equalizer-watch="menu">
               {# URL provided by django-allauth/account/urls.py #}
-              <a href="{% url 'users:detail' request.user.username  %}">{% trans "My Profile" %}</a>
-            </li>
-            <li>
+              <a href="{% url 'users:detail' request.user.username  %}">{% trans "My Profile" %} {% avatar request.user 30 class="profile_circle_small" %}</a>
+          </li>
+          <li data-equalizer-watch="menu">
               {# URL provided by django-allauth/account/urls.py #}
               <a href="{% url 'account_logout' %}">{% trans "Sign out" %}</a>
-            </li>
-            {% else %}
-            <li>
+          </li>
+          {% else %}
+          <li data-equalizer-watch="menu">
               {# URL provided by django-allauth/account/urls.py #}
               <a id="sign-up-link" href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
-            </li>
-            <li>
+          </li>
+          <li data-equalizer-watch="menu">
               {# URL provided by django-allauth/account/urls.py #}
               <a id="log-in-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
             </li>
@@ -72,6 +77,7 @@
     <div class="row">
 
       <div class="medium-6 medium-offset-3 columns">
+          {% cookielaw_banner %}
         {% if messages %}
           {% for message in messages %}
 
@@ -129,6 +135,7 @@
       <!-- place project specific Javascript in this file -->
       {% compress js %}
       <script src="{% static 'js/project.js' %}"></script>
+      <script src="{% static 'cookielaw/js/cookielaw.js' %}"></script>
       {% endcompress %}
 
       <!-- Your stuff: Third-party javascript libraries go here -->
