@@ -44,10 +44,8 @@ django-debug-toolbar = "*"
 django-extensions = "*"
 django-coverage-plugin = "*"
 pytest-django = "*"
-black = "*"
 
 [requires]
 python_version = "3.6"
 
-[pipenv]
-allow_prereleases = true
+
