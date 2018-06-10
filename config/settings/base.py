@@ -76,9 +76,12 @@ THIRD_PARTY_APPS = [
     "avatar",
     "django_registration",
     "pwned_passwords_django",
+    "isbn_field",
+    "taggit",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
+    "looking_for_group.game_catalog",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

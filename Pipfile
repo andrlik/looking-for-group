@@ -1,9 +1,12 @@
 [[source]]
+
 url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+
 [packages]
+
 pytz = "*"
 text-unidecode = "*"
 pillow = "*"
@@ -30,8 +33,15 @@ django-registration = {git = "https://github.com/ubernostrum/django-registration
 django-avatar = "*"
 pwned-passwords-django = "*"
 django-cookie-law = "*"
+python-stdnum = "*"
+django-isbn-field = "*"
+django-taggit = "*"
+django-treebeard = "*"
+django-braces = "*"
+
 
 [dev-packages]
+
 werkzeug = "*"
 ipdb = "*"
 sphinx = "*"
@@ -49,5 +59,7 @@ django-extensions = "*"
 django-coverage-plugin = "*"
 pytest-django = "*"
 
+
 [requires]
+
 python_version = "3.6"

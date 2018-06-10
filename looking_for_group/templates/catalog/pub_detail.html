@@ -1,0 +1,11 @@
+{% extends "catalog/base.html" %}
+{% load l18n humanize %}
+{% block subtitle %}{{ publisher.name }} - {% endblock %}
+{% block content %}
+<h1>{{ publisher.name }}</h1>
+
+<h2><a href="{{ publisher.get_absolute_url }}">{{ publisher.name }}</a></h2>
+<span class="meta">{% blocktrans count counter=publisher.publishedgame_set|length %}1 Game{% plural %} {{ counter|humanize }} Games{% endblocktrans %}, {% blocktrans count counter=publisher.gamesystem_set|length %}one Game System{% plural %}{{ counter|humanize }} Games Systems{% endblocktrans %}, {% blocktrans count counter=publisher.publishedmodule_set|length %}and one Game Module{% plural %}and {{ counter|humanize }} Game Modules.{% endblocktrans %}</span>
+<p>{{ publisher.description }}</p>
+
+{% endblock %}

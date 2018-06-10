@@ -1,0 +1,11 @@
+{% extends "catalog/base.html" %}
+{% load l18n humanize %}
+{% block subtitle %}{{ module.title }} - {% endblock %}
+{% block content %}
+<h1>{{ module.title }}</h1>
+
+<h2><a href="{{ module.get_absolute_url }}">{{ module.title }}</a></h2>
+<span class="meta">{% trans "An adventure for "%}<a href="{{ module.parent_game.get_absolute_url }}">{{ module.parent_game.title}}</a>. {% trans "Published by " %}<a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></span>
+<p>{{ module.description }}</p>
+
+{% endblock %}

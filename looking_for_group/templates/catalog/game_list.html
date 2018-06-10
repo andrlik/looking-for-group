@@ -1,0 +1,15 @@
+{% extends "catalog/base.html" %}
+{% load l18n humanize %}
+{% block subtitle %}{% trans "Games" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "Published Games" %}</h1>
+
+{% for game in object_list %}
+<h2><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></h2>
+<span class="meta">Published by <a href="{{ game.publisher.get_absolute_url }}">{{ publisher.name }}</a>. System: <a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}. {% blocktrans count counter=game.publishedmodule_set|length %}One additional Module{% plural %}{{ counter|humanize }} additional Modules.{% endblocktrans %}</span>
+<p>{{ game.description|truncatewords:100 }}</p>
+{% empty %}
+<p>No published games found.</p>
+{% endfor %}
+
+{% endblock %}

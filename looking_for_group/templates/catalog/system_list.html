@@ -1,0 +1,15 @@
+{% extends "catalog/base.html" %}
+{% load l18n humanize %}
+{% block subtitle %}{% trans "Game Systems" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "Game Systems" %}</h1>
+
+{% for system in object_list %}
+<h2><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></h2>
+<span class="meta">{% blocktrans %}Published by <a href="{{system.original_publisher.get_absolute_url}}">{{ system.original_publisher.name }}</a>. {% blocktrans count counter=system.publishedgame_set|length %}1 Game{% plural %} {{ counter|humanize }} Games{% endblocktrans %}, {% blocktrans count counter=system.publishedmodule_set|length %}and one Game Module{% plural %}and {{ counter|humanize }} Game Modules.{% endblocktrans %}</span>
+<p>{{ system.description|truncatewords:100 }}</p>
+{% empty %}
+<p>No game systems found.</p>
+{% endfor %}
+
+{% endblock %}

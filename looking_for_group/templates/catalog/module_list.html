@@ -1,0 +1,15 @@
+{% extends "catalog/base.html" %}
+{% load l18n humanize %}
+{% block subtitle %}{% trans "Modules" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "Published Game Modules" %}</h1>
+
+{% for module in object_list %}
+<h2><a href="{{ module.get_absolute_url }}">{{ module.title }}</a></h2>
+<span class="meta">{% blocktrans %}An adventure for <a href="{{ module.parent_game.get_absolute_url }}">{{ module.parent_game.title }}</a>. Published by <a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></span>
+<p>{{ module.description|truncatewords:100 }}</p>
+{% empty %}
+<p>No published modules found.</p>
+{% endfor %}
+
+{% endblock %}
