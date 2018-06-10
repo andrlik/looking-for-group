@@ -74,7 +74,7 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount",
     "rest_framework",
     "avatar",
-    "registration",
+    "django_registration",
     "pwned_passwords_django",
 ]
 LOCAL_APPS = [
