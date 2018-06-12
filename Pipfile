@@ -38,6 +38,7 @@ django-isbn-field = "*"
 django-taggit = "*"
 django-treebeard = "*"
 django-braces = "*"
+rules = "*"
 
 
 [dev-packages]

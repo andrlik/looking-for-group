@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from django.apps import AppConfig  # pragma: no cover
 
 
-class GameCatalogConfig(AppConfig):
+class GameCatalogConfig(AppConfig):  # pragma: no cover
     name = 'game_catalog'  # pragma: no cover

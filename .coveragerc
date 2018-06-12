@@ -1,5 +1,5 @@
 [run]
 include = looking_for_group/*
 omit = *migrations*, *tests*
-plugins =
-    django_coverage_plugin
+# plugins =
+#    django_coverage_plugin

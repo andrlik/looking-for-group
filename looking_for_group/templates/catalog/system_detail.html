@@ -1,11 +1,11 @@
 {% extends "catalog/base.html" %}
-{% load l18n humanize %}
+{% load i18n humanize %}
 {% block subtitle %}{{ system.name }} - {% endblock %}
 {% block content %}
 <h1>{{ system.name }}</h1>
 
 <h2><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></h2>
-<span class="meta">Published by <a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a>. {% blocktrans count counter=system.publishedgame_set|length %}1 Game{% plural %} {{ counter|humanize }} Games{% endblocktrans %}, {% blocktrans count counter=system.publishedmodule_set|length %}and one Game Module{% plural %}and {{ counter|humanize }} Game Modules.{% endblocktrans %}</span>
+<span class="meta">{% trans "Published by" %} <a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a>. {% blocktrans count counter=system.publishedgame_set|length %}One Game{% plural %} {{ counter|humanize }} Games{% endblocktrans %}.</span>
 <p>{{ system.description }}</p>
 
 {% endblock %}

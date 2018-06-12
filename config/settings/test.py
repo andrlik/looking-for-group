@@ -35,7 +35,7 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # TEMPLATES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#templates
-TEMPLATES[0]["OPTIONS"]["debug"] = DEBUG  # noqa F405
+# TEMPLATES[0]["OPTIONS"]["debug"] = DEBUG  # noqa F405
 TEMPLATES[0]["OPTIONS"]["loaders"] = [  # noqa F405
     (
         "django.template.loaders.cached.Loader",
@@ -80,6 +80,6 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "catalog": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "catalog": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }

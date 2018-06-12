@@ -83,7 +83,7 @@ class GamePublisher(TimeStampedModel, models.Model):
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("catalog:pub_detail", kwargs={"publisher", self.id})
+        return reverse("game_catalog:pub_detail", kwargs={"publisher": self.id})
 
 
 class GameSystem(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
@@ -122,7 +122,7 @@ class GameSystem(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("catalog:sys_detail", kwargs={"system": self.id})
+        return reverse("game_catalog:system_detail", kwargs={"system": self.id})
 
 
 class PublishedGame(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
@@ -161,7 +161,7 @@ class PublishedGame(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("catalog:game_detail", kwargs={"game": self.id})
+        return reverse("game_catalog:game_detail", kwargs={"game": self.id})
 
 
 class PublishedModule(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
@@ -200,4 +200,4 @@ class PublishedModule(TimeStampedModel, AbstractTaggedLinkedModel, models.Model)
         return "{0} ({1})".format(self.title, self.parent_game.title)  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("catalog:mod_detail", kwargs={"module": self.id})
+        return reverse("game_catalog:module_detail", kwargs={"module": self.id})

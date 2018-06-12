@@ -265,6 +265,8 @@ Session.vim
 # Auto-generated tag files
 tags
 
+### Emacs swap files
+.#*
 
 ### VirtualEnv template
 # Virtualenv

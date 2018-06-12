@@ -16,9 +16,7 @@ class AbstractViewTest(TestCase):
             name="Cypher System", original_publisher=self.mcg
         )
         self.cypher.save()
-        self.fivesrd = models.GameSystem(
-            name="5E SRD", original_publisher=self.wotc
-        )
+        self.fivesrd = models.GameSystem(name="5E SRD", original_publisher=self.wotc)
         self.fivesrd.save()
         self.cypher.tags.add("player focused", "streamlined")
         self.fivesrd.tags.add("crunchy", "traditional")
@@ -54,36 +52,36 @@ class AbstractViewTest(TestCase):
 
 class PublisherViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("catalog:pub_list")
+        self.assertGoodView("game_catalog:pub_list")
         assert len(self.get_context("object_list")) == 2
 
     def test_detail_retrieval(self):
-        self.assertGoodView("catalog:pub_detail", publisher=self.mcg.pk)
-        self.assertGoodView("catalog:pub_detail", publisher=self.wotc.pk)
+        self.assertGoodView("game_catalog:pub_detail", publisher=self.mcg.pk)
+        self.assertGoodView("game_catalog:pub_detail", publisher=self.wotc.pk)
 
 
 class GameSystemViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("catalog:system_list")
+        self.assertGoodView("game_catalog:system_list")
 
     def test_detail_retrieval(self):
-        self.assertGoodView("catalog:system_detail", system=self.cypher)
-        self.assertGoodView("catalog:system_detail", system=self.fivesrd)
+        self.assertGoodView("game_catalog:system_detail", system=self.cypher.pk)
+        self.assertGoodView("game_catalog:system_detail", system=self.fivesrd.pk)
 
 
 class PublishedGameViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("catalog:game_list")
+        self.assertGoodView("game_catalog:game_list")
 
     def test_detail_retrieval(self):
         for g in [self.numen, self.strange, self.ddfive]:
-            self.assertGoodView("catalog:game_detail", game=g.pk)
+            self.assertGoodView("game_catalog:game_detail", game=g.pk)
 
 
 class PublishedModuleViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("catalog:module_list")
+        self.assertGoodView("game_catalog:module_list")
 
     def test_detail_retrieval(self):
         for m in [self.cos, self.tiamat, self.vv]:
-            self.assertGoodView("catalog:module_detail", module=m.pk)
+            self.assertGoodView("game_catalog:module_detail", module=m.pk)
