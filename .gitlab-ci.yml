@@ -14,9 +14,9 @@ variables:
 
 # This folder is cached between builds
 # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
-cache:
-  paths:
-  - ~/.cache/pip/
+#cache:
+#  paths:
+#  - ~/.cache/pip/
 
 # This is a basic example for a gem or script which doesn't use
 # services such as redis or postgres
@@ -26,7 +26,6 @@ before_script:
   # - apt-get update -q && apt-get install nodejs -yqq
   - pip install pipenv
   - pipenv sync --dev
-
 # To get Django tests to work you may need to create a settings file using
 # the following DATABASES:
 # 
@@ -46,5 +45,6 @@ before_script:
 test:
   variables:
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/$POSTGRES_DB"
+    DJANGO_SETTINGS_MODULE: "config.settings.test"
   script:
-  - pipenv run pytest
+  - pipenv run pytest -n 2

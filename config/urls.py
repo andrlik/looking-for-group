@@ -4,6 +4,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import TemplateView
 from django.views import defaults as default_views
+from .api_routers import router
+
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -16,10 +18,9 @@ urlpatterns = [
     path("users/", include("looking_for_group.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    path(
-        "catalog/",
-        include("looking_for_group.game_catalog.urls"),
-    ),
+    path("catalog/", include("looking_for_group.game_catalog.urls")),
+    path("api-auth/", include('rest_framework.urls')),
+    path("api/", include(router.urls)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

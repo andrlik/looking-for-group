@@ -1,80 +1,21 @@
 import logging
-from uuid import uuid4
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils.functional import cached_property
 from django.urls import reverse
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
-from taggit.managers import TaggableManager
-from taggit.models import GenericUUIDTaggedItemBase, TaggedItemBase
+from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel
+
 
 # Create your models here.
-logger = logging.getLogger('catalog')
+logger = logging.getLogger("catalog")
 
 
-class UUIDTaggedItem(GenericUUIDTaggedItemBase, TaggedItemBase):
-    """
-    UUID compatible tagged item management model.
-    """
-
-    class Meta:
-        verbose_name = _("Tag")
-        verbose_name_plural = _("Tags")
-
-
-class AbstractTaggedLinkedModel(models.Model):
-    """
-    Helper functions for collecting tags from linked objects.
-    """
-
-    tags = TaggableManager(through=UUIDTaggedItem)
-
-    @classmethod
-    def get_all_parent_objects(cls):
-        """
-        Fetch all releated objects to this for tag examination.
-        """
-        return [
-            f for f in cls._meta.get_fields()
-            if f.many_to_one and not f.auto_created and f.related_model
-        ]
-
-    @cached_property
-    def inherited_tags(self):
-        """
-        Fetches tags for itself and all other linked model instances.
-        """
-        related_objects = self.get_all_parent_objects()
-        logger.debug("Found {} related objects.".format(len(related_objects)))
-        parent_tags = None
-        for field in related_objects:
-            obj = getattr(self, field.name)
-            logger.debug("Parsing instance of class {}".format(obj.__class__))
-            for prop in ["tags", "inherited_tags"]:
-                if hasattr(obj, prop):
-                    logger.debug("Found property: {}".format(prop))
-                    tags_qs = getattr(obj, prop)
-                    if tags_qs:
-                        logger.debug("Tags found")
-                        if not parent_tags:
-                            logger.debug('First tag queryset')
-                            parent_tags = tags_qs.all()
-                        else:
-                            logger.debug('Merging tags into existing queryset')
-                            parent_tags = parent_tags.union(tags_qs.all())
-        return parent_tags
-
-    class Meta:
-        abstract = True
-
-
-class GamePublisher(TimeStampedModel, models.Model):
+class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
     A publisher of games.
     """
 
-    id = models.UUIDField(default=uuid4, primary_key=True)
     name = models.CharField(max_length=255, db_index=True, help_text=_("Company Name"))
     logo = models.ImageField(null=True, blank=True)
     url = models.URLField(null=True, blank=True, help_text=_("Company URL"))
@@ -86,12 +27,13 @@ class GamePublisher(TimeStampedModel, models.Model):
         return reverse("game_catalog:pub_detail", kwargs={"publisher": self.id})
 
 
-class GameSystem(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
+class GameSystem(
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+):
     """
     A root rule system potentially used for multiple games.
     """
 
-    id = models.UUIDField(default=uuid4, primary_key=True)
     name = models.CharField(
         max_length=100, db_index=True, help_text=_("Name of the game system.")
     )
@@ -110,9 +52,11 @@ class GameSystem(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
         db_index=True,
         help_text=_("ISBN of published ruleset if applicable."),
     )
+    publication_date = models.DateField(
+        null=True, blank=True, help_text=_("Release/publication date of this system.")
+    )
     ogl_license = models.BooleanField(
-        default=False,
-        help_text=_("Released under an Open Gaming License?")
+        default=False, help_text=_("Released under an Open Gaming License?")
     )
     system_url = models.URLField(
         null=True, blank=True, help_text=_("More info can be found here.")
@@ -125,14 +69,20 @@ class GameSystem(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
         return reverse("game_catalog:system_detail", kwargs={"system": self.id})
 
 
-class PublishedGame(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
+class PublishedGame(
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+):
     """
     A published game.
     """
 
-    id = models.UUIDField(default=uuid4, primary_key=True)
     title = models.CharField(
         max_length=150, db_index=True, help_text=_("Title of the game")
+    )
+    edition = models.CharField(
+        max_length=25,
+        default="1",
+        help_text=_("Common edition name for this version of the game."),
     )
     publisher = models.ForeignKey(
         GamePublisher, help_text=_("Publisher of the game."), on_delete=models.CASCADE
@@ -156,6 +106,9 @@ class PublishedGame(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
         db_index=True,
         help_text=_("ISBN of published game if applicable."),
     )
+    publication_date = models.DateField(
+        null=True, blank=True, help_text=_("Release/publication date of game.")
+    )
 
     def __str__(self):
         return self.name  # pragma: no cover
@@ -164,12 +117,13 @@ class PublishedGame(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
         return reverse("game_catalog:game_detail", kwargs={"game": self.id})
 
 
-class PublishedModule(TimeStampedModel, AbstractTaggedLinkedModel, models.Model):
+class PublishedModule(
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+):
     """
     A published campaign/adventure module that might be used as the basis for gameplay.
     """
 
-    id = models.UUIDField(default=uuid4, primary_key=True)
     title = models.CharField(
         max_length=255, db_index=True, help_text=_("Title of module")
     )
@@ -186,6 +140,9 @@ class PublishedModule(TimeStampedModel, AbstractTaggedLinkedModel, models.Model)
         db_index=True,
         help_text=_("ISBN of published module if applicable."),
     )
+    publication_date = models.DateField(
+        null=True, blank=True, help_text=_("Release/publication date for this module.")
+    )
     parent_game = models.ForeignKey(
         PublishedGame,
         help_text=_("Module is written for this game."),
@@ -197,7 +154,9 @@ class PublishedModule(TimeStampedModel, AbstractTaggedLinkedModel, models.Model)
     )
 
     def __str__(self):
-        return "{0} ({1})".format(self.title, self.parent_game.title)  # pragma: no cover
+        return "{0} ({1})".format(
+            self.title, self.parent_game.title
+        )  # pragma: no cover
 
     def get_absolute_url(self):
         return reverse("game_catalog:module_detail", kwargs={"module": self.id})

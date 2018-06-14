@@ -1,6 +1,7 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 
-from . import views
+from . import views, api_views
 
 app_name = "game_catalog"
 urlpatterns = [
@@ -35,3 +36,11 @@ urlpatterns = [
         name="module_detail",
     ),
 ]
+
+
+# API Router
+router = DefaultRouter()
+router.register(r'publishers', api_views.GamePublisherViewSet)
+router.register(r'systems', api_views.GameSystemViewSet)
+router.register(r'publishedgames', api_views.PublishedGameViewSet)
+router.register(r'publishedmodules', api_views.PublishedModuleViewSet)

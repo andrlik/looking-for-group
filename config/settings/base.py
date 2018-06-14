@@ -62,7 +62,7 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'django.contrib.humanize', # Handy template tags
+    "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
 ]
 
@@ -78,10 +78,12 @@ THIRD_PARTY_APPS = [
     "pwned_passwords_django",
     "isbn_field",
     "taggit",
+    "rules.apps.AutodiscoverRulesConfig",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
     "looking_for_group.game_catalog",
+    "looking_for_group.gamer_profiles",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -96,9 +98,14 @@ MIGRATION_MODULES = {"sites": "looking_for_group.contrib.sites.migrations"}
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
+    "rules.permissions.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"]
+}
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_AUTHENTICATION_METHOD = "username"

@@ -1,5 +1,14 @@
 [run]
 include = looking_for_group/*
-omit = *migrations*, *tests*
+omit = *migrations*, *tests*, *apps.py
+[report]
+exclude_lines =
+    pragma: no cover
+    def __str__
+    def get_absolute_url
+    if settings.DEBUG
+    raise NotImplementedError
+    raise AssertionError
+    if __name__ == .__main__.:
 # plugins =
 #    django_coverage_plugin

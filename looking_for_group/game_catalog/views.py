@@ -30,7 +30,7 @@ class GameSystemListView(SelectRelatedMixin, PrefetchRelatedMixin, generic.ListV
     select_related = ["original_publisher"]
     prefetch_related = ["publishedgame_set"]
     template_name = "catalog/system_list.html"
-    ordering = ['original_publisher__name', "name", '-created']
+    ordering = ["original_publisher__name", "name", "-publication_date", "-created"]
 
 
 class GameSystemDetailView(
@@ -49,7 +49,13 @@ class PublishedGameListView(SelectRelatedMixin, PrefetchRelatedMixin, generic.Li
     select_related = ["publisher", "game_system"]
     prefetch_related = ["publishedmodule_set"]
     template_name = "catalog/game_list.html"
-    ordering = ['publisher__name', 'game_system__name', 'title', '-created']
+    ordering = [
+        "publisher__name",
+        "game_system__name",
+        "title",
+        "-publication_date",
+        "-created",
+    ]
 
 
 class PublishedGameDetailView(
@@ -67,7 +73,13 @@ class PublishedModuleListView(SelectRelatedMixin, generic.ListView):
     model = PublishedModule
     select_related = ["parent_game", "publisher", "parent_game__game_system"]
     template_name = "catalog/module_list.html"
-    ordering = ['parent_game__title', 'publisher__name', 'title', '-created']
+    ordering = [
+        "parent_game__title",
+        "publisher__name",
+        "title",
+        "-publication_date",
+        "-created",
+    ]
 
 
 class PublishedModuleDetailView(SelectRelatedMixin, generic.DetailView):
