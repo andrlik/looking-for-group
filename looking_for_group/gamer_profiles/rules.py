@@ -1,6 +1,9 @@
 import rules
 from .models import NotInCommunity
 
+@rules.predicate
+def is_authenticated(user):
+    return user.is_authenticated()
 
 @rules.predicate
 def is_community_admin(user, community):
@@ -70,6 +73,9 @@ def is_game_member(user, game):
 
 log_writer = is_game_gm | is_scribe
 
+rules.add_perm('community.list_communities', is_authenticated)
+rules.add_perm('community.view_details', is_community_member)
+rules.add_perm('community.edit_community', is_community_admin)
 rules.add_perm('community.kick_user', is_community_admin)
 rules.add_perm('community.ban_user', is_community_admin)
 rules.add_perm('game.edit_players', is_game_gm)
