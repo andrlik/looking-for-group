@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from ..users.models import User
 from . import models
 
 
@@ -34,6 +35,7 @@ class CommunityListingField(serializers.RelatedField):
     """
     Text-friendly representation for community.
     """
+    queryset = models.GamerCommunity.objects.all()
 
     def to_representation(self, value):
         return value.name
@@ -43,7 +45,7 @@ class UserListingField(serializers.RelatedField):
     """
     Text-friendly representation for community.
     """
-
+    queryset = User.objects.all()
     def to_representation(self, value):
         return value.display_name
 

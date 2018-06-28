@@ -1,4 +1,5 @@
 from django.db import models, transaction, IntegrityError
+from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -18,10 +19,20 @@ class NotInCommunity(Exception):
 
 
 class AlreadyInCommunity(Exception):
-    '''
+    """
     Raised when you try to add a gamer to a community
     that they already belong to.
-    '''
+    """
+
+    pass
+
+
+class CurrentlySuspended(Exception):
+    """
+    Raised when you try to add a gamer to a community (either explicitly or by approving an application)
+    when they are currently suspended via Kick.
+    """
+
     pass
 
 
@@ -137,21 +148,23 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             raise NotInCommunity
         return role_obj.get_community_role_display()
 
-    def add_member(self, gamer, role='member'):
-        '''
+    def add_member(self, gamer, role="member"):
+        """
         Adds a gamer to the community directly.
-        '''
+        """
         try:
-            membership = CommunityMembership.objects.create(community=self, gamer=gamer, community_role=role)
+            membership = CommunityMembership.objects.create(
+                community=self, gamer=gamer, community_role=role
+            )
         except IntegrityError:
             raise AlreadyInCommunity
         return membership
 
     def remove_member(self, gamer):
-        '''
+        """
         Removes a gamer from the community, but not
         from any games they already are playing.
-        '''
+        """
         try:
             membership = CommunityMembership.objects.get(community=self, gamer=gamer)
             membership.delete()
@@ -486,6 +499,34 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
             "gamer_profiles:community-application-detail",
             kwargs={"application": self.pk},
         )
+
+    def approve_application(self):
+        """
+        Approves an application and adds gamer to community.
+        """
+        # Are they already in community?
+        memberships = CommunityMembership.objects.filter(
+            community=self.community, gamer=self.gamer
+        )
+        if memberships:
+            raise AlreadyInCommunity
+        # Check to see if user is currently kicked from community.
+        kicks = KickedUser.objects.filter(community=self.community, gamer=self.gamer)
+        if kicks:
+            for kick in kicks:
+                if kick.end_date and kick.end_date > timezone.now():
+                    raise CurrentlySuspended
+        with transaction.atomic():
+            self.community.add_member(self.gamer)
+            self.status = "approve"
+            self.save()
+
+    def reject_application(self):
+        """
+        Rejects an application.
+        """
+        self.status = "reject"
+        self.save()
 
 
 class BlockedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
