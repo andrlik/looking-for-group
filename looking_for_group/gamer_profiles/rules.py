@@ -20,6 +20,33 @@ def is_community_admin(user, community):
 
 
 @rules.predicate
+def is_membership_subject(user, membership):
+    if membership.gamer == user.gamerprofile:
+        return True
+    return False
+
+
+@rules.predicate
+def is_community_superior(user, gamer, community):
+    gamer_role = community.get_role(gamer)
+    user_role = community.get_role(user.gamerprofile)
+    if gamer_role == "Admin" and community.owner == user.gamerprofile:
+        return True
+    if gamer_role == "Moderator" and user_role == "Admin":
+        return True
+    if gamer_role == "Member" and user_role != "Member" and user_role:
+        return True
+    return False
+
+
+@rules.predicate
+def is_community_owner(user, community):
+    if user.gamerprofile == community.owner:
+        return True
+    return False
+
+
+@rules.predicate
 def is_community_member(user, community):
     try:
         user.gamerprofile.get_role(community)
@@ -48,6 +75,20 @@ def is_connected_to_gamer(user, gamer):
     try:
         BlockedUser.objects.get(blocker=gamer, blockee=user.gamerprofile)
     except ObjectDoesNotExist:
+        return True
+    return False
+
+
+@rules.predicate
+def is_blocker(user, block_file):
+    if block_file.blocker == user.gamerprofile:
+        return True
+    return False
+
+
+@rules.predicate
+def is_muter(user, mute_file):
+    if mute_file.muter == user.gamerprofile:
         return True
     return False
 
@@ -108,10 +149,15 @@ log_writer = is_game_gm | is_scribe
 rules.add_perm('community.list_communities', is_user)
 rules.add_perm('community.view_details', is_community_member)
 rules.add_perm('community.edit_community', is_community_admin)
+rules.add_perm('community.leave', is_membership_subject)
+rules.add_perm('community.delete_community', is_community_owner)
 rules.add_perm('community.kick_user', is_community_admin)
 rules.add_perm('community.ban_user', is_community_admin)
-rules.add_perm('gamer_profile.view_detail', is_connected_to_gamer)
-rules.add_perm('gamer_profile.edit_profile', is_profile_owner)
+rules.add_perm('community.edit_roles', is_community_admin)
+rules.add_perm('community.edit_gamer_role', is_community_superior)
+rules.add_perm('community.transfer_ownership', is_community_owner)
+rules.add_perm('profile.view_detail', is_connected_to_gamer)
+rules.add_perm('profile.edit_profile', is_profile_owner)
 rules.add_perm('game.edit_players', is_game_gm)
 rules.add_perm('game.attendance', is_game_gm)
 rules.add_perm('game.close_game', is_game_gm)
