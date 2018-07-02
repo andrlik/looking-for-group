@@ -1,7 +1,7 @@
 from django.core.exceptions import PermissionDenied
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 from rest_framework_rules.mixins import PermissionRequiredMixin
 from rest_framework_rules.decorators import (
     permission_required as action_permission_required
@@ -20,15 +20,14 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     queryset = models.GamerCommunity.objects.all()
     serializer_class = serializers.GamerCommunitySerializer
 
-    @action_permission_required("community.view_details")
+    @action_permission_required("community.list_communities")
     def retrieve(self, request, pk=None):
         """
         View details of the community.
         """
         return super().retrieve(request, pk)
 
-    @action_permission_required("community.view_details")
-    @action(methods=["get"], detail=True)
+    @detail_route(methods=["get"], permission_required='community.view_details')
     def list_members(self, request, pk=None):
         """
         List members of a community.
@@ -47,8 +46,7 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         )
         return Response(member_serials.data, status=status.HTTP_200_OK)
 
-    @action_permission_required("community.ban_user")
-    @action(methods=["get"], detail=True)
+    @detail_route(methods=["get"], permission_required='community.ban_user')
     def list_banned_users(self, request, pk=None):
         """
         Retrieve a list of banned users for this community.
@@ -57,8 +55,7 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         serializer = serializers.BannedUserSerializer(ban_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action_permission_required("community.kick_user")
-    @action(methods=["get"], detail=True)
+    @detail_route(methods=["get"], permission_required='community.kick_user')
     def list_kicked_users(self, request, pk=None):
         """
         List users that have been kicked/suspended from community.
@@ -67,8 +64,7 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         serializer = serializers.KickedUserSerializer(kick_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action_permission_required("community.view_details")
-    @action(methods=["get"], detail=True)
+    @detail_route(methods=["get"], permission_required='community.view_details')
     def list_admins(self, request, pk=None):
         """
         List community admins.
@@ -77,8 +73,7 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         serializer = serializers.GamerProfileSerializer(admins, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action_permission_required("community.view_details")
-    @action(methods=["get"], detail=True)
+    @detail_route(methods=["get"], permission_required='community.view_details')
     def list_mods(self, request, pk=None):
         """
         List community moderators.
@@ -102,7 +97,7 @@ class CommunityMembershipViewSet(PermissionRequiredMixin, viewsets.ModelViewSet)
         "community.kick_user",
         fn=lambda request, pk: models.CommunityMembership.objects.get(pk=pk).community,
     )
-    @action(methods=["post"], detail=True)
+    @detail_route(methods=["post"])
     def kick_user(self, request, pk=None):
         end_date = None
         try:
@@ -127,7 +122,7 @@ class CommunityMembershipViewSet(PermissionRequiredMixin, viewsets.ModelViewSet)
         "community.ban_user",
         fn=lambda request, pk: models.CommunityMembership.objects.get(pk=pk).community,
     )
-    @action(methods=["post"], detail=True)
+    @detail_route(methods=["post"])
     def ban_user(self, request, pk=None):
         try:
             reason = self.request.kwargs["reason"]
@@ -150,7 +145,6 @@ class GamerProfileViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     """
 
     permission_required = "gamer_profile.view_detail"
-    object_permission_required = "gamer_profile.edit_profile"
     serializer_class = serializers.GamerProfileSerializer
     queryset = models.GamerProfile.objects.all()
 
@@ -160,7 +154,7 @@ class GamerProfileViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
             author=request.user, gamer=models.GamerProfile.objects.get(pk=pk)
         ),
     )
-    @action(methods=["get"], detail=True)
+    @detail_route(methods=["get"])
     def view_notes(self, request, pk=None):
         notes = models.GamerNote.objects.filter(
             author=self.request.user, gamer=self.get_object().gamer
@@ -225,7 +219,7 @@ class CommunityApplicationViewSet(PermissionRequiredMixin, viewsets.ModelViewSet
     serializer_class = serializers.CommunityApplicationSerializer
 
     @action_permission_required("community.approve_application")
-    @action(methods=["post"], detail=True)
+    @detail_route(methods=["post"])
     def approve(self, request, pk=None):
         """
         Approve an application.
@@ -240,7 +234,7 @@ class CommunityApplicationViewSet(PermissionRequiredMixin, viewsets.ModelViewSet
         return Response(status=status.HTTP_202_ACCEPTED)
 
     @action_permission_required("community.approve_application")
-    @action(methods=["post"], detail=True)
+    @detail_route(methods=["post"])
     def reject(self, request, pk=None):
         """
         Reject an application.

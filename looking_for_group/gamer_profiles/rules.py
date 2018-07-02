@@ -1,9 +1,12 @@
 import rules
-from .models import NotInCommunity
+from django.core.exceptions import ObjectDoesNotExist
+from .models import NotInCommunity, BlockedUser
+
 
 @rules.predicate
-def is_authenticated(user):
-    return user.is_authenticated()
+def is_user(user):
+    return True
+
 
 @rules.predicate
 def is_community_admin(user, community):
@@ -23,6 +26,35 @@ def is_community_member(user, community):
         return True
     except NotInCommunity:
         return False
+
+
+def in_same_community_as_gamer(user, gamer):
+    communities_to_check = gamer.communities.all()
+    user_communities = user.gamerprofile.communities.all()
+    for community in communities_to_check:
+        if community in user_communities:
+            return True
+    return False
+
+
+@rules.predicate
+def is_connected_to_gamer(user, gamer):
+    if not gamer.private:
+        return True
+    if in_same_community_as_gamer(user, gamer):
+        return True
+    # Placeholder for "in same game"
+    # placeholder for friends
+    try:
+        BlockedUser.objects.get(blocker=gamer, blockee=user.gamerprofile)
+    except ObjectDoesNotExist:
+        return True
+    return False
+
+
+@rules.predicate
+def is_profile_owner(user, gamer):
+    return gamer.user == user
 
 
 @rules.predicate
@@ -73,11 +105,13 @@ def is_game_member(user, game):
 
 log_writer = is_game_gm | is_scribe
 
-rules.add_perm('community.list_communities', is_authenticated)
+rules.add_perm('community.list_communities', is_user)
 rules.add_perm('community.view_details', is_community_member)
 rules.add_perm('community.edit_community', is_community_admin)
 rules.add_perm('community.kick_user', is_community_admin)
 rules.add_perm('community.ban_user', is_community_admin)
+rules.add_perm('gamer_profile.view_detail', is_connected_to_gamer)
+rules.add_perm('gamer_profile.edit_profile', is_profile_owner)
 rules.add_perm('game.edit_players', is_game_gm)
 rules.add_perm('game.attendance', is_game_gm)
 rules.add_perm('game.close_game', is_game_gm)
