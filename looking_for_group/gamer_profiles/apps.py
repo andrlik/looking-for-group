@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class GamerProfilesConfig(AppConfig):
-    name = "gamer_profiles"
+    name = "looking_for_group.gamer_profiles"
     verbose_name = "Gamer Profiles"
 
     def ready(self):  # pragma: no cover

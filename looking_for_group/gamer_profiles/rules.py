@@ -27,23 +27,13 @@ def is_membership_subject(user, membership):
 
 
 @rules.predicate
-def is_community_superior(user, gamer, community):
-    gamer_role = community.get_role(gamer)
-    user_role = community.get_role(user.gamerprofile)
-    if gamer_role == "Admin" and community.owner == user.gamerprofile:
-        return True
-    if gamer_role == "Moderator" and user_role == "Admin":
-        return True
-    if gamer_role == "Member" and user_role != "Member" and user_role:
-        return True
-    return False
-
-
-@rules.predicate
 def is_community_owner(user, community):
     if user.gamerprofile == community.owner:
         return True
     return False
+
+
+is_community_superior = is_community_owner | is_community_admin
 
 
 @rules.predicate

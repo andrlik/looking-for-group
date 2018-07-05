@@ -67,6 +67,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     name = models.CharField(max_length=255, help_text=_("Community Name"))
+    owner = models.ForeignKey('GamerProfile', on_delete=models.CASCADE)
     description = models.TextField(
         null=True,
         blank=True,

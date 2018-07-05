@@ -81,5 +81,11 @@ LOGGING = {
             "propagate": False,
         },
         "catalog": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "gamer_profiles": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "rules": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }

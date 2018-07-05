@@ -82,8 +82,8 @@ THIRD_PARTY_APPS = [
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
-    "looking_for_group.game_catalog",
-    "looking_for_group.gamer_profiles",
+    "looking_for_group.game_catalog.apps.GameCatalogConfig",
+    "looking_for_group.gamer_profiles.apps.GamerProfilesConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
