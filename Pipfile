@@ -43,6 +43,8 @@ django-filter = "*"
 markdown = "*"
 django-taggit-serializer = "*"
 django-rest-framework-rules = "*"
+bleach = "*"
+bleach-whitelist = "*"
 
 
 [dev-packages]

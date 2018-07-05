@@ -1,4 +1,6 @@
 import logging
+import bleach
+from bleach_whitelist.bleach_whitelist import markdown_tags, markdown_attrs
 from markdown import markdown
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
@@ -18,7 +20,11 @@ def generate_rendered_html_from_description(sender, instance, *args, **kwargs):
         logger.debug(
             "Found description for {}, rendering with markdown".format(instance.name)
         )
-        instance.description_rendered = markdown(instance.description)
+        instance.description_rendered = bleach.clean(
+            markdown(instance.description, output_format="html5"),
+            markdown_tags,
+            markdown_attrs,
+        )
     if instance.id and not instance.description:
         logger.debug(
             "Description is either not present or removed. Nulling out rendered html for {}".format(
@@ -35,7 +41,11 @@ def generate_rendered_note_body(sender, instance, *args, **kwargs):
     """
     if instance.body:
         logger.debug("Rendering markdown for note titled {}".format(instance.title))
-        instance.body_rendered = markdown(instance.body)
+        instance.body_rendered = bleach.clean(
+            markdown(instance.body, output_format="html5"),
+            markdown_tags,
+            markdown_attrs,
+        )
 
 
 @receiver(post_save, sender=User)

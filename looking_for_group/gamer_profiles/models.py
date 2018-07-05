@@ -54,6 +54,13 @@ APPLICATION_STATUSES = (
 )
 
 
+FRIEND_REQUEST_STATUSES = (
+    ("new", _("Pending")),
+    ("accept", _("Accepted")),
+    ("reject", _("Rejected")),
+)
+
+
 COMMUNITY_ROLES = (
     ("member", _("Member")),
     ("moderator", _("Moderator")),
@@ -67,7 +74,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     name = models.CharField(max_length=255, help_text=_("Community Name"))
-    owner = models.ForeignKey('GamerProfile', on_delete=models.CASCADE)
+    owner = models.ForeignKey("GamerProfile", on_delete=models.CASCADE)
     description = models.TextField(
         null=True,
         blank=True,
@@ -221,12 +228,59 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         return ban_file
 
 
+class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):
+    """
+    An object representing a symmetrical friendship.
+    """
+
+    requestor = models.ForeignKey(
+        "GamerProfile", on_delete=models.CASCADE, help_text=_("Who asked to friend?"),
+        related_name='friend_requests_sent',
+    )
+    recipient = models.ForeignKey(
+        "GamerProfile",
+        on_delete=models.CASCADE,
+        related_name='friend_requests_received',
+        help_text=_("Will they or won't they?"),
+    )
+    status = models.CharField(
+        max_length=25,
+        choices=FRIEND_REQUEST_STATUSES,
+        default="new",
+        help_text=_("Current request status."),
+    )
+
+    def __str__(self):
+        return "{0} friend request from {1} to {2}".format(
+            self.get_status_display(), self.requestor, self.recipient
+        )
+
+    def accept(self):
+        """
+        Accept a friend request.
+        """
+        with transaction.atomic():
+            self.requestor.friends.add(self.recipient)
+            self.status = "accept"
+            self.save()
+
+    def deny(self):
+        """
+        Ignore a friend request.
+        """
+        self.status = "reject"
+        self.save()
+
+
 class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
     A profile of game preferences and history.
     """
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    friends = models.ManyToManyField(
+        "self", blank=True, help_text=_("Other friends.")
+    )
     rpg_experience = models.TextField(
         null=True,
         blank=True,

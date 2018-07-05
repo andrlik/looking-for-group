@@ -2,7 +2,7 @@ import pytest
 from django.db import transaction
 from django.core.exceptions import PermissionDenied
 from test_plus import TestCase
-from ..models import NotInCommunity, AlreadyInCommunity, CommunityMembership, KickedUser, BannedUser
+from ..models import NotInCommunity, AlreadyInCommunity, CommunityMembership, KickedUser, BannedUser, GamerFriendRequest
 from .factories import GamerProfileWithCommunityFactory, GamerProfileFactory
 
 
@@ -128,3 +128,36 @@ class CommunityFunctionTests(TestCase):
         self.community.add_member(self.gamer2)
         with pytest.raises(PermissionDenied):
             self.community.ban_user(self.gamer2, self.gamer, 'Revenge!')
+
+
+class TestFriendships(TestCase):
+    '''
+    Test friend requests for other users.
+    '''
+
+    def setUp(self):
+        self.gamer1 = GamerProfileFactory()
+        self.gamer2 = GamerProfileFactory()
+
+    def test_friend_requests_check(self):
+        assert self.gamer1.friend_requests_received.count() == 0
+        assert self.gamer1.friend_requests_sent.count() == 0
+        req = GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2)
+        assert req.status == 'new'
+        assert self.gamer1.friend_requests_sent.count() == 1
+        assert self.gamer2.friend_requests_received.count() == 1
+
+    def test_accept_friend_request(self):
+        assert self.gamer1.friends.count() == self.gamer2.friends.count() and self.gamer1.friends.count() == 0
+        req = GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2)
+        req.accept()
+        assert self.gamer1.friends.all().count() == 1
+        assert self.gamer1.friends.all()[0] == self.gamer2
+        assert self.gamer2.friends.all().count() == 1
+        assert GamerFriendRequest.objects.get(pk=req.pk).status == 'accept'
+
+    def test_reject_friendship(self):
+        req = GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2)
+        req.deny()
+        assert self.gamer1.friends.count() == 0
+        assert GamerFriendRequest.objects.get(pk=req.pk).status == 'reject'
