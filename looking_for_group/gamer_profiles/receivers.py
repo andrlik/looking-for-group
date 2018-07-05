@@ -10,7 +10,10 @@ def generate_rendered_html_from_description(sender, instance, *args, **kwargs):
     """
     Parse the description with markdown and save the result.
     """
-    instance.description_rendered = markdown(instance.description)
+    if instance.description:
+        instance.description_rendered = markdown(instance.description)
+    if instance.id and not instance.description:
+        instance.description_rendered = None
 
 
 @receiver(pre_save, sender=models.GamerNote)
@@ -18,7 +21,10 @@ def generate_rendered_note_body(sender, instance, *args, **kwargs):
     """
     Parse and convert markdown to rendered body.
     """
-    instance.body_rendered = markdown(instance.body)
+    if instance.body:
+        instance.body_rendered = markdown(instance.body)
+    if instance.id and not instance.body:
+        instance.body_rendered = None
 
 
 @receiver(post_save, sender=User)
