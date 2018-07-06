@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions, mixins
 from rest_framework.response import Response
 from rest_framework.decorators import detail_route
 from rest_framework_rules.mixins import PermissionRequiredMixin
@@ -15,17 +15,33 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     A view set of GamerCommunity functions.
     """
 
+    permission_classes = (permissions.IsAuthenticated,)
     permission_required = "community.list_communities"
-    object_permission_required = "community.edit_community"
+    object_permission_required = "community.view_details"
     queryset = models.GamerCommunity.objects.all()
     serializer_class = serializers.GamerCommunitySerializer
 
-    @action_permission_required("community.list_communities")
+    @action_permission_required("community.view_details")
     def retrieve(self, request, pk=None):
         """
         View details of the community.
         """
         return super().retrieve(request, pk)
+
+    @action_permission_required('community.delete_community')
+    def destroy(self, request, pk=None):
+        '''
+        Destroy the community.
+        '''
+        return super().destroy(request, pk)
+
+    @action_permission_required('community.edit_community')
+    def update(self, request, pk=None):
+        return super().update(request, pk)
+
+    @action_permission_required('community.edit_community')
+    def partial_update(self, request, pk=None):
+        return super().partial_update(request, pk)
 
     @detail_route(methods=["get"], permission_required='community.view_details')
     def list_members(self, request, pk=None):
@@ -144,23 +160,24 @@ class GamerProfileViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     Viewset for a gamer profile.
     """
 
-    permission_required = "gamer_profile.view_detail"
+    permission_classes = (permissions.IsAuthenticated,)
+    permission_required = "profile.view_detail"
     serializer_class = serializers.GamerProfileSerializer
     queryset = models.GamerProfile.objects.all()
 
-    @action_permission_required(
-        "gamer_profile.view_note",
-        fn=lambda request, pk: models.GamerNote.objects.filter(
-            author=request.user, gamer=models.GamerProfile.objects.get(pk=pk)
-        ),
-    )
-    @detail_route(methods=["get"])
-    def view_notes(self, request, pk=None):
-        notes = models.GamerNote.objects.filter(
-            author=self.request.user, gamer=self.get_object().gamer
-        )
-        serializer = serializers.GamerNoteSerializer(notes, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    # @action_permission_required(
+    #     "profile.view_note",
+    #     fn=lambda request, pk: models.GamerNote.objects.filter(
+    #         author=request.user, gamer=models.GamerProfile.objects.get(pk=pk)
+    #     ),
+    # )
+    # @detail_route(methods=["get"])
+    # def view_notes(self, request, pk=None):
+    #     notes = models.GamerNote.objects.filter(
+    #         author=self.request.user, gamer=self.get_object()
+    #     )
+    #     serializer = serializers.GamerNoteSerializer(notes, many=True)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class GamerNoteViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):

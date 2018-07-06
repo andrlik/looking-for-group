@@ -46,6 +46,7 @@ class UserListingField(serializers.RelatedField):
     Text-friendly representation for community.
     """
     queryset = User.objects.all()
+
     def to_representation(self, value):
         return value.display_name
 
@@ -63,6 +64,7 @@ class GamerProfileSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "user",
+            "private",
             "playstyle",
             "will_gm",
             "player_status",

@@ -1,5 +1,7 @@
 import pytest
+import factory.django
 from django.db import transaction
+from django.db.models.signals import post_save
 from django.core.exceptions import PermissionDenied
 from test_plus import TestCase
 from ..models import NotInCommunity, AlreadyInCommunity, CommunityMembership, KickedUser, BannedUser, GamerFriendRequest
@@ -12,10 +14,18 @@ class FactoryTests(TestCase):
     """
 
     def setUp(self):
-        self.gamer = GamerProfileWithCommunityFactory()
+        with factory.django.mute_signals(post_save):
+            self.gamer = GamerProfileWithCommunityFactory()
+            self.gamer2 = GamerProfileFactory()
 
     def test_factory_results(self):
         assert self.gamer.communities.count() == 1
+
+    def test_user_created(self):
+        assert self.gamer.user
+
+    def test_user_without_community(self):
+        assert self.gamer2.user
 
 
 class CommunityFunctionTests(TestCase):

@@ -3,13 +3,14 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
+from looking_for_group.game_catalog.utils import AbstractUUIDModel
 
 
-class User(TimeStampedModel, AbstractUser):
+class User(TimeStampedModel, AbstractUUIDModel, AbstractUser):
 
     # First Name and Last Name do not cover name patterns
     # around the globe.
-    name = models.CharField(_("Name of User"), blank=True, max_length=255)
+    name = models.CharField(_("Name of User"), blank=True, null=True, max_length=255)
     display_name = models.CharField(
         _("Display Name"),
         blank=True,

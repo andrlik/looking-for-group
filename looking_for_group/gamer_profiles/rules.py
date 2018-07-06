@@ -1,10 +1,16 @@
 import rules
+import logging
 from django.core.exceptions import ObjectDoesNotExist
 from .models import NotInCommunity, BlockedUser
 
 
+logger = logging.getLogger('rules')
+
+
 @rules.predicate
-def is_user(user):
+def is_user(user, obj=None):
+    if user.is_anonymous:
+        return False
     return True
 
 
@@ -17,6 +23,13 @@ def is_community_admin(user, community):
     if role == 'Admin':
         return True
     return False
+
+
+@rules.predicate
+def is_public_community(user, community):
+    if community.private:
+        return False
+    return True
 
 
 @rules.predicate
@@ -38,35 +51,51 @@ is_community_superior = is_community_owner | is_community_admin
 
 @rules.predicate
 def is_community_member(user, community):
+    if user.is_anonymous:
+        return False
     try:
-        user.gamerprofile.get_role(community)
+        community.get_role(user.gamerprofile)
         return True
     except NotInCommunity:
         return False
+    return False
 
 
 def in_same_community_as_gamer(user, gamer):
     communities_to_check = gamer.communities.all()
+    logger.debug('found {} communities to check'.format(len(communities_to_check)))
     user_communities = user.gamerprofile.communities.all()
     for community in communities_to_check:
         if community in user_communities:
+            logger.debug('One shared community found.')
             return True
+    logger.debug('No shared communities found.')
     return False
 
 
 @rules.predicate
 def is_connected_to_gamer(user, gamer):
+    logger.debug('Starting check of is {0} connected to gamer {1}.'.format(user.gamerprofile, gamer.user.display_name))
+    result = False
+    logger.debug('Checking if gamer is private...')
+    print(gamer.private)
     if not gamer.private:
         return True
+    logger.debug('Gamer is private... moving on.')
     if in_same_community_as_gamer(user, gamer):
-        return True
+        result = True
     # Placeholder for "in same game"
-    # placeholder for friends
+    if user.gamerprofile in gamer.friends.all():
+        logger.debug('User is a friend of gamer.')
+        result = True
     try:
         BlockedUser.objects.get(blocker=gamer, blockee=user.gamerprofile)
+        logger.debug('User is blocked by gamer')
+        result = False
     except ObjectDoesNotExist:
-        return True
-    return False
+        logger.debug('User is not blocked.')
+        pass  # Stick with earlier result.
+    return result
 
 
 @rules.predicate
@@ -85,37 +114,18 @@ def is_muter(user, mute_file):
 
 @rules.predicate
 def is_profile_owner(user, gamer):
-    return gamer.user == user
+    logger.debug('Checking if {} owns profile {}...'.format(user, gamer))
+    return user.gamerprofile == gamer
 
 
-@rules.predicate
-def is_same_community_as_game(user, game):
-    for community in game.communities:
-        if is_community_member(user, community):
-            return True
-    return False
+is_profile_viewer_eligible = is_profile_owner | is_connected_to_gamer
+
+is_profile_viewer = is_user & is_profile_viewer_eligible
 
 
 @rules.predicate
 def is_friend(user, user2):
     if user.gamerprofile in user2.gamerprofile.friends.all():
-        return True
-    return False
-
-
-can_see_private_game_listing = is_friend | is_same_community_as_game
-
-
-@rules.predicate
-def is_game_gm(user, game):
-    if user.gamerprofile in game.gm.all():
-        return True
-    return False
-
-
-@rules.predicate
-def is_scribe(user, game):
-    if user.gamerprofile in game.scribes.all():
         return True
     return False
 
@@ -127,17 +137,8 @@ def is_note_author(user, note):
     return False
 
 
-@rules.predicate
-def is_game_member(user, game):
-    if user.gamerprofile in game.players.all() or user.gamerprofile == game.gm:
-        return True
-    return False
-
-
-log_writer = is_game_gm | is_scribe
-
 rules.add_perm('community.list_communities', is_user)
-rules.add_perm('community.view_details', is_community_member)
+rules.add_perm('community.view_details', is_community_member | is_public_community)
 rules.add_perm('community.edit_community', is_community_admin)
 rules.add_perm('community.leave', is_membership_subject)
 rules.add_perm('community.delete_community', is_community_owner)
@@ -146,15 +147,6 @@ rules.add_perm('community.ban_user', is_community_admin)
 rules.add_perm('community.edit_roles', is_community_admin)
 rules.add_perm('community.edit_gamer_role', is_community_superior)
 rules.add_perm('community.transfer_ownership', is_community_owner)
-rules.add_perm('profile.view_detail', is_connected_to_gamer)
+rules.add_perm('profile.view_detail', is_profile_viewer)
 rules.add_perm('profile.edit_profile', is_profile_owner)
-rules.add_perm('game.edit_players', is_game_gm)
-rules.add_perm('game.attendance', is_game_gm)
-rules.add_perm('game.close_game', is_game_gm)
-rules.add_perm('game.cancel_game', is_game_gm)
-rules.add_perm('game.view_game_details', is_game_member)
-rules.add_perm('game.edit_create_adventure_log', log_writer)
-rules.add_perm('game.delete_adventure_log', is_game_gm)
-rules.add_perm('game.view_game_listing_detail', can_see_private_game_listing)
-rules.add_perm('game.post_game_to_community', is_community_member)
-rules.add_perm('game.view_gamer_notes', is_note_author)
+rules.add_perm('profile.view_gamer_notes', is_note_author)

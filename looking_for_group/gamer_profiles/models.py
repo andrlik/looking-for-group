@@ -234,13 +234,15 @@ class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     requestor = models.ForeignKey(
-        "GamerProfile", on_delete=models.CASCADE, help_text=_("Who asked to friend?"),
-        related_name='friend_requests_sent',
+        "GamerProfile",
+        on_delete=models.CASCADE,
+        help_text=_("Who asked to friend?"),
+        related_name="friend_requests_sent",
     )
     recipient = models.ForeignKey(
         "GamerProfile",
         on_delete=models.CASCADE,
-        related_name='friend_requests_received',
+        related_name="friend_requests_received",
         help_text=_("Will they or won't they?"),
     )
     status = models.CharField(
@@ -278,9 +280,11 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    friends = models.ManyToManyField(
-        "self", blank=True, help_text=_("Other friends.")
+    private = models.BooleanField(
+        default=True,
+        help_text=_("Only allow GMs and communities I belong/apply to see profile."),
     )
+    friends = models.ManyToManyField("self", blank=True, help_text=_("Other friends."))
     rpg_experience = models.TextField(
         null=True,
         blank=True,
@@ -316,11 +320,10 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         help_text=_("Are you ok with 18+ themes/content/language in games?"),
         db_index=True,
     )
-    one_shots = (
-        models.BooleanField(
-            default=False, help_text=_("Interested in one-shots?"), db_index=True
-        ),
+    one_shots = models.BooleanField(
+        default=False, help_text=_("Interested in one-shots?"), db_index=True
     )
+
     adventures = models.BooleanField(
         default=False,
         help_text=_("Interested in short multi-session games?"),
