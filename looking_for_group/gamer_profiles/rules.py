@@ -33,6 +33,18 @@ def is_public_community(user, community):
 
 
 @rules.predicate
+def is_not_member(user, community):
+    try:
+        community.get_role(user.gamerprofile)
+    except NotInCommunity:
+        return True
+    return False
+
+
+is_joinable = is_user & is_public_community & is_not_member
+
+
+@rules.predicate
 def is_membership_subject(user, membership):
     if membership.gamer == user.gamerprofile:
         return True
@@ -140,6 +152,7 @@ def is_note_author(user, note):
 rules.add_perm('community.list_communities', is_user)
 rules.add_perm('community.view_details', is_community_member | is_public_community)
 rules.add_perm('community.edit_community', is_community_admin)
+rules.add_perm('community.join', is_joinable)
 rules.add_perm('community.leave', is_membership_subject)
 rules.add_perm('community.delete_community', is_community_owner)
 rules.add_perm('community.kick_user', is_community_admin)

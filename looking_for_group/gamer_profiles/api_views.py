@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied
-from rest_framework import viewsets, status, permissions, mixins
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import detail_route
 from rest_framework_rules.mixins import PermissionRequiredMixin
@@ -20,13 +20,6 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     object_permission_required = "community.view_details"
     queryset = models.GamerCommunity.objects.all()
     serializer_class = serializers.GamerCommunitySerializer
-
-    @action_permission_required("community.view_details")
-    def retrieve(self, request, pk=None):
-        """
-        View details of the community.
-        """
-        return super().retrieve(request, pk)
 
     @action_permission_required('community.delete_community')
     def destroy(self, request, pk=None):
@@ -161,7 +154,8 @@ class GamerProfileViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     """
 
     permission_classes = (permissions.IsAuthenticated,)
-    permission_required = "profile.view_detail"
+    permission_required = "community.list_communities"
+    object_permission_required = 'profile.view_detail'
     serializer_class = serializers.GamerProfileSerializer
     queryset = models.GamerProfile.objects.all()
 

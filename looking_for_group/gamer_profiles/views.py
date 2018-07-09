@@ -21,13 +21,7 @@ class CommunityListView(generic.ListView):
     template_name = "gamer_profiles/community_list.html"
     model = models.GamerCommunity
     paginate_by = 25
-    ordering = ['member_count', '-modified', 'name']
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.user.is_authenticated:
-            context["my_communities"] = self.request.user.gamerprofile.communities.all()
-        return context
+    ordering = ['-member_count', 'name']
 
 
 class MyCommunitiesListView(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
@@ -47,6 +41,23 @@ class MyCommunitiesListView(LoginRequiredMixin, SelectRelatedMixin, generic.List
         )
 
 
+class JoinCommunity(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
+    '''
+    Try to join a community. Fails if community is private.
+    '''
+    model = models.CommunityMembership
+    permission_required = "community.join"
+    template_name = "gamer_profiles/community_join.html"
+    form_class = BlankDistructiveForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.community = get_object_or_404(models.GamerCommunity, pk=kwargs.pop('community'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.community
+
+
 class LeaveCommunity(
     LoginRequiredMixin,
     PermissionRequiredMixin,
@@ -61,7 +72,7 @@ class LeaveCommunity(
     pk_url_kwarg = "membership"
     permission_required = "community.leave"
     select_related = ["community", "gamer"]
-    template_name = "gamer_profiles:community_leave.html"
+    template_name = "gamer_profiles/community_leave.html"
 
     def form_valid(self, form):
         community = self.get_object().community
