@@ -1,4 +1,5 @@
 import pytest
+from django.urls import reverse
 from test_plus import TestCase
 from .. import models
 from . import factories
@@ -60,3 +61,52 @@ class TestCommunityList(AbstractViewTest):
             self.assertResponseNotContains("<span class='membership'>")
             self.assertResponseContains("class='button'>Apply", html=False)
             self.assertResponseContains("class='button'>Join", html=False)
+
+
+class MyCommunityListView(AbstractViewTest):
+    '''
+    Only a user's communities should be listed.
+    '''
+
+    def test_unauthenticated_view(self):
+        self.assertLoginRequired('gamer_profiles:my-community-list')
+
+    def test_logged_in_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView('gamer_profiles:my-community-list')
+            assert len(self.get_context('object_list')) == 1
+        with self.login(username=self.gamer2.user.username):
+            self.assertGoodView('gamer_profiles:my-community-list')
+            assert len(self.get_context('object_list')) == 1
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView("gamer_profiles:my-community-list")
+            assert not self.get_context('object_list')
+
+
+class CommunityDetailViewTest(AbstractViewTest):
+    '''
+    Test the community detail view.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = 'gamer_profiles:community-detail'
+
+    def test_unauthenticated(self):
+        self.assertLoginRequired(self.view_name, community=self.community1.pk)
+
+    def test_authenticated(self):
+        with self.login(username=self.gamer1.user.username):
+            print(self.community1.pk)
+            print(reverse(self.view_name, kwargs={'community': self.community1.pk}))
+            assert models.GamerCommunity.objects.get(pk=self.community1.pk)
+            self.assertGoodView(self.view_name, community=self.community1.pk)
+            self.assertGoodView(self.view_name, community=self.community2.pk)
+        with self.login(username=self.gamer2.user.username):
+            self.assertGoodView(self.view_name, community=self.community2.pk)
+            self.get(self.view_name, self.community1.pk)
+            self.response_302()
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView(self.view_name, community=self.community2.pk)
+            self.get(self.view_name, community=self.community1.pk)
+            self.response_302()

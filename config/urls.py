@@ -14,6 +14,7 @@ urlpatterns = [
     ),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
+    path('{}doc/'.format(settings.ADMIN_URL), include('django.contrib.admindocs.urls')),
     # User management
     path("users/", include("looking_for_group.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),

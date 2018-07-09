@@ -16,7 +16,7 @@ def community_role_flag(context, community):
         not isinstance(community, models.GamerCommunity)
         or not context["request"].user.is_authenticated
     ):
-        return None
+        return ""
     try:
         role = community.get_role(context["request"].user.gamerprofile)
     except models.NotInCommunity:

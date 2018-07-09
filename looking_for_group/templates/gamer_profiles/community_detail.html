@@ -1,0 +1,17 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize %}
+{% block subtitle %}{{ community.name }} - {% endblock %}
+{% block content %}
+<h1>{{ community.name }}</h1>
+<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.user.display_name }}</a></span>
+<p>{{ community.description_rendered|safe }}</p>
+<div class="member-list">
+  <ul>
+    {% for member in community.get_members|slice:":20" %}
+    <li><a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer.user.display_name }}</a></li>
+    {% endfor %}
+    <p><a href="{% url 'gamer_profiles:community-member-list' community=community.pk %}">{% trans "See all members..." %}</a></p>
+  </ul>
+</div>
+
+{% endblock %}

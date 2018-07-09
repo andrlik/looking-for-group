@@ -1,13 +1,17 @@
+import logging
 from rules.contrib.views import PermissionRequiredMixin
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from braces.views import SelectRelatedMixin, PrefetchRelatedMixin, LoginRequiredMixin
 from . import models
 from .forms import OwnershipTransferForm, BlankDistructiveForm
+
+
+logger = logging.getLogger('gamer_profiles')
 
 
 # Create your views here.
@@ -33,7 +37,7 @@ class MyCommunitiesListView(LoginRequiredMixin, SelectRelatedMixin, generic.List
     model = models.CommunityMembership
     paginate_by = 25
     select_related = ["community"]
-    ordering = ['name']
+    ordering = ['community', 'community__name']
 
     def get_queryset(self):
         return models.CommunityMembership.objects.filter(
@@ -124,7 +128,7 @@ class ChangeCommunityRole(
     select_related = ["gamer", "community"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -168,7 +172,7 @@ class CommunityDetailView(
     LoginRequiredMixin,
     PermissionRequiredMixin,
     SelectRelatedMixin,
-    PrefetchRelatedMixin,
+   # PrefetchRelatedMixin,
     generic.DetailView,
 ):
     """
@@ -176,15 +180,33 @@ class CommunityDetailView(
     """
 
     pk_url_kwarg = "community"
-    permission_required = "community.view_details"
+    permission_required = "community.list_communities"
     model = models.GamerCommunity
     template_name = "gamer_profiles/community_detail.html"
-    prefetch_related = [
-        "communitymembership_set",
-        "communitymembership_gamer",
-        "communityapplication_set",
-    ]  # TODO Add games.
+    select_related = ['owner']
+    # prefetch_related = [
+    #     "gamerprofile_set",
+    #     "communityapplication_set",
+    # ]  # TODO Add games.
     context_object_name = "community"
+
+    def get(self, request, *args, **kwargs):
+        logger.debug("Attempting to retrieve community for evaluation.")
+        obj = get_object_or_404(models.GamerCommunity, pk=kwargs['community'])
+        logger.debug("Found community {}".format(obj.name))
+        logger.debug("Checking permissions of user...")
+        if not request.user.has_perm('community.view_details', obj):
+            logger.debug("User does not have permission to view.")
+            view_target = 'gamer_profiles:community-join'
+            message = _("You must join this community in order to view its details.")
+            if obj.private:
+                logger.debug("Community is private: redirecting to apply instead of join.")
+                view_target = 'gamer_profiles:community-apply'
+                message = _("You must be a member of this community to view its details. You can apply below.")
+            messages.info(request, message)
+            return HttpResponseRedirect(reverse(view_target, kwargs={'community': obj.pk}))
+        logger.debug("user has permissions, proceeding with standard redirect")
+        return super().get(request, *args, **kwargs)
 
 
 class CommunityUpdateView(
@@ -229,7 +251,7 @@ class CommunityMemberList(
     ordering = ["community_role", "gamer__display_name"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -264,7 +286,7 @@ class CommunityApplicantList(
     context_object_name = "applications"
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -303,7 +325,7 @@ class UpdateApplication(
     fields = ["message"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_uk = kwargs.pop("community")
+        comm_uk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_uk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -328,9 +350,14 @@ class CreateApplication(
     permission_required = "community.can_apply"
 
     def dispatch(self, request, *args, **kwargs):
-        comm_uk = kwargs.pop("community")
+        comm_uk = kwargs['community']
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_uk)
-        return self.dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
 
     def get_permission_object(self):
         return self.community
@@ -407,7 +434,7 @@ class ApproveApplication(
     fields = ["status"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -469,7 +496,7 @@ class CommunityKickedUserList(
     ordering = ["-end_date", "-created"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -495,7 +522,7 @@ class CommunityBannedUserList(
     ordering = ["-created"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -523,7 +550,7 @@ class CommunityDeleteBan(
     context_object_name = "ban_record"
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -542,7 +569,7 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
     fields = ["reason"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = self.kwargs.pop("community")
+        comm_pk = self.kwargs.pop("community", None)
         gamer_pk = self.kwargs.pop("gamer")
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         self.gamer = get_object_or_404(models.GamerProfile, pk=gamer_pk)
@@ -609,7 +636,7 @@ class CommunityKickUser(
     fields = ["reason", "end_date"]
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         gamer_pk = kwargs.pop("gamer")
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         self.gamer = get_object_or_404(models.GamerProfile, pk=gamer_pk)
@@ -683,7 +710,7 @@ class UpdateKickRecord(
     permission_required = "community.kick_user"
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community")
+        comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 

@@ -8,8 +8,8 @@
   {% for community in object_list %}
   <li>
 <h2><a href="{{ community.get_absolute_url }}">{{ community.name }}</a>{% community_role_flag community %}</h2>
-<span class="meta">{% if community.private %}<span class="privacy-flag">{% trans "Private" %}</span>{% endif %} {% blocktrans count counter=community.gamerprofile_set|length %}1 Member{% plural %} {{ counter|humanize }} Members{% endblocktrans %}</span>
-<p>{{ community.description_rendered|truncatewords_html:100 }}</p>
+<span class="meta">{% if community.private %}<span class="privacy-flag">{% trans "Private" %}</span>{% endif %} {% blocktrans count counter=community.member_count %}1 Member{% plural %} {{ counter|humanize }} Members{% endblocktrans %}</span>
+<p>{{ community.description_rendered|truncatewords_html:100|safe }}</p>
   </li>
 {% empty %}
 <p>{% trans "No communities found." %}</p>

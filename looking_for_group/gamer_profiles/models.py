@@ -118,7 +118,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             "What is the minimum role level required to invite others to the community?"
         ),
     )
-    member_count = models.PositiveIntegerField(default=0, help_text=_('Current total count of members.'))
+    member_count = models.PositiveIntegerField(
+        default=0, help_text=_("Current total count of members.")
+    )
 
     def __str__(self):
         return self.name
@@ -126,7 +128,6 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     def get_absolute_url(self):
         return reverse("gamer_profiles:community-detail", kwargs={"community": self.pk})
 
-    @property
     def get_member_count(self):
         return self.members.count()
 
@@ -167,7 +168,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
                 membership = CommunityMembership.objects.create(
                     community=self, gamer=gamer, community_role=role
                 )
-                self.member_count = F('member_count') + 1
+                self.member_count = F("member_count") + 1
                 self.save()
         except IntegrityError:
             raise AlreadyInCommunity
@@ -180,9 +181,11 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         """
         try:
             with transaction.atomic():
-                membership = CommunityMembership.objects.get(community=self, gamer=gamer)
+                membership = CommunityMembership.objects.get(
+                    community=self, gamer=gamer
+                )
                 membership.delete()
-                self.member_count = F('member_count') - 1
+                self.member_count = F("member_count") - 1
                 self.save()
         except ObjectDoesNotExist:
             raise NotInCommunity
@@ -204,7 +207,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         if not kicker.user.has_perm("community.kick_user", self):
             raise PermissionDenied
         if self.owner == gamer:
-            raise PermissionDenied(_('You cannot kick the owner of a community out.'))
+            raise PermissionDenied(_("You cannot kick the owner of a community out."))
         with transaction.atomic():
             kick_file = KickedUser.objects.create(
                 community=self,
@@ -402,7 +405,7 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         return "Game Profile: {}".format(self.user.username)
 
     def get_absolute_url(self):
-        return reverse("gamer_profiles:profile_detail", kwargs={"gamer": self.pk})
+        return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.pk})
 
     def get_role(self, community):
         """
