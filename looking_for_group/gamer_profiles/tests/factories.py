@@ -13,7 +13,7 @@ class GamerProfileFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(userfac.UserFactory)
 
 
-@factory.django.mute_signals(post_save)
+# @factory.django.mute_signals(post_save)
 class GamerCommunityFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.GamerCommunity
@@ -31,6 +31,6 @@ class CommMembershipFactory(factory.django.DjangoModelFactory):
     community = factory.SubFactory(GamerCommunityFactory)
 
 
-@factory.django.mute_signals(post_save)
+# @factory.django.mute_signals(post_save)
 class GamerProfileWithCommunityFactory(GamerProfileFactory):
     communities = factory.RelatedFactory(CommMembershipFactory, "gamer")

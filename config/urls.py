@@ -19,6 +19,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     path("catalog/", include("looking_for_group.game_catalog.urls")),
+    path("social/", include("looking_for_group.gamer_profiles.urls")),
     path("api-auth/", include('rest_framework.urls')),
     path("api/", include(router.urls)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

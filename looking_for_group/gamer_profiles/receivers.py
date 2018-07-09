@@ -82,6 +82,4 @@ def add_owner_to_community(sender, instance, created, *args, **kwargs):
         logger.debug(
             "Ower is not in community {}; adding as admin".format(instance.name)
         )
-        models.CommunityMembership.objects.create(
-            community=instance, gamer=instance.owner, community_role="admin"
-        )
+        instance.add_member(instance.owner, role='admin')

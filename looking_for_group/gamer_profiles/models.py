@@ -1,4 +1,5 @@
 from django.db import models, transaction, IntegrityError
+from django.db.models import F
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.urls import reverse
@@ -117,15 +118,16 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             "What is the minimum role level required to invite others to the community?"
         ),
     )
+    member_count = models.PositiveIntegerField(default=0, help_text=_('Current total count of members.'))
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("gamer_profiles:community_detail", kwargs={"community": self.pk})
+        return reverse("gamer_profiles:community-detail", kwargs={"community": self.pk})
 
     @property
-    def member_count(self):
+    def get_member_count(self):
         return self.members.count()
 
     def get_admins(self):
@@ -161,9 +163,12 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         Adds a gamer to the community directly.
         """
         try:
-            membership = CommunityMembership.objects.create(
-                community=self, gamer=gamer, community_role=role
-            )
+            with transaction.atomic():
+                membership = CommunityMembership.objects.create(
+                    community=self, gamer=gamer, community_role=role
+                )
+                self.member_count = F('member_count') + 1
+                self.save()
         except IntegrityError:
             raise AlreadyInCommunity
         return membership
@@ -174,8 +179,11 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         from any games they already are playing.
         """
         try:
-            membership = CommunityMembership.objects.get(community=self, gamer=gamer)
-            membership.delete()
+            with transaction.atomic():
+                membership = CommunityMembership.objects.get(community=self, gamer=gamer)
+                membership.delete()
+                self.member_count = F('member_count') - 1
+                self.save()
         except ObjectDoesNotExist:
             raise NotInCommunity
 
@@ -195,10 +203,8 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         """
         if not kicker.user.has_perm("community.kick_user", self):
             raise PermissionDenied
-        try:
-            membership = CommunityMembership.objects.get(gamer=gamer, community=self)
-        except ObjectDoesNotExist:
-            raise NotInCommunity
+        if self.owner == gamer:
+            raise PermissionDenied(_('You cannot kick the owner of a community out.'))
         with transaction.atomic():
             kick_file = KickedUser.objects.create(
                 community=self,
@@ -207,7 +213,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
                 reason=reason,
                 end_date=earliest_reapply,
             )
-            membership.delete()
+            self.remove_member(gamer)
         return kick_file
 
     def ban_user(self, banner, gamer, reason):
@@ -216,15 +222,13 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         """
         if not banner.user.has_perm("community.ban_user", self):
             raise PermissionDenied
-        try:
-            member = CommunityMembership.objects.get(community=self, gamer=gamer)
-        except ObjectDoesNotExist:
-            raise NotInCommunity
+        if self.owner == gamer:
+            raise PermissionDenied(_("You cannot ban the owner of the community."))
         with transaction.atomic():
             ban_file = BannedUser.objects.create(
                 community=self, banner=banner, banned_user=gamer, reason=reason
             )
-            member.delete()
+            self.remove_member(gamer)
         return ban_file
 
 

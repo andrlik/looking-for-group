@@ -21,10 +21,11 @@ class CommunityListView(generic.ListView):
     template_name = "gamer_profiles/community_list.html"
     model = models.GamerCommunity
     paginate_by = 25
+    ordering = ['member_count', '-modified', 'name']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             context["my_communities"] = self.request.user.gamerprofile.communities.all()
         return context
 
@@ -38,6 +39,7 @@ class MyCommunitiesListView(LoginRequiredMixin, SelectRelatedMixin, generic.List
     model = models.CommunityMembership
     paginate_by = 25
     select_related = ["community"]
+    ordering = ['name']
 
     def get_queryset(self):
         return models.CommunityMembership.objects.filter(
