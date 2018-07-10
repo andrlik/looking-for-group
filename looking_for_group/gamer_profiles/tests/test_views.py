@@ -110,3 +110,14 @@ class CommunityDetailViewTest(AbstractViewTest):
             self.assertGoodView(self.view_name, community=self.community2.pk)
             self.get(self.view_name, community=self.community1.pk)
             self.response_302()
+
+
+class TestCommunityJoinView(AbstractViewTest):
+    '''
+    Test joining a community. Public communities should be
+    easily joinable, but privates should redirect to the apply page.
+    People who try to join a community they already belong to, are up
+    to somethign malicious (since that isn't in the UI), and should be
+    denied. Ensure that bans and kicks are enforced.
+    '''
+    pass

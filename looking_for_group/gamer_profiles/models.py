@@ -234,6 +234,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             self.remove_member(gamer)
         return ban_file
 
+    class Meta:
+        ordering = ['name']
+
 
 class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
@@ -535,6 +538,7 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     class Meta:
         unique_together = ["gamer", "community"]
+        order_with_respect_to = 'community'
 
 
 class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):

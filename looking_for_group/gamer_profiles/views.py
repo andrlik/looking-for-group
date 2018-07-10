@@ -1,6 +1,8 @@
 import logging
 from rules.contrib.views import PermissionRequiredMixin
 from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 from django.views import generic
 from django.contrib import messages
 from django.urls import reverse_lazy, reverse
@@ -56,7 +58,30 @@ class JoinCommunity(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateV
 
     def dispatch(self, request, *args, **kwargs):
         self.community = get_object_or_404(models.GamerCommunity, pk=kwargs.pop('community'))
+        if self.community.private:
+            return HttpResponseRedirect(reverse('gamer_profiles:community-apply', kwargs={'community': self.community.pk}))
+        # check if user is banned or kicked with a date in the future.
+        bans = models.BannedUser.objects.filter(community=self.community, banned_user=request.user.gamerprofile)
+        if bans:
+            messages.error(request, _('You are currently banned from this community.'))
+            raise PermissionDenied(_('You are currently banned from this community.'))
+        kicks = models.KickedUser.objects.filter(community=self.community, kicked_user=request.user.gamerprofile, end_date__gt=timezone.now())
+        if kicks:
+            messages.error(request, _('You are currently under active suspension from this community.'))
+            raise PermissionDenied(_('You are currently under suspension '))
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
+
+    def form_valid(self, form):
+        self.community.add_member(self.request.user.gamerprofile)
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return self.community.get_absolute_url()
 
     def get_permission_object(self):
         return self.community
