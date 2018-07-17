@@ -17,21 +17,10 @@ class OwnershipTransferForm(forms.ModelForm):
         fields = ["owner"]
 
 
-class BlankDistructiveForm(forms.Form):
+class BlankDistructiveForm(forms.ModelForm):
     """
     Used for post-only submissions.
     """
 
-    confirm = forms.CharField(
-        required=True,
-        max_length=25,
-        label="Confirm Block",
-        initial="confirm",
-        widget=forms.HiddenInput,
-    )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        if cleaned_data.get("confirm") != "confirm":
-            raise forms.ValidationError(_("You have been monkeying with the form!"))
-        return cleaned_data
+    class Meta:
+        fields = []

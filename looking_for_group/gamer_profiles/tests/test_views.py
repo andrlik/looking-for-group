@@ -1,5 +1,7 @@
 import pytest
+from datetime import timedelta
 from django.urls import reverse
+from django.utils import timezone
 from test_plus import TestCase
 from .. import models
 from . import factories
@@ -64,33 +66,33 @@ class TestCommunityList(AbstractViewTest):
 
 
 class MyCommunityListView(AbstractViewTest):
-    '''
+    """
     Only a user's communities should be listed.
-    '''
+    """
 
     def test_unauthenticated_view(self):
-        self.assertLoginRequired('gamer_profiles:my-community-list')
+        self.assertLoginRequired("gamer_profiles:my-community-list")
 
     def test_logged_in_user(self):
         with self.login(username=self.gamer1.user.username):
-            self.assertGoodView('gamer_profiles:my-community-list')
-            assert len(self.get_context('object_list')) == 1
+            self.assertGoodView("gamer_profiles:my-community-list")
+            assert len(self.get_context("object_list")) == 1
         with self.login(username=self.gamer2.user.username):
-            self.assertGoodView('gamer_profiles:my-community-list')
-            assert len(self.get_context('object_list')) == 1
+            self.assertGoodView("gamer_profiles:my-community-list")
+            assert len(self.get_context("object_list")) == 1
         with self.login(username=self.gamer3.user.username):
             self.assertGoodView("gamer_profiles:my-community-list")
-            assert not self.get_context('object_list')
+            assert not self.get_context("object_list")
 
 
 class CommunityDetailViewTest(AbstractViewTest):
-    '''
+    """
     Test the community detail view.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.view_name = 'gamer_profiles:community-detail'
+        self.view_name = "gamer_profiles:community-detail"
 
     def test_unauthenticated(self):
         self.assertLoginRequired(self.view_name, community=self.community1.pk)
@@ -98,7 +100,7 @@ class CommunityDetailViewTest(AbstractViewTest):
     def test_authenticated(self):
         with self.login(username=self.gamer1.user.username):
             print(self.community1.pk)
-            print(reverse(self.view_name, kwargs={'community': self.community1.pk}))
+            print(reverse(self.view_name, kwargs={"community": self.community1.pk}))
             assert models.GamerCommunity.objects.get(pk=self.community1.pk)
             self.assertGoodView(self.view_name, community=self.community1.pk)
             self.assertGoodView(self.view_name, community=self.community2.pk)
@@ -113,11 +115,95 @@ class CommunityDetailViewTest(AbstractViewTest):
 
 
 class TestCommunityJoinView(AbstractViewTest):
-    '''
+    """
     Test joining a community. Public communities should be
     easily joinable, but privates should redirect to the apply page.
     People who try to join a community they already belong to, are up
     to somethign malicious (since that isn't in the UI), and should be
     denied. Ensure that bans and kicks are enforced.
-    '''
-    pass
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.community2.set_role(self.gamer2, role="admin")
+        self.form_data = {"confirm": "confirm"}
+
+    def test_login_required(self):
+        self.assertLoginRequired(
+            "gamer_profiles:community-join", community=self.community2.pk
+        )
+
+    def test_private_community(self):
+        with self.login(username=self.gamer3.user.username):
+            self.get("gamer_profiles:community-join", community=self.community1.pk)
+            self.response_302()
+            assert "apply" in self.last_response["location"]
+            self.post("gamer_profiles:community-join", community=self.community1.pk)
+            self.response_302()
+            assert "apply" in self.last_response["location"]
+            with pytest.raises(models.NotInCommunity):
+                self.community1.get_role(self.gamer3)
+
+    def test_public_community(self):
+        for user in [self.gamer3.user, self.gamer1.user]:
+            with self.login(username=user.username):
+                self.assertGoodView(
+                    "gamer_profiles:community-join", community=self.community2.pk
+                )
+                self.post(
+                    "gamer_profiles:community-join",
+                    data={},
+                    community=self.community2.pk,
+                )
+                self.response_302()
+                assert self.community2.get_role(user.gamerprofile)
+
+    def test_join_community_already_in(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get("gamer_profiles:community-join", community=self.community2.pk)
+            self.response_302()
+
+    def test_kicked_user(self):
+        self.community2.add_member(self.gamer3)
+        self.community2.kick_user(
+            kicker=self.gamer2,
+            gamer=self.gamer3,
+            reason="test",
+            earliest_reapply=timezone.now() + timedelta(days=1),
+        )
+        assert models.KickedUser.objects.filter(
+            community=self.community2,
+            kicked_user=self.gamer3,
+            end_date__gt=timezone.now(),
+        )
+        with self.login(username=self.gamer3.user.username):
+            self.get("gamer_profiles:community-join", community=self.community2.pk)
+            self.response_403()
+            self.post("gamer_profiles:community-join", community=self.community2.pk)
+            self.response_403()
+            with pytest.raises(models.NotInCommunity):
+                self.community2.get_role(self.gamer3)
+
+    def test_kicked_user_no_date(self):
+        self.community2.add_member(self.gamer3)
+        self.community2.kick_user(kicker=self.gamer2, gamer=self.gamer3, reason="test")
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView(
+                "gamer_profiles:community-join", community=self.community2.pk
+            )
+            self.post("gamer_profiles:community-join", community=self.community2.pk)
+            assert self.community2.get_role(self.gamer3) == "Member"
+
+    def test_banned_gamer(self):
+        self.community2.add_member(self.gamer3)
+        self.community2.ban_user(banner=self.gamer2, gamer=self.gamer3, reason="test")
+        assert models.BannedUser.objects.filter(
+            banned_user=self.gamer3, community=self.community2
+        )
+        with self.login(username=self.gamer3.user.username):
+            self.get("gamer_profiles:community-join", community=self.community2.pk)
+            self.response_403()
+            self.post("gamer_profiles:community-join", community=self.community2.pk)
+            self.response_403()
+            with pytest.raises(models.NotInCommunity):
+                self.community2.get_role(self.gamer3)

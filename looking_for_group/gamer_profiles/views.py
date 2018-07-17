@@ -8,12 +8,13 @@ from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
+from django.forms import modelform_factory
 from braces.views import SelectRelatedMixin, PrefetchRelatedMixin, LoginRequiredMixin
 from . import models
 from .forms import OwnershipTransferForm, BlankDistructiveForm
 
 
-logger = logging.getLogger('gamer_profiles')
+logger = logging.getLogger("gamer_profiles")
 
 
 # Create your views here.
@@ -27,7 +28,7 @@ class CommunityListView(generic.ListView):
     template_name = "gamer_profiles/community_list.html"
     model = models.GamerCommunity
     paginate_by = 25
-    ordering = ['-member_count', 'name']
+    ordering = ["-member_count", "name"]
 
 
 class MyCommunitiesListView(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
@@ -39,7 +40,7 @@ class MyCommunitiesListView(LoginRequiredMixin, SelectRelatedMixin, generic.List
     model = models.CommunityMembership
     paginate_by = 25
     select_related = ["community"]
-    ordering = ['community', 'community__name']
+    ordering = ["community", "community__name"]
 
     def get_queryset(self):
         return models.CommunityMembership.objects.filter(
@@ -48,32 +49,67 @@ class MyCommunitiesListView(LoginRequiredMixin, SelectRelatedMixin, generic.List
 
 
 class JoinCommunity(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
-    '''
+    """
     Try to join a community. Fails if community is private.
-    '''
+    """
+
     model = models.CommunityMembership
     permission_required = "community.join"
     template_name = "gamer_profiles/community_join.html"
-    form_class = BlankDistructiveForm
+    form_class = modelform_factory(
+        model=models.CommunityMembership, form=BlankDistructiveForm, fields=[]
+    )
 
     def dispatch(self, request, *args, **kwargs):
-        self.community = get_object_or_404(models.GamerCommunity, pk=kwargs.pop('community'))
-        if self.community.private:
-            return HttpResponseRedirect(reverse('gamer_profiles:community-apply', kwargs={'community': self.community.pk}))
-        # check if user is banned or kicked with a date in the future.
-        bans = models.BannedUser.objects.filter(community=self.community, banned_user=request.user.gamerprofile)
-        if bans:
-            messages.error(request, _('You are currently banned from this community.'))
-            raise PermissionDenied(_('You are currently banned from this community.'))
-        kicks = models.KickedUser.objects.filter(community=self.community, kicked_user=request.user.gamerprofile, end_date__gt=timezone.now())
-        if kicks:
-            messages.error(request, _('You are currently under active suspension from this community.'))
-            raise PermissionDenied(_('You are currently under suspension '))
+        if request.user.is_authenticated:
+            self.community = get_object_or_404(
+                models.GamerCommunity, pk=kwargs.pop("community")
+            )
+            try:
+                role = self.community.get_role(request.user.gamerprofile)
+                if role:
+                    messages.info(request, _("You are already a member of this community."))
+                    return HttpResponseRedirect(self.community.get_absolute_url())
+            except models.NotInCommunity:
+                pass
+            if self.community.private:
+                return HttpResponseRedirect(
+                    reverse(
+                        "gamer_profiles:community-apply",
+                        kwargs={"community": self.community.pk},
+                    )
+                )
+            # check if user is banned or kicked with a date in the future.
+            bans = models.BannedUser.objects.filter(
+                community=self.community, banned_user=request.user.gamerprofile
+            )
+            if bans:
+                messages.error(
+                    request, _("You are currently banned from this community.")
+                )
+                raise PermissionDenied(
+                    _("You are currently banned from this community.")
+                )
+            kicks = models.KickedUser.objects.filter(
+                community=self.community,
+                kicked_user=request.user.gamerprofile,
+                end_date__gt=timezone.now(),
+            ).order_by("-end_date")
+            if kicks:
+                messages.error(
+                    request,
+                    _(
+                        "You are currently under active suspension from this community until {}.".format(
+                            kicks[0].end_date
+                        )
+                    ),
+                )
+                raise PermissionDenied(_("You are currently under suspension "))
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def form_valid(self, form):
@@ -197,7 +233,7 @@ class CommunityDetailView(
     LoginRequiredMixin,
     PermissionRequiredMixin,
     SelectRelatedMixin,
-   # PrefetchRelatedMixin,
+    # PrefetchRelatedMixin,
     generic.DetailView,
 ):
     """
@@ -208,7 +244,7 @@ class CommunityDetailView(
     permission_required = "community.list_communities"
     model = models.GamerCommunity
     template_name = "gamer_profiles/community_detail.html"
-    select_related = ['owner']
+    select_related = ["owner"]
     # prefetch_related = [
     #     "gamerprofile_set",
     #     "communityapplication_set",
@@ -217,19 +253,25 @@ class CommunityDetailView(
 
     def get(self, request, *args, **kwargs):
         logger.debug("Attempting to retrieve community for evaluation.")
-        obj = get_object_or_404(models.GamerCommunity, pk=kwargs['community'])
+        obj = get_object_or_404(models.GamerCommunity, pk=kwargs["community"])
         logger.debug("Found community {}".format(obj.name))
         logger.debug("Checking permissions of user...")
-        if not request.user.has_perm('community.view_details', obj):
+        if not request.user.has_perm("community.view_details", obj):
             logger.debug("User does not have permission to view.")
-            view_target = 'gamer_profiles:community-join'
+            view_target = "gamer_profiles:community-join"
             message = _("You must join this community in order to view its details.")
             if obj.private:
-                logger.debug("Community is private: redirecting to apply instead of join.")
-                view_target = 'gamer_profiles:community-apply'
-                message = _("You must be a member of this community to view its details. You can apply below.")
+                logger.debug(
+                    "Community is private: redirecting to apply instead of join."
+                )
+                view_target = "gamer_profiles:community-apply"
+                message = _(
+                    "You must be a member of this community to view its details. You can apply below."
+                )
             messages.info(request, message)
-            return HttpResponseRedirect(reverse(view_target, kwargs={'community': obj.pk}))
+            return HttpResponseRedirect(
+                reverse(view_target, kwargs={"community": obj.pk})
+            )
         logger.debug("user has permissions, proceeding with standard redirect")
         return super().get(request, *args, **kwargs)
 
@@ -375,13 +417,13 @@ class CreateApplication(
     permission_required = "community.can_apply"
 
     def dispatch(self, request, *args, **kwargs):
-        comm_uk = kwargs['community']
+        comm_uk = kwargs["community"]
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_uk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def get_permission_object(self):

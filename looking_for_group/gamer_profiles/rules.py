@@ -41,7 +41,7 @@ def is_not_member(user, community):
     return False
 
 
-is_joinable = is_user & is_public_community & is_not_member
+is_joinable = is_user & (is_public_community & is_not_member)
 
 
 @rules.predicate
