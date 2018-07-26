@@ -387,21 +387,22 @@ class UpdateApplication(
     """
 
     pk_url_kwarg = "application"
+    context_object_name = 'application'
     model = models.CommunityApplication
     template_name = "gamer_profiles/community_apply_edit.html"
     permission_required = "community.edit_application"
     fields = ["message"]
 
-    def dispatch(self, request, *args, **kwargs):
-        comm_uk = kwargs.pop("community", None)
-        self.community = get_object_or_404(models.GamerCommunity, pk=comm_uk)
-        return super().dispatch(request, *args, **kwargs)
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:my-application-list')
 
-    def get_permission_object(self):
-        return self.community
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.object.community
+        return context
 
     def form_valid(self, form):
-        messages.success(_("Application successfully updated."))
+        messages.success(self.request, _("Application successfully updated."))
         return super().form_valid(form)
 
 

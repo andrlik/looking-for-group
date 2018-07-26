@@ -35,6 +35,19 @@ urlpatterns = [
         view=views.CommunityMemberList.as_view(),
         name="community-member-list",
     ),
-    path("profiles/<uuid:gamer>/", view=views.GamerProfileDetailView.as_view(), name='profile-detail'),
-    path("me/applications/community/", view=views.CreateApplication.as_view(), name='my-application-list'),
+    path(
+        "profiles/<uuid:gamer>/",
+        view=views.GamerProfileDetailView.as_view(),
+        name="profile-detail",
+    ),
+    path(
+        "me/applications/community/",
+        view=views.CreateApplication.as_view(),
+        name="my-application-list",
+    ),
+    path(
+        "me/applications/community/<uuid:application>/edit/",
+        view=views.UpdateApplication.as_view(),
+        name="update-application",
+    ),
 ]

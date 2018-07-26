@@ -312,3 +312,54 @@ class TestCommunityApplyView(AbstractViewTest):
             kicker=self.community1.owner, gamer=self.gamer3, reason="Bam!"
         )
         self.test_normal_user()
+
+
+class UpdateApplicationTest(AbstractViewTest):
+    """
+    Test that only the author of an application can edit its message.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.application = models.CommunityApplication.objects.create(
+            gamer=self.gamer3, message="Not me", community=self.community1, status="new"
+        )
+        self.update_data = {"message": "This is better"}
+
+    def test_login_required(self):
+        self.assertLoginRequired(
+            "gamer_profiles:update-application", application=self.application.pk
+        )
+
+    def test_non_owner(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(
+                "gamer_profiles:update-application", application=self.application.pk
+            )
+            self.response_302()
+            self.post(
+                "gamer_profiles:update-application",
+                application=self.application.pk,
+                data=self.update_data,
+            )
+            self.response_302()
+            assert (
+                models.CommunityApplication.objects.get(pk=self.application.pk).message
+                == "Not me"
+            )
+
+    def test_owner(self):
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView(
+                "gamer_profiles:update-application", application=self.application.pk
+            )
+            self.post(
+                "gamer_profiles:update-application",
+                application=self.application.pk,
+                data=self.update_data,
+            )
+            self.response_302()
+            assert (
+                models.CommunityApplication.objects.get(pk=self.application.pk).message
+                == "This is better"
+            )
