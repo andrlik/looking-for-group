@@ -207,3 +207,108 @@ class TestCommunityJoinView(AbstractViewTest):
             self.response_403()
             with pytest.raises(models.NotInCommunity):
                 self.community2.get_role(self.gamer3)
+
+
+class TestCommunityApplyView(AbstractViewTest):
+    """
+    Apply is always available. But not if you are banned or on
+    suspension. And if you are already a member, redirect to the community
+    detail view without creating an application.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.apply_data = {"message": "Hi there."}
+
+    def test_login_required(self):
+        self.assertLoginRequired(
+            "gamer_profiles:community-apply", community=self.community1.pk
+        )
+        self.post(
+            "gamer_profiles:community-apply",
+            community=self.community1.pk,
+            data=self.apply_data,
+        )
+        self.response_302()
+        assert "login" in self.last_response["location"]
+
+    def test_restrict_suspended_user(self):
+        self.community1.add_member(self.gamer3)
+        self.community1.kick_user(
+            kicker=self.community1.owner,
+            gamer=self.gamer3,
+            earliest_reapply=timezone.now() + timedelta(days=10),
+            reason="annoying",
+        )
+        with self.login(username=self.gamer3.user.username):
+            self.get("gamer_profiles:community-apply", community=self.community1.pk)
+            self.response_302()
+            current_apps = models.CommunityApplication.objects.filter(
+                community=self.community1
+            ).count()
+            assert current_apps == 0
+            self.post(
+                "gamer_profiles:community-apply",
+                community=self.community1.pk,
+                data=self.apply_data,
+            )
+            self.response_302()
+            assert (
+                current_apps
+                == models.CommunityApplication.objects.filter(
+                    community=self.community1
+                ).count()
+            )
+
+    def test_restrict_banned_user(self):
+        self.community1.add_member(self.gamer3)
+        self.community1.ban_user(
+            banner=self.community1.owner, gamer=self.gamer3, reason="Harassment"
+        )
+        with self.login(username=self.gamer3.user.username):
+            current_apps = models.CommunityApplication.objects.filter(
+                community=self.community1
+            ).count()
+            self.get("gamer_profiles:community-apply", community=self.community1.pk)
+            self.response_302()
+            self.post(
+                "gamer_profiles:community-apply",
+                community=self.community1.pk,
+                data=self.apply_data,
+            )
+            self.response_302()
+            assert (
+                current_apps
+                == models.CommunityApplication.objects.filter(
+                    community=self.community1
+                ).count()
+            )
+
+    def test_normal_user(self):
+        with self.login(username=self.gamer3.user.username):
+            current_apps = models.CommunityApplication.objects.filter(
+                community=self.community1
+            ).count()
+            assert current_apps == 0
+            self.assertGoodView(
+                "gamer_profiles:community-apply", community=self.community1.pk
+            )
+            self.post(
+                "gamer_profiles:community-apply",
+                community=self.community1.pk,
+                data=self.apply_data,
+            )
+            self.response_302()
+            assert (
+                current_apps
+                < models.CommunityApplication.objects.filter(
+                    community=self.community1
+                ).count()
+            )
+
+    def test_user_kicked_no_suspension(self):
+        self.community1.add_member(self.gamer3)
+        self.community1.kick_user(
+            kicker=self.community1.owner, gamer=self.gamer3, reason="Bam!"
+        )
+        self.test_normal_user()

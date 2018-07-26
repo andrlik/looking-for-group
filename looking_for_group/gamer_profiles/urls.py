@@ -36,4 +36,5 @@ urlpatterns = [
         name="community-member-list",
     ),
     path("profiles/<uuid:gamer>/", view=views.GamerProfileDetailView.as_view(), name='profile-detail'),
+    path("me/applications/community/", view=views.CreateApplication.as_view(), name='my-application-list'),
 ]

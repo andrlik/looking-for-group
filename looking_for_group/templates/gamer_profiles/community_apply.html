@@ -1,0 +1,16 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize foundation_formtags %}
+{% block subtitle %}{% trans "Apply to join" %} {{ community.name }} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans %}Apply to join {{ community.name }}?{% endblocktrans %}</h1>
+<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.user.display_name }}</a></span>
+<p>{{ community.description_rendered|safe }}</p>
+<h2>{% trans "Are you sure?" %}</h2>
+<p>{% blocktrans %}If you application is approved, joining this community means that your profile will be visible to all the other members of this group.{% endblocktrans %}</p>
+<form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <button type="submit">{% trans "Submit Application" %}
+</form>
+
+{% endblock %}

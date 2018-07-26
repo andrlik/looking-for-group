@@ -4,12 +4,13 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
 from django.views import generic
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from django.forms import modelform_factory
-from braces.views import SelectRelatedMixin, PrefetchRelatedMixin, LoginRequiredMixin
+from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
 from . import models
 from .forms import OwnershipTransferForm, BlankDistructiveForm
 
@@ -414,7 +415,7 @@ class CreateApplication(
     model = models.CommunityApplication
     fields = ["message"]
     template_name = "gamer_profiles/community_apply.html"
-    permission_required = "community.can_apply"
+    permission_required = "community.apply"
 
     def dispatch(self, request, *args, **kwargs):
         comm_uk = kwargs["community"]
@@ -433,10 +434,13 @@ class CreateApplication(
         return reverse_lazy("gamer_profiles:my-application-list")
 
     def form_valid(self, form):
-        form.instance.community = self.community
-        form.instance.gamer = self.user.gamerprofile
-        form.instance.status = "new"
-        return super().form_valid(form)
+        self.object = form.save(commit=False)
+        self.object.community = self.community
+        self.object.gamer = self.request.user.gamerprofile
+        self.object.status = "new"
+        self.object.save()
+        messages.success(self.request, _('Application successfully submitted.'))
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class MyApplicationList(

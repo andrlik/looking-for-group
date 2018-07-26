@@ -1,7 +1,8 @@
 import rules
 import logging
+from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
-from .models import NotInCommunity, BlockedUser
+from .models import NotInCommunity, BlockedUser, BannedUser, KickedUser
 
 
 logger = logging.getLogger('rules')
@@ -59,6 +60,20 @@ def is_community_owner(user, community):
 
 
 is_community_superior = is_community_owner | is_community_admin
+
+
+@rules.predicate
+def is_not_comm_blocked(user, community):
+    bans = BannedUser.objects.filter(banned_user=user.gamerprofile, community=community)
+    if bans:
+        return False
+    kicks = KickedUser.objects.filter(kicked_user=user.gamerprofile, community=community, end_date__gt=timezone.now())
+    if kicks:
+        return False
+    return True
+
+
+is_eligible_applicant = is_user & (is_not_member & is_not_comm_blocked)
 
 
 @rules.predicate
@@ -153,6 +168,7 @@ rules.add_perm('community.list_communities', is_user)
 rules.add_perm('community.view_details', is_community_member | is_public_community)
 rules.add_perm('community.edit_community', is_community_admin)
 rules.add_perm('community.join', is_joinable)
+rules.add_perm('community.apply', is_eligible_applicant)
 rules.add_perm('community.leave', is_membership_subject)
 rules.add_perm('community.delete_community', is_community_owner)
 rules.add_perm('community.kick_user', is_community_admin)
