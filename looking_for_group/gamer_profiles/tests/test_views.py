@@ -242,7 +242,7 @@ class TestCommunityApplyView(AbstractViewTest):
         )
         with self.login(username=self.gamer3.user.username):
             self.get("gamer_profiles:community-apply", community=self.community1.pk)
-            self.response_302()
+            self.response_403()
             current_apps = models.CommunityApplication.objects.filter(
                 community=self.community1
             ).count()
@@ -252,7 +252,7 @@ class TestCommunityApplyView(AbstractViewTest):
                 community=self.community1.pk,
                 data=self.apply_data,
             )
-            self.response_302()
+            self.response_403()
             assert (
                 current_apps
                 == models.CommunityApplication.objects.filter(
@@ -270,13 +270,13 @@ class TestCommunityApplyView(AbstractViewTest):
                 community=self.community1
             ).count()
             self.get("gamer_profiles:community-apply", community=self.community1.pk)
-            self.response_302()
+            self.response_403()
             self.post(
                 "gamer_profiles:community-apply",
                 community=self.community1.pk,
                 data=self.apply_data,
             )
-            self.response_302()
+            self.response_403()
             assert (
                 current_apps
                 == models.CommunityApplication.objects.filter(
@@ -336,13 +336,13 @@ class UpdateApplicationTest(AbstractViewTest):
             self.get(
                 "gamer_profiles:update-application", application=self.application.pk
             )
-            self.response_302()
+            self.response_403()
             self.post(
                 "gamer_profiles:update-application",
                 application=self.application.pk,
                 data=self.update_data,
             )
-            self.response_302()
+            self.response_403()
             assert (
                 models.CommunityApplication.objects.get(pk=self.application.pk).message
                 == "Not me"
