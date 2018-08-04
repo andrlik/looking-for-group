@@ -363,7 +363,7 @@ class CommunityApplicantList(
 
     def get_queryset(self):
         return models.CommunityApplication.objects.filter(
-            community=self.community, status__in=["new", "review", "hold"]
+            community=self.community, status__in=["review", "hold"]
         )
 
     def get_context_data(self, **kwargs):
@@ -402,6 +402,18 @@ class UpdateApplication(
         return context
 
     def form_valid(self, form):
+        if "submit_app" in self.request.POST.keys():
+            try:
+                if self.submit_application():
+                    messages.success(self.request, _("Application successfully submitted."))
+                    return HttpResponseRedirect(self.get_success_url())
+            except models.AlreadyInCommunity:
+                messages.error(self.request, _('You are already a member of this community.'))
+            except models.CurrentlyBanned:
+                messages.error(self.request, _('You are currently banned from this community.'))
+            except models.CurrentlySuspended:
+                messages.error(self.request, _('You are currently under an active suspension from this community.'))
+            return self.form_invalid(form)
         messages.success(self.request, _("Application successfully updated."))
         return super().form_valid(form)
 
@@ -438,9 +450,22 @@ class CreateApplication(
         self.object = form.save(commit=False)
         self.object.community = self.community
         self.object.gamer = self.request.user.gamerprofile
-        self.object.status = "new"
+        if "submit_app" in self.request.POST.keys():
+            try:
+                self.object.submit_application()
+                messages.success(self.request, _('Application successfully submitted.'))
+                return HttpResponseRedirect(self.object.community.get_absolute_url())
+            except models.AlreadyInCommunity:
+                messages.error(self.request, _('You are already a member of this community.'))
+            except models.CurrentlyBanned:
+                messages.error(self.request, _('You are currently banned from this community.'))
+            except models.CurrentlySuspended:
+                messages.error(self.request, _('You are currently suspended from this community.'))
+            return self.form_invalid(form)
+        else:
+            self.object.status = "new"
         self.object.save()
-        messages.success(self.request, _('Application successfully submitted.'))
+        messages.success(self.request, _('Application successfully saved.'))
         return HttpResponseRedirect(self.get_success_url())
 
 

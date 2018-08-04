@@ -10,7 +10,7 @@
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
-  <button type="submit">{% trans "Update Application" %}
+  <button type="submit">{% trans "Update Application" %}</button> {% if object.status == "new" %}<button type='submit' id='id_submit_app' name='submit_app'>{% trans "Update and Submit Application" %}</button>{% endif %}
 </form>
 
 {% endblock %}

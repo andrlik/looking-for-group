@@ -37,6 +37,14 @@ class CurrentlySuspended(Exception):
     pass
 
 
+class CurrentlyBanned(Exception):
+    """
+    Raised when you try to validate an application or add a user to a community from which they are banned.
+    """
+
+    pass
+
+
 # Create your models here.
 
 
@@ -235,7 +243,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         return ban_file
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
 
 class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):
@@ -538,7 +546,7 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     class Meta:
         unique_together = ["gamer", "community"]
-        order_with_respect_to = 'community'
+        order_with_respect_to = "community"
 
 
 class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
@@ -569,26 +577,47 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
             kwargs={"application": self.pk},
         )
 
-    def approve_application(self):
+    def validate_application(self):
         """
-        Approves an application and adds gamer to community.
+        Checks if the user is banned, suspended, or already a member.
         """
-        # Are they already in community?
         memberships = CommunityMembership.objects.filter(
             community=self.community, gamer=self.gamer
         )
         if memberships:
             raise AlreadyInCommunity
-        # Check to see if user is currently kicked from community.
-        kicks = KickedUser.objects.filter(community=self.community, gamer=self.gamer)
+        bans = BannedUser.objects.filter(community=self.community, banned_user=self.gamer)
+        if bans:
+            raise CurrentlyBanned
+        kicks = KickedUser.objects.filter(
+            community=self.community, kicked_user=self.gamer, end_date__gt=timezone.now()
+        )
         if kicks:
-            for kick in kicks:
-                if kick.end_date and kick.end_date > timezone.now():
-                    raise CurrentlySuspended
-        with transaction.atomic():
-            self.community.add_member(self.gamer)
-            self.status = "approve"
+            raise CurrentlySuspended
+        return True
+
+    def submit_application(self):
+        """
+        Submit an application.
+        """
+        if self.validate_application():
+            self.status = "review"
             self.save()
+            return True
+        return False  # Really an exception gets passed up to us.
+
+    def approve_application(self):
+        """
+        Approves an application and adds gamer to community.
+        """
+
+        if self.validate_application():
+            with transaction.atomic():
+                self.community.add_member(self.gamer)
+                self.status = "approve"
+                self.save()
+            return True
+        return False  # Actually an exception gets passed up.
 
     def reject_application(self):
         """

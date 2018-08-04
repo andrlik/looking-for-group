@@ -306,6 +306,25 @@ class TestCommunityApplyView(AbstractViewTest):
                 ).count()
             )
 
+    def test_normal_user_submit(self):
+        with self.login(username=self.gamer3.user.username):
+            submit_data = self.apply_data
+            submit_data["submit_app"] = ""
+            self.post(
+                "gamer_profiles:community-apply",
+                community=self.community1.pk,
+                data=submit_data,
+            )
+            self.response_302()
+            assert (
+                models.CommunityApplication.objects.filter(
+                    community=self.community1, gamer=self.gamer3
+                )
+                .order_by("-modified")[0]
+                .status
+                == "review"
+            )
+
     def test_user_kicked_no_suspension(self):
         self.community1.add_member(self.gamer3)
         self.community1.kick_user(
@@ -362,4 +381,23 @@ class UpdateApplicationTest(AbstractViewTest):
             assert (
                 models.CommunityApplication.objects.get(pk=self.application.pk).message
                 == "This is better"
+            )
+
+    def test_owner_submit(self):
+        with self.login(username=self.gamer3.user.username):
+            submit_data = self.update_data
+            submit_data["submit_app"] = ""
+            self.post(
+                "gamer_profiles:community-apply",
+                community=self.community1.pk,
+                data=submit_data,
+            )
+            self.response_302()
+            assert (
+                models.CommunityApplication.objects.filter(
+                    community=self.community1, gamer=self.gamer3
+                )
+                .order_by("-modified")[0]
+                .status
+                == "review"
             )
