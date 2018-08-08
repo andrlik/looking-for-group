@@ -348,7 +348,7 @@ class CommunityApplicantList(
     model = models.CommunityApplication
     select_related = ["gamer"]
     template_name = "gamer_profiles/community_applicant_list.html"
-    permission_required = "community.approve_application"
+    permission_required = "community.review_applications"
     paginate_by = 25
     ordering = ["created", "status"]
     context_object_name = "applications"
@@ -377,6 +377,19 @@ class CommunityApplicantList(
         context["approved_apps"] = all_apps.filter(status="approve")
         context["rejected_apps"] = all_apps.filter(status="reject")
         return context
+
+
+class CommunityApplicantDetail(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.DetailView):
+    '''
+    View for a community admin to view the details of an application.
+    '''
+
+    model = models.CommunityApplication
+    select_related = ['gamer', 'community']
+    template_name = 'gamer_profiles/community_applicant_detail.html'
+    permission_required = 'community.approve_application'
+    pk_url_kwarg = 'application'
+    context_object_name = 'application'
 
 
 class UpdateApplication(

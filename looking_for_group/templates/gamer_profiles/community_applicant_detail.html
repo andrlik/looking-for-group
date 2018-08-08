@@ -1,0 +1,21 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize foundation_formtags %}
+{% block subtitle %}{% trans "Application from" %} {{ application.gamer.user.display_name }} {% trans "for" %} {{ application.community.name }} - {% endblock %}
+{% block content %}
+<h1>{% trans "Application from" %} {{ application.gamer.user.display_name }} {% trans "for" %} {{ community.name }}</h1>
+
+<dl>
+  <dt>{% trans "Applicant" %}</dt>
+  <dd>{{ application.gamer.user.display_name }}</dd>
+  <dt>{% trans "Community" %}</dt>
+  <dd><a href="{{ application.community.get_absolute_url }}">{{ application.community.name }}</a></dd>
+  <dt>{% trans "Applicant Message" %}</dt>
+  <dd>{{ application.message }}</dd>
+  <dt>{% trans "Last update" %}</dt>
+  <dd>{{ application.modified }}</dd>
+</dl>
+
+<p><a href="{% url 'community-applicant-approve' community=application.community.pk application=application.pk %}"><button>{% trans "Approve" %}</button></a> <a href="{% url 'community-applicant-reject' community=application.community.pk application=application.pk %}"><button>{% trans "Reject Application" %}</button></a></p>
+
+<p><a href="{% url 'community-applicant-list' community=application.community.pk %}">{% trans "Back to applicant list..." %}</a></p><p>
+{% endblock %}

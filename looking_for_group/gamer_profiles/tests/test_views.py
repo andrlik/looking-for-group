@@ -405,9 +405,9 @@ class UpdateApplicationTest(AbstractViewTest):
 
 
 class CommunityApplicationWithdrawTest(AbstractViewTest):
-    '''
+    """
     Test withdraw/delete view for Community Application objects.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
@@ -416,19 +416,115 @@ class CommunityApplicationWithdrawTest(AbstractViewTest):
         )
 
     def test_login_required(self):
-        self.assertLoginRequired('gamer_profiles:delete-application', application=self.application.pk)
+        self.assertLoginRequired(
+            "gamer_profiles:delete-application", application=self.application.pk
+        )
 
     def test_unauthorized_user(self):
         with self.login(username=self.gamer2.user.username):
-            self.get('gamer_profiles:delete-application', application=self.application.pk)
+            self.get(
+                "gamer_profiles:delete-application", application=self.application.pk
+            )
             self.response_403()
-            self.post('gamer_profiles:delete-application', application=self.application.pk)
+            self.post(
+                "gamer_profiles:delete-application", application=self.application.pk
+            )
             self.response_403()
             assert models.CommunityApplication.objects.get(pk=self.application.pk)
 
     def test_authorized_user(self):
         with self.login(username=self.gamer3.user.username):
-            self.assertGoodView('gamer_profiles:delete-application', application=self.application.pk)
-            self.post('gamer_profiles:delete-application', application=self.application.pk)
+            self.assertGoodView(
+                "gamer_profiles:delete-application", application=self.application.pk
+            )
+            self.post(
+                "gamer_profiles:delete-application", application=self.application.pk
+            )
             with pytest.raises(ObjectDoesNotExist):
                 models.CommunityApplication.objects.get(pk=self.application.pk)
+
+
+class CommunityApplicantListTest(AbstractViewTest):
+    """
+    Test a community moderator ability to see pending applications.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.application1 = models.CommunityApplication.objects.create(
+            gamer=self.gamer3,
+            message="Notice me, Senpai!",
+            community=self.community1,
+            status="review",
+        )
+        self.application2 = models.CommunityApplication.objects.create(
+            gamer=self.gamer2,
+            message="I want to play!",
+            community=self.community1,
+            status="new",
+        )
+        self.view_str = "gamer_profiles:community-applicant-list"
+        self.url_kwargs = {"community": self.community1.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            applicants = self.get_context("applicants")
+            assert len(applicants) == 1
+            self.application2.submit_application()
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            assert len(self.get_context("applicants")) == 2
+
+
+class CommunityApplicationDetail(AbstractViewTest):
+    """
+    Test a community admin reviewing an application.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.application1 = models.CommunityApplication.objects.create(
+            gamer=self.gamer3,
+            message="Notice me, Senpai!",
+            community=self.community1,
+            status="review",
+        )
+        self.application2 = models.CommunityApplication.objects.create(
+            gamer=self.gamer2,
+            message="I want to play!",
+            community=self.community1,
+            status="new",
+        )
+        self.view_str = "gamer_profiles:community-applicant-detail"
+        self.url_kwargs = {"community": self.community1.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(
+            self.view_str, application=self.application1.pk, **self.url_kwargs
+        )
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, application=self.application1.pk, **self.url_kwargs)
+            self.response_403()
+            self.get(self.view_str, application=self.application2.pk, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_can_only_see_submitted(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, application=self.application2.pk, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(
+                self.view_str, application=self.application1.pk, **self.url_kwargs
+            )

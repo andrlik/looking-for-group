@@ -1,0 +1,15 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize foundation_formtags %}
+{% block subtitle %}{% trans "Applicants for " %} {{ community.name }} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans %}Applicants for {{ community.name }}?{% endblocktrans %}</h1>
+<span class="meta">{% blocktrans count counter=applications.count %}One Application{% plural %}{{ counter }} Applications{% endblocktrans %} {% trans "Pending" %}</span>
+<ul>
+  {% for application in applications %}
+  <li><a href="{% url 'community-applicant-detail' community=community.pk application=application.pk %}">{{ application.gamer.user.display_name }}</a> ({% trans "Last modified:" %} {{ application.modified }})</li>
+  {% empty %}
+  <li>{% trans "No pending applications." %}</li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

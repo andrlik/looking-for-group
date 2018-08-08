@@ -36,6 +36,26 @@ urlpatterns = [
         name="community-member-list",
     ),
     path(
+        "communities/<uuid:community>/applicants/",
+        view=views.CommunityApplicantList.as_view(),
+        name="community-applicant-list",
+    ),
+    path(
+        "communities/<uuid:community>/applicants/<uuid:application>/",
+        view=views.CommunityApplicantDetail.as_view(),
+        name="community-applicant-detail",
+    ),
+    path(
+        "communities/<uuid:community>/applicants/<uuid:application>/approve/",
+        view=views.ApproveApplication.as_view(),
+        name="community-applicant-approve",
+    ),
+    path(
+        "communities/<uuid:community>/applicants/<uuid:application>/reject/",
+        view=views.RejectApplication.as_view(),
+        name="community-applicant-reject",
+    ),
+    path(
         "profiles/<uuid:gamer>/",
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",

@@ -82,6 +82,13 @@ is_eligible_applicant = is_user & (is_not_member & is_not_comm_blocked)
 
 
 @rules.predicate
+def is_application_approver(user, application):
+    if application.status == "new":
+        return False
+    return is_community_superior(user, application.community)
+
+
+@rules.predicate
 def is_community_member(user, community):
     if user.is_anonymous:
         return False
@@ -175,6 +182,8 @@ rules.add_perm('community.edit_community', is_community_admin)
 rules.add_perm('community.join', is_joinable)
 rules.add_perm('community.apply', is_eligible_applicant)
 rules.add_perm('community.edit_application', is_applicant)
+rules.add_perm('community.approve_application', is_application_approver)
+rules.add_perm('community.review_applications', is_community_superior)
 rules.add_perm('community.leave', is_membership_subject)
 rules.add_perm('community.delete_community', is_community_owner)
 rules.add_perm('community.kick_user', is_community_admin)
