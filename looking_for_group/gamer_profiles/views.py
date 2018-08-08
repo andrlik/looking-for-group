@@ -511,10 +511,15 @@ class WithdrawApplication(
 
     pk_url_kwarg = "application"
     model = models.CommunityApplication
-    template_name = "gamer_profiles/delete_application.html"
+    template_name = "gamer_profiles/application_delete.html"
     permission_required = "community.edit_application"
     context_object_name = "application"
     select_related = ["community"]
+    success_url = reverse_lazy('gamer_profiles:my-application-list')
+
+    def form_valid(self, form):
+        messages.success(self.request, _('Application successfully deleted.'))
+        return super().form_valid(form)
 
 
 class ApproveApplication(

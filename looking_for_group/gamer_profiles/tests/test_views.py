@@ -1,5 +1,6 @@
 import pytest
 from datetime import timedelta
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
 from test_plus import TestCase
@@ -401,3 +402,33 @@ class UpdateApplicationTest(AbstractViewTest):
                 .status
                 == "review"
             )
+
+
+class CommunityApplicationWithdrawTest(AbstractViewTest):
+    '''
+    Test withdraw/delete view for Community Application objects.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.application = models.CommunityApplication.objects.create(
+            gamer=self.gamer3, message="Not me", community=self.community1, status="new"
+        )
+
+    def test_login_required(self):
+        self.assertLoginRequired('gamer_profiles:delete-application', application=self.application.pk)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get('gamer_profiles:delete-application', application=self.application.pk)
+            self.response_403()
+            self.post('gamer_profiles:delete-application', application=self.application.pk)
+            self.response_403()
+            assert models.CommunityApplication.objects.get(pk=self.application.pk)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView('gamer_profiles:delete-application', application=self.application.pk)
+            self.post('gamer_profiles:delete-application', application=self.application.pk)
+            with pytest.raises(ObjectDoesNotExist):
+                models.CommunityApplication.objects.get(pk=self.application.pk)

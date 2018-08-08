@@ -50,4 +50,9 @@ urlpatterns = [
         view=views.UpdateApplication.as_view(),
         name="update-application",
     ),
+    path(
+        "me/applications/community/<uuid:application>/delete/",
+        view=views.WithdrawApplication.as_view(),
+        name="delete-application",
+    ),
 ]
