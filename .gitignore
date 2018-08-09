@@ -287,3 +287,4 @@ MailHog
 looking_for_group/media/
 .env
 .envs/*
+.dir-local*

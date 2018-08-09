@@ -69,7 +69,9 @@ class JoinCommunity(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateV
             try:
                 role = self.community.get_role(request.user.gamerprofile)
                 if role:
-                    messages.info(request, _("You are already a member of this community."))
+                    messages.info(
+                        request, _("You are already a member of this community.")
+                    )
                     return HttpResponseRedirect(self.community.get_absolute_url())
             except models.NotInCommunity:
                 pass
@@ -379,17 +381,19 @@ class CommunityApplicantList(
         return context
 
 
-class CommunityApplicantDetail(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.DetailView):
-    '''
+class CommunityApplicantDetail(
+    LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.DetailView
+):
+    """
     View for a community admin to view the details of an application.
-    '''
+    """
 
     model = models.CommunityApplication
-    select_related = ['gamer', 'community']
-    template_name = 'gamer_profiles/community_applicant_detail.html'
-    permission_required = 'community.approve_application'
-    pk_url_kwarg = 'application'
-    context_object_name = 'application'
+    select_related = ["gamer", "community"]
+    template_name = "gamer_profiles/community_applicant_detail.html"
+    permission_required = "community.approve_application"
+    pk_url_kwarg = "application"
+    context_object_name = "application"
 
 
 class UpdateApplication(
@@ -400,32 +404,43 @@ class UpdateApplication(
     """
 
     pk_url_kwarg = "application"
-    context_object_name = 'application'
+    context_object_name = "application"
     model = models.CommunityApplication
     template_name = "gamer_profiles/community_apply_edit.html"
     permission_required = "community.edit_application"
     fields = ["message"]
 
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:my-application-list')
+        return reverse_lazy("gamer_profiles:my-application-list")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.object.community
+        context["community"] = self.object.community
         return context
 
     def form_valid(self, form):
         if "submit_app" in self.request.POST.keys():
             try:
                 if self.submit_application():
-                    messages.success(self.request, _("Application successfully submitted."))
+                    messages.success(
+                        self.request, _("Application successfully submitted.")
+                    )
                     return HttpResponseRedirect(self.get_success_url())
             except models.AlreadyInCommunity:
-                messages.error(self.request, _('You are already a member of this community.'))
+                messages.error(
+                    self.request, _("You are already a member of this community.")
+                )
             except models.CurrentlyBanned:
-                messages.error(self.request, _('You are currently banned from this community.'))
+                messages.error(
+                    self.request, _("You are currently banned from this community.")
+                )
             except models.CurrentlySuspended:
-                messages.error(self.request, _('You are currently under an active suspension from this community.'))
+                messages.error(
+                    self.request,
+                    _(
+                        "You are currently under an active suspension from this community."
+                    ),
+                )
             return self.form_invalid(form)
         messages.success(self.request, _("Application successfully updated."))
         return super().form_valid(form)
@@ -466,19 +481,25 @@ class CreateApplication(
         if "submit_app" in self.request.POST.keys():
             try:
                 self.object.submit_application()
-                messages.success(self.request, _('Application successfully submitted.'))
+                messages.success(self.request, _("Application successfully submitted."))
                 return HttpResponseRedirect(self.object.community.get_absolute_url())
             except models.AlreadyInCommunity:
-                messages.error(self.request, _('You are already a member of this community.'))
+                messages.error(
+                    self.request, _("You are already a member of this community.")
+                )
             except models.CurrentlyBanned:
-                messages.error(self.request, _('You are currently banned from this community.'))
+                messages.error(
+                    self.request, _("You are currently banned from this community.")
+                )
             except models.CurrentlySuspended:
-                messages.error(self.request, _('You are currently suspended from this community.'))
+                messages.error(
+                    self.request, _("You are currently suspended from this community.")
+                )
             return self.form_invalid(form)
         else:
             self.object.status = "new"
         self.object.save()
-        messages.success(self.request, _('Application successfully saved.'))
+        messages.success(self.request, _("Application successfully saved."))
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -528,10 +549,10 @@ class WithdrawApplication(
     permission_required = "community.edit_application"
     context_object_name = "application"
     select_related = ["community"]
-    success_url = reverse_lazy('gamer_profiles:my-application-list')
+    success_url = reverse_lazy("gamer_profiles:my-application-list")
 
     def form_valid(self, form):
-        messages.success(self.request, _('Application successfully deleted.'))
+        messages.success(self.request, _("Application successfully deleted."))
         return super().form_valid(form)
 
 
@@ -556,7 +577,7 @@ class ApproveApplication(
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self.model.objects.filter(status__in=['review', 'onhold'])
+        return self.model.objects.filter(status__in=["review", "onhold"])
 
     def get_success_url(self):
         return reverse_lazy(
@@ -569,20 +590,22 @@ class ApproveApplication(
         try:
             application.approve_application()
         except models.AlreadyInCommunity:
-            messages.error(self.request,
+            messages.error(
+                self.request,
                 _(
                     "{0} is already a member of {1}".format(
                         application.gamer.user.display_name, self.community.name
                     )
-                )
+                ),
             )
         except models.CurrentlySuspended:
-            messages.error(self.request,
+            messages.error(
+                self.request,
                 _(
                     "{0} is currently suspended and cannot rejoin.".format(
                         application.gamer.user.display_name
                     )
-                )
+                ),
             )
         return HttpResponseRedirect(self.get_success_url())
 
@@ -595,7 +618,7 @@ class RejectApplication(ApproveApplication):
     def form_valid(self, form):
         application = self.get_object()
         application.reject_application()
-        messages.success(self.request, _('Application rejected.'))
+        messages.success(self.request, _("Application rejected."))
         return HttpResponseRedirect(self.get_success_url())
 
 

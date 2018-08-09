@@ -587,3 +587,23 @@ class ApproveApplicationTest(AbstractViewTest):
             self.response_302()
             assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "approve"
             assert models.CommunityMembership.objects.get(community=self.community1, gamer=self.gamer3)
+
+
+class RejectApplicationTest(ApproveApplicationTest):
+    '''
+    Run the same tests as approval but for rejection.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = "gamer_profiles:community-applicant-reject"
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.valid_url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.valid_url_kwargs)
+            self.response_302()
+            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "reject"
+            with pytest.raises(ObjectDoesNotExist):
+                models.CommunityMembership.objects.get(community=self.community1, gamer=self.gamer3)
