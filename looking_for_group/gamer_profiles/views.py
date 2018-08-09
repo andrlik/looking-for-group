@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseNotAllowed
 from django.forms import modelform_factory
 from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
 from . import models
@@ -546,15 +546,17 @@ class ApproveApplication(
     pk_url_kwarg = "application"
     permission_required = "community.approve_application"
     http_method_names = ["post"]
-    fields = ["status"]
+    fields = []
 
     def dispatch(self, request, *args, **kwargs):
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
         comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
-    def get_permission_object(self):
-        return self.community
+    def get_queryset(self):
+        return self.model.objects.filter(status__in=['review', 'onhold'])
 
     def get_success_url(self):
         return reverse_lazy(
@@ -567,7 +569,7 @@ class ApproveApplication(
         try:
             application.approve_application()
         except models.AlreadyInCommunity:
-            messages.error(
+            messages.error(self.request,
                 _(
                     "{0} is already a member of {1}".format(
                         application.gamer.user.display_name, self.community.name
@@ -575,7 +577,7 @@ class ApproveApplication(
                 )
             )
         except models.CurrentlySuspended:
-            messages.error(
+            messages.error(self.request,
                 _(
                     "{0} is currently suspended and cannot rejoin.".format(
                         application.gamer.user.display_name
@@ -593,6 +595,7 @@ class RejectApplication(ApproveApplication):
     def form_valid(self, form):
         application = self.get_object()
         application.reject_application()
+        messages.success(self.request, _('Application rejected.'))
         return HttpResponseRedirect(self.get_success_url())
 
 

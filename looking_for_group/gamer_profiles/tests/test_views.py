@@ -528,3 +528,62 @@ class CommunityApplicationDetail(AbstractViewTest):
             self.assertGoodView(
                 self.view_str, application=self.application1.pk, **self.url_kwargs
             )
+
+
+class ApproveApplicationTest(AbstractViewTest):
+    '''
+    Approve view for community admins.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.application1 = models.CommunityApplication.objects.create(
+            gamer=self.gamer3,
+            message="Notice me, Senpai!",
+            community=self.community1,
+            status="review",
+        )
+        self.application2 = models.CommunityApplication.objects.create(
+            gamer=self.gamer2,
+            message="I want to play!",
+            community=self.community1,
+            status="new",
+        )
+        self.view_str = "gamer_profiles:community-applicant-approve"
+        self.valid_url_kwargs = {"community": self.community1.pk, "application": self.application1.pk}
+        self.invalid_url_kwargs = {"community": self.community1.pk, "application": self.application2.pk}
+
+    def test_login_required(self):
+        self.get(self.view_str, **self.valid_url_kwargs)
+        self.response_405()
+        assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+        self.post(self.view_str, **self.valid_url_kwargs)
+        self.response_302()
+        assert 'login' in self.last_response['location']
+        assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+
+    def test_unauthorized_users(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.valid_url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.valid_url_kwargs)
+            self.response_403()
+            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+
+    def test_auth_user_with_invalid_target(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.invalid_url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.invalid_url_kwargs)
+            self.response_404()
+            assert models.CommunityApplication.objects.get(pk=self.application2.pk).status == "new"
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.valid_url_kwargs)
+            self.response_405()
+            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+            self.post(self.view_str, **self.valid_url_kwargs)
+            self.response_302()
+            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "approve"
+            assert models.CommunityMembership.objects.get(community=self.community1, gamer=self.gamer3)
