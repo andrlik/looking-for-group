@@ -569,7 +569,7 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
     )
 
     def __str__(self):
-        return "{0} {1} {2}".format(self.created, self.gamer.username, self.status)
+        return "{0} {1} {2}".format(self.created, self.gamer.user.username, self.status)
 
     def get_absolute_url(self):
         return reverse(

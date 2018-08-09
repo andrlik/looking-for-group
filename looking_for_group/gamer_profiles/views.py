@@ -350,8 +350,8 @@ class CommunityApplicantList(
     template_name = "gamer_profiles/community_applicant_list.html"
     permission_required = "community.review_applications"
     paginate_by = 25
-    ordering = ["created", "status"]
-    context_object_name = "applications"
+    ordering = ["modified", "created", "status"]
+    context_object_name = "applicants"
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
@@ -370,7 +370,7 @@ class CommunityApplicantList(
         all_apps = (
             models.CommunityApplication.objects.filter(community=self.community)
             .select_related("gamer")
-            .order_by("created")
+            .order_by("-modified")
         )
         context = super().get_context_data(**kwargs)
         context["community"] = self.community

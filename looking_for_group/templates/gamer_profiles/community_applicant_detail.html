@@ -15,7 +15,7 @@
   <dd>{{ application.modified }}</dd>
 </dl>
 
-<p><a href="{% url 'community-applicant-approve' community=application.community.pk application=application.pk %}"><button>{% trans "Approve" %}</button></a> <a href="{% url 'community-applicant-reject' community=application.community.pk application=application.pk %}"><button>{% trans "Reject Application" %}</button></a></p>
+<p><a href="{% url 'gamer_profiles:community-applicant-approve' community=application.community.pk application=application.pk %}"><button class="success button">{% trans "Approve Application" %}</button></a> <a href="{% url 'gamer_profiles:community-applicant-reject' community=application.community.pk application=application.pk %}"><button class="alert button">{% trans "Reject Application" %}</button></a></p>
 
-<p><a href="{% url 'community-applicant-list' community=application.community.pk %}">{% trans "Back to applicant list..." %}</a></p><p>
+<p><a href="{% url 'gamer_profiles:community-applicant-list' community=application.community.pk %}">{% trans "Back to applicant list..." %}</a></p><p>
 {% endblock %}
