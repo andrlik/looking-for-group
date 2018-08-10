@@ -61,6 +61,16 @@ urlpatterns = [
         name="profile-detail",
     ),
     path(
+        "profiles/<uuid:gamer>/friend/",
+        view=views.GamerFriendRequestView.as_view(),
+        name="gamer-friend",
+    ),
+    path(
+        "profiles/requests/<uuid:request>/withdraw/",
+        view=views.GamerFriendRequestWithdraw.as_view(),
+        name="gamer-friend-request-delete",
+    ),
+    path(
         "me/applications/community/",
         view=views.CreateApplication.as_view(),
         name="my-application-list",

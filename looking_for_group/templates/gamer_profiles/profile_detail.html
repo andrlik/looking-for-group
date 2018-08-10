@@ -1,0 +1,57 @@
+{% extends "gamer_profiles/base.html" %}
+{% load avatar_tags i18n humanize %}
+{% block subtitle %}{{ gamer.user.display_name }} - {% endblock %}
+{% block content %}
+<h1>{{ gamer.user.display_name }} ({{ gamer.user.username }})</h1>
+{% avatar gamer.user %}
+<dl>
+  <dt>{% trans "Display Name" %}</dt>
+  <dd>{{ gamer.user.display_name }}</dd>
+  <dt>{% trans "Bio" %}</dt>
+  <dd>{{ gamer.user.bio }}</dd>
+  <dt><a href="{{ gamer.user.homepage_url }}" rel="nofollow">{% trans "Homepage" %}</a></dt>
+  <dd></dd>
+  <dt>{% trans "RPG Experience" %}</dt>
+  <dd>{{ gamer.rpg_experience }}</dd>
+  <dt>{% trans "Tabletop Game Experience" %}</dt>
+  <dd>{{ gamer.ttgame_experience }}</dd>
+  <dt>{% trans "Playstyle" %}</dt>
+  <dd>{{ gamer.playstyle }}</dd>
+</dl>
+
+<h2>{% trans "Status" %}</h2>
+
+<table>
+  <thead><th>{% trans "Preference" %}</th><th>{% trans "Response" %}</th></thead>
+  <tbody>
+    <tr><td>{% trans "Current Status" %}</td><td>{{ gamer.player_status }}</td></tr>
+    <tr><td>{% trans "Willing to GM" %}</td><td>{{ gamer.will_gm|yesno:_('Yes,No') }}</td></tr>
+    <tr><td>{% trans "Adult Themes OK?" %}</td><td>{{ gamer.adult_themes|yesno:_('Yes,No') }}</td></tr>
+    <tr><td>{% trans "One Shots?" %}</td><td>{{ gamer.one_shots|yesno:_('Yes,No') }}</td></tr>
+    <tr><td>{% trans "Adventures?" %}</td><td>{{ gamer.adventures|yesno:_('Yes,No') }}</td></tr>
+    <tr><td>{% trans "Campaigns?" %}</td><td>{{ gamer.campaigns|yesno:_('Yes,No') }}</td></tr>
+    <tr><td>{% trans "Online games?" %}</td><td>{{ gamer.online_games|yesno:_('Yes,No')</td></tr>
+    <tr><td>{% trans "Local games?" %}</td><td>{{ gamer.local_games|yesno:_('Yes,No') }}</td></tr>
+  </tbody>
+</table>
+
+<h2>{% trans "Favorites" %}</h2>
+
+<h3>{% trans "Preferred Games" %}</h3>
+
+<ul>
+  {% for game in gamer.preferred_games.all %}
+  <li><a href="{% url 'catalog:game-detail' game=game.pk %}">{{ game.title }}</a></li>
+  {% empty %}
+  <p>{% blocktrans %}{{ gamer.user.display_name }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
+  {% endfor %}
+</ul>
+<h3>{% trans "Preferred Systems" %}</h3>
+<ul>
+  {% for system in gamer.preferred_systems.all %}
+  <li><a href="{% url 'catalog:system-detail' system=system.pk %}">{{ system.name }}</a></li>
+  {% empty %}
+  <p>{% blocktrans %}{{ gamer.user.display_name }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
+  {% endfor %}
+</ul>
+{% endblock %}

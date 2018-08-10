@@ -607,3 +607,79 @@ class RejectApplicationTest(ApproveApplicationTest):
             assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "reject"
             with pytest.raises(ObjectDoesNotExist):
                 models.CommunityMembership.objects.get(community=self.community1, gamer=self.gamer3)
+
+
+class GamerProfileDetailTest(AbstractViewTest):
+    '''
+    Tests for viewing gamer profile.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.gamer_friend = factories.GamerProfileFactory()
+        self.gamer1.friends.add(self.gamer_friend)
+        self.gamer3.friends.remove(self.gamer1)
+        self.gamer_jerk = factories.GamerProfileFactory()
+        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
+        self.gamer_public = factories.GamerProfileFactory(private=False)
+        self.view_str = 'gamer_profiles:profile-detail'
+        self.url_kwargs = {'gamer': self.gamer1.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_public_profile(self):
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView(self.view_str, gamer=self.gamer_public.pk)
+
+    def test_private_but_stranger(self):
+        '''
+        If a profile is private and the user has no existing connection, it should be redirected
+        to an option to friend the player.
+        '''
+        with self.login(username=self.gamer3.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert 'friend' in self.last_response['location']
+
+    def test_public_but_blocked(self):
+        with self.login(username=self.gamer_jerk.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+
+    def test_private_same_comm_blocked(self):
+        '''
+        Even if you are in the same community, a blocked user
+        cannot see the profile.
+        '''
+        self.community1.add_member(self.gamer_jerk)
+        with self.login(username=self.gamer_jerk.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+
+    def test_private_friend_but_blocked(self):
+        '''
+        If someone is a friend, but then subsequently blocked,
+        they should be removed from friends and added to blocked users.
+        '''
+        assert self.gamer_friend in self.gamer1.friends.all()
+        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_friend)
+        assert self.gamer_friend not in self.gamer1.friends.all()
+        with self.login(username=self.gamer_friend.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+
+    def test_private_but_friend(self):
+        '''
+        If profile is private, but user is a friend, show the profile.
+        '''
+        with self.login(username=self.gamer_friend.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+
+    def test_private_but_same_comm(self):
+        '''
+        If in the same community, see the profile.
+        '''
+        self.community1.add_member(self.gamer3)
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)

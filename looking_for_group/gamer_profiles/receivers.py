@@ -82,4 +82,13 @@ def add_owner_to_community(sender, instance, created, *args, **kwargs):
         logger.debug(
             "Ower is not in community {}; adding as admin".format(instance.name)
         )
-        instance.add_member(instance.owner, role='admin')
+        instance.add_member(instance.owner, role="admin")
+
+
+@receiver(post_save, sender=models.BlockedUser)
+def remove_blocked_user_from_friends(sender, instance, created, *args, **kwargs):
+    """
+    When creating a new block record, remove from the blocker's friends list if present.
+    """
+    if created:
+        instance.blocker.friends.remove(instance.blockee)

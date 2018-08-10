@@ -2,7 +2,7 @@ import logging
 from rules.contrib.views import PermissionRequiredMixin
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -879,8 +879,8 @@ class GamerProfileDetailView(
     model = models.GamerProfile
     select_related = ["user"]
     prefetch_related = ["communities"]
-    pk_url_kwarg = "profile"
-    permission_required = "profile.view_details"
+    pk_url_kwarg = "gamer"
+    permission_required = "profile.view_detail"
     template_name = "gamer_profiles/profile_detail.html"
 
     def get_context_data(self, **kwargs):
@@ -892,6 +892,82 @@ class GamerProfileDetailView(
             gamer=self.object, rater=self.request.user.gamerprofile
         )
         return context
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            self.object = self.get_object()
+            if self.request.user.gamerprofile.blocked_by(self.object):
+                messages.error(self.request, _('{} has blocked you from viewing their profiles, posts, and games.'.format(self.object.user.display_name)))
+            else:
+                return HttpResponseRedirect(reverse_lazy('gamer_profiles:gamer-friend', kwargs={'gamer': self.object.pk}))
+        return super().handle_no_permission()
+
+
+class GamerFriendRequestView(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
+    '''
+    For creating a friend request.
+    '''
+    model = models.GamerFriendRequest
+    permission_required = 'profile.can_friend'
+    template_name = 'gamer_profiles/gamer_friend.html'
+    fields = []
+
+    def dispatch(self, request, *args, **kwargs):
+        self.target_gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop('gamer', None))
+        self.requestor = request.user.gamerprofile
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.target_gamer
+
+    def check_friend_request_for_pending(self):
+        try:
+            prev_request = models.GamerFriendRequest.objects.get(requestor=self.requestor, recipient=self.target_gamer, status='new')
+        except ObjectDoesNotExist:
+            return False
+        return prev_request
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['target_gamer'] = self.target_gamer
+        context['pending_request'] = self.check_friend_request_for_pending()
+        if context['pending_request']:
+            messages.info(self.request, _("You already have a pending friend request for this user."))
+
+    def handle_no_permission(self):
+        messages.error(self.request, _('You cannot friend this user because they have blocked you.'))
+        return super().handle_no_permission()
+
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:friend-gamer', kwargs={'gamer': self.target_gamer.pk})
+
+    def form_valid(self, form):
+        # Verify that the user doesn't already have a friend request in queue.
+        if self.check_friend_request_for_pending():
+            messages.info(self.request, _("You already have a pending friend request for this user."))
+        else:
+            self.model.objects.create(requestor=self.requestor, recipient=self.target_gamer, status='new')
+            messages.success(self.request, _('Friend request sent!'))
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class GamerFriendRequestWithdraw(LoginRequiredMixin, PermissionRequiredMixin, generic.DeleteView):
+    '''
+    For withdrawing a friend request.
+    '''
+    model = models.GamerFriendRequest
+    pk_url_kwarg = 'request'
+    permission_required = 'profile.withdraw_friend_request'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() not in ['post']:
+            return HttpResponseNotAllowed(['POST'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.success_url = reverse_lazy('gamer_profiles:friend-gamer', kwargs={'gamer': self.object.recipient.pk})
+        messages.success(self.request, _('Friend request withdrawn.'))
+        return super().form_valid(form)
 
 
 class GamerProfileUpdateView(

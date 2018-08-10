@@ -418,6 +418,16 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     def get_absolute_url(self):
         return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.pk})
 
+    def blocked_by(self, gamer):
+        '''
+        Check to see if self is blocked by indicated gamer.
+        '''
+        try:
+            BlockedUser.objects.get(blocker=gamer, blockee=self)
+        except ObjectDoesNotExist:
+            return False
+        return True
+
     def get_role(self, community):
         """
         For a given community object fetch the role the user has within that community.
