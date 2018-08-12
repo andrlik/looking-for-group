@@ -66,7 +66,7 @@ urlpatterns = [
         name="gamer-friend",
     ),
     path(
-        "profiles/requests/<uuid:request>/withdraw/",
+        "profiles/requests/<uuid:friend_request>/withdraw/",
         view=views.GamerFriendRequestWithdraw.as_view(),
         name="gamer-friend-request-delete",
     ),

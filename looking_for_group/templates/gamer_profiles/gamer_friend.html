@@ -5,7 +5,7 @@
 <h1>{% trans "Send a friend request to" %} {{ target_gamer.user.display_name }}?</h1>
 {% if pending_request %}
 <p>{% trans "You have a pending friend request for this user." %}</p>
-<form action="{% url 'gamer_profiles:gamer-friend-request-delete' request=pending_request.pk %}" method="POST">
+<form action="{% url 'gamer_profiles:gamer-friend-request-delete' friend_request=pending_request.pk %}" method="POST">
   {% csrf_token %}
   <p>{% trans "Would you like to withdraw your friend request?" %}</p>
   <button class="alert button" type="submit">{% trans "Withdraw request" %}</button>

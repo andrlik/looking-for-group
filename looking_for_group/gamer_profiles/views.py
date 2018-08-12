@@ -956,16 +956,19 @@ class GamerFriendRequestWithdraw(LoginRequiredMixin, PermissionRequiredMixin, ge
     For withdrawing a friend request.
     '''
     model = models.GamerFriendRequest
-    pk_url_kwarg = 'request'
+    pk_url_kwarg = 'friend_request'
     permission_required = 'profile.withdraw_friend_request'
 
     def dispatch(self, request, *args, **kwargs):
-        if request.method.lower() not in ['post']:
+        if request.user.is_authenticated and request.method != 'POST':
             return HttpResponseNotAllowed(['POST'])
         return super().dispatch(request, *args, **kwargs)
 
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:gamer-friend', kwargs={'gamer': self.object.recipient.pk})
+
     def form_valid(self, form):
-        self.success_url = reverse_lazy('gamer_profiles:friend-gamer', kwargs={'gamer': self.object.recipient.pk})
+        self.success_url = reverse_lazy('gamer_profiles:gamer-friend', kwargs={'gamer': self.object.recipient.pk})
         messages.success(self.request, _('Friend request withdrawn.'))
         return super().form_valid(form)
 

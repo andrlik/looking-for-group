@@ -730,3 +730,40 @@ class GamerFriendRequestTest(AbstractViewTest):
             self.assertInContext('pending_request')
             self.post(self.view_str, **self.url_kwargs)
             assert models.GamerFriendRequest.objects.filter(requestor=self.gamer3, recipient=self.gamer1).count() == 1
+
+
+class GamerFriendRequestWithdrawTest(AbstractViewTest):
+    '''
+    Test that only the creator of a friend request can delete it.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.gamer_friend = factories.GamerProfileFactory()
+        self.gamer1.friends.add(self.gamer_friend)
+        self.gamer3.friends.remove(self.gamer1)
+        self.request_obj = models.GamerFriendRequest.objects.create(requestor=self.gamer3, recipient=self.gamer1, status='new')
+        self.gamer_jerk = factories.GamerProfileFactory()
+        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
+        self.gamer_public = factories.GamerProfileFactory(private=False)
+        self.view_str = 'gamer_profiles:gamer-friend-request-delete'
+        self.url_kwargs = {'friend_request': self.request_obj.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_403()
+            assert models.GamerFriendRequest.objects.get(pk=self.request_obj.pk)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            with pytest.raises(ObjectDoesNotExist):
+                models.GamerFriendRequest.objects.get(pk=self.request_obj.pk)

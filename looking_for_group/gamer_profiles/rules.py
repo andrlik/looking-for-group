@@ -182,6 +182,11 @@ def is_possible_friend(user, gamer):
 
 
 @predicate
+def is_request_author(user, request):
+    return request.requestor == user.gamerprofile
+
+
+@predicate
 def is_note_author(user, note):
     if note.author == user.gamerprofile:
         return True
@@ -205,5 +210,6 @@ rules.add_perm("community.edit_gamer_role", is_community_superior)
 rules.add_perm("community.transfer_ownership", is_community_owner)
 rules.add_perm("profile.view_detail", is_profile_viewer)
 rules.add_perm("profile.can_friend", is_possible_friend)
+rules.add_perm("profile.withdraw_friend_request", is_request_author)
 rules.add_perm("profile.edit_profile", is_profile_owner)
 rules.add_perm("profile.view_gamer_notes", is_note_author)
