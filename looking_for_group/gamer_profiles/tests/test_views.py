@@ -712,6 +712,25 @@ class GamerFriendRequestTest(AbstractViewTest):
             self.post(self.view_str, **self.url_kwargs)
             self.response_403()
 
+    def test_already_friends(self):
+        with self.login(username=self.gamer_friend.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_302()
+            current_requests = models.GamerFriendRequest.objects.filter(requestor=self.gamer_friend, recipient=self.gamer1).count()
+            assert current_requests == 0
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert current_requests == models.GamerFriendRequest.objects.filter(requestor=self.gamer_friend, recipient=self.gamer1).count()
+
+    def reverse_request_already_received(self):
+        assert self.gamer3 not in self.gamer1.friends.all()
+        test_request = models.GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer3, status='new')
+        with self.login(username=self.gamer3.user.username):
+            self.post(self.view_str, **self.url_kwargs)
+            test_request.refresh_from_db()
+            assert test_request.status == 'approve'
+            assert self.gamer3 in self.gamer1.friends.all()
+
     def test_authorized_user(self):
         with self.login(username=self.gamer3.user.username):
             with transaction.atomic():

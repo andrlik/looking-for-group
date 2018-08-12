@@ -916,6 +916,10 @@ class GamerFriendRequestView(LoginRequiredMixin, PermissionRequiredMixin, generi
         if request.user.is_authenticated:
             self.target_gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop('gamer', None))
             self.requestor = request.user.gamerprofile
+            if self.requestor in self.target_gamer.friends.all():
+                logger.debug('Requestor is already friends with target recipient. Redirecting...')
+                messages.info(request, _('You are already friends with {}'.format(self.target_gamer.user.display_name)))
+                return HttpResponseRedirect(reverse_lazy('gamer_profiles:profile-detail', kwargs={'gamer': self.target_gamer.pk}))
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
@@ -927,6 +931,23 @@ class GamerFriendRequestView(LoginRequiredMixin, PermissionRequiredMixin, generi
         except ObjectDoesNotExist:
             return False
         return prev_request
+
+    def check_for_other_request_or_create(self):
+        '''
+        Find out if there is already a reverse request we should simply approve.
+        '''
+        try:
+            logger.debug('Checking for previous pending request from the intended recipient.')
+            prev_request = self.model.objects.get(requestor=self.target_gamer, recipient=self.request.user.gamerprofile, status='new')
+            if prev_request:
+                logger.debug('Request found, accepting it instead of making a new one.')
+                prev_request.approve()
+                messages.info(self.request, _('You already had a pending friend request from {}, which has now been accepted.'.format(self.target_gamer.user.display_name)))
+        except ObjectDoesNotExist:
+            # Create a new friend request.
+            logger.debug('Creating new friend request.')
+            self.model.objects.create(requestor=self.requestor, recipient=self.target_gamer, status='new')
+            messages.success(self.request, _('Friend request sent!'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -946,8 +967,7 @@ class GamerFriendRequestView(LoginRequiredMixin, PermissionRequiredMixin, generi
         if self.check_friend_request_for_pending():
             messages.info(self.request, _("You already have a pending friend request for this user."))
         else:
-            self.model.objects.create(requestor=self.requestor, recipient=self.target_gamer, status='new')
-            messages.success(self.request, _('Friend request sent!'))
+            self.check_for_other_request_or_create()
         return HttpResponseRedirect(self.get_success_url())
 
 
