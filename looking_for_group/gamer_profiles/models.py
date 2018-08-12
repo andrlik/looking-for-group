@@ -636,6 +636,9 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
         self.status = "reject"
         self.save()
 
+    class Meta:
+        ordering = ['community__name', 'modified']
+
 
 class BlockedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
