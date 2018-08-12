@@ -993,6 +993,66 @@ class GamerFriendRequestWithdraw(LoginRequiredMixin, PermissionRequiredMixin, ge
         return super().form_valid(form)
 
 
+class GamerFriendRequestApprove(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.UpdateView):
+    '''
+    A POST-only view which permits the user to accept a friend request.
+    '''
+
+    model = models.GamerFriendRequest
+    pk_url_kwarg = 'friend_request'
+    permission_required = 'profile.approve_friend_request'
+    fields = []
+    select_related = ['requestor', 'requestor__user', 'recipient']
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.method != "POST":
+            return HttpResponseNotAllowed(['POST'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:my-gamer-friend-requests')
+
+    def form_valid(self, form):
+        friend_request = self.get_object()
+        if friend_request.status != "new":
+            messages.error(self.request, _('This request has already been resolved.'))
+        else:
+            friend_request.accept()
+            messages.success(self.request, _('You are now friends with {}'.format(friend_request.requestor.user.display_name)))
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class GamerFriendRequestReject(GamerFriendRequestApprove):
+    '''
+    Same as approve, but in this case the form valid action is to reject.
+    '''
+
+    def form_valid(self, form):
+        friend_request = self.get_object()
+        if friend_request.status != "new":
+            messages.error(self.request, _('This request has already been resolved.'))
+        else:
+            friend_request.deny()
+            messages.success(self.request, _('You have ignored the friend request from {}'.format(friend_request.requestor.user.display_name)))
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class GamerFriendRequestListView(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
+
+    model = models.GamerFriendRequest
+    context_object_name = 'pending_requests'
+    template_name = 'gamer_profiles/friend_requests.html'
+    select_related = ['requestor', 'requestor__user', 'recipient']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sent_requests'] = models.GamerFriendRequest.objects.filter(requestor=self.request.user.gamerprofile, status='new')
+        return context
+
+    def get_queryset(self):
+        return models.GamerFriendRequest.objects.filter(recipient=self.request.user.gamerprofile, status='new')
+
+
 class GamerProfileUpdateView(
     LoginRequiredMixin,
     PermissionRequiredMixin,

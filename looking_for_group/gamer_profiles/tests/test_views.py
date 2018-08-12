@@ -786,3 +786,85 @@ class GamerFriendRequestWithdrawTest(AbstractViewTest):
             self.post(self.view_str, **self.url_kwargs)
             with pytest.raises(ObjectDoesNotExist):
                 models.GamerFriendRequest.objects.get(pk=self.request_obj.pk)
+
+
+class GamerFriendRequestApproveTest(AbstractViewTest):
+    '''
+    Test request approvals.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.new_frand = factories.GamerProfileFactory()
+        self.friend_request = models.GamerFriendRequest.objects.create(requestor=self.new_frand, recipient=self.gamer1, status='new')
+        self.view_str = 'gamer_profiles:gamer-friend-request-approve'
+        self.url_kwargs = {'friend_request': self.friend_request.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_403()
+            assert models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status == "new"
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status != "new"
+            assert self.new_frand in self.gamer1.friends.all()
+
+
+class GamerFriendRequestDenyTest(GamerFriendRequestApproveTest):
+    '''
+    Test request denials
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = 'gamer_profiles:gamer-friend-request-reject'
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status != 'new'
+            assert self.new_frand not in self.gamer1.friends.all()
+
+
+class GamerFriendRequestListTest(AbstractViewTest):
+    '''
+    View requests.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.new_frand = factories.GamerProfileFactory()
+        self.new_frand2 = factories.GamerProfileFactory()
+        self.new_frand3 = factories.GamerProfileFactory()
+        self.friend_request = models.GamerFriendRequest.objects.create(requestor=self.new_frand, recipient=self.gamer1, status='new')
+        self.friend_request2 = models.GamerFriendRequest.objects.create(requestor=self.new_frand2, recipient=self.gamer1, status='new')
+        self.sent_request = models.GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2, status='new')
+        self.extra_request = models.GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.new_frand3, status='new')
+        self.extra_request.accept()
+        self.view_str = 'gamer_profiles:my-gamer-friend-requests'
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str)
+
+    def test_authenticated_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str)
+            assert self.get_context('pending_requests').count() == 2
+            assert self.get_context('sent_requests').count() == 1
+            self.friend_request.accept()
+            self.assertGoodView(self.view_str)
+            assert self.get_context('pending_requests').count() == 1

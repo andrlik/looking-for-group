@@ -71,6 +71,21 @@ urlpatterns = [
         name="gamer-friend-request-delete",
     ),
     path(
+        "profiles/requests/<uuid:friend_request>/approve/",
+        view=views.GamerFriendRequestApprove.as_view(),
+        name="gamer-friend-request-approve",
+    ),
+    path(
+        "profiles/requests/<uuid:friend_request>/reject/",
+        view=views.GamerFriendRequestReject.as_view(),
+        name="gamer-friend-request-reject",
+    ),
+    path(
+        "profiles/requests/",
+        view=views.GamerFriendRequestListView.as_view(),
+        name="my-gamer-friend-requests",
+    ),
+    path(
         "me/applications/community/",
         view=views.CreateApplication.as_view(),
         name="my-application-list",
