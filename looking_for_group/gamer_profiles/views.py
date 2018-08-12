@@ -913,8 +913,9 @@ class GamerFriendRequestView(LoginRequiredMixin, PermissionRequiredMixin, generi
     fields = []
 
     def dispatch(self, request, *args, **kwargs):
-        self.target_gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop('gamer', None))
-        self.requestor = request.user.gamerprofile
+        if request.user.is_authenticated:
+            self.target_gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop('gamer', None))
+            self.requestor = request.user.gamerprofile
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
@@ -931,15 +932,14 @@ class GamerFriendRequestView(LoginRequiredMixin, PermissionRequiredMixin, generi
         context = super().get_context_data(**kwargs)
         context['target_gamer'] = self.target_gamer
         context['pending_request'] = self.check_friend_request_for_pending()
-        if context['pending_request']:
-            messages.info(self.request, _("You already have a pending friend request for this user."))
+        return context
 
     def handle_no_permission(self):
         messages.error(self.request, _('You cannot friend this user because they have blocked you.'))
         return super().handle_no_permission()
 
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:friend-gamer', kwargs={'gamer': self.target_gamer.pk})
+        return reverse_lazy('gamer_profiles:gamer-friend', kwargs={'gamer': self.target_gamer.pk})
 
     def form_valid(self, form):
         # Verify that the user doesn't already have a friend request in queue.

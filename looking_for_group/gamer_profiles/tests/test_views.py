@@ -1,5 +1,6 @@
 import pytest
 from datetime import timedelta
+from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
@@ -683,3 +684,49 @@ class GamerProfileDetailTest(AbstractViewTest):
         self.community1.add_member(self.gamer3)
         with self.login(username=self.gamer3.user.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
+
+
+class GamerFriendRequestTest(AbstractViewTest):
+    '''
+    Tests the view for submitting friend requests.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.gamer_friend = factories.GamerProfileFactory()
+        self.gamer1.friends.add(self.gamer_friend)
+        self.gamer3.friends.remove(self.gamer1)
+        self.gamer_jerk = factories.GamerProfileFactory()
+        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
+        self.gamer_public = factories.GamerProfileFactory(private=False)
+        self.view_str = 'gamer_profiles:gamer-friend'
+        self.url_kwargs = {'gamer': self.gamer1.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_blocked_user(self):
+        with self.login(username=self.gamer_jerk.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            with transaction.atomic():
+                with pytest.raises(ObjectDoesNotExist):
+                    models.GamerFriendRequest.objects.get(requestor=self.gamer3, recipient=self.gamer1)
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert models.GamerFriendRequest.objects.get(requestor=self.gamer3, recipient=self.gamer1)
+
+    def test_request_already_queued(self):
+        models.GamerFriendRequest.objects.create(requestor=self.gamer3, recipient=self.gamer1, status='new')
+        assert models.GamerFriendRequest.objects.filter(requestor=self.gamer3, recipient=self.gamer1).count() == 1
+        with self.login(username=self.gamer3.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.assertInContext('pending_request')
+            self.post(self.view_str, **self.url_kwargs)
+            assert models.GamerFriendRequest.objects.filter(requestor=self.gamer3, recipient=self.gamer1).count() == 1
