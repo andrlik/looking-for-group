@@ -868,3 +868,28 @@ class GamerFriendRequestListTest(AbstractViewTest):
             self.friend_request.accept()
             self.assertGoodView(self.view_str)
             assert self.get_context('pending_requests').count() == 1
+
+
+class MuteGamerTest(AbstractViewTest):
+    '''
+    A post only method to mute a gamer. If arg 'next' is provided,
+    will redirect to that, otherwise goes to target's profile page.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = 'gamer_profiles:mute-gamer'
+        self.url_kwargs = {'gamer': self.gamer3.pk, 'next': reverse('gamer_profiles:my-community-list')}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_auth_user(self):
+        assert models.MutedUser.objects.filter(muter=self.gamer1, mutee=self.gamer3).count() == 0
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert 'communities' in self.last_response['location']
+            assert models.MutedUser.objects.filter(muter=self.gamer1, mutee=self.gamer3).count() == 1

@@ -2,6 +2,7 @@ import logging
 from rules.contrib.views import PermissionRequiredMixin
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
+from django.utils.http import is_safe_url
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -1215,10 +1216,16 @@ class MuteGamer(LoginRequiredMixin, generic.CreateView):
     template_name = "gamer_profiles/mute_gamer.html"
 
     def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.method != 'POST':
+            return HttpResponseNotAllowed(['POST'])
         self.gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop("profile"))
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
+        redirect_url = self.kwargs.pop('next', '')
+        url_is_safe = is_safe_url(redirect_url)
+        if redirect_url and url_is_safe:
+            return redirect_url
         return self.gamer.get_absolute.url()
 
     def form_valid(self, form):
