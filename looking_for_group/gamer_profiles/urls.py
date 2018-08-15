@@ -85,7 +85,14 @@ urlpatterns = [
         view=views.GamerFriendRequestListView.as_view(),
         name="my-gamer-friend-requests",
     ),
-    path("profiles/<uuid:gamer>/mute/", view=views.MuteGamer.as_view(), name='mute-gamer'),
+    path(
+        "profiles/<uuid:gamer>/mute/", view=views.MuteGamer.as_view(), name="mute-gamer"
+    ),
+    path(
+        "profiles/<uuid:gamer>/mute/?next=<path:next>/",
+        view=views.MuteGamer.as_view(),
+        name="mute-gamer",
+    ),
     path(
         "me/applications/community/",
         view=views.CreateApplication.as_view(),
