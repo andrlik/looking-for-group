@@ -1312,7 +1312,7 @@ class MuteGamer(LoginRequiredMixin, generic.CreateView):
         redirect_url = urllib.parse.unquote(self.kwargs.pop("next", ""))
         url_is_safe = is_safe_url(redirect_url, settings.ALLOWED_HOSTS)
         if redirect_url and url_is_safe:
-            return redirect_url
+            return urllib.request.quote(redirect_url)
         return self.gamer.get_absolute.url()
 
     def form_valid(self, form):

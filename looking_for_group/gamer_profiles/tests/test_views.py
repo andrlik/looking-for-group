@@ -882,7 +882,9 @@ class MuteGamerTest(AbstractViewTest):
         self.url_kwargs = {'gamer': self.gamer3.pk, 'next': reverse('gamer_profiles:my-community-list')}
 
     def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+        self.get(self.view_str, **self.url_kwargs)
+        self.response_302()
+        assert 'accounts/login' in self.last_response['location']
 
     def test_auth_user(self):
         assert models.MutedUser.objects.filter(muter=self.gamer1, mutee=self.gamer3).count() == 0
