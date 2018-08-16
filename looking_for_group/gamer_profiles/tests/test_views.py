@@ -895,3 +895,38 @@ class MuteGamerTest(AbstractViewTest):
             self.response_302()
             assert 'communities' in self.last_response['location']
             assert models.MutedUser.objects.filter(muter=self.gamer1, mutee=self.gamer3).count() == 1
+
+
+class RemoveMuteTest(AbstractViewTest):
+    '''
+    Only the person who created a given mute record can remove it.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.mute_record = models.MutedUser.objects.create(muter=self.gamer1, mutee=self.gamer3)
+        self.view_str = 'gamer_profiles:unmute-gamer'
+        self.url_kwargs = {'mute': self.mute_record.pk, 'next': reverse('gamer_profiles:profile-detail', kwargs={'gamer': self.mute_record.mutee.pk})}
+
+    def test_login_required(self):
+        self.get(self.view_str, self.url_kwargs)
+        self.response_302()
+        assert 'accounts/login' in self.last_response['location']
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            self.get(self.view_str, self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, self.url_kwargs)
+            self.response_403()
+            assert models.MutedUser.objects.get(pk=self.mute_record.pk)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, self.url_kwargs)
+            self.response_302()
+            assert 'profile' in self.last_response['location']
+            with pytest.raises(ObjectDoesNotExist):
+                models.MutedUser.objects.get(pk=self.mute_record.pk)

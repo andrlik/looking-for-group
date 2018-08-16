@@ -94,6 +94,17 @@ urlpatterns = [
         name="mute-gamer",
     ),
     path(
+        "profiles/mutes/<uuid:mute>/unmute/",
+        view=views.RemoveMute.as_view(),
+        name="unmute-gamer",
+    ),
+    path(
+        "profiles/mutes/<uuid:mute>/unmute/?next=<path:next>/",
+        view=views.RemoveMute.as_view(),
+        name="unmute-gamer",
+    ),
+    path("profiles/mutes/", view=views.MyMuteList.as_view(), name="my-mute-list"),
+    path(
         "me/applications/community/",
         view=views.CreateApplication.as_view(),
         name="my-application-list",
