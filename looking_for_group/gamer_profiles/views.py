@@ -672,6 +672,7 @@ class CommunityBannedUserList(
     template_name = "gamer_profiles/community_banned_list.html"
     permission_required = "community.ban_user"
     paginate_by = 25
+    context_object_name = 'ban_list'
     ordering = ["-created"]
 
     def dispatch(self, request, *args, **kwargs):
@@ -679,11 +680,16 @@ class CommunityBannedUserList(
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
+
     def get_permission_object(self):
         return self.community
 
     def get_queryset(self):
-        return self.model.objects.filter(community=self.community)
+        return self.model.objects.filter(community=self.community).order_by('-created')
 
 
 class CommunityDeleteBan(
@@ -700,7 +706,8 @@ class CommunityDeleteBan(
     select_related = ["banned_user"]
     template_name = "gamer_profiles/delete_ban.html"
     permission_required = "community.ban_user"
-    context_object_name = "ban_record"
+    context_object_name = "ban"
+    pk_url_kwarg = 'ban'
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
@@ -709,6 +716,42 @@ class CommunityDeleteBan(
 
     def get_permission_object(self):
         return self.community
+
+    def form_valid(self, form):
+        messages.success(self.request, _('Successfully deleted ban.'))
+        return super().form_valid(form)
+
+
+class CommunityUpdateBan(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.UpdateView):
+    '''
+    Loads form for editing a ban (you can only edit the reason.)
+    '''
+
+    model = models.BannedUser
+    fields = ['reason']
+    permission_required = "community.ban_user"
+    template_name = 'gamer_profiles/community_ban_edit.html'
+    pk_url_kwarg = 'ban'
+
+    def dispatch(self, request, *args, **kwargs):
+        comm_pk = self.kwargs.pop("community", None)
+        self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
+
+    def get_permission_object(self):
+        return self.community
+
+    def form_valid(self, form):
+        messages.success(self.request, _('Ban record updated!'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Please correct the errors below.'))
 
 
 class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
