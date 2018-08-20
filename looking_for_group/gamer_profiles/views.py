@@ -882,6 +882,7 @@ class GamerProfileDetailView(
     model = models.GamerProfile
     select_related = ["user"]
     prefetch_related = ["communities"]
+    context_object_name = 'gamer'
     pk_url_kwarg = "gamer"
     permission_required = "profile.view_detail"
     template_name = "gamer_profiles/profile_detail.html"

@@ -24,13 +24,13 @@
 <table>
   <thead><th>{% trans "Preference" %}</th><th>{% trans "Response" %}</th></thead>
   <tbody>
-    <tr><td>{% trans "Current Status" %}</td><td>{{ gamer.player_status }}</td></tr>
+    <tr><td>{% trans "Current Status" %}</td><td>{{ gamer.get_player_status_display }}</td></tr>
     <tr><td>{% trans "Willing to GM" %}</td><td>{{ gamer.will_gm|yesno:_('Yes,No') }}</td></tr>
     <tr><td>{% trans "Adult Themes OK?" %}</td><td>{{ gamer.adult_themes|yesno:_('Yes,No') }}</td></tr>
     <tr><td>{% trans "One Shots?" %}</td><td>{{ gamer.one_shots|yesno:_('Yes,No') }}</td></tr>
     <tr><td>{% trans "Adventures?" %}</td><td>{{ gamer.adventures|yesno:_('Yes,No') }}</td></tr>
     <tr><td>{% trans "Campaigns?" %}</td><td>{{ gamer.campaigns|yesno:_('Yes,No') }}</td></tr>
-    <tr><td>{% trans "Online games?" %}</td><td>{{ gamer.online_games|yesno:_('Yes,No')</td></tr>
+    <tr><td>{% trans "Online games?" %}</td><td>{{ gamer.online_games|yesno:_('Yes,No') }}</td></tr>
     <tr><td>{% trans "Local games?" %}</td><td>{{ gamer.local_games|yesno:_('Yes,No') }}</td></tr>
   </tbody>
 </table>
@@ -43,7 +43,7 @@
   {% for game in gamer.preferred_games.all %}
   <li><a href="{% url 'catalog:game-detail' game=game.pk %}">{{ game.title }}</a></li>
   {% empty %}
-  <p>{% blocktrans %}{{ gamer.user.display_name }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
+  <p>{% blocktrans with gname=gamer.user.display_name %}{{ gname }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
 <h3>{% trans "Preferred Systems" %}</h3>
@@ -51,14 +51,14 @@
   {% for system in gamer.preferred_systems.all %}
   <li><a href="{% url 'catalog:system-detail' system=system.pk %}">{{ system.name }}</a></li>
   {% empty %}
-  <p>{% blocktrans %}{{ gamer.user.display_name }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
+  <p>{% blocktrans with gname=gamer.user.display_name %}{{ gname }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
 {% if request.user.is_authenticated %}
 <div id="user-gamer-meta-data">
   <dl>
     <dt>{% trans "Average Rating" %}</dt>
-    <dd>{{ gamer.avg_rating }}</dd>
+    <dd>{{ gamer.avg_gamer_rating }}</dd>
     <dt>{% trans "Rate gamer" %}</dt>
     <dd>Some cool star form here</dd>
     <dt>{% trans "Your notes on this gamer" %}</dt>
@@ -72,7 +72,7 @@
           <dt>{% trans "Modified" %}</dt>
           <dd>{{ note.modified }}</dd>
           <dt>{% trans "Note" %}</dt>
-          <dd>{{ note.body_rendered }}</dd>
+          <dd>{{ note.body_rendered|safe }}</dd>
           </dl>
         </li>
         {% empty %}

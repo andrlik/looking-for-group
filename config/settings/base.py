@@ -69,7 +69,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "foundation_formtags",  # Form layouts
-    "django_extensions",
+#    "django_extensions",
     # "cookielaw",
     "allauth",
     "allauth.account",
