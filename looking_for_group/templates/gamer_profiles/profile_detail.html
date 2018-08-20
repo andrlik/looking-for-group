@@ -54,4 +54,35 @@
   <p>{% blocktrans %}{{ gamer.user.display_name }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
+{% if request.user.is_authenticated %}
+<div id="user-gamer-meta-data">
+  <dl>
+    <dt>{% trans "Average Rating" %}</dt>
+    <dd>{{ gamer.avg_rating }}</dd>
+    <dt>{% trans "Rate gamer" %}</dt>
+    <dd>Some cool star form here</dd>
+    <dt>{% trans "Your notes on this gamer" %}</dt>
+    <dd>
+      <ol>
+        {% for note in gamer_notes %}
+        <li class="gamer-note">
+          <dl>
+          <dt>{% trans "Created" %}</dt>
+          <dd>{{ note.created }}</dd>
+          <dt>{% trans "Modified" %}</dt>
+          <dd>{{ note.modified }}</dd>
+          <dt>{% trans "Note" %}</dt>
+          <dd>{{ note.body_rendered }}</dd>
+          </dl>
+        </li>
+        {% empty %}
+        <p>{% trans "You have not made any notes for this gamer yet." %}</p>
+        {% endfor %}
+        <a href="{% url 'gamer_profiles:add-gamer-note' gamer=gamer.pk %}"><button class="button primary">{% trans "Add a note" %}</button></a>
+      </ol>
+    </dd>
+</div>
+{% endif %}
+
+
 {% endblock %}

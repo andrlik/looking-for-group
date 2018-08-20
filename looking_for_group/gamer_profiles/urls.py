@@ -60,6 +60,7 @@ urlpatterns = [
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",
     ),
+    path("profiles/<uuid:gamer>/add_note/", view=views.CreateGamerNote.as_view(), name='add-gamer-note'),
     path(
         "profiles/<uuid:gamer>/friend/",
         view=views.GamerFriendRequestView.as_view(),

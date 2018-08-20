@@ -889,10 +889,10 @@ class GamerProfileDetailView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["gamer_notes"] = models.GamerNote.objects.filter(
-            author=self.request.user.gamerprofile, gamer=self.object
+            author=self.request.user.gamerprofile, gamer=self.get_object()
         )
         context["your_rating"], created = models.GamerRating.objects.get_or_create(
-            gamer=self.object, rater=self.request.user.gamerprofile
+            gamer=self.get_object(), rater=self.request.user.gamerprofile
         )
         return context
 
@@ -911,7 +911,7 @@ class GamerProfileDetailView(
             else:
                 return HttpResponseRedirect(
                     reverse_lazy(
-                        "gamer_profiles:gamer-friend", kwargs={"gamer": self.object.pk}
+                        "gamer_profiles:gamer-friend", kwargs={"gamer": self.get_object().pk}
                     )
                 )
         return super().handle_no_permission()
@@ -1191,7 +1191,7 @@ class CreateGamerNote(
 
     def dispatch(self, request, *args, **kwargs):
         self.gamer = get_object_or_404(
-            models.GamerProfile, pk=self.kwargs.pop("profile")
+            models.GamerProfile, pk=self.kwargs.pop("gamer")
         )
         return super().dispatch(request, *args, **kwargs)
 
@@ -1200,7 +1200,7 @@ class CreateGamerNote(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:profile_detail", kwargs={"profile": self.gamer.pk}
+            "gamer_profiles:profile_detail", kwargs={"gamer": self.gamer.pk}
         )
 
     def form_valid(self, form):
