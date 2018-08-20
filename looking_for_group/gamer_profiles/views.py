@@ -1215,6 +1215,40 @@ class CreateGamerNote(
         return super().form_valid(form)
 
 
+class UpdateGamerNote(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.UpdateView):
+    '''
+    Updating a specific gamer note.
+    '''
+
+    model = models.GamerNote
+    permission_required = "profile.delete_note"
+    pk_url_kwarg = 'gamernote'
+    context_object_name = 'gamernote'
+    select_related = ['gamer', 'gamer__user', 'author']
+    template_name = 'gamer_profiles/gamernote_update.html'
+    fields = ['title', 'body']
+
+    def dispatch(self, request, *args, **kwargs):
+        self.gamer = self.get_object().gamer
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:profile-detail', kwargs={'gamer': self.gamer.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['gamer'] = self.gamer
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _('Successfully updated note!'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Please correct the errors below.'))
+        return super().form_invalid(form)
+
+
 class RemoveGamerNote(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.DeleteView):
     '''
     Delete view for a gamer note.

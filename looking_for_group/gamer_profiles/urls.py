@@ -60,8 +60,21 @@ urlpatterns = [
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",
     ),
-    path("profiles/<uuid:gamer>/add_note/", view=views.CreateGamerNote.as_view(), name='add-gamer-note'),
-    path("profiles/<uuid:gamernote>/delete/", view=views.RemoveGamerNote.as_view(), name='delete-gamernote'),
+    path(
+        "profiles/<uuid:gamer>/add_note/",
+        view=views.CreateGamerNote.as_view(),
+        name="add-gamer-note",
+    ),
+    path(
+        "profiles/notes/<uuid:gamernote>/edit/",
+        view=views.UpdateGamerNote.as_view(),
+        name="edit-gamernote",
+    ),
+    path(
+        "profiles/notes/<uuid:gamernote>/delete/",
+        view=views.RemoveGamerNote.as_view(),
+        name="delete-gamernote",
+    ),
     path(
         "profiles/<uuid:gamer>/friend/",
         view=views.GamerFriendRequestView.as_view(),
@@ -107,10 +120,26 @@ urlpatterns = [
     ),
     path("profiles/mutes/", view=views.MyMuteList.as_view(), name="my-mute-list"),
     path("profiles/blocks/", view=views.BlockList.as_view(), name="my-block-list"),
-    path("profiles/<uuid:gamer>/block/", view=views.BlockGamer.as_view(), name='block-gamer'),
-    path("profiles/<uuid:gamer>/block/?next=<path:next>", view=views.BlockGamer.as_view(), name='block-gamer'),
-    path("profiles/blocks/<uuid:block>/unblock/", view=views.RemoveBlock.as_view(), name='unblock-gamer'),
-    path("profiles/blocks/<uuid:block>/unblock/?next=<path:next>", view=views.RemoveBlock.as_view(), name='unblock-gamer'),
+    path(
+        "profiles/<uuid:gamer>/block/",
+        view=views.BlockGamer.as_view(),
+        name="block-gamer",
+    ),
+    path(
+        "profiles/<uuid:gamer>/block/?next=<path:next>",
+        view=views.BlockGamer.as_view(),
+        name="block-gamer",
+    ),
+    path(
+        "profiles/blocks/<uuid:block>/unblock/",
+        view=views.RemoveBlock.as_view(),
+        name="unblock-gamer",
+    ),
+    path(
+        "profiles/blocks/<uuid:block>/unblock/?next=<path:next>",
+        view=views.RemoveBlock.as_view(),
+        name="unblock-gamer",
+    ),
     path(
         "me/applications/community/",
         view=views.CreateApplication.as_view(),
