@@ -89,7 +89,7 @@ urlpatterns = [
         "profiles/<uuid:gamer>/mute/", view=views.MuteGamer.as_view(), name="mute-gamer"
     ),
     path(
-        "profiles/<uuid:gamer>/mute/?next=<path:next>/",
+        "profiles/<uuid:gamer>/mute/?next=<path:next>",
         view=views.MuteGamer.as_view(),
         name="mute-gamer",
     ),
@@ -99,7 +99,7 @@ urlpatterns = [
         name="unmute-gamer",
     ),
     path(
-        "profiles/mutes/<uuid:mute>/unmute/?next=<path:next>/",
+        "profiles/mutes/<uuid:mute>/unmute/?next=<path:next>",
         view=views.RemoveMute.as_view(),
         name="unmute-gamer",
     ),

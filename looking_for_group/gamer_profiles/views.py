@@ -1352,27 +1352,29 @@ class RemoveMute(
     select_related = ["mutee"]
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.method != 'POST':
-            return HttpResponseNotAllowed(['POST'])
+        if request.user.is_authenticated and request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
-        redirect_url = urllib.parse.unquote(self.kwargs.pop('next', ''))
+        redirect_url = urllib.parse.unquote(self.kwargs.pop("next", ""))
         is_url_safe = is_safe_url(redirect_url, allowed_hosts=settings.ALLOWED_HOSTS)
         if redirect_url and is_url_safe:
             return urllib.request.quote(redirect_url)
-        return reverse_lazy('gamer_profiles:my-mute-list')
+        return reverse_lazy("gamer_profiles:my-mute-list")
 
     def form_valid(self, form):
-        messages.success(self.request, _('You have unmuted this user.'))
+        messages.success(self.request, _("You have unmuted this user."))
         return super().form_valid(form)
 
 
 class MyMuteList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
 
     model = models.MutedUser
-    select_related = ['mutee', 'mutee__user']
-    template_name = 'gamer_profiles/mute-list.html'
+    select_related = ["mutee", "mutee__user"]
+    template_name = "gamer_profiles/mute-list.html"
 
     def get_queryset(self):
-        return models.MutedUser.objects.filter(muter=self.request.user.gamerprofile).order_by('-created')
+        return models.MutedUser.objects.filter(
+            muter=self.request.user.gamerprofile
+        ).order_by("-created")
