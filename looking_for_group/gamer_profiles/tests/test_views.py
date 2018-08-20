@@ -610,6 +610,35 @@ class RejectApplicationTest(ApproveApplicationTest):
                 models.CommunityMembership.objects.get(community=self.community1, gamer=self.gamer3)
 
 
+class CommunityKickListTest(AbstractViewTest):
+    '''
+    Test viewing the list of kicked users from a given community.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.community1.add_member(self.gamer2)
+        self.community1.add_member(self.gamer3)
+        self.community1.kick_user(self.gamer1, self.gamer2, 'Bad apple')
+        self.community1.kick_user(self.gamer1, self.gamer3, 'Jerk', earliest_reapply=timezone.now()+timedelta(days=2))
+        self.view_str = "gamer_profiles:community-kick-list"
+        self.url_kwargs = {'community': self.community1.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            assert self.get_context('kick_list').count() == 1
+            assert self.get_context('expired_kicks').count() == 1
+
+
 class GamerProfileDetailTest(AbstractViewTest):
     '''
     Tests for viewing gamer profile.

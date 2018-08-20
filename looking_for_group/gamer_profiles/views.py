@@ -633,9 +633,10 @@ class CommunityKickedUserList(
     """
 
     model = models.KickedUser
-    select_related = ["kicked_user"]
+    select_related = ["kicked_user", 'kicker']
     template_name = "gamer_profiles/community_kicked_list.html"
     permission_required = "community.kick_user"
+    context_object_name = 'kick_list'
     paginate_by = 25
     ordering = ["-end_date", "-created"]
 
@@ -644,11 +645,19 @@ class CommunityKickedUserList(
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        expired_kicks = models.KickedUser.objects.filter(community=self.community, end_date__lt=timezone.now()).select_related('kicked_user', 'kicker')
+        nodate_kicks = models.KickedUser.objects.filter(community=self.community, end_date=None).select_related('kicked_user', 'kicker')
+        context['expired_kicks'] = expired_kicks.union(nodate_kicks).order_by('-created')
+        return context
+
     def get_permission_object(self):
         return self.community
 
     def get_queryset(self):
-        return self.model.objects.filter(community=self.community)
+        return self.model.objects.filter(community=self.community, end_date__gte=timezone.now()).order_by('-end_date', '-created')
 
 
 class CommunityBannedUserList(
@@ -850,13 +859,21 @@ class UpdateKickRecord(
     select_related = ["community", "kicked_user"]
     template_name = "gamer_profiles/kick_edit.html"
     fields = ["reason", "end_date"]
-    pk_url_kwarg = "kickfile"
+    context_object_name = 'kick'
+    pk_url_kwarg = "kick"
     permission_required = "community.kick_user"
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self):
+        self.object = super().get_object()
+        if not self.object.end_date or self.object.end_date < timezone.now():
+            messages.error(self.request, _('You cannot edit an expired suspension or kick.'))
+            raise PermissionDenied
+        return self.object
 
     def get_permission_object(self):
         return self.community
@@ -866,6 +883,34 @@ class UpdateKickRecord(
             "gamer_profiles:community-kicked-list",
             kwargs={"community": self.community.pk},
         )
+
+
+class DeleteKickRecord(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.DeleteView):
+    '''
+    Allows an admin to delete a kick record.
+    '''
+
+    model = models.KickedUser
+    select_related = ['community', 'kicked_user', 'kicker']
+    permission_required = 'community.kick_user'
+    template_name = 'gamer_profiles/kick_delete.html'
+    context_object_name = 'kick'
+    pk_url_kwarg = 'kick'
+
+    def dispatch(self, request, *args, **kwargs):
+        comm_pk = kwargs.pop("community", None)
+        self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:community-kicked-list', kwargs={'community': self.community.pk})
+
+    def get_permission_object(self):
+        return self.community
+
+    def form_valid(self, form):
+        messages.success(self.request, _('Suspension deleted.'))
+        return super().form_valid(form)
 
 
 class GamerProfileDetailView(

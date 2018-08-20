@@ -56,6 +56,21 @@ urlpatterns = [
         name="community-applicant-reject",
     ),
     path(
+        "communities/<uuid:community>/kicks/",
+        view=views.CommunityKickedUserList.as_view(),
+        name="community-kick-list",
+    ),
+    path(
+        "communities/<uuid:community>/kicks/<uuid:kick>/edit/",
+        view=views.UpdateKickRecord.as_view(),
+        name="community-kick-edit",
+    ),
+    path(
+        "communities/<uuid:community>/kicks/<uuid:kick>/delete/",
+        view=views.DeleteKickRecord.as_view(),
+        name="community-kick-delete",
+    ),
+    path(
         "profiles/<uuid:gamer>/",
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",
