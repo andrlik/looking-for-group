@@ -1179,7 +1179,7 @@ class GamerProfileUpdateView(
 
 
 class CreateGamerNote(
-    LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.CreateView
+    LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView
 ):
     """
     Add a note to a gamer profile.
@@ -1187,7 +1187,7 @@ class CreateGamerNote(
 
     model = models.GamerNote
     fields = ["title", "body"]
-    permission_required = "profile.view_details"
+    permission_required = "profile.view_detail"
     template_name = "gamer_profiles/gamernote_create.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -1199,9 +1199,14 @@ class CreateGamerNote(
     def get_permission_object(self):
         return self.gamer
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['gamer'] = self.gamer
+        return context
+
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:profile_detail", kwargs={"gamer": self.gamer.pk}
+            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.pk}
         )
 
     def form_valid(self, form):

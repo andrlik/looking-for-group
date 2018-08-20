@@ -994,3 +994,27 @@ class RemoveBlockTest(AbstractViewTest):
             assert 'profile' in self.last_response['location']
             with pytest.raises(ObjectDoesNotExist):
                 models.BlockedUser.objects.get(pk=self.block_record.pk)
+
+
+class CreateGamerNoteTest(AbstractViewTest):
+    '''
+    Test create view for gamer notes.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = 'gamer_profiles:add-gamer-note'
+        self.url_kwargs = {'gamer': self.gamer3.pk }
+        self.post_url_kwargs = {'gamer': self.gamer3.pk, 'data': {'title': 'Test note', 'body': 'Hi **there**!'}}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            assert models.GamerNote.objects.filter(gamer=self.gamer3).count() == 0
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            assert models.GamerNote.objects.filter(gamer=self.gamer3).count() == 0
+            self.post(self.view_str, **self.post_url_kwargs)
+            self.response_302()
+            assert models.GamerNote.objects.filter(gamer=self.gamer3).count() == 1
