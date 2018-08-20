@@ -1215,6 +1215,30 @@ class CreateGamerNote(
         return super().form_valid(form)
 
 
+class RemoveGamerNote(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.DeleteView):
+    '''
+    Delete view for a gamer note.
+    '''
+
+    model = models.GamerNote
+    permission_required = "profile.delete_note"
+    template_name = "gamer_profiles/gamernote_delete.html"
+    select_related = ['author', 'gamer']
+    context_object_name = 'gamernote'
+    pk_url_kwarg = 'gamernote'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.gamer = self.get_object().gamer
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:profile-detail', kwargs={'gamer': self.gamer.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, _('You have deleted the selected gamer note.'))
+        return super().form_valid(form)
+
+
 class RateGamer(
     LoginRequiredMixin,
     PermissionRequiredMixin,

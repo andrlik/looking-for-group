@@ -1018,3 +1018,35 @@ class CreateGamerNoteTest(AbstractViewTest):
             self.post(self.view_str, **self.post_url_kwargs)
             self.response_302()
             assert models.GamerNote.objects.filter(gamer=self.gamer3).count() == 1
+
+
+class DeleteGamerNoteTest(AbstractViewTest):
+    '''
+    Test deleting a gamer note.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.gn = models.GamerNote.objects.create(author=self.gamer1, gamer=self.gamer3, title='Test Note', body='Hi **there**!')
+        self.view_str = 'gamer_profiles:delete-gamernote'
+        self.url_kwargs = {'gamernote': self.gn.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+            assert models.GamerNote.objects.get(pk=self.gn.pk)
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_403()
+            assert models.GamerNote.objects.get(pk=self.gn.pk)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            with pytest.raises(ObjectDoesNotExist):
+                models.GamerNote.objects.get(pk=self.gn.pk)

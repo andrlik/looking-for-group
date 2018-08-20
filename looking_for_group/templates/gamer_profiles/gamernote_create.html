@@ -5,6 +5,7 @@
 <h1>{% blocktrans with gname=gamer.user.display_name %}Add note to {{ gname }}{% endblocktrans %}</h1>
 
 <form action="" method="post">
+  {% csrf_token %}
   {{ form|as_foundation }}
   <p><a href="{{ gamer.get_absolute_url }}"><button class="primary button">{% trans "Go Back" %}</button></a>    <button type="submit" class="button success">{% trans "Save Note" %}</button></p>
 </form>
