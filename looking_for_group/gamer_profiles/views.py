@@ -1244,14 +1244,19 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
     """
 
     model = models.BlockedUser
-    form_class = BlankDistructiveForm
-    template_name = "gamer_profiles/block_gamer.html"
+    fields = []
 
     def dispatch(self, request, *args, **kwargs):
-        self.gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop("profile"))
+        if request.user.is_authenticated and request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        self.gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop("gamer"))
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
+        next_url = self.kwargs.pop("next", "")
+        url_is_safe = is_safe_url(next_url, settings.ALLOWED_HOSTS)
+        if next_url and url_is_safe:
+            return next_url
         return reverse_lazy(
             "gamer_profiles:profile-detail", kwargs={"profile": self.gamer.pk}
         )
@@ -1262,15 +1267,17 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
         )
         if created:
             messages.success(
+                self.request,
                 _(
                     "You have successfully blocked {}".format(
                         self.gamer.user.display_name
                     )
-                )
+                ),
             )
         else:
             messages.error(
-                _("You have already blocked {}".format(self.gamer.user.display_name))
+                self.request,
+                _("You have already blocked {}".format(self.gamer.user.display_name)),
             )
         return HttpResponseRedirect(self.get_success_url())
 
@@ -1287,9 +1294,42 @@ class RemoveBlock(
 
     model = models.BlockedUser
     pk_url_kwarg = "block"
-    template_name = "gamer_profiles/block_delete.html"
     permission_required = "profile.remove_block"
     select_related = ["blockee"]
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        redirect_url = self.kwargs.pop("next", "")
+        url_is_safe = is_safe_url(redirect_url, settings.ALLOWED_HOSTS)
+        if redirect_url and url_is_safe:
+            return redirect_url
+        return reverse_lazy("my-block-list")
+
+    def form_valid(self, form):
+        messages.success(
+            self.request,
+            _("You have unblocked {}".format(self.get_object().blockee.user.username)),
+        )
+        return super().form_valid(form)
+
+
+class BlockList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
+    """
+    View existing blocks.
+    """
+
+    model = models.BlockedUser
+    template_name = "gamer_profiles/block_list.html"
+    select_related = ["blockee"]
+
+    def get_queryset(self):
+        return models.BlockedUser.objects.filter(
+            blocker=self.request.user.gamerprofile
+        ).order_by("-created")
 
 
 class MuteGamer(LoginRequiredMixin, generic.CreateView):

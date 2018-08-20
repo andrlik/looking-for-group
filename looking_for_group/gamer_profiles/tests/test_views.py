@@ -931,3 +931,66 @@ class RemoveMuteTest(AbstractViewTest):
             assert 'profile' in self.last_response['location']
             with pytest.raises(ObjectDoesNotExist):
                 models.MutedUser.objects.get(pk=self.mute_record.pk)
+
+
+class BlockGamerTest(AbstractViewTest):
+    '''
+    A post only method to block a gamer. If arg 'next' is provided,
+    will redirect to that, otherwise goes to target's profile page.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = 'gamer_profiles:block-gamer'
+        self.url_kwargs = {'gamer': self.gamer3.pk, 'next': reverse('gamer_profiles:my-community-list')}
+
+    def test_login_required(self):
+        self.get(self.view_str, **self.url_kwargs)
+        self.response_302()
+        assert 'accounts/login' in self.last_response['location']
+
+    def test_auth_user(self):
+        assert models.BlockedUser.objects.filter(blocker=self.gamer1, blockee=self.gamer3).count() == 0
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert 'communities' in self.last_response['location']
+            assert models.BlockedUser.objects.filter(blocker=self.gamer1, blockee=self.gamer3).count() == 1
+
+
+class RemoveBlockTest(AbstractViewTest):
+    '''
+    Only the person who created a given block record can remove it.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.block_record = models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer3)
+        self.view_str = 'gamer_profiles:unblock-gamer'
+        self.url_kwargs = {'block': self.block_record.pk, 'next': reverse('gamer_profiles:profile-detail', kwargs={'gamer': self.block_record.blockee.pk})}
+        print(reverse(self.view_str, kwargs=self.url_kwargs))
+
+    def test_login_required(self):
+        self.get(self.view_str, **self.url_kwargs)
+        self.response_302()
+        assert 'accounts/login' in self.last_response['location']
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_403()
+            assert models.BlockedUser.objects.get(pk=self.block_record.pk)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_405()
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            assert 'profile' in self.last_response['location']
+            with pytest.raises(ObjectDoesNotExist):
+                models.BlockedUser.objects.get(pk=self.block_record.pk)

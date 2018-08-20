@@ -104,6 +104,11 @@ urlpatterns = [
         name="unmute-gamer",
     ),
     path("profiles/mutes/", view=views.MyMuteList.as_view(), name="my-mute-list"),
+    path("profiles/blocks/", view=views.BlockList.as_view(), name="my-block-list"),
+    path("profiles/<uuid:gamer>/block/", view=views.BlockGamer.as_view(), name='block-gamer'),
+    path("profiles/<uuid:gamer>/block/?next=<path:next>", view=views.BlockGamer.as_view(), name='block-gamer'),
+    path("profiles/blocks/<uuid:block>/unblock/", view=views.RemoveBlock.as_view(), name='unblock-gamer'),
+    path("profiles/blocks/<uuid:block>/unblock/?next=<path:next>", view=views.RemoveBlock.as_view(), name='unblock-gamer'),
     path(
         "me/applications/community/",
         view=views.CreateApplication.as_view(),
