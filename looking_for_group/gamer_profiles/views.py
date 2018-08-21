@@ -845,7 +845,7 @@ class CommunityKickUser(
         )
 
     def get_permission_object(self):
-        return self.community
+        return self.get_object().community
 
     def has_permission(self):
         if (
@@ -900,7 +900,7 @@ class UpdateKickRecord(
 
     model = models.KickedUser
     select_related = ["community", "kicked_user"]
-    template_name = "gamer_profiles/kick_edit.html"
+    template_name = "gamer_profiles/community_kick_edit.html"
     fields = ["reason", "end_date"]
     context_object_name = 'kick'
     pk_url_kwarg = "kick"
@@ -911,19 +911,25 @@ class UpdateKickRecord(
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
+
     def get_object(self):
-        self.object = super().get_object()
-        if not self.object.end_date or self.object.end_date < timezone.now():
-            messages.error(self.request, _('You cannot edit an expired suspension or kick.'))
-            raise PermissionDenied
+        if not hasattr(self, 'object'):
+            self.object = super().get_object()
+            if not self.object.end_date or self.object.end_date < timezone.now():
+                messages.error(self.request, _('You cannot edit an expired suspension or kick.'))
+                raise PermissionDenied
         return self.object
 
     def get_permission_object(self):
-        return self.community
+        return self.get_object().community
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-kicked-list",
+            "gamer_profiles:community-kick-list",
             kwargs={"community": self.community.pk},
         )
 
@@ -936,7 +942,7 @@ class DeleteKickRecord(LoginRequiredMixin, PermissionRequiredMixin, SelectRelate
     model = models.KickedUser
     select_related = ['community', 'kicked_user', 'kicker']
     permission_required = 'community.kick_user'
-    template_name = 'gamer_profiles/kick_delete.html'
+    template_name = 'gamer_profiles/community_kick_delete.html'
     context_object_name = 'kick'
     pk_url_kwarg = 'kick'
 
@@ -945,11 +951,16 @@ class DeleteKickRecord(LoginRequiredMixin, PermissionRequiredMixin, SelectRelate
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
+
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:community-kicked-list', kwargs={'community': self.community.pk})
+        return reverse_lazy('gamer_profiles:community-kick-list', kwargs={'community': self.community.pk})
 
     def get_permission_object(self):
-        return self.community
+        return self.get_object().community
 
     def form_valid(self, form):
         messages.success(self.request, _('Suspension deleted.'))

@@ -619,8 +619,8 @@ class CommunityKickListTest(AbstractViewTest):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.community1.add_member(self.gamer3)
-        self.community1.kick_user(self.gamer1, self.gamer2, 'Bad apple')
-        self.community1.kick_user(self.gamer1, self.gamer3, 'Jerk', earliest_reapply=timezone.now()+timedelta(days=2))
+        self.bad_kick = self.community1.kick_user(self.gamer1, self.gamer2, 'Bad apple')
+        self.good_kick = self.community1.kick_user(self.gamer1, self.gamer3, 'Jerk', earliest_reapply=timezone.now()+timedelta(days=2))
         self.view_str = "gamer_profiles:community-kick-list"
         self.url_kwargs = {'community': self.community1.pk}
 
@@ -637,6 +637,82 @@ class CommunityKickListTest(AbstractViewTest):
             self.assertGoodView(self.view_str, **self.url_kwargs)
             assert self.get_context('kick_list').count() == 1
             assert self.get_context('expired_kicks').count() == 1
+
+
+class CommunityUpdateKickTest(CommunityKickListTest):
+    '''
+    Test attempts to update a kick record.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = "gamer_profiles:community-kick-edit"
+        self.url_kwargs = {'community': self.community1.pk, 'kick': self.good_kick.pk}
+        self.bad_url_kwargs = {'community': self.community1.pk, 'kick': self.bad_kick.pk}
+        self.bad_comm_url_kwargs = {'community': self.community2.pk, 'kick': self.good_kick.pk}
+        self.bad_post_data = {'gamer': self.gamer2.pk}
+        self.good_post_data = {'reason': 'Posting adult games without CW', 'end_date': self.good_kick.end_date.strftime('%Y-%m-%d %H:%M')}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+            self.get(self.view_str, **self.bad_comm_url_kwargs)
+            self.response_403()
+            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
+            self.response_403()
+            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Jerk'
+            self.post(self.view_str, data=self.good_post_data, **self.bad_comm_url_kwargs)
+            self.response_403()
+            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Jerk'
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
+            self.response_200()
+            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Jerk'
+            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
+            self.response_302()
+            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Posting adult games without CW'
+
+    def test_authorized_user_with_expired_kick(self):
+        with self.login(username=self.gamer1.user.username):
+            self.get(self.view_str, **self.bad_url_kwargs)
+            self.response_403()
+            self.post(self.view_str, data=self.good_post_data, **self.bad_url_kwargs)
+            self.response_403()
+            assert models.KickedUser.objects.get(pk=self.bad_kick.pk).reason == 'Bad apple'
+
+
+class KickDeleteTest(CommunityUpdateKickTest):
+    '''
+    Only authorized users should be able to delete a kick.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = 'gamer_profiles:community-kick-delete'
+        self.url_kwargs = {'community': self.community1.pk, 'kick': self.good_kick.pk}
+        self.bad_comm_url_kwargs = {'community': self.community2.pk, 'kick': self.good_kick.pk}
+        self.good_post_data = {} # Allows us to reuse methods from CommunityUpdateKickTest
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            with pytest.raises(ObjectDoesNotExist):
+                models.KickedUser.objects.get(pk=self.good_kick.pk)
+
+    def test_authorized_user_with_expired_kick(self):
+        '''
+        Not valid for this test.
+        '''
+        pass
 
 
 class GamerProfileDetailTest(AbstractViewTest):
