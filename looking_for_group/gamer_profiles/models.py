@@ -435,14 +435,6 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     def display_name(self):
         return self.user.display_name
 
-    @cached_property
-    def username(self):
-        return self.user.username
-
-    @cached_property
-    def display_name(self):
-        return self.user.display_name
-
     def blocked_by(self, gamer):
         '''
         Check to see if self is blocked by indicated gamer.
