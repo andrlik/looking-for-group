@@ -798,7 +798,7 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
         comm_pk = self.kwargs.pop("community", None)
         gamer_pk = self.kwargs.pop("gamer")
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
-        self.gamer = get_object_or_404(models.GamerProfile, pk=gamer_pk)
+        self.gamer = get_object_or_404(models.GamerProfile, username=gamer_pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
@@ -875,7 +875,7 @@ class CommunityKickUser(
         comm_pk = kwargs.pop("community", None)
         gamer_pk = kwargs.pop("gamer")
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
-        self.gamer = get_object_or_404(models.GamerProfile, pk=gamer_pk)
+        self.gamer = get_object_or_404(models.GamerProfile, username=gamer_pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1042,7 +1042,8 @@ class GamerProfileDetailView(
     select_related = ["user"]
     prefetch_related = ["communities"]
     context_object_name = "gamer"
-    pk_url_kwarg = "gamer"
+    slug_url_kwarg = "gamer"
+    slug_field = 'username'
     permission_required = "profile.view_detail"
     template_name = "gamer_profiles/profile_detail.html"
 
@@ -1072,7 +1073,7 @@ class GamerProfileDetailView(
                 return HttpResponseRedirect(
                     reverse_lazy(
                         "gamer_profiles:gamer-friend",
-                        kwargs={"gamer": self.get_object().pk},
+                        kwargs={"gamer": self.get_object().username},
                     )
                 )
         return super().handle_no_permission()
@@ -1093,7 +1094,7 @@ class GamerFriendRequestView(
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             self.target_gamer = get_object_or_404(
-                models.GamerProfile, pk=kwargs.pop("gamer", None)
+                models.GamerProfile, username=kwargs.pop("gamer", None)
             )
             self.requestor = request.user.gamerprofile
             if self.requestor in self.target_gamer.friends.all():
@@ -1111,7 +1112,7 @@ class GamerFriendRequestView(
                 return HttpResponseRedirect(
                     reverse_lazy(
                         "gamer_profiles:profile-detail",
-                        kwargs={"gamer": self.target_gamer.pk},
+                        kwargs={"gamer": self.target_gamer.username},
                     )
                 )
         return super().dispatch(request, *args, **kwargs)
@@ -1175,7 +1176,7 @@ class GamerFriendRequestView(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:gamer-friend", kwargs={"gamer": self.target_gamer.pk}
+            "gamer_profiles:gamer-friend", kwargs={"gamer": self.target_gamer.username}
         )
 
     def form_valid(self, form):
@@ -1208,12 +1209,12 @@ class GamerFriendRequestWithdraw(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:gamer-friend", kwargs={"gamer": self.object.recipient.pk}
+            "gamer_profiles:gamer-friend", kwargs={"gamer": self.object.recipient.username}
         )
 
     def form_valid(self, form):
         self.success_url = reverse_lazy(
-            "gamer_profiles:gamer-friend", kwargs={"gamer": self.object.recipient.pk}
+            "gamer_profiles:gamer-friend", kwargs={"gamer": self.object.recipient.username}
         )
         messages.success(self.request, _("Friend request withdrawn."))
         return super().form_valid(form)
@@ -1349,7 +1350,7 @@ class CreateGamerNote(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
     template_name = "gamer_profiles/gamernote_create.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.gamer = get_object_or_404(models.GamerProfile, pk=self.kwargs.pop("gamer"))
+        self.gamer = get_object_or_404(models.GamerProfile, username=self.kwargs.pop("gamer"))
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
@@ -1362,7 +1363,7 @@ class CreateGamerNote(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.pk}
+            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.username}
         )
 
     def form_valid(self, form):
@@ -1395,7 +1396,7 @@ class UpdateGamerNote(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.pk}
+            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.username}
         )
 
     def get_context_data(self, **kwargs):
@@ -1435,7 +1436,7 @@ class RemoveGamerNote(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.pk}
+            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.username}
         )
 
     def form_valid(self, form):
@@ -1460,7 +1461,7 @@ class RateGamer(
     fields = ["rating"]
 
     def dispatch(self, request, *args, **kwargs):
-        self.gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop("profile"))
+        self.gamer = get_object_or_404(models.GamerProfile, username=kwargs.pop("profile"))
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
@@ -1483,7 +1484,7 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.method != "POST":
             return HttpResponseNotAllowed(["POST"])
-        self.gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop("gamer"))
+        self.gamer = get_object_or_404(models.GamerProfile, username=kwargs.pop("gamer"))
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
@@ -1492,7 +1493,7 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
         if next_url and url_is_safe:
             return next_url
         return reverse_lazy(
-            "gamer_profiles:profile-detail", kwargs={"profile": self.gamer.pk}
+            "gamer_profiles:profile-detail", kwargs={"profile": self.gamer.username}
         )
 
     def form_valid(self, form):
@@ -1575,7 +1576,7 @@ class MuteGamer(LoginRequiredMixin, generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.method != "POST":
             return HttpResponseNotAllowed(["POST"])
-        self.gamer = get_object_or_404(models.GamerProfile, pk=kwargs.pop("gamer", ""))
+        self.gamer = get_object_or_404(models.GamerProfile, username=kwargs.pop("gamer", ""))
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
