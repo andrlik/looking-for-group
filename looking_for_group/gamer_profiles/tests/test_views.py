@@ -684,8 +684,8 @@ class CommunityKickUserTest(AbstractViewTest):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.view_str = "gamer_profiles:community-kick-gamer"
-        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.pk}
-        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.pk}
+        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.username}
+        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.username}
         self.post_data = {
             "reason": "Jerk",
             "end_date": (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%d %H:%M"),
@@ -863,8 +863,8 @@ class CommunityBanUserTest(AbstractViewTest):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.view_str = "gamer_profiles:community-ban-gamer"
-        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.pk}
-        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.pk}
+        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.username}
+        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.username}
         self.post_data = {"reason": "Jerk"}
         self.bad_post_data = {}
 
@@ -1001,14 +1001,14 @@ class GamerProfileDetailTest(AbstractViewTest):
         models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
         self.gamer_public = factories.GamerProfileFactory(private=False)
         self.view_str = "gamer_profiles:profile-detail"
-        self.url_kwargs = {"gamer": self.gamer1.pk}
+        self.url_kwargs = {"gamer": self.gamer1.username}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
 
     def test_public_profile(self):
         with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_str, gamer=self.gamer_public.pk)
+            self.assertGoodView(self.view_str, gamer=self.gamer_public.username)
 
     def test_private_but_stranger(self):
         """
@@ -1079,7 +1079,7 @@ class GamerFriendRequestTest(AbstractViewTest):
         models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
         self.gamer_public = factories.GamerProfileFactory(private=False)
         self.view_str = "gamer_profiles:gamer-friend"
-        self.url_kwargs = {"gamer": self.gamer1.pk}
+        self.url_kwargs = {"gamer": self.gamer1.username}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -1305,7 +1305,7 @@ class MuteGamerTest(AbstractViewTest):
         super().setUp()
         self.view_str = "gamer_profiles:mute-gamer"
         self.url_kwargs = {
-            "gamer": self.gamer3.pk,
+            "gamer": self.gamer3.username,
             "next": reverse("gamer_profiles:my-community-list"),
         }
 
@@ -1389,7 +1389,7 @@ class BlockGamerTest(AbstractViewTest):
         super().setUp()
         self.view_str = "gamer_profiles:block-gamer"
         self.url_kwargs = {
-            "gamer": self.gamer3.pk,
+            "gamer": self.gamer3.username,
             "next": reverse("gamer_profiles:my-community-list"),
         }
 
@@ -1471,9 +1471,9 @@ class CreateGamerNoteTest(AbstractViewTest):
     def setUp(self):
         super().setUp()
         self.view_str = "gamer_profiles:add-gamer-note"
-        self.url_kwargs = {"gamer": self.gamer3.pk}
+        self.url_kwargs = {"gamer": self.gamer3.username}
         self.post_url_kwargs = {
-            "gamer": self.gamer3.pk,
+            "gamer": self.gamer3.username,
             "data": {"title": "Test note", "body": "Hi **there**!"},
         }
 
