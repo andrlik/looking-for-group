@@ -1,9 +1,11 @@
 import pytest
+import factory.django
 from django.db import transaction
+from django.db.models.signals import post_save
 from django.core.exceptions import PermissionDenied
 from test_plus import TestCase
-from ..models import NotInCommunity, AlreadyInCommunity, CommunityMembership, KickedUser, BannedUser
-from .factories import GamerProfileWithCommunityFactory, GamerProfileFactory
+from ..models import NotInCommunity, AlreadyInCommunity, CommunityMembership, KickedUser, BannedUser, GamerFriendRequest
+from .factories import GamerProfileWithCommunityFactory, GamerProfileFactory, GamerCommunityFactory
 
 
 class FactoryTests(TestCase):
@@ -12,10 +14,20 @@ class FactoryTests(TestCase):
     """
 
     def setUp(self):
-        self.gamer = GamerProfileWithCommunityFactory()
+        with factory.django.mute_signals(post_save):
+            self.gamer = GamerProfileWithCommunityFactory()
+            self.gamer2 = GamerProfileFactory()
+            print(self.gamer.user.display_name)
+            print(self.gamer2.user.display_name)
 
     def test_factory_results(self):
         assert self.gamer.communities.count() == 1
+
+    def test_user_created(self):
+        assert self.gamer.user
+
+    def test_user_without_community(self):
+        assert self.gamer2.user
 
 
 class CommunityFunctionTests(TestCase):
@@ -24,9 +36,13 @@ class CommunityFunctionTests(TestCase):
     """
 
     def setUp(self):
-        self.gamer = GamerProfileWithCommunityFactory()
-        self.community = self.gamer.communities.all()[0]
+        self.gamer = GamerProfileFactory()
+        self.community = GamerCommunityFactory(owner=GamerProfileFactory())
+        self.community.add_member(self.gamer)
+        self.community.refresh_from_db()
         self.gamer2 = GamerProfileFactory()
+        print(self.gamer.user.display_name)
+        print(self.gamer2.user.display_name)
 
     def test_community_role(self):
         assert self.gamer.get_role(self.community) == "Member"
@@ -45,18 +61,20 @@ class CommunityFunctionTests(TestCase):
             self.community.get_role(self.gamer2)
 
     def test_add_to_community(self):
-        assert self.community.member_count == 1
+        assert self.community.member_count == 2
         with transaction.atomic():
             with pytest.raises(AlreadyInCommunity):
                 self.community.add_member(self.gamer)
         self.community.add_member(self.gamer2)
-        assert self.community.member_count == 2
+        self.community.refresh_from_db()
+        assert self.community.member_count == 3
 
     def test_remove_member(self):
         with pytest.raises(NotInCommunity):
             self.community.remove_member(self.gamer2)
         self.community.remove_member(self.gamer)
-        assert self.community.member_count == 0
+        self.community.refresh_from_db()
+        assert self.community.member_count == 1
 
     def test_set_role(self):
         assert self.gamer.get_role(self.community) == "Member"
@@ -72,20 +90,21 @@ class CommunityFunctionTests(TestCase):
     def test_member_list(self):
         self.community.add_member(self.gamer2)
         members = self.community.get_members()
-        assert len(members) == 2
-        user_list = [self.gamer.pk, self.gamer2.pk]
+        assert len(members) == 3
+        user_list = [self.community.owner.pk, self.gamer.pk, self.gamer2.pk]
         for member in members:
             assert member.gamer.pk in user_list
 
     def test_admin_list(self):
         self.community.add_member(self.gamer2)
+        self.community.refresh_from_db()
         self.community.set_role(self.gamer, role="admin")
-        assert self.community.member_count == 2
-        assert self.community.get_admins().count() == 1
-        assert self.community.get_admins()[0].gamer == self.gamer
+        assert self.community.member_count == 3
+        assert self.community.get_admins().count() == 2
 
     def test_moderator_list(self):
         self.community.add_member(self.gamer2, role='moderator')
+        self.community.refresh_from_db()
         mods = self.community.get_moderators()
         assert mods.count() == 1
         assert mods[0].gamer == self.gamer2
@@ -96,7 +115,8 @@ class CommunityFunctionTests(TestCase):
         '''
         self.community.add_member(self.gamer2, role='admin')
         self.community.kick_user(self.gamer2, self.gamer, 'Self promotion.')
-        assert self.community.member_count == 1
+        self.community.refresh_from_db()
+        assert self.community.member_count == 2
         assert CommunityMembership.objects.filter(gamer=self.gamer).count() == 0
         assert KickedUser.objects.all().count() == 1
         assert KickedUser.objects.all()[0].kicked_user == self.gamer
@@ -114,7 +134,8 @@ class CommunityFunctionTests(TestCase):
     def test_ban_user(self):
         self.community.add_member(self.gamer2, role='admin')
         self.community.ban_user(self.gamer2, self.gamer, 'SPAM and harassment')
-        assert self.community.member_count == 1
+        self.community.refresh_from_db()
+        assert self.community.member_count == 2
         assert CommunityMembership.objects.filter(gamer=self.gamer).count() == 0
         assert BannedUser.objects.all().count() == 1
         assert BannedUser.objects.all()[0].banned_user == self.gamer
@@ -128,3 +149,36 @@ class CommunityFunctionTests(TestCase):
         self.community.add_member(self.gamer2)
         with pytest.raises(PermissionDenied):
             self.community.ban_user(self.gamer2, self.gamer, 'Revenge!')
+
+
+class TestFriendships(TestCase):
+    '''
+    Test friend requests for other users.
+    '''
+
+    def setUp(self):
+        self.gamer1 = GamerProfileFactory()
+        self.gamer2 = GamerProfileFactory()
+
+    def test_friend_requests_check(self):
+        assert self.gamer1.friend_requests_received.count() == 0
+        assert self.gamer1.friend_requests_sent.count() == 0
+        req = GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2)
+        assert req.status == 'new'
+        assert self.gamer1.friend_requests_sent.count() == 1
+        assert self.gamer2.friend_requests_received.count() == 1
+
+    def test_accept_friend_request(self):
+        assert self.gamer1.friends.count() == self.gamer2.friends.count() and self.gamer1.friends.count() == 0
+        req = GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2)
+        req.accept()
+        assert self.gamer1.friends.all().count() == 1
+        assert self.gamer1.friends.all()[0] == self.gamer2
+        assert self.gamer2.friends.all().count() == 1
+        assert GamerFriendRequest.objects.get(pk=req.pk).status == 'accept'
+
+    def test_reject_friendship(self):
+        req = GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2)
+        req.deny()
+        assert self.gamer1.friends.count() == 0
+        assert GamerFriendRequest.objects.get(pk=req.pk).status == 'reject'

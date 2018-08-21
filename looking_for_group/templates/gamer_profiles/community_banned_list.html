@@ -1,0 +1,36 @@
+{% extends "gamer_profiles/base.html" %}
+{% load avatar_tags i18n humanize foundation_formtags %}
+{% block subtitle %}{% trans "Banned gamers for " %} {{ community.name }} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans %}Banned gamers for {{ community.name }}?{% endblocktrans %}</h1>
+<span class="meta">{% blocktrans count counter=ban_list.count %}One active ban{% plural %}{{ counter }} active bans.{% endblocktrans %}</span>
+    {% if ban_list %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Gamer" %}</th>
+          <th>{% trans "Banned at" %}</th>
+          <th>{% trans "Banned by" %}</th>
+          <th>{% trans "Reason" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ban in ban_list %}
+        <tr>
+          <td>{% avatar ban.banned_user.user 20 %} {{ ban.banned_user.user.display_name }} ({{ ban.banned_user.user.username }})</td>
+          <td>{{ ban.created }}</td>
+          <td><a href="{{ ban.banner.get_absolute_url }}">{% avatar ban.banner.user 20 %} {{ ban.banner.user.display_name }} ({{ ban.banner.user.username }})</a></td>
+          <td>{{ ban.reason }}</td>
+          <td>{{ ban.end_date }}</td>
+          <td><a href="{% url 'gamer_profiles:community-ban-edit' community=community.pk ban=ban.pk %}"><button class="button primary">{% trans "Edit" %}</button></a></td>
+          <td><a href="{% url 'gamer_profiles:community-ban-delete' community=community.pk ban=ban.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "There are no active bans from this community." %}</p>
+    {% endif %}
+{% endblock %}

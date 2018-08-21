@@ -1,0 +1,14 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize foundation_formtags %}
+{% block subtitle %}{% trans "Delete note" %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with gname=gamernote.gamer.user.display_name %}Delete note regarding {{ gname }}?{% endblocktrans %}</h1>
+<h2>{% trans "Are you sure?" %}</h2>
+<p>{% blocktrans %}Proceeding will delete this note permanently.{% endblocktrans %}</p>
+<form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <a href="{% url 'gamer_profiles:profile-detail' gamer=gamernote.gamer.pk %}"><button>Go Back</button></a> <button type="submit">{% trans "Delete Note" %}</button>
+</form>
+
+{% endblock %}

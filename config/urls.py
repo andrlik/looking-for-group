@@ -14,11 +14,13 @@ urlpatterns = [
     ),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
+    path('{}doc/'.format(settings.ADMIN_URL), include('django.contrib.admindocs.urls')),
     # User management
     path("users/", include("looking_for_group.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     path("catalog/", include("looking_for_group.game_catalog.urls")),
+    path("social/", include("looking_for_group.gamer_profiles.urls")),
     path("api-auth/", include('rest_framework.urls')),
     path("api/", include(router.urls)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,13 @@
+{% extends "gamer_profiles/base.html" %}
+{% load avatar_tags i18n humanize foundation_formtags %}
+{% block subtitle %}{% trans "Edit note about" %} {{ gamernote.gamer.user.display_name }} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with gname=gamernote.gamer.user.display_name %}Edit note about {{ gname }}{% endblocktrans %}</h1>
+
+<form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <p><a href="{{ gamernote.gamer.get_absolute_url }}"><button class="primary button">{% trans "Go Back" %}</button></a>    <button type="submit" class="button success">{% trans "Save Note" %}</button></p>
+</form>
+
+{% endblock %}

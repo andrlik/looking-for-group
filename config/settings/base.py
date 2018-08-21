@@ -64,11 +64,13 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
+    "django.contrib.admindocs",
 ]
 
 THIRD_PARTY_APPS = [
     "foundation_formtags",  # Form layouts
-    "cookielaw",
+#    "django_extensions",
+    # "cookielaw",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -82,8 +84,8 @@ THIRD_PARTY_APPS = [
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
-    "looking_for_group.game_catalog",
-    "looking_for_group.gamer_profiles",
+    "looking_for_group.game_catalog.apps.GameCatalogConfig",
+    "looking_for_group.gamer_profiles.apps.GamerProfilesConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

@@ -43,6 +43,8 @@ django-filter = "*"
 markdown = "*"
 django-taggit-serializer = "*"
 django-rest-framework-rules = "*"
+bleach = "*"
+bleach-whitelist = "*"
 
 
 [dev-packages]
@@ -67,4 +69,4 @@ pytest-django = "*"
 
 [requires]
 
-python_version = "3.6"
+python_version = "3.7"

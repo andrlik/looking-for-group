@@ -1,0 +1,20 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize %}
+{% block subtitle %}{% trans "Friend" %}{{ target_gamer.user.display_name }} ? - {% endblock %}
+{% block content %}
+<h1>{% trans "Send a friend request to" %} {{ target_gamer.user.display_name }}?</h1>
+{% if pending_request %}
+<p>{% trans "You have a pending friend request for this user." %}</p>
+<form action="{% url 'gamer_profiles:gamer-friend-request-delete' friend_request=pending_request.pk %}" method="POST">
+  {% csrf_token %}
+  <p>{% trans "Would you like to withdraw your friend request?" %}</p>
+  <button class="alert button" type="submit">{% trans "Withdraw request" %}</button>
+</form>
+{% else %}
+<p>{% trans "Send a friend request to" %} {{ target_gamer.user.display_name }}?</p>
+<form action="" method="POST">
+  {% csrf_token %}
+  <button class="success button" type="submit">{% trans "Send Request" %}</button>
+</form>
+{% endif %}
+{% endblock %}

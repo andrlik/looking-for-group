@@ -1,0 +1,18 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize social_tags %}
+{% block subtitle %}{% trans "My Communities" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "My Communities" %}</h1>
+
+<ul>
+  {% for membership in object_list %}
+  <li>
+<h2><a href="{{ membership.community.get_absolute_url }}">{{ membership.community.name }}</a>{% community_role_flag membership.community %}</h2>
+<span class="meta">{% if membership.community.private %}<span class="privacy-flag">{% trans "Private" %}</span>{% endif %} {% blocktrans count counter=membership.community.member_count %}1 Member{% plural %} {{ counter|humanize }} Members{% endblocktrans %}</span>
+<p>{{ membership.community.description_rendered|truncatewords_html:100|safe }}</p>
+  </li>
+{% empty %}
+<p>{% trans "You do not belong to any communities yet." %}</p>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -1,4 +1,6 @@
 from django.db import models, transaction, IntegrityError
+from django.db.models import F
+from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -18,10 +20,28 @@ class NotInCommunity(Exception):
 
 
 class AlreadyInCommunity(Exception):
-    '''
+    """
     Raised when you try to add a gamer to a community
     that they already belong to.
-    '''
+    """
+
+    pass
+
+
+class CurrentlySuspended(Exception):
+    """
+    Raised when you try to add a gamer to a community (either explicitly or by approving an application)
+    when they are currently suspended via Kick.
+    """
+
+    pass
+
+
+class CurrentlyBanned(Exception):
+    """
+    Raised when you try to validate an application or add a user to a community from which they are banned.
+    """
+
     pass
 
 
@@ -43,6 +63,13 @@ APPLICATION_STATUSES = (
 )
 
 
+FRIEND_REQUEST_STATUSES = (
+    ("new", _("Pending")),
+    ("accept", _("Accepted")),
+    ("reject", _("Rejected")),
+)
+
+
 COMMUNITY_ROLES = (
     ("member", _("Member")),
     ("moderator", _("Moderator")),
@@ -56,6 +83,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     name = models.CharField(max_length=255, help_text=_("Community Name"))
+    owner = models.ForeignKey("GamerProfile", on_delete=models.CASCADE)
     description = models.TextField(
         null=True,
         blank=True,
@@ -98,15 +126,17 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             "What is the minimum role level required to invite others to the community?"
         ),
     )
+    member_count = models.PositiveIntegerField(
+        default=0, help_text=_("Current total count of members.")
+    )
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("gamer_profiles:community_detail", kwargs={"community": self.pk})
+        return reverse("gamer_profiles:community-detail", kwargs={"community": self.pk})
 
-    @property
-    def member_count(self):
+    def get_member_count(self):
         return self.members.count()
 
     def get_admins(self):
@@ -137,24 +167,34 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             raise NotInCommunity
         return role_obj.get_community_role_display()
 
-    def add_member(self, gamer, role='member'):
-        '''
+    def add_member(self, gamer, role="member"):
+        """
         Adds a gamer to the community directly.
-        '''
+        """
         try:
-            membership = CommunityMembership.objects.create(community=self, gamer=gamer, community_role=role)
+            with transaction.atomic():
+                membership = CommunityMembership.objects.create(
+                    community=self, gamer=gamer, community_role=role
+                )
+                self.member_count = F("member_count") + 1
+                self.save()
         except IntegrityError:
             raise AlreadyInCommunity
         return membership
 
     def remove_member(self, gamer):
-        '''
+        """
         Removes a gamer from the community, but not
         from any games they already are playing.
-        '''
+        """
         try:
-            membership = CommunityMembership.objects.get(community=self, gamer=gamer)
-            membership.delete()
+            with transaction.atomic():
+                membership = CommunityMembership.objects.get(
+                    community=self, gamer=gamer
+                )
+                membership.delete()
+                self.member_count = F("member_count") - 1
+                self.save()
         except ObjectDoesNotExist:
             raise NotInCommunity
 
@@ -174,10 +214,8 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         """
         if not kicker.user.has_perm("community.kick_user", self):
             raise PermissionDenied
-        try:
-            membership = CommunityMembership.objects.get(gamer=gamer, community=self)
-        except ObjectDoesNotExist:
-            raise NotInCommunity
+        if self.owner == gamer:
+            raise PermissionDenied(_("You cannot kick the owner of a community out."))
         with transaction.atomic():
             kick_file = KickedUser.objects.create(
                 community=self,
@@ -186,7 +224,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
                 reason=reason,
                 end_date=earliest_reapply,
             )
-            membership.delete()
+            self.remove_member(gamer)
         return kick_file
 
     def ban_user(self, banner, gamer, reason):
@@ -195,16 +233,63 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         """
         if not banner.user.has_perm("community.ban_user", self):
             raise PermissionDenied
-        try:
-            member = CommunityMembership.objects.get(community=self, gamer=gamer)
-        except ObjectDoesNotExist:
-            raise NotInCommunity
+        if self.owner == gamer:
+            raise PermissionDenied(_("You cannot ban the owner of the community."))
         with transaction.atomic():
             ban_file = BannedUser.objects.create(
                 community=self, banner=banner, banned_user=gamer, reason=reason
             )
-            member.delete()
+            self.remove_member(gamer)
         return ban_file
+
+    class Meta:
+        ordering = ["name"]
+
+
+class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):
+    """
+    An object representing a symmetrical friendship.
+    """
+
+    requestor = models.ForeignKey(
+        "GamerProfile",
+        on_delete=models.CASCADE,
+        help_text=_("Who asked to friend?"),
+        related_name="friend_requests_sent",
+    )
+    recipient = models.ForeignKey(
+        "GamerProfile",
+        on_delete=models.CASCADE,
+        related_name="friend_requests_received",
+        help_text=_("Will they or won't they?"),
+    )
+    status = models.CharField(
+        max_length=25,
+        choices=FRIEND_REQUEST_STATUSES,
+        default="new",
+        help_text=_("Current request status."),
+    )
+
+    def __str__(self):
+        return "{0} friend request from {1} to {2}".format(
+            self.get_status_display(), self.requestor, self.recipient
+        )
+
+    def accept(self):
+        """
+        Accept a friend request.
+        """
+        with transaction.atomic():
+            self.requestor.friends.add(self.recipient)
+            self.status = "accept"
+            self.save()
+
+    def deny(self):
+        """
+        Ignore a friend request.
+        """
+        self.status = "reject"
+        self.save()
 
 
 class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
@@ -213,6 +298,11 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    private = models.BooleanField(
+        default=True,
+        help_text=_("Only allow GMs and communities I belong/apply to see profile."),
+    )
+    friends = models.ManyToManyField("self", blank=True, help_text=_("Other friends."))
     rpg_experience = models.TextField(
         null=True,
         blank=True,
@@ -248,11 +338,10 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         help_text=_("Are you ok with 18+ themes/content/language in games?"),
         db_index=True,
     )
-    one_shots = (
-        models.BooleanField(
-            default=False, help_text=_("Interested in one-shots?"), db_index=True
-        ),
+    one_shots = models.BooleanField(
+        default=False, help_text=_("Interested in one-shots?"), db_index=True
     )
+
     adventures = models.BooleanField(
         default=False,
         help_text=_("Interested in short multi-session games?"),
@@ -327,7 +416,17 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         return "Game Profile: {}".format(self.user.username)
 
     def get_absolute_url(self):
-        return reverse("gamer_profiles:profile_detail", kwargs={"gamer": self.pk})
+        return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.pk})
+
+    def blocked_by(self, gamer):
+        '''
+        Check to see if self is blocked by indicated gamer.
+        '''
+        try:
+            BlockedUser.objects.get(blocker=gamer, blockee=self)
+        except ObjectDoesNotExist:
+            return False
+        return True
 
     def get_role(self, community):
         """
@@ -457,6 +556,7 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     class Meta:
         unique_together = ["gamer", "community"]
+        order_with_respect_to = "community"
 
 
 class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
@@ -479,13 +579,65 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
     )
 
     def __str__(self):
-        return "{0} {1} {2}".format(self.created, self.gamer.username, self.status)
+        return "{0} {1} {2}".format(self.created, self.gamer.user.username, self.status)
 
     def get_absolute_url(self):
         return reverse(
             "gamer_profiles:community-application-detail",
             kwargs={"application": self.pk},
         )
+
+    def validate_application(self):
+        """
+        Checks if the user is banned, suspended, or already a member.
+        """
+        memberships = CommunityMembership.objects.filter(
+            community=self.community, gamer=self.gamer
+        )
+        if memberships:
+            raise AlreadyInCommunity
+        bans = BannedUser.objects.filter(community=self.community, banned_user=self.gamer)
+        if bans:
+            raise CurrentlyBanned
+        kicks = KickedUser.objects.filter(
+            community=self.community, kicked_user=self.gamer, end_date__gt=timezone.now()
+        )
+        if kicks:
+            raise CurrentlySuspended
+        return True
+
+    def submit_application(self):
+        """
+        Submit an application.
+        """
+        if self.validate_application():
+            self.status = "review"
+            self.save()
+            return True
+        return False  # Really an exception gets passed up to us.
+
+    def approve_application(self):
+        """
+        Approves an application and adds gamer to community.
+        """
+
+        if self.validate_application():
+            with transaction.atomic():
+                self.community.add_member(self.gamer)
+                self.status = "approve"
+                self.save()
+            return True
+        return False  # Actually an exception gets passed up.
+
+    def reject_application(self):
+        """
+        Rejects an application.
+        """
+        self.status = "reject"
+        self.save()
+
+    class Meta:
+        ordering = ['community__name', 'modified']
 
 
 class BlockedUser(TimeStampedModel, AbstractUUIDModel, models.Model):

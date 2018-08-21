@@ -1,0 +1,19 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize foundation_formtags %}
+{% block subtitle %}{% trans "Remove suspension/kick from" %} {{ community.name }} {% trans "for" %} {{ kick.kicked_user.user.display_name }} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with cname=community.name gname=kick.kicked_user.user.display_name %}Remove suspension/kick from {{ cname }} for {{ gname }}?{% endblocktrans %}</h1>
+
+<div class="callout alert">
+  <h2>{% trans "Are you sure?" %}</h2>
+  <p>{% blocktrans with cname=community.name gname=kick.kicked_user.user.display_name %}This will remove this record permanently and will permit {{ gname }} to repply and/or rejoin {{ cname }}. {% endblocktrans %}
+  </p>
+</div>
+
+  <form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+    <p><a href="{% url 'gamer_profiles:community-kick-list' community=community.pk %}" class="button secondary">{% trans "Go back" %}</a> <button type="submit" class="button alert">{% trans "Delete Record" %}</button></p>
+</form>
+
+{% endblock %}
