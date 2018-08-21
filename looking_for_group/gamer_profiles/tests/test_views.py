@@ -532,9 +532,9 @@ class CommunityApplicationDetail(AbstractViewTest):
 
 
 class ApproveApplicationTest(AbstractViewTest):
-    '''
+    """
     Approve view for community admins.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
@@ -551,17 +551,29 @@ class ApproveApplicationTest(AbstractViewTest):
             status="new",
         )
         self.view_str = "gamer_profiles:community-applicant-approve"
-        self.valid_url_kwargs = {"community": self.community1.pk, "application": self.application1.pk}
-        self.invalid_url_kwargs = {"community": self.community1.pk, "application": self.application2.pk}
+        self.valid_url_kwargs = {
+            "community": self.community1.pk,
+            "application": self.application1.pk,
+        }
+        self.invalid_url_kwargs = {
+            "community": self.community1.pk,
+            "application": self.application2.pk,
+        }
 
     def test_login_required(self):
         self.get(self.view_str, **self.valid_url_kwargs)
         self.response_405()
-        assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+        assert (
+            models.CommunityApplication.objects.get(pk=self.application1.pk).status
+            == "review"
+        )
         self.post(self.view_str, **self.valid_url_kwargs)
         self.response_302()
-        assert 'login' in self.last_response['location']
-        assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+        assert "login" in self.last_response["location"]
+        assert (
+            models.CommunityApplication.objects.get(pk=self.application1.pk).status
+            == "review"
+        )
 
     def test_unauthorized_users(self):
         with self.login(username=self.gamer2.user.username):
@@ -569,7 +581,10 @@ class ApproveApplicationTest(AbstractViewTest):
             self.response_405()
             self.post(self.view_str, **self.valid_url_kwargs)
             self.response_403()
-            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+            assert (
+                models.CommunityApplication.objects.get(pk=self.application1.pk).status
+                == "review"
+            )
 
     def test_auth_user_with_invalid_target(self):
         with self.login(username=self.gamer1.user.username):
@@ -577,23 +592,34 @@ class ApproveApplicationTest(AbstractViewTest):
             self.response_405()
             self.post(self.view_str, **self.invalid_url_kwargs)
             self.response_404()
-            assert models.CommunityApplication.objects.get(pk=self.application2.pk).status == "new"
+            assert (
+                models.CommunityApplication.objects.get(pk=self.application2.pk).status
+                == "new"
+            )
 
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
             self.get(self.view_str, **self.valid_url_kwargs)
             self.response_405()
-            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "review"
+            assert (
+                models.CommunityApplication.objects.get(pk=self.application1.pk).status
+                == "review"
+            )
             self.post(self.view_str, **self.valid_url_kwargs)
             self.response_302()
-            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "approve"
-            assert models.CommunityMembership.objects.get(community=self.community1, gamer=self.gamer3)
+            assert (
+                models.CommunityApplication.objects.get(pk=self.application1.pk).status
+                == "approve"
+            )
+            assert models.CommunityMembership.objects.get(
+                community=self.community1, gamer=self.gamer3
+            )
 
 
 class RejectApplicationTest(ApproveApplicationTest):
-    '''
+    """
     Run the same tests as approval but for rejection.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
@@ -605,24 +631,34 @@ class RejectApplicationTest(ApproveApplicationTest):
             self.response_405()
             self.post(self.view_str, **self.valid_url_kwargs)
             self.response_302()
-            assert models.CommunityApplication.objects.get(pk=self.application1.pk).status == "reject"
+            assert (
+                models.CommunityApplication.objects.get(pk=self.application1.pk).status
+                == "reject"
+            )
             with pytest.raises(ObjectDoesNotExist):
-                models.CommunityMembership.objects.get(community=self.community1, gamer=self.gamer3)
+                models.CommunityMembership.objects.get(
+                    community=self.community1, gamer=self.gamer3
+                )
 
 
 class CommunityKickListTest(AbstractViewTest):
-    '''
+    """
     Test viewing the list of kicked users from a given community.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.community1.add_member(self.gamer3)
-        self.bad_kick = self.community1.kick_user(self.gamer1, self.gamer2, 'Bad apple')
-        self.good_kick = self.community1.kick_user(self.gamer1, self.gamer3, 'Jerk', earliest_reapply=timezone.now()+timedelta(days=2))
+        self.bad_kick = self.community1.kick_user(self.gamer1, self.gamer2, "Bad apple")
+        self.good_kick = self.community1.kick_user(
+            self.gamer1,
+            self.gamer3,
+            "Jerk",
+            earliest_reapply=timezone.now() + timedelta(days=2),
+        )
         self.view_str = "gamer_profiles:community-kick-list"
-        self.url_kwargs = {'community': self.community1.pk}
+        self.url_kwargs = {"community": self.community1.pk}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -635,23 +671,28 @@ class CommunityKickListTest(AbstractViewTest):
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
-            assert self.get_context('kick_list').count() == 1
-            assert self.get_context('expired_kicks').count() == 1
+            assert self.get_context("kick_list").count() == 1
+            assert self.get_context("expired_kicks").count() == 1
 
 
 class CommunityKickUserTest(AbstractViewTest):
-    '''
+    """
     Test creating a kick record
-    '''
+    """
 
     def setUp(self):
         super().setUp()
         self.community1.add_member(self.gamer2)
-        self.view_str = 'gamer_profiles:community-kick-gamer'
-        self.url_kwargs = {'community': self.community1.pk, 'gamer': self.gamer2.pk}
-        self.bad_url_kwargs = {'community': self.community1.pk, 'gamer': self.gamer3.pk}
-        self.post_data = {'reason': 'Jerk', 'end_date': (timezone.now()+timedelta(days=2)).strftime('%Y-%m-%d %H:%M')}
-        self.bad_post_data = {'end_date': (timezone.now()+timedelta(days=2)).strftime('%Y-%m-%d %H:%M')}
+        self.view_str = "gamer_profiles:community-kick-gamer"
+        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.pk}
+        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.pk}
+        self.post_data = {
+            "reason": "Jerk",
+            "end_date": (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%d %H:%M"),
+        }
+        self.bad_post_data = {
+            "end_date": (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%d %H:%M")
+        }
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -662,7 +703,12 @@ class CommunityKickUserTest(AbstractViewTest):
             self.response_403()
             self.post(self.view_str, data=self.post_data, **self.url_kwargs)
             self.response_403()
-            assert models.KickedUser.objects.filter(community=self.community1, kicked_user=self.gamer2).count() == 0
+            assert (
+                models.KickedUser.objects.filter(
+                    community=self.community1, kicked_user=self.gamer2
+                ).count()
+                == 0
+            )
 
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
@@ -671,26 +717,44 @@ class CommunityKickUserTest(AbstractViewTest):
             self.assertGoodView(self.view_str, **self.url_kwargs)
             self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
             self.response_200()
-            assert models.KickedUser.objects.filter(community=self.community1, kicked_user=self.gamer2).count() == 0
+            assert (
+                models.KickedUser.objects.filter(
+                    community=self.community1, kicked_user=self.gamer2
+                ).count()
+                == 0
+            )
             self.post(self.view_str, data=self.post_data, **self.url_kwargs)
             self.response_302()
-            assert models.KickedUser.objects.filter(community=self.community1, kicked_user=self.gamer2).count() == 1
-
+            assert (
+                models.KickedUser.objects.filter(
+                    community=self.community1, kicked_user=self.gamer2
+                ).count()
+                == 1
+            )
 
 
 class CommunityUpdateKickTest(CommunityKickListTest):
-    '''
+    """
     Test attempts to update a kick record.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
         self.view_str = "gamer_profiles:community-kick-edit"
-        self.url_kwargs = {'community': self.community1.pk, 'kick': self.good_kick.pk}
-        self.bad_url_kwargs = {'community': self.community1.pk, 'kick': self.bad_kick.pk}
-        self.bad_comm_url_kwargs = {'community': self.community2.pk, 'kick': self.good_kick.pk}
-        self.bad_post_data = {'gamer': self.gamer2.pk}
-        self.good_post_data = {'reason': 'Posting adult games without CW', 'end_date': self.good_kick.end_date.strftime('%Y-%m-%d %H:%M')}
+        self.url_kwargs = {"community": self.community1.pk, "kick": self.good_kick.pk}
+        self.bad_url_kwargs = {
+            "community": self.community1.pk,
+            "kick": self.bad_kick.pk,
+        }
+        self.bad_comm_url_kwargs = {
+            "community": self.community2.pk,
+            "kick": self.good_kick.pk,
+        }
+        self.bad_post_data = {"gamer": self.gamer2.pk}
+        self.good_post_data = {
+            "reason": "Posting adult games without CW",
+            "end_date": self.good_kick.end_date.strftime("%Y-%m-%d %H:%M"),
+        }
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -703,20 +767,25 @@ class CommunityUpdateKickTest(CommunityKickListTest):
             self.response_403()
             self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
             self.response_403()
-            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Jerk'
-            self.post(self.view_str, data=self.good_post_data, **self.bad_comm_url_kwargs)
+            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == "Jerk"
+            self.post(
+                self.view_str, data=self.good_post_data, **self.bad_comm_url_kwargs
+            )
             self.response_403()
-            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Jerk'
+            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == "Jerk"
 
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
             self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
             self.response_200()
-            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Jerk'
+            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == "Jerk"
             self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
             self.response_302()
-            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == 'Posting adult games without CW'
+            assert (
+                models.KickedUser.objects.get(pk=self.good_kick.pk).reason
+                == "Posting adult games without CW"
+            )
 
     def test_authorized_user_with_expired_kick(self):
         with self.login(username=self.gamer1.user.username):
@@ -724,20 +793,25 @@ class CommunityUpdateKickTest(CommunityKickListTest):
             self.response_403()
             self.post(self.view_str, data=self.good_post_data, **self.bad_url_kwargs)
             self.response_403()
-            assert models.KickedUser.objects.get(pk=self.bad_kick.pk).reason == 'Bad apple'
+            assert (
+                models.KickedUser.objects.get(pk=self.bad_kick.pk).reason == "Bad apple"
+            )
 
 
-class KickDeleteTest(CommunityUpdateKickTest):
-    '''
+class CommunityKickDeleteTest(CommunityUpdateKickTest):
+    """
     Only authorized users should be able to delete a kick.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.view_str = 'gamer_profiles:community-kick-delete'
-        self.url_kwargs = {'community': self.community1.pk, 'kick': self.good_kick.pk}
-        self.bad_comm_url_kwargs = {'community': self.community2.pk, 'kick': self.good_kick.pk}
-        self.good_post_data = {} # Allows us to reuse methods from CommunityUpdateKickTest
+        self.view_str = "gamer_profiles:community-kick-delete"
+        self.url_kwargs = {"community": self.community1.pk, "kick": self.good_kick.pk}
+        self.bad_comm_url_kwargs = {
+            "community": self.community2.pk,
+            "kick": self.good_kick.pk,
+        }
+        self.good_post_data = {}  # Allows us to reuse methods from CommunityUpdateKickTest
 
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
@@ -748,16 +822,175 @@ class KickDeleteTest(CommunityUpdateKickTest):
                 models.KickedUser.objects.get(pk=self.good_kick.pk)
 
     def test_authorized_user_with_expired_kick(self):
-        '''
+        """
         Not valid for this test.
-        '''
+        """
         pass
 
 
+class CommunityBanListTest(AbstractViewTest):
+    """
+    Test viewing the list of banned users from a given community.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.community1.add_member(self.gamer2)
+        self.ban_file = self.community1.ban_user(self.gamer1, self.gamer2, "Jerk")
+        self.view_str = "gamer_profiles:community-ban-list"
+        self.url_kwargs = {"community": self.community1.pk}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            assert self.get_context("ban_list").count() == 1
+
+
+class CommunityBanUserTest(AbstractViewTest):
+    """
+    Test creating a ban record
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.community1.add_member(self.gamer2)
+        self.view_str = "gamer_profiles:community-ban-gamer"
+        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.pk}
+        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.pk}
+        self.post_data = {"reason": "Jerk"}
+        self.bad_post_data = {}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+            assert (
+                models.BannedUser.objects.filter(
+                    community=self.community1, banned_user=self.gamer2
+                ).count()
+                == 0
+            )
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.post(self.view_str, data=self.post_data, **self.bad_url_kwargs)
+            self.response_403()
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
+            self.response_200()
+            assert (
+                models.BannedUser.objects.filter(
+                    community=self.community1, banned_user=self.gamer2
+                ).count()
+                == 0
+            )
+            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.BannedUser.objects.filter(
+                    community=self.community1, banned_user=self.gamer2
+                ).count()
+                == 1
+            )
+
+
+class CommunityUpdateBanTest(CommunityBanListTest):
+    """
+    Test attempts to update a ban record.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.community2.add_member(self.gamer3)
+        self.bad_ban_file = self.community2.ban_user(
+            self.community2.owner, self.gamer3, "Jerkhole"
+        )
+        self.view_str = "gamer_profiles:community-ban-edit"
+        self.url_kwargs = {"community": self.community1.pk, "ban": self.ban_file.pk}
+        self.bad_url_kwargs = {
+            "community": self.community1.pk,
+            "ban": self.bad_ban_file.pk,
+        }
+        self.bad_comm_url_kwargs = {
+            "community": self.community2.pk,
+            "ban": self.ban_file.pk,
+        }
+        self.bad_post_data = {"gamer": self.gamer2.pk}
+        self.good_post_data = {"reason": "Posting adult games without CW"}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+            self.get(self.view_str, **self.bad_comm_url_kwargs)
+            self.response_403()
+            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
+            self.response_403()
+            assert models.BannedUser.objects.get(pk=self.ban_file.pk).reason == "Jerk"
+            self.post(
+                self.view_str, data=self.good_post_data, **self.bad_comm_url_kwargs
+            )
+            self.response_403()
+            assert models.BannedUser.objects.get(pk=self.ban_file.pk).reason == "Jerk"
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
+            self.response_200()
+            assert models.BannedUser.objects.get(pk=self.ban_file.pk).reason == "Jerk"
+            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.BannedUser.objects.get(pk=self.ban_file.pk).reason
+                == "Posting adult games without CW"
+            )
+
+
+class CommunityBanDeleteTest(CommunityUpdateBanTest):
+    """
+    Only authorized users should be able to delete a ban.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = "gamer_profiles:community-ban-delete"
+        self.url_kwargs = {"community": self.community1.pk, "ban": self.ban_file.pk}
+        self.bad_comm_url_kwargs = {
+            "community": self.community2.pk,
+            "ban": self.bad_ban_file.pk,
+        }
+        self.good_post_data = {}  # Allows us to reuse methods from CommunityUpdateBanTest
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, **self.url_kwargs)
+            self.response_302()
+            with pytest.raises(ObjectDoesNotExist):
+                models.BannedUser.objects.get(pk=self.ban_file.pk)
+
+
 class GamerProfileDetailTest(AbstractViewTest):
-    '''
+    """
     Tests for viewing gamer profile.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
@@ -767,8 +1000,8 @@ class GamerProfileDetailTest(AbstractViewTest):
         self.gamer_jerk = factories.GamerProfileFactory()
         models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
         self.gamer_public = factories.GamerProfileFactory(private=False)
-        self.view_str = 'gamer_profiles:profile-detail'
-        self.url_kwargs = {'gamer': self.gamer1.pk}
+        self.view_str = "gamer_profiles:profile-detail"
+        self.url_kwargs = {"gamer": self.gamer1.pk}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -778,14 +1011,14 @@ class GamerProfileDetailTest(AbstractViewTest):
             self.assertGoodView(self.view_str, gamer=self.gamer_public.pk)
 
     def test_private_but_stranger(self):
-        '''
+        """
         If a profile is private and the user has no existing connection, it should be redirected
         to an option to friend the player.
-        '''
+        """
         with self.login(username=self.gamer3.user.username):
             self.get(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert 'friend' in self.last_response['location']
+            assert "friend" in self.last_response["location"]
 
     def test_public_but_blocked(self):
         with self.login(username=self.gamer_jerk.user.username):
@@ -793,47 +1026,49 @@ class GamerProfileDetailTest(AbstractViewTest):
             self.response_403()
 
     def test_private_same_comm_blocked(self):
-        '''
+        """
         Even if you are in the same community, a blocked user
         cannot see the profile.
-        '''
+        """
         self.community1.add_member(self.gamer_jerk)
         with self.login(username=self.gamer_jerk.user.username):
             self.get(self.view_str, **self.url_kwargs)
             self.response_403()
 
     def test_private_friend_but_blocked(self):
-        '''
+        """
         If someone is a friend, but then subsequently blocked,
         they should be removed from friends and added to blocked users.
-        '''
+        """
         assert self.gamer_friend in self.gamer1.friends.all()
-        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_friend)
+        models.BlockedUser.objects.create(
+            blocker=self.gamer1, blockee=self.gamer_friend
+        )
         assert self.gamer_friend not in self.gamer1.friends.all()
         with self.login(username=self.gamer_friend.user.username):
             self.get(self.view_str, **self.url_kwargs)
             self.response_403()
 
     def test_private_but_friend(self):
-        '''
+        """
         If profile is private, but user is a friend, show the profile.
-        '''
+        """
         with self.login(username=self.gamer_friend.user.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
 
     def test_private_but_same_comm(self):
-        '''
+        """
         If in the same community, see the profile.
-        '''
+        """
         self.community1.add_member(self.gamer3)
         with self.login(username=self.gamer3.user.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
 
 
 class GamerFriendRequestTest(AbstractViewTest):
-    '''
+    """
     Tests the view for submitting friend requests.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
@@ -843,8 +1078,8 @@ class GamerFriendRequestTest(AbstractViewTest):
         self.gamer_jerk = factories.GamerProfileFactory()
         models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
         self.gamer_public = factories.GamerProfileFactory(private=False)
-        self.view_str = 'gamer_profiles:gamer-friend'
-        self.url_kwargs = {'gamer': self.gamer1.pk}
+        self.view_str = "gamer_profiles:gamer-friend"
+        self.url_kwargs = {"gamer": self.gamer1.pk}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -860,57 +1095,84 @@ class GamerFriendRequestTest(AbstractViewTest):
         with self.login(username=self.gamer_friend.user.username):
             self.get(self.view_str, **self.url_kwargs)
             self.response_302()
-            current_requests = models.GamerFriendRequest.objects.filter(requestor=self.gamer_friend, recipient=self.gamer1).count()
+            current_requests = models.GamerFriendRequest.objects.filter(
+                requestor=self.gamer_friend, recipient=self.gamer1
+            ).count()
             assert current_requests == 0
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert current_requests == models.GamerFriendRequest.objects.filter(requestor=self.gamer_friend, recipient=self.gamer1).count()
+            assert (
+                current_requests
+                == models.GamerFriendRequest.objects.filter(
+                    requestor=self.gamer_friend, recipient=self.gamer1
+                ).count()
+            )
 
     def reverse_request_already_received(self):
         assert self.gamer3 not in self.gamer1.friends.all()
-        test_request = models.GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer3, status='new')
+        test_request = models.GamerFriendRequest.objects.create(
+            requestor=self.gamer1, recipient=self.gamer3, status="new"
+        )
         with self.login(username=self.gamer3.user.username):
             self.post(self.view_str, **self.url_kwargs)
             test_request.refresh_from_db()
-            assert test_request.status == 'approve'
+            assert test_request.status == "approve"
             assert self.gamer3 in self.gamer1.friends.all()
 
     def test_authorized_user(self):
         with self.login(username=self.gamer3.user.username):
             with transaction.atomic():
                 with pytest.raises(ObjectDoesNotExist):
-                    models.GamerFriendRequest.objects.get(requestor=self.gamer3, recipient=self.gamer1)
+                    models.GamerFriendRequest.objects.get(
+                        requestor=self.gamer3, recipient=self.gamer1
+                    )
             self.assertGoodView(self.view_str, **self.url_kwargs)
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert models.GamerFriendRequest.objects.get(requestor=self.gamer3, recipient=self.gamer1)
+            assert models.GamerFriendRequest.objects.get(
+                requestor=self.gamer3, recipient=self.gamer1
+            )
 
     def test_request_already_queued(self):
-        models.GamerFriendRequest.objects.create(requestor=self.gamer3, recipient=self.gamer1, status='new')
-        assert models.GamerFriendRequest.objects.filter(requestor=self.gamer3, recipient=self.gamer1).count() == 1
+        models.GamerFriendRequest.objects.create(
+            requestor=self.gamer3, recipient=self.gamer1, status="new"
+        )
+        assert (
+            models.GamerFriendRequest.objects.filter(
+                requestor=self.gamer3, recipient=self.gamer1
+            ).count()
+            == 1
+        )
         with self.login(username=self.gamer3.user.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.assertInContext('pending_request')
+            self.assertInContext("pending_request")
             self.post(self.view_str, **self.url_kwargs)
-            assert models.GamerFriendRequest.objects.filter(requestor=self.gamer3, recipient=self.gamer1).count() == 1
+            assert (
+                models.GamerFriendRequest.objects.filter(
+                    requestor=self.gamer3, recipient=self.gamer1
+                ).count()
+                == 1
+            )
 
 
 class GamerFriendRequestWithdrawTest(AbstractViewTest):
-    '''
+    """
     Test that only the creator of a friend request can delete it.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
         self.gamer_friend = factories.GamerProfileFactory()
         self.gamer1.friends.add(self.gamer_friend)
         self.gamer3.friends.remove(self.gamer1)
-        self.request_obj = models.GamerFriendRequest.objects.create(requestor=self.gamer3, recipient=self.gamer1, status='new')
+        self.request_obj = models.GamerFriendRequest.objects.create(
+            requestor=self.gamer3, recipient=self.gamer1, status="new"
+        )
         self.gamer_jerk = factories.GamerProfileFactory()
         models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
         self.gamer_public = factories.GamerProfileFactory(private=False)
-        self.view_str = 'gamer_profiles:gamer-friend-request-delete'
-        self.url_kwargs = {'friend_request': self.request_obj.pk}
+        self.view_str = "gamer_profiles:gamer-friend-request-delete"
+        self.url_kwargs = {"friend_request": self.request_obj.pk}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -933,16 +1195,18 @@ class GamerFriendRequestWithdrawTest(AbstractViewTest):
 
 
 class GamerFriendRequestApproveTest(AbstractViewTest):
-    '''
+    """
     Test request approvals.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
         self.new_frand = factories.GamerProfileFactory()
-        self.friend_request = models.GamerFriendRequest.objects.create(requestor=self.new_frand, recipient=self.gamer1, status='new')
-        self.view_str = 'gamer_profiles:gamer-friend-request-approve'
-        self.url_kwargs = {'friend_request': self.friend_request.pk}
+        self.friend_request = models.GamerFriendRequest.objects.create(
+            requestor=self.new_frand, recipient=self.gamer1, status="new"
+        )
+        self.view_str = "gamer_profiles:gamer-friend-request-approve"
+        self.url_kwargs = {"friend_request": self.friend_request.pk}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -953,7 +1217,10 @@ class GamerFriendRequestApproveTest(AbstractViewTest):
             self.response_405()
             self.post(self.view_str, **self.url_kwargs)
             self.response_403()
-            assert models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status == "new"
+            assert (
+                models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status
+                == "new"
+            )
 
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
@@ -961,18 +1228,21 @@ class GamerFriendRequestApproveTest(AbstractViewTest):
             self.response_405()
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status != "new"
+            assert (
+                models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status
+                != "new"
+            )
             assert self.new_frand in self.gamer1.friends.all()
 
 
 class GamerFriendRequestDenyTest(GamerFriendRequestApproveTest):
-    '''
+    """
     Test request denials
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.view_str = 'gamer_profiles:gamer-friend-request-reject'
+        self.view_str = "gamer_profiles:gamer-friend-request-reject"
 
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
@@ -980,26 +1250,37 @@ class GamerFriendRequestDenyTest(GamerFriendRequestApproveTest):
             self.response_405()
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status != 'new'
+            assert (
+                models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status
+                != "new"
+            )
             assert self.new_frand not in self.gamer1.friends.all()
 
 
 class GamerFriendRequestListTest(AbstractViewTest):
-    '''
+    """
     View requests.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
         self.new_frand = factories.GamerProfileFactory()
         self.new_frand2 = factories.GamerProfileFactory()
         self.new_frand3 = factories.GamerProfileFactory()
-        self.friend_request = models.GamerFriendRequest.objects.create(requestor=self.new_frand, recipient=self.gamer1, status='new')
-        self.friend_request2 = models.GamerFriendRequest.objects.create(requestor=self.new_frand2, recipient=self.gamer1, status='new')
-        self.sent_request = models.GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.gamer2, status='new')
-        self.extra_request = models.GamerFriendRequest.objects.create(requestor=self.gamer1, recipient=self.new_frand3, status='new')
+        self.friend_request = models.GamerFriendRequest.objects.create(
+            requestor=self.new_frand, recipient=self.gamer1, status="new"
+        )
+        self.friend_request2 = models.GamerFriendRequest.objects.create(
+            requestor=self.new_frand2, recipient=self.gamer1, status="new"
+        )
+        self.sent_request = models.GamerFriendRequest.objects.create(
+            requestor=self.gamer1, recipient=self.gamer2, status="new"
+        )
+        self.extra_request = models.GamerFriendRequest.objects.create(
+            requestor=self.gamer1, recipient=self.new_frand3, status="new"
+        )
         self.extra_request.accept()
-        self.view_str = 'gamer_profiles:my-gamer-friend-requests'
+        self.view_str = "gamer_profiles:my-gamer-friend-requests"
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str)
@@ -1007,56 +1288,77 @@ class GamerFriendRequestListTest(AbstractViewTest):
     def test_authenticated_user(self):
         with self.login(username=self.gamer1.user.username):
             self.assertGoodView(self.view_str)
-            assert self.get_context('pending_requests').count() == 2
-            assert self.get_context('sent_requests').count() == 1
+            assert self.get_context("pending_requests").count() == 2
+            assert self.get_context("sent_requests").count() == 1
             self.friend_request.accept()
             self.assertGoodView(self.view_str)
-            assert self.get_context('pending_requests').count() == 1
+            assert self.get_context("pending_requests").count() == 1
 
 
 class MuteGamerTest(AbstractViewTest):
-    '''
+    """
     A post only method to mute a gamer. If arg 'next' is provided,
     will redirect to that, otherwise goes to target's profile page.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.view_str = 'gamer_profiles:mute-gamer'
-        self.url_kwargs = {'gamer': self.gamer3.pk, 'next': reverse('gamer_profiles:my-community-list')}
+        self.view_str = "gamer_profiles:mute-gamer"
+        self.url_kwargs = {
+            "gamer": self.gamer3.pk,
+            "next": reverse("gamer_profiles:my-community-list"),
+        }
 
     def test_login_required(self):
         self.get(self.view_str, **self.url_kwargs)
         self.response_302()
-        assert 'accounts/login' in self.last_response['location']
+        assert "accounts/login" in self.last_response["location"]
 
     def test_auth_user(self):
-        assert models.MutedUser.objects.filter(muter=self.gamer1, mutee=self.gamer3).count() == 0
+        assert (
+            models.MutedUser.objects.filter(
+                muter=self.gamer1, mutee=self.gamer3
+            ).count()
+            == 0
+        )
         with self.login(username=self.gamer1.user.username):
             self.get(self.view_str, **self.url_kwargs)
             self.response_405()
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert 'communities' in self.last_response['location']
-            assert models.MutedUser.objects.filter(muter=self.gamer1, mutee=self.gamer3).count() == 1
+            assert "communities" in self.last_response["location"]
+            assert (
+                models.MutedUser.objects.filter(
+                    muter=self.gamer1, mutee=self.gamer3
+                ).count()
+                == 1
+            )
 
 
 class RemoveMuteTest(AbstractViewTest):
-    '''
+    """
     Only the person who created a given mute record can remove it.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.mute_record = models.MutedUser.objects.create(muter=self.gamer1, mutee=self.gamer3)
-        self.view_str = 'gamer_profiles:unmute-gamer'
-        self.url_kwargs = {'mute': self.mute_record.pk, 'next': reverse('gamer_profiles:profile-detail', kwargs={'gamer': self.mute_record.mutee.pk})}
+        self.mute_record = models.MutedUser.objects.create(
+            muter=self.gamer1, mutee=self.gamer3
+        )
+        self.view_str = "gamer_profiles:unmute-gamer"
+        self.url_kwargs = {
+            "mute": self.mute_record.pk,
+            "next": reverse(
+                "gamer_profiles:profile-detail",
+                kwargs={"gamer": self.mute_record.mutee.pk},
+            ),
+        }
         print(reverse(self.view_str, kwargs=self.url_kwargs))
 
     def test_login_required(self):
         self.get(self.view_str, **self.url_kwargs)
         self.response_302()
-        assert 'accounts/login' in self.last_response['location']
+        assert "accounts/login" in self.last_response["location"]
 
     def test_unauthorized_user(self):
         with self.login(username=self.gamer3.user.username):
@@ -1072,54 +1374,75 @@ class RemoveMuteTest(AbstractViewTest):
             self.response_405()
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert 'profile' in self.last_response['location']
+            assert "profile" in self.last_response["location"]
             with pytest.raises(ObjectDoesNotExist):
                 models.MutedUser.objects.get(pk=self.mute_record.pk)
 
 
 class BlockGamerTest(AbstractViewTest):
-    '''
+    """
     A post only method to block a gamer. If arg 'next' is provided,
     will redirect to that, otherwise goes to target's profile page.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.view_str = 'gamer_profiles:block-gamer'
-        self.url_kwargs = {'gamer': self.gamer3.pk, 'next': reverse('gamer_profiles:my-community-list')}
+        self.view_str = "gamer_profiles:block-gamer"
+        self.url_kwargs = {
+            "gamer": self.gamer3.pk,
+            "next": reverse("gamer_profiles:my-community-list"),
+        }
 
     def test_login_required(self):
         self.get(self.view_str, **self.url_kwargs)
         self.response_302()
-        assert 'accounts/login' in self.last_response['location']
+        assert "accounts/login" in self.last_response["location"]
 
     def test_auth_user(self):
-        assert models.BlockedUser.objects.filter(blocker=self.gamer1, blockee=self.gamer3).count() == 0
+        assert (
+            models.BlockedUser.objects.filter(
+                blocker=self.gamer1, blockee=self.gamer3
+            ).count()
+            == 0
+        )
         with self.login(username=self.gamer1.user.username):
             self.get(self.view_str, **self.url_kwargs)
             self.response_405()
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert 'communities' in self.last_response['location']
-            assert models.BlockedUser.objects.filter(blocker=self.gamer1, blockee=self.gamer3).count() == 1
+            assert "communities" in self.last_response["location"]
+            assert (
+                models.BlockedUser.objects.filter(
+                    blocker=self.gamer1, blockee=self.gamer3
+                ).count()
+                == 1
+            )
 
 
 class RemoveBlockTest(AbstractViewTest):
-    '''
+    """
     Only the person who created a given block record can remove it.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.block_record = models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer3)
-        self.view_str = 'gamer_profiles:unblock-gamer'
-        self.url_kwargs = {'block': self.block_record.pk, 'next': reverse('gamer_profiles:profile-detail', kwargs={'gamer': self.block_record.blockee.pk})}
+        self.block_record = models.BlockedUser.objects.create(
+            blocker=self.gamer1, blockee=self.gamer3
+        )
+        self.view_str = "gamer_profiles:unblock-gamer"
+        self.url_kwargs = {
+            "block": self.block_record.pk,
+            "next": reverse(
+                "gamer_profiles:profile-detail",
+                kwargs={"gamer": self.block_record.blockee.pk},
+            ),
+        }
         print(reverse(self.view_str, kwargs=self.url_kwargs))
 
     def test_login_required(self):
         self.get(self.view_str, **self.url_kwargs)
         self.response_302()
-        assert 'accounts/login' in self.last_response['location']
+        assert "accounts/login" in self.last_response["location"]
 
     def test_unauthorized_user(self):
         with self.login(username=self.gamer3.user.username):
@@ -1135,21 +1458,24 @@ class RemoveBlockTest(AbstractViewTest):
             self.response_405()
             self.post(self.view_str, **self.url_kwargs)
             self.response_302()
-            assert 'profile' in self.last_response['location']
+            assert "profile" in self.last_response["location"]
             with pytest.raises(ObjectDoesNotExist):
                 models.BlockedUser.objects.get(pk=self.block_record.pk)
 
 
 class CreateGamerNoteTest(AbstractViewTest):
-    '''
+    """
     Test create view for gamer notes.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.view_str = 'gamer_profiles:add-gamer-note'
-        self.url_kwargs = {'gamer': self.gamer3.pk }
-        self.post_url_kwargs = {'gamer': self.gamer3.pk, 'data': {'title': 'Test note', 'body': 'Hi **there**!'}}
+        self.view_str = "gamer_profiles:add-gamer-note"
+        self.url_kwargs = {"gamer": self.gamer3.pk}
+        self.post_url_kwargs = {
+            "gamer": self.gamer3.pk,
+            "data": {"title": "Test note", "body": "Hi **there**!"},
+        }
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -1165,16 +1491,27 @@ class CreateGamerNoteTest(AbstractViewTest):
 
 
 class UpdateGamerNoteTest(AbstractViewTest):
-    '''
+    """
     Test updating a gamer note.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.gn = models.GamerNote.objects.create(author=self.gamer1, gamer=self.gamer3, title='Test Note', body='Hi **there**!')
-        self.view_str = 'gamer_profiles:edit-gamernote'
-        self.url_kwargs = {'gamernote': self.gn.pk}
-        self.post_url_kwargs = {'gamernote': self.gn.pk, 'data': {'title': 'New Title', 'body': 'Something [new](https://www.google.com)'}}
+        self.gn = models.GamerNote.objects.create(
+            author=self.gamer1,
+            gamer=self.gamer3,
+            title="Test Note",
+            body="Hi **there**!",
+        )
+        self.view_str = "gamer_profiles:edit-gamernote"
+        self.url_kwargs = {"gamernote": self.gn.pk}
+        self.post_url_kwargs = {
+            "gamernote": self.gn.pk,
+            "data": {
+                "title": "New Title",
+                "body": "Something [new](https://www.google.com)",
+            },
+        }
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -1185,30 +1522,35 @@ class UpdateGamerNoteTest(AbstractViewTest):
             self.response_403()
             self.post(self.view_str, **self.post_url_kwargs)
             self.response_403()
-            assert models.GamerNote.objects.get(pk=self.gn.pk).title == 'Test Note'
+            assert models.GamerNote.objects.get(pk=self.gn.pk).title == "Test Note"
 
     def test_authorized_user(self):
         with self.login(username=self.gamer1.user.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
             # test invalid form
             self.post(self.view_str, **self.url_kwargs)
-            self.response_200() # Form errors
-            assert models.GamerNote.objects.get(pk=self.gn.pk).title == 'Test Note'
+            self.response_200()  # Form errors
+            assert models.GamerNote.objects.get(pk=self.gn.pk).title == "Test Note"
             self.post(self.view_str, **self.post_url_kwargs)
             self.response_302()
-            assert models.GamerNote.objects.get(pk=self.gn.pk).title == 'New Title'
+            assert models.GamerNote.objects.get(pk=self.gn.pk).title == "New Title"
 
 
 class DeleteGamerNoteTest(AbstractViewTest):
-    '''
+    """
     Test deleting a gamer note.
-    '''
+    """
 
     def setUp(self):
         super().setUp()
-        self.gn = models.GamerNote.objects.create(author=self.gamer1, gamer=self.gamer3, title='Test Note', body='Hi **there**!')
-        self.view_str = 'gamer_profiles:delete-gamernote'
-        self.url_kwargs = {'gamernote': self.gn.pk}
+        self.gn = models.GamerNote.objects.create(
+            author=self.gamer1,
+            gamer=self.gamer3,
+            title="Test Note",
+            body="Hi **there**!",
+        )
+        self.view_str = "gamer_profiles:delete-gamernote"
+        self.url_kwargs = {"gamernote": self.gn.pk}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)

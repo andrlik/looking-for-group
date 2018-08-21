@@ -712,7 +712,7 @@ class CommunityDeleteBan(
 
     model = models.BannedUser
     select_related = ["banned_user"]
-    template_name = "gamer_profiles/delete_ban.html"
+    template_name = "gamer_profiles/community_ban_delete.html"
     permission_required = "community.ban_user"
     context_object_name = "ban"
     pk_url_kwarg = "ban"
@@ -722,8 +722,16 @@ class CommunityDeleteBan(
         self.community = get_object_or_404(models.GamerCommunity, pk=comm_pk)
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:community-ban-list', kwargs={'community': self.community.pk})
+
     def get_permission_object(self):
-        return self.community
+        return self.get_object().community
 
     def form_valid(self, form):
         messages.success(self.request, _("Successfully deleted ban."))
@@ -745,6 +753,7 @@ class CommunityUpdateBan(
     permission_required = "community.ban_user"
     template_name = "gamer_profiles/community_ban_edit.html"
     pk_url_kwarg = "ban"
+    select_related = ['banned_user', 'banned_user__user', 'community']
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = self.kwargs.pop("community", None)
@@ -756,8 +765,11 @@ class CommunityUpdateBan(
         context["community"] = self.community
         return context
 
+    def get_success_url(self):
+        return reverse_lazy('gamer_profiles:community-ban-list', kwargs={'community': self.community.pk})
+
     def get_permission_object(self):
-        return self.community
+        return self.get_object().community
 
     def form_valid(self, form):
         messages.success(self.request, _("Ban record updated!"))
@@ -765,6 +777,7 @@ class CommunityUpdateBan(
 
     def form_invalid(self, form):
         messages.error(self.request, _("Please correct the errors below."))
+        return super().form_invalid(form)
 
 
 class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
@@ -787,22 +800,31 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
     def get_permission_object(self):
         return self.community
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        context['gamer'] = self.gamer
+        return context
+
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-banned-list",
+            "gamer_profiles:community-ban-list",
             kwargs={"community": self.community.pk},
         )
 
     def has_permission(self):
-        if (
-            self.gamer.get_role(self.community) == "Admin"
-            and self.community.owner != self.request.user.gamerprofile
-        ):
-            return False
-        if (
-            self.gamer.get_role(self.community) == "Moderator"
-            and self.community.get_role(self.request.user.gamerprofile) != "Admin"
-        ):
+        try:
+            if (
+                    self.gamer.get_role(self.community) == "Admin"
+                    and self.community.owner != self.request.user.gamerprofile
+            ):
+                return False
+            if (
+                    self.gamer.get_role(self.community) == "Moderator"
+                    and self.community.get_role(self.request.user.gamerprofile) != "Admin"
+            ):
+                return False
+        except models.NotInCommunity:
             return False
         return super().has_permission()
 
@@ -814,7 +836,7 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
                 reason=form.instance.reason,
             )
         except models.NotInCommunity:
-            messages.error(
+            messages.error(self.request,
                 _(
                     "{0} is not a current member of the {1} and cannot be banned.".format(
                         self.gamer.user.display_name, self.community.name
@@ -822,7 +844,7 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
                 )
             )
             return super().form_invalid(form)
-        messages.success(
+        messages.success(self.request,
             _(
                 "{0} successfully banned from {1}".format(
                     self.gamer.user.display_name, self.community.name

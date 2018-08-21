@@ -75,6 +75,10 @@ urlpatterns = [
         view=views.DeleteKickRecord.as_view(),
         name="community-kick-delete",
     ),
+    path("communities/<uuid:community>/bans/", view=views.CommunityBannedUserList.as_view(), name='community-ban-list'),
+    path("communities/<uuid:community>/members/<uuid:gamer>/ban/", view=views.CommunityBanUser.as_view(), name='community-ban-gamer'),
+    path("communities/<uuid:community>/bans/<uuid:ban>/edit/", view=views.CommunityUpdateBan.as_view(), name='community-ban-edit'),
+    path("communities/<uuid:community>/bans/<uuid:ban>/delete/", view=views.CommunityDeleteBan.as_view(), name='community-ban-delete'),
     path(
         "profiles/<uuid:gamer>/",
         view=views.GamerProfileDetailView.as_view(),

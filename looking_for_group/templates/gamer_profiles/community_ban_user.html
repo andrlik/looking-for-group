@@ -1,0 +1,16 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize foundation_formtags %}
+{% block subtitle %}{% blocktrans with cname=community.name gname=gamer.user.display_name %}Ban {{ gname }} from {{ cname }}{% endblocktrans %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with cname=community.name gname=gamer.user.display_name %}Ban {{ gname }} from {{ cname }}?{% endblocktrans %}</h1>
+<div class="callout warning">
+  <h2>{% trans "Are you sure?" %}</h2>
+  <p>{% blocktrans with cname=community.name gname=gamer.user.display_name %}This will immediately remove {{ gname }} from {{ cname }}, and they will be unable to rejoin or reapply.{% endblocktrans %}</p>
+</div>
+  <form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+    <p><a href="{% url 'gamer_profiles:community-detail' community=community.pk %}" class="button secondary">{% trans "Go back" %}</a> <button type="submit" class="button success">{% trans "Ban gamer" %}</button></p>
+</form>
+
+{% endblock %}
