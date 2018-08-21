@@ -11,6 +11,23 @@ logger = logging.getLogger("gamer_profiles")
 logger.debug("Signals loaded...")
 
 
+@receiver(pre_save, sender=models.GamerProfile)
+def check_and_copy_username(sender, instance, *args, **kwargs):
+    '''
+    When saving, double check if we already have the cached username
+    and add it if it is missing.
+    '''
+    if not instance.username and instance.user:
+        instance.username = instance.user.username
+
+
+@receiver(post_save, sender=User)
+def copy_changed_username_to_gamerprofile(sender, instance, created, *args, **kwargs):
+    if not created and instance.gamerprofile:
+        instance.gamerprofile.username = instance.username
+        instance.gamerprofile.save()
+
+
 @receiver(pre_save, sender=models.GamerCommunity)
 def generate_rendered_html_from_description(sender, instance, *args, **kwargs):
     """

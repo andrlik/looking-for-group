@@ -299,6 +299,7 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    username = models.TextField(unique=True, db_index=True, help_text=_('Cached value from user.'))
     private = models.BooleanField(
         default=True,
         help_text=_("Only allow GMs and communities I belong/apply to see profile."),
@@ -417,11 +418,12 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         return "Game Profile: {}".format(self.user.username)
 
     def get_absolute_url(self):
-        return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.pk})
+        return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.username})
 
-    @cached_property
-    def username(self):
-        return self.user.username
+    def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = self.user.username
+        super().save(*args, **kwargs)
 
     @cached_property
     def display_name(self):
