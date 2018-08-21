@@ -32,8 +32,8 @@
           <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.display_name }} ({{ kick.kicker.username }})</a></td>
           <td>{{ kick.reason }}</td>
           <td>{{ kick.end_date }}</td>
-          <td><a href="{% url 'gamer_profiles:community-kick-edit' community=community.pk kick=kick.pk %}"><button class="button primary">{% trans "Edit" %}</button></a></td>
-          <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.pk kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
+          <td><a href="{% url 'gamer_profiles:community-kick-edit' community=community.slug kick=kick.pk %}"><button class="button primary">{% trans "Edit" %}</button></a></td>
+          <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.slug kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -65,7 +65,7 @@
           <td>{{ kick.reason }}</td>
           <td>{{ kick.end_date }}</td>
           <td><a href="#" class="button disabled" aria-disabled>{% trans "Edit" %}</a></td>
-          <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.pk kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
+          <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.slug kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
         </tr>
         {% endfor %}
       </tbody>

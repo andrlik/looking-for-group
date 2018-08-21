@@ -15,7 +15,7 @@
   <dd>{{ application.modified }}</dd>
 </dl>
 
-<p><form action="{% url 'gamer_profiles:community-applicant-approve' community=application.community.pk application=application.pk %}" method="post">{% csrf_token %}<button type="submit" class="success button">{% trans "Approve Application" %}</button></form> <form action="{% url 'gamer_profiles:community-applicant-reject' community=application.community.pk application=application.pk %}" method="post">{% csrf_token %}<button type="submit" class="alert button">{% trans "Reject Application" %}</button></form></p>
+<p><form action="{% url 'gamer_profiles:community-applicant-approve' community=application.community.slug application=application.pk %}" method="post">{% csrf_token %}<button type="submit" class="success button">{% trans "Approve Application" %}</button></form> <form action="{% url 'gamer_profiles:community-applicant-reject' community=application.community.slug application=application.pk %}" method="post">{% csrf_token %}<button type="submit" class="alert button">{% trans "Reject Application" %}</button></form></p>
 
-<p><a href="{% url 'gamer_profiles:community-applicant-list' community=application.community.pk %}">{% trans "Back to applicant list..." %}</a></p><p>
+<p><a href="{% url 'gamer_profiles:community-applicant-list' community=application.community.slug %}">{% trans "Back to applicant list..." %}</a></p><p>
 {% endblock %}
