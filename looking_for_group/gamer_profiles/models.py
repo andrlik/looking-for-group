@@ -1,6 +1,8 @@
+import itertools
 from django.db import models, transaction, IntegrityError
 from django.db.models import F
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.functional import cached_property
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.urls import reverse
@@ -83,7 +85,8 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     Represents a player community, e.g. GeeklyInc.
     """
 
-    name = models.CharField(max_length=255, help_text=_("Community Name"))
+    name = models.CharField(max_length=255, unique=True, db_index=True, help_text=_("Community Name (must be unique)"))
+    slug = models.SlugField(max_length=50, unique=True, db_index=True)
     owner = models.ForeignKey("GamerProfile", on_delete=models.CASCADE)
     description = models.TextField(
         null=True,
@@ -134,8 +137,21 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            max_length = self._meta.get_field('slug').max_length
+            temp_slug = slugify(self.name, allow_unicode=True)[:max_length]
+            for x in itertools.count(1):
+                if not type(self).objects.filter(slug=temp_slug).exists():
+                    break
+
+                temp_slug = "{}-{}".format(temp_slug[:max_length - len(str(x)) - 1], x)
+            self.slug = temp_slug
+        super().save(*args, **kwargs)
+
+
     def get_absolute_url(self):
-        return reverse("gamer_profiles:community-detail", kwargs={"community": self.pk})
+        return reverse("gamer_profiles:community-detail", kwargs={"community": self.slug})
 
     def get_member_count(self):
         return self.members.count()

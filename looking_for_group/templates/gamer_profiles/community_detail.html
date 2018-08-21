@@ -10,7 +10,7 @@
     {% for member in community.get_members|slice:":20" %}
     <li><a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer.display_name }}</a></li>
     {% endfor %}
-    <p><a href="{% url 'gamer_profiles:community-member-list' community=community.pk %}">{% trans "See all members..." %}</a></p>
+    <p><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "See all members..." %}</a></p>
   </ul>
 </div>
 

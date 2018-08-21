@@ -97,22 +97,22 @@ class CommunityDetailViewTest(AbstractViewTest):
         self.view_name = "gamer_profiles:community-detail"
 
     def test_unauthenticated(self):
-        self.assertLoginRequired(self.view_name, community=self.community1.pk)
+        self.assertLoginRequired(self.view_name, community=self.community1.slug)
 
     def test_authenticated(self):
         with self.login(username=self.gamer1.username):
             print(self.community1.pk)
-            print(reverse(self.view_name, kwargs={"community": self.community1.pk}))
+            print(reverse(self.view_name, kwargs={"community": self.community1.slug}))
             assert models.GamerCommunity.objects.get(pk=self.community1.pk)
-            self.assertGoodView(self.view_name, community=self.community1.pk)
-            self.assertGoodView(self.view_name, community=self.community2.pk)
+            self.assertGoodView(self.view_name, community=self.community1.slug)
+            self.assertGoodView(self.view_name, community=self.community2.slug)
         with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, community=self.community2.pk)
-            self.get(self.view_name, self.community1.pk)
+            self.assertGoodView(self.view_name, community=self.community2.slug)
+            self.get(self.view_name, self.community1.slug)
             self.response_302()
         with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_name, community=self.community2.pk)
-            self.get(self.view_name, community=self.community1.pk)
+            self.assertGoodView(self.view_name, community=self.community2.slug)
+            self.get(self.view_name, community=self.community1.slug)
             self.response_302()
 
 
@@ -132,15 +132,15 @@ class TestCommunityJoinView(AbstractViewTest):
 
     def test_login_required(self):
         self.assertLoginRequired(
-            "gamer_profiles:community-join", community=self.community2.pk
+            "gamer_profiles:community-join", community=self.community2.slug
         )
 
     def test_private_community(self):
         with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-join", community=self.community1.pk)
+            self.get("gamer_profiles:community-join", community=self.community1.slug)
             self.response_302()
             assert "apply" in self.last_response["location"]
-            self.post("gamer_profiles:community-join", community=self.community1.pk)
+            self.post("gamer_profiles:community-join", community=self.community1.slug)
             self.response_302()
             assert "apply" in self.last_response["location"]
             with pytest.raises(models.NotInCommunity):
@@ -150,19 +150,19 @@ class TestCommunityJoinView(AbstractViewTest):
         for user in [self.gamer3.user, self.gamer1.user]:
             with self.login(username=user.username):
                 self.assertGoodView(
-                    "gamer_profiles:community-join", community=self.community2.pk
+                    "gamer_profiles:community-join", community=self.community2.slug
                 )
                 self.post(
                     "gamer_profiles:community-join",
                     data={},
-                    community=self.community2.pk,
+                    community=self.community2.slug,
                 )
                 self.response_302()
                 assert self.community2.get_role(user.gamerprofile)
 
     def test_join_community_already_in(self):
         with self.login(username=self.gamer2.username):
-            self.get("gamer_profiles:community-join", community=self.community2.pk)
+            self.get("gamer_profiles:community-join", community=self.community2.slug)
             self.response_302()
 
     def test_kicked_user(self):
@@ -179,9 +179,9 @@ class TestCommunityJoinView(AbstractViewTest):
             end_date__gt=timezone.now(),
         )
         with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-join", community=self.community2.pk)
+            self.get("gamer_profiles:community-join", community=self.community2.slug)
             self.response_403()
-            self.post("gamer_profiles:community-join", community=self.community2.pk)
+            self.post("gamer_profiles:community-join", community=self.community2.slug)
             self.response_403()
             with pytest.raises(models.NotInCommunity):
                 self.community2.get_role(self.gamer3)
@@ -191,9 +191,9 @@ class TestCommunityJoinView(AbstractViewTest):
         self.community2.kick_user(kicker=self.gamer2, gamer=self.gamer3, reason="test")
         with self.login(username=self.gamer3.username):
             self.assertGoodView(
-                "gamer_profiles:community-join", community=self.community2.pk
+                "gamer_profiles:community-join", community=self.community2.slug
             )
-            self.post("gamer_profiles:community-join", community=self.community2.pk)
+            self.post("gamer_profiles:community-join", community=self.community2.slug)
             assert self.community2.get_role(self.gamer3) == "Member"
 
     def test_banned_gamer(self):
@@ -203,9 +203,9 @@ class TestCommunityJoinView(AbstractViewTest):
             banned_user=self.gamer3, community=self.community2
         )
         with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-join", community=self.community2.pk)
+            self.get("gamer_profiles:community-join", community=self.community2.slug)
             self.response_403()
-            self.post("gamer_profiles:community-join", community=self.community2.pk)
+            self.post("gamer_profiles:community-join", community=self.community2.slug)
             self.response_403()
             with pytest.raises(models.NotInCommunity):
                 self.community2.get_role(self.gamer3)
@@ -224,11 +224,11 @@ class TestCommunityApplyView(AbstractViewTest):
 
     def test_login_required(self):
         self.assertLoginRequired(
-            "gamer_profiles:community-apply", community=self.community1.pk
+            "gamer_profiles:community-apply", community=self.community1.slug
         )
         self.post(
             "gamer_profiles:community-apply",
-            community=self.community1.pk,
+            community=self.community1.slug,
             data=self.apply_data,
         )
         self.response_302()
@@ -243,7 +243,7 @@ class TestCommunityApplyView(AbstractViewTest):
             reason="annoying",
         )
         with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-apply", community=self.community1.pk)
+            self.get("gamer_profiles:community-apply", community=self.community1.slug)
             self.response_403()
             current_apps = models.CommunityApplication.objects.filter(
                 community=self.community1
@@ -251,7 +251,7 @@ class TestCommunityApplyView(AbstractViewTest):
             assert current_apps == 0
             self.post(
                 "gamer_profiles:community-apply",
-                community=self.community1.pk,
+                community=self.community1.slug,
                 data=self.apply_data,
             )
             self.response_403()
@@ -271,11 +271,11 @@ class TestCommunityApplyView(AbstractViewTest):
             current_apps = models.CommunityApplication.objects.filter(
                 community=self.community1
             ).count()
-            self.get("gamer_profiles:community-apply", community=self.community1.pk)
+            self.get("gamer_profiles:community-apply", community=self.community1.slug)
             self.response_403()
             self.post(
                 "gamer_profiles:community-apply",
-                community=self.community1.pk,
+                community=self.community1.slug,
                 data=self.apply_data,
             )
             self.response_403()
@@ -293,11 +293,11 @@ class TestCommunityApplyView(AbstractViewTest):
             ).count()
             assert current_apps == 0
             self.assertGoodView(
-                "gamer_profiles:community-apply", community=self.community1.pk
+                "gamer_profiles:community-apply", community=self.community1.slug
             )
             self.post(
                 "gamer_profiles:community-apply",
-                community=self.community1.pk,
+                community=self.community1.slug,
                 data=self.apply_data,
             )
             self.response_302()
@@ -314,7 +314,7 @@ class TestCommunityApplyView(AbstractViewTest):
             submit_data["submit_app"] = ""
             self.post(
                 "gamer_profiles:community-apply",
-                community=self.community1.pk,
+                community=self.community1.slug,
                 data=submit_data,
             )
             self.response_302()
@@ -391,7 +391,7 @@ class UpdateApplicationTest(AbstractViewTest):
             submit_data["submit_app"] = ""
             self.post(
                 "gamer_profiles:community-apply",
-                community=self.community1.pk,
+                community=self.community1.slug,
                 data=submit_data,
             )
             self.response_302()
@@ -465,7 +465,7 @@ class CommunityApplicantListTest(AbstractViewTest):
             status="new",
         )
         self.view_str = "gamer_profiles:community-applicant-list"
-        self.url_kwargs = {"community": self.community1.pk}
+        self.url_kwargs = {"community": self.community1.slug}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -505,7 +505,7 @@ class CommunityApplicationDetail(AbstractViewTest):
             status="new",
         )
         self.view_str = "gamer_profiles:community-applicant-detail"
-        self.url_kwargs = {"community": self.community1.pk}
+        self.url_kwargs = {"community": self.community1.slug}
 
     def test_login_required(self):
         self.assertLoginRequired(
@@ -552,11 +552,11 @@ class ApproveApplicationTest(AbstractViewTest):
         )
         self.view_str = "gamer_profiles:community-applicant-approve"
         self.valid_url_kwargs = {
-            "community": self.community1.pk,
+            "community": self.community1.slug,
             "application": self.application1.pk,
         }
         self.invalid_url_kwargs = {
-            "community": self.community1.pk,
+            "community": self.community1.slug,
             "application": self.application2.pk,
         }
 
@@ -658,7 +658,7 @@ class CommunityKickListTest(AbstractViewTest):
             earliest_reapply=timezone.now() + timedelta(days=2),
         )
         self.view_str = "gamer_profiles:community-kick-list"
-        self.url_kwargs = {"community": self.community1.pk}
+        self.url_kwargs = {"community": self.community1.slug}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -684,8 +684,8 @@ class CommunityKickUserTest(AbstractViewTest):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.view_str = "gamer_profiles:community-kick-gamer"
-        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.username}
-        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.username}
+        self.url_kwargs = {"community": self.community1.slug, "gamer": self.gamer2.username}
+        self.bad_url_kwargs = {"community": self.community1.slug, "gamer": self.gamer3.username}
         self.post_data = {
             "reason": "Jerk",
             "end_date": (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%d %H:%M"),
@@ -741,13 +741,13 @@ class CommunityUpdateKickTest(CommunityKickListTest):
     def setUp(self):
         super().setUp()
         self.view_str = "gamer_profiles:community-kick-edit"
-        self.url_kwargs = {"community": self.community1.pk, "kick": self.good_kick.pk}
+        self.url_kwargs = {"community": self.community1.slug, "kick": self.good_kick.pk}
         self.bad_url_kwargs = {
-            "community": self.community1.pk,
+            "community": self.community1.slug,
             "kick": self.bad_kick.pk,
         }
         self.bad_comm_url_kwargs = {
-            "community": self.community2.pk,
+            "community": self.community2.slug,
             "kick": self.good_kick.pk,
         }
         self.bad_post_data = {"gamer": self.gamer2.pk}
@@ -806,9 +806,9 @@ class CommunityKickDeleteTest(CommunityUpdateKickTest):
     def setUp(self):
         super().setUp()
         self.view_str = "gamer_profiles:community-kick-delete"
-        self.url_kwargs = {"community": self.community1.pk, "kick": self.good_kick.pk}
+        self.url_kwargs = {"community": self.community1.slug, "kick": self.good_kick.pk}
         self.bad_comm_url_kwargs = {
-            "community": self.community2.pk,
+            "community": self.community2.slug,
             "kick": self.good_kick.pk,
         }
         self.good_post_data = {}  # Allows us to reuse methods from CommunityUpdateKickTest
@@ -838,7 +838,7 @@ class CommunityBanListTest(AbstractViewTest):
         self.community1.add_member(self.gamer2)
         self.ban_file = self.community1.ban_user(self.gamer1, self.gamer2, "Jerk")
         self.view_str = "gamer_profiles:community-ban-list"
-        self.url_kwargs = {"community": self.community1.pk}
+        self.url_kwargs = {"community": self.community1.slug}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_str, **self.url_kwargs)
@@ -863,8 +863,8 @@ class CommunityBanUserTest(AbstractViewTest):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.view_str = "gamer_profiles:community-ban-gamer"
-        self.url_kwargs = {"community": self.community1.pk, "gamer": self.gamer2.username}
-        self.bad_url_kwargs = {"community": self.community1.pk, "gamer": self.gamer3.username}
+        self.url_kwargs = {"community": self.community1.slug, "gamer": self.gamer2.username}
+        self.bad_url_kwargs = {"community": self.community1.slug, "gamer": self.gamer3.username}
         self.post_data = {"reason": "Jerk"}
         self.bad_post_data = {}
 
@@ -919,13 +919,13 @@ class CommunityUpdateBanTest(CommunityBanListTest):
             self.community2.owner, self.gamer3, "Jerkhole"
         )
         self.view_str = "gamer_profiles:community-ban-edit"
-        self.url_kwargs = {"community": self.community1.pk, "ban": self.ban_file.pk}
+        self.url_kwargs = {"community": self.community1.slug, "ban": self.ban_file.pk}
         self.bad_url_kwargs = {
-            "community": self.community1.pk,
+            "community": self.community1.slug,
             "ban": self.bad_ban_file.pk,
         }
         self.bad_comm_url_kwargs = {
-            "community": self.community2.pk,
+            "community": self.community2.slug,
             "ban": self.ban_file.pk,
         }
         self.bad_post_data = {"gamer": self.gamer2.pk}
@@ -971,9 +971,9 @@ class CommunityBanDeleteTest(CommunityUpdateBanTest):
     def setUp(self):
         super().setUp()
         self.view_str = "gamer_profiles:community-ban-delete"
-        self.url_kwargs = {"community": self.community1.pk, "ban": self.ban_file.pk}
+        self.url_kwargs = {"community": self.community1.slug, "ban": self.ban_file.pk}
         self.bad_comm_url_kwargs = {
-            "community": self.community2.pk,
+            "community": self.community2.slug,
             "ban": self.bad_ban_file.pk,
         }
         self.good_post_data = {}  # Allows us to reuse methods from CommunityUpdateBanTest
