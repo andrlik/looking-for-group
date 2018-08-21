@@ -61,6 +61,11 @@ urlpatterns = [
         name="community-kick-list",
     ),
     path(
+        "communities/<uuid:community>/members/<uuid:gamer>/kick/",
+        view=views.CommunityKickUser.as_view(),
+        name="community-kick-gamer",
+    ),
+    path(
         "communities/<uuid:community>/kicks/<uuid:kick>/edit/",
         view=views.UpdateKickRecord.as_view(),
         name="community-kick-edit",

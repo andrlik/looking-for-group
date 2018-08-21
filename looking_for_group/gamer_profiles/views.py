@@ -633,10 +633,10 @@ class CommunityKickedUserList(
     """
 
     model = models.KickedUser
-    select_related = ["kicked_user", 'kicker']
+    select_related = ["kicked_user", "kicker"]
     template_name = "gamer_profiles/community_kicked_list.html"
     permission_required = "community.kick_user"
-    context_object_name = 'kick_list'
+    context_object_name = "kick_list"
     paginate_by = 25
     ordering = ["-end_date", "-created"]
 
@@ -647,17 +647,25 @@ class CommunityKickedUserList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
-        expired_kicks = models.KickedUser.objects.filter(community=self.community, end_date__lt=timezone.now()).select_related('kicked_user', 'kicker')
-        nodate_kicks = models.KickedUser.objects.filter(community=self.community, end_date=None).select_related('kicked_user', 'kicker')
-        context['expired_kicks'] = expired_kicks.union(nodate_kicks).order_by('-created')
+        context["community"] = self.community
+        expired_kicks = models.KickedUser.objects.filter(
+            community=self.community, end_date__lt=timezone.now()
+        ).select_related("kicked_user", "kicker")
+        nodate_kicks = models.KickedUser.objects.filter(
+            community=self.community, end_date=None
+        ).select_related("kicked_user", "kicker")
+        context["expired_kicks"] = expired_kicks.union(nodate_kicks).order_by(
+            "-created"
+        )
         return context
 
     def get_permission_object(self):
         return self.community
 
     def get_queryset(self):
-        return self.model.objects.filter(community=self.community, end_date__gte=timezone.now()).order_by('-end_date', '-created')
+        return self.model.objects.filter(
+            community=self.community, end_date__gte=timezone.now()
+        ).order_by("-end_date", "-created")
 
 
 class CommunityBannedUserList(
@@ -672,7 +680,7 @@ class CommunityBannedUserList(
     template_name = "gamer_profiles/community_banned_list.html"
     permission_required = "community.ban_user"
     paginate_by = 25
-    context_object_name = 'ban_list'
+    context_object_name = "ban_list"
     ordering = ["-created"]
 
     def dispatch(self, request, *args, **kwargs):
@@ -682,14 +690,14 @@ class CommunityBannedUserList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def get_permission_object(self):
         return self.community
 
     def get_queryset(self):
-        return self.model.objects.filter(community=self.community).order_by('-created')
+        return self.model.objects.filter(community=self.community).order_by("-created")
 
 
 class CommunityDeleteBan(
@@ -707,7 +715,7 @@ class CommunityDeleteBan(
     template_name = "gamer_profiles/delete_ban.html"
     permission_required = "community.ban_user"
     context_object_name = "ban"
-    pk_url_kwarg = 'ban'
+    pk_url_kwarg = "ban"
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
@@ -718,20 +726,25 @@ class CommunityDeleteBan(
         return self.community
 
     def form_valid(self, form):
-        messages.success(self.request, _('Successfully deleted ban.'))
+        messages.success(self.request, _("Successfully deleted ban."))
         return super().form_valid(form)
 
 
-class CommunityUpdateBan(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.UpdateView):
-    '''
+class CommunityUpdateBan(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SelectRelatedMixin,
+    generic.edit.UpdateView,
+):
+    """
     Loads form for editing a ban (you can only edit the reason.)
-    '''
+    """
 
     model = models.BannedUser
-    fields = ['reason']
+    fields = ["reason"]
     permission_required = "community.ban_user"
-    template_name = 'gamer_profiles/community_ban_edit.html'
-    pk_url_kwarg = 'ban'
+    template_name = "gamer_profiles/community_ban_edit.html"
+    pk_url_kwarg = "ban"
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = self.kwargs.pop("community", None)
@@ -740,18 +753,18 @@ class CommunityUpdateBan(LoginRequiredMixin, PermissionRequiredMixin, SelectRela
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def get_permission_object(self):
         return self.community
 
     def form_valid(self, form):
-        messages.success(self.request, _('Ban record updated!'))
+        messages.success(self.request, _("Ban record updated!"))
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        messages.error(self.request, _('Please correct the errors below.'))
+        messages.error(self.request, _("Please correct the errors below."))
 
 
 class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
@@ -838,54 +851,64 @@ class CommunityKickUser(
         self.gamer = get_object_or_404(models.GamerProfile, pk=gamer_pk)
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        context['gamer'] = self.gamer
+        return context
+
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-kicked-list",
+            "gamer_profiles:community-kick-list",
             kwargs={"community": self.community.pk},
         )
 
     def get_permission_object(self):
-        return self.get_object().community
+        return self.community
 
     def has_permission(self):
-        if (
-            self.community.get_role(self.gamer) == "Admin"
-            and self.community.owner != self.request.user.gamerprofile
-        ):
+        try:
+            if (
+                    self.community.get_role(self.gamer) == "Admin"
+                    and self.community.owner != self.request.user.gamerprofile
+            ):
+                return False
+            if (
+                    self.community.get_role(self.gamer) == "Moderator"
+                    and self.community.get_role(self.request.user.gamerprofile) != "Admin"
+            ):
+                return False
+        except models.NotInCommunity:
             return False
-        if (
-            self.community.get_role(self.gamer) == "Moderator"
-            and self.community.get_role(self.request.user.gamerprofile) != "Admin"
-        ):
-            return False
-        return super().has_permission(self)
+        return super().has_permission()
 
     def form_valid(self, form):
         try:
             self.community.kick_user(
                 kicker=self.request.user.gamerprofile,
                 gamer=self.gamer,
-                community=self.community,
                 reason=form.instance.reason,
                 earliest_reapply=form.instance.end_date,
             )
         except models.NotInCommunity:
             messages.error(
+                self.request,
                 _(
                     "{0} is not a current member of the {1} and cannot be kicked.".format(
                         self.gamer.user.display_name, self.community.name
                     )
-                )
+                ),
             )
-            return super().form_invalid(form)
+            return self.form_invalid(form)
         messages.success(
+            self.request,
             _(
                 "{0} successfully kicked from {1}.".format(
                     self.gamer.user.display_name, self.community.name
                 )
-            )
+            ),
         )
-        return super().form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class UpdateKickRecord(
@@ -902,7 +925,7 @@ class UpdateKickRecord(
     select_related = ["community", "kicked_user"]
     template_name = "gamer_profiles/community_kick_edit.html"
     fields = ["reason", "end_date"]
-    context_object_name = 'kick'
+    context_object_name = "kick"
     pk_url_kwarg = "kick"
     permission_required = "community.kick_user"
 
@@ -913,14 +936,16 @@ class UpdateKickRecord(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def get_object(self):
-        if not hasattr(self, 'object'):
+        if not hasattr(self, "object"):
             self.object = super().get_object()
             if not self.object.end_date or self.object.end_date < timezone.now():
-                messages.error(self.request, _('You cannot edit an expired suspension or kick.'))
+                messages.error(
+                    self.request, _("You cannot edit an expired suspension or kick.")
+                )
                 raise PermissionDenied
         return self.object
 
@@ -934,17 +959,22 @@ class UpdateKickRecord(
         )
 
 
-class DeleteKickRecord(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.DeleteView):
-    '''
+class DeleteKickRecord(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SelectRelatedMixin,
+    generic.edit.DeleteView,
+):
+    """
     Allows an admin to delete a kick record.
-    '''
+    """
 
     model = models.KickedUser
-    select_related = ['community', 'kicked_user', 'kicker']
-    permission_required = 'community.kick_user'
-    template_name = 'gamer_profiles/community_kick_delete.html'
-    context_object_name = 'kick'
-    pk_url_kwarg = 'kick'
+    select_related = ["community", "kicked_user", "kicker"]
+    permission_required = "community.kick_user"
+    template_name = "gamer_profiles/community_kick_delete.html"
+    context_object_name = "kick"
+    pk_url_kwarg = "kick"
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
@@ -953,17 +983,20 @@ class DeleteKickRecord(LoginRequiredMixin, PermissionRequiredMixin, SelectRelate
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:community-kick-list', kwargs={'community': self.community.pk})
+        return reverse_lazy(
+            "gamer_profiles:community-kick-list",
+            kwargs={"community": self.community.pk},
+        )
 
     def get_permission_object(self):
         return self.get_object().community
 
     def form_valid(self, form):
-        messages.success(self.request, _('Suspension deleted.'))
+        messages.success(self.request, _("Suspension deleted."))
         return super().form_valid(form)
 
 
@@ -981,7 +1014,7 @@ class GamerProfileDetailView(
     model = models.GamerProfile
     select_related = ["user"]
     prefetch_related = ["communities"]
-    context_object_name = 'gamer'
+    context_object_name = "gamer"
     pk_url_kwarg = "gamer"
     permission_required = "profile.view_detail"
     template_name = "gamer_profiles/profile_detail.html"
@@ -1011,7 +1044,8 @@ class GamerProfileDetailView(
             else:
                 return HttpResponseRedirect(
                     reverse_lazy(
-                        "gamer_profiles:gamer-friend", kwargs={"gamer": self.get_object().pk}
+                        "gamer_profiles:gamer-friend",
+                        kwargs={"gamer": self.get_object().pk},
                     )
                 )
         return super().handle_no_permission()
@@ -1277,9 +1311,7 @@ class GamerProfileUpdateView(
         )
 
 
-class CreateGamerNote(
-    LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView
-):
+class CreateGamerNote(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
     """
     Add a note to a gamer profile.
     """
@@ -1290,9 +1322,7 @@ class CreateGamerNote(
     template_name = "gamer_profiles/gamernote_create.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.gamer = get_object_or_404(
-            models.GamerProfile, pk=self.kwargs.pop("gamer")
-        )
+        self.gamer = get_object_or_404(models.GamerProfile, pk=self.kwargs.pop("gamer"))
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
@@ -1300,7 +1330,7 @@ class CreateGamerNote(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['gamer'] = self.gamer
+        context["gamer"] = self.gamer
         return context
 
     def get_success_url(self):
@@ -1314,61 +1344,75 @@ class CreateGamerNote(
         return super().form_valid(form)
 
 
-class UpdateGamerNote(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.UpdateView):
-    '''
+class UpdateGamerNote(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SelectRelatedMixin,
+    generic.edit.UpdateView,
+):
+    """
     Updating a specific gamer note.
-    '''
+    """
 
     model = models.GamerNote
     permission_required = "profile.delete_note"
-    pk_url_kwarg = 'gamernote'
-    context_object_name = 'gamernote'
-    select_related = ['gamer', 'gamer__user', 'author']
-    template_name = 'gamer_profiles/gamernote_update.html'
-    fields = ['title', 'body']
+    pk_url_kwarg = "gamernote"
+    context_object_name = "gamernote"
+    select_related = ["gamer", "gamer__user", "author"]
+    template_name = "gamer_profiles/gamernote_update.html"
+    fields = ["title", "body"]
 
     def dispatch(self, request, *args, **kwargs):
         self.gamer = self.get_object().gamer
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:profile-detail', kwargs={'gamer': self.gamer.pk})
+        return reverse_lazy(
+            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.pk}
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['gamer'] = self.gamer
+        context["gamer"] = self.gamer
         return context
 
     def form_valid(self, form):
-        messages.success(self.request, _('Successfully updated note!'))
+        messages.success(self.request, _("Successfully updated note!"))
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        messages.error(self.request, _('Please correct the errors below.'))
+        messages.error(self.request, _("Please correct the errors below."))
         return super().form_invalid(form)
 
 
-class RemoveGamerNote(LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.edit.DeleteView):
-    '''
+class RemoveGamerNote(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SelectRelatedMixin,
+    generic.edit.DeleteView,
+):
+    """
     Delete view for a gamer note.
-    '''
+    """
 
     model = models.GamerNote
     permission_required = "profile.delete_note"
     template_name = "gamer_profiles/gamernote_delete.html"
-    select_related = ['author', 'gamer']
-    context_object_name = 'gamernote'
-    pk_url_kwarg = 'gamernote'
+    select_related = ["author", "gamer"]
+    context_object_name = "gamernote"
+    pk_url_kwarg = "gamernote"
 
     def dispatch(self, request, *args, **kwargs):
         self.gamer = self.get_object().gamer
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:profile-detail', kwargs={'gamer': self.gamer.pk})
+        return reverse_lazy(
+            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.pk}
+        )
 
     def form_valid(self, form):
-        messages.success(self.request, _('You have deleted the selected gamer note.'))
+        messages.success(self.request, _("You have deleted the selected gamer note."))
         return super().form_valid(form)
 
 

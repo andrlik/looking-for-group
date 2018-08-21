@@ -639,6 +639,45 @@ class CommunityKickListTest(AbstractViewTest):
             assert self.get_context('expired_kicks').count() == 1
 
 
+class CommunityKickUserTest(AbstractViewTest):
+    '''
+    Test creating a kick record
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.community1.add_member(self.gamer2)
+        self.view_str = 'gamer_profiles:community-kick-gamer'
+        self.url_kwargs = {'community': self.community1.pk, 'gamer': self.gamer2.pk}
+        self.bad_url_kwargs = {'community': self.community1.pk, 'gamer': self.gamer3.pk}
+        self.post_data = {'reason': 'Jerk', 'end_date': (timezone.now()+timedelta(days=2)).strftime('%Y-%m-%d %H:%M')}
+        self.bad_post_data = {'end_date': (timezone.now()+timedelta(days=2)).strftime('%Y-%m-%d %H:%M')}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.user.username):
+            self.get(self.view_str, **self.url_kwargs)
+            self.response_403()
+            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+            assert models.KickedUser.objects.filter(community=self.community1, kicked_user=self.gamer2).count() == 0
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.user.username):
+            self.post(self.view_str, data=self.post_data, **self.bad_url_kwargs)
+            self.response_403()
+            self.assertGoodView(self.view_str, **self.url_kwargs)
+            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
+            self.response_200()
+            assert models.KickedUser.objects.filter(community=self.community1, kicked_user=self.gamer2).count() == 0
+            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert models.KickedUser.objects.filter(community=self.community1, kicked_user=self.gamer2).count() == 1
+
+
+
 class CommunityUpdateKickTest(CommunityKickListTest):
     '''
     Test attempts to update a kick record.
