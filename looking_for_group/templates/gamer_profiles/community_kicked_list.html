@@ -27,9 +27,9 @@
       <tbody>
         {% for kick in kick_list %}
         <tr>
-          <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.user.display_name }} ({{ kick.kicked_user.user.username }})</td>
+          <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.display_name }} ({{ kick.kicked_user.username }})</td>
           <td>{{ kick.created }}</td>
-          <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.user.display_name }} ({{ kick.kicker.user.username }})</a></td>
+          <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.display_name }} ({{ kick.kicker.username }})</a></td>
           <td>{{ kick.reason }}</td>
           <td>{{ kick.end_date }}</td>
           <td><a href="{% url 'gamer_profiles:community-kick-edit' community=community.pk kick=kick.pk %}"><button class="button primary">{% trans "Edit" %}</button></a></td>
@@ -59,9 +59,9 @@
       <tbody>
         {% for kick in expired_kicks %}
         <tr>
-          <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.user.display_name }} ({{ kick.kicked_user.user.username }})</td>
+          <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.display_name }} ({{ kick.kicked_user.username }})</td>
           <td>{{ kick.created }}</td>
-          <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.user.display_name }} ({{ kick.kicker.user.username }})</a></td>
+          <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.display_name }} ({{ kick.kicker.username }})</a></td>
           <td>{{ kick.reason }}</td>
           <td>{{ kick.end_date }}</td>
           <td><a href="#" class="button disabled" aria-disabled>{% trans "Edit" %}</a></td>

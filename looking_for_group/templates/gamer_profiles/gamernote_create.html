@@ -1,8 +1,8 @@
 {% extends "gamer_profiles/base.html" %}
 {% load avatar_tags i18n humanize foundation_formtags %}
-{% block subtitle %}{% trans "Add note to" %} {{ gamer.user.display_name }} - {% endblock %}
+{% block subtitle %}{% trans "Add note to" %} {{ gamer.display_name }} - {% endblock %}
 {% block content %}
-<h1>{% blocktrans with gname=gamer.user.display_name %}Add note to {{ gname }}{% endblocktrans %}</h1>
+<h1>{% blocktrans with gname=gamer.display_name %}Add note to {{ gname }}{% endblocktrans %}</h1>
 
 <form action="" method="post">
   {% csrf_token %}

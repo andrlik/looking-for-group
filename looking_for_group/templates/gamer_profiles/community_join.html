@@ -3,7 +3,7 @@
 {% block subtitle %}{% trans "Join" %} {{ community.name }} - {% endblock %}
 {% block content %}
 <h1>{% blocktrans %}Join {{ community.name }}?{% endblocktrans %}</h1>
-<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.user.display_name }}</a></span>
+<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.display_name }}</a></span>
 <p>{{ community.description_rendered|safe }}</p>
 <h2>{% trans "Are you sure?" %}</h2>
 <p>{% blocktrans %}Joining this community means that your profile will be visible to all the other members of this group.{% endblocktrans %}</p>

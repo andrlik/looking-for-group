@@ -6,7 +6,7 @@
 <span class="meta">{% blocktrans count counter=applicants.count %}One Application{% plural %}{{ counter }} Applications{% endblocktrans %} {% trans "Pending" %}</span>
 <ul>
   {% for application in applications %}
-  <li><a href="{% url 'gamer_profiles:community-applicant-detail' community=community.pk application=application.pk %}">{{ application.gamer.user.display_name }}</a> ({% trans "Last modified:" %} {{ application.modified }})</li>
+  <li><a href="{% url 'gamer_profiles:community-applicant-detail' community=community.pk application=application.pk %}">{{ application.gamer.display_name }}</a> ({% trans "Last modified:" %} {{ application.modified }})</li>
   {% empty %}
   <li>{% trans "No pending applications." %}</li>
   {% endfor %}

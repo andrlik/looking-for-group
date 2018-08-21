@@ -1,6 +1,7 @@
 from django.db import models, transaction, IntegrityError
 from django.db.models import F
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -417,6 +418,14 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     def get_absolute_url(self):
         return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.pk})
+
+    @cached_property
+    def username(self):
+        return self.user.username
+
+    @cached_property
+    def display_name(self):
+        return self.user.display_name
 
     def blocked_by(self, gamer):
         '''

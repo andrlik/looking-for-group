@@ -1,12 +1,12 @@
 {% extends "gamer_profiles/base.html" %}
 {% load avatar_tags i18n humanize %}
-{% block subtitle %}{{ gamer.user.display_name }} - {% endblock %}
+{% block subtitle %}{{ gamer.display_name }} - {% endblock %}
 {% block content %}
-<h1>{{ gamer.user.display_name }} ({{ gamer.user.username }})</h1>
+<h1>{{ gamer.display_name }} ({{ gamer.username }})</h1>
 {% avatar gamer.user %}
 <dl>
   <dt>{% trans "Display Name" %}</dt>
-  <dd>{{ gamer.user.display_name }}</dd>
+  <dd>{{ gamer.display_name }}</dd>
   <dt>{% trans "Bio" %}</dt>
   <dd>{{ gamer.user.bio }}</dd>
   <dt><a href="{{ gamer.user.homepage_url }}" rel="nofollow">{% trans "Homepage" %}</a></dt>
@@ -43,7 +43,7 @@
   {% for game in gamer.preferred_games.all %}
   <li><a href="{% url 'catalog:game-detail' game=game.pk %}">{{ game.title }}</a></li>
   {% empty %}
-  <p>{% blocktrans with gname=gamer.user.display_name %}{{ gname }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
+  <p>{% blocktrans with gname=gamer.display_name %}{{ gname }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
 <h3>{% trans "Preferred Systems" %}</h3>
@@ -51,7 +51,7 @@
   {% for system in gamer.preferred_systems.all %}
   <li><a href="{% url 'catalog:system-detail' system=system.pk %}">{{ system.name }}</a></li>
   {% empty %}
-  <p>{% blocktrans with gname=gamer.user.display_name %}{{ gname }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
+  <p>{% blocktrans with gname=gamer.display_name %}{{ gname }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
 {% if request.user.is_authenticated %}

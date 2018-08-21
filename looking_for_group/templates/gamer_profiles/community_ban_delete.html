@@ -1,12 +1,12 @@
 {% extends "gamer_profiles/base.html" %}
 {% load i18n humanize foundation_formtags %}
-{% block subtitle %}{% trans "Remove ban from" %} {{ community.name }} {% trans "for" %} {{ ban.banned_user.user.display_name }} - {% endblock %}
+{% block subtitle %}{% trans "Remove ban from" %} {{ community.name }} {% trans "for" %} {{ ban.banned_user.display_name }} - {% endblock %}
 {% block content %}
-<h1>{% blocktrans with cname=community.name gname=ban.banned_user.user.display_name %}Remove ban from {{ cname }} for {{ gname }}?{% endblocktrans %}</h1>
+<h1>{% blocktrans with cname=community.name gname=ban.banned_user.display_name %}Remove ban from {{ cname }} for {{ gname }}?{% endblocktrans %}</h1>
 
 <div class="callout alert">
   <h2>{% trans "Are you sure?" %}</h2>
-  <p>{% blocktrans with cname=community.name gname=ban.banned_user.user.display_name %}This will remove this record permanently and will permit {{ gname }} to repply and/or rejoin {{ cname }}. {% endblocktrans %}
+  <p>{% blocktrans with cname=community.name gname=ban.banned_user.display_name %}This will remove this record permanently and will permit {{ gname }} to repply and/or rejoin {{ cname }}. {% endblocktrans %}
   </p>
 </div>
 

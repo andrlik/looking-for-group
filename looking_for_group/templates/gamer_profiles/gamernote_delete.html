@@ -2,7 +2,7 @@
 {% load i18n humanize foundation_formtags %}
 {% block subtitle %}{% trans "Delete note" %} - {% endblock %}
 {% block content %}
-<h1>{% blocktrans with gname=gamernote.gamer.user.display_name %}Delete note regarding {{ gname }}?{% endblocktrans %}</h1>
+<h1>{% blocktrans with gname=gamernote.gamer.display_name %}Delete note regarding {{ gname }}?{% endblocktrans %}</h1>
 <h2>{% trans "Are you sure?" %}</h2>
 <p>{% blocktrans %}Proceeding will delete this note permanently.{% endblocktrans %}</p>
 <form action="" method="post">
