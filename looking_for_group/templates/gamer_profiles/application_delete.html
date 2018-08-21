@@ -3,7 +3,7 @@
 {% block subtitle %}{% trans "Withdraw application to join" %} {{ object.community.name }} - {% endblock %}
 {% block content %}
 <h1>{% blocktrans %}Withdraw application to join {{ object.community.name }}?{% endblocktrans %}</h1>
-<span class="meta">{% blocktrans count counter=object.community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ object.community.owner.get_absolute_url }}">{{ object.community.owner.user.display_name }}</a></span>
+<span class="meta">{% blocktrans count counter=object.community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ object.community.owner.get_absolute_url }}">{{ object.community.owner.display_name }}</a></span>
 <p>{{ object.community.description_rendered|safe }}</p>
 <h2>{% trans "Are you sure?" %}</h2>
 <p>{% blocktrans %}Proceeding will delete your application from this community.{% endblocktrans %}</p>

@@ -597,7 +597,7 @@ class ApproveApplication(
                 self.request,
                 _(
                     "{0} is already a member of {1}".format(
-                        application.gamer.user.display_name, self.community.name
+                        application.gamer.display_name, self.community.name
                     )
                 ),
             )
@@ -606,7 +606,7 @@ class ApproveApplication(
                 self.request,
                 _(
                     "{0} is currently suspended and cannot rejoin.".format(
-                        application.gamer.user.display_name
+                        application.gamer.display_name
                     )
                 ),
             )
@@ -724,11 +724,13 @@ class CommunityDeleteBan(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:community-ban-list', kwargs={'community': self.community.pk})
+        return reverse_lazy(
+            "gamer_profiles:community-ban-list", kwargs={"community": self.community.pk}
+        )
 
     def get_permission_object(self):
         return self.get_object().community
@@ -753,7 +755,7 @@ class CommunityUpdateBan(
     permission_required = "community.ban_user"
     template_name = "gamer_profiles/community_ban_edit.html"
     pk_url_kwarg = "ban"
-    select_related = ['banned_user', 'banned_user__user', 'community']
+    select_related = ["banned_user", "banned_user__user", "community"]
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = self.kwargs.pop("community", None)
@@ -766,7 +768,9 @@ class CommunityUpdateBan(
         return context
 
     def get_success_url(self):
-        return reverse_lazy('gamer_profiles:community-ban-list', kwargs={'community': self.community.pk})
+        return reverse_lazy(
+            "gamer_profiles:community-ban-list", kwargs={"community": self.community.pk}
+        )
 
     def get_permission_object(self):
         return self.get_object().community
@@ -802,26 +806,25 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
-        context['gamer'] = self.gamer
+        context["community"] = self.community
+        context["gamer"] = self.gamer
         return context
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-ban-list",
-            kwargs={"community": self.community.pk},
+            "gamer_profiles:community-ban-list", kwargs={"community": self.community.pk}
         )
 
     def has_permission(self):
         try:
             if (
-                    self.gamer.get_role(self.community) == "Admin"
-                    and self.community.owner != self.request.user.gamerprofile
+                self.gamer.get_role(self.community) == "Admin"
+                and self.community.owner != self.request.user.gamerprofile
             ):
                 return False
             if (
-                    self.gamer.get_role(self.community) == "Moderator"
-                    and self.community.get_role(self.request.user.gamerprofile) != "Admin"
+                self.gamer.get_role(self.community) == "Moderator"
+                and self.community.get_role(self.request.user.gamerprofile) != "Admin"
             ):
                 return False
         except models.NotInCommunity:
@@ -836,20 +839,22 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
                 reason=form.instance.reason,
             )
         except models.NotInCommunity:
-            messages.error(self.request,
+            messages.error(
+                self.request,
                 _(
                     "{0} is not a current member of the {1} and cannot be banned.".format(
-                        self.gamer.user.display_name, self.community.name
+                        self.gamer.display_name, self.community.name
                     )
-                )
+                ),
             )
             return super().form_invalid(form)
-        messages.success(self.request,
+        messages.success(
+            self.request,
             _(
                 "{0} successfully banned from {1}".format(
-                    self.gamer.user.display_name, self.community.name
+                    self.gamer.display_name, self.community.name
                 )
-            )
+            ),
         )
         return HttpResponseRedirect(self.get_success_url())
 
@@ -875,8 +880,8 @@ class CommunityKickUser(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
-        context['gamer'] = self.gamer
+        context["community"] = self.community
+        context["gamer"] = self.gamer
         return context
 
     def get_success_url(self):
@@ -891,13 +896,13 @@ class CommunityKickUser(
     def has_permission(self):
         try:
             if (
-                    self.community.get_role(self.gamer) == "Admin"
-                    and self.community.owner != self.request.user.gamerprofile
+                self.community.get_role(self.gamer) == "Admin"
+                and self.community.owner != self.request.user.gamerprofile
             ):
                 return False
             if (
-                    self.community.get_role(self.gamer) == "Moderator"
-                    and self.community.get_role(self.request.user.gamerprofile) != "Admin"
+                self.community.get_role(self.gamer) == "Moderator"
+                and self.community.get_role(self.request.user.gamerprofile) != "Admin"
             ):
                 return False
         except models.NotInCommunity:
@@ -917,7 +922,7 @@ class CommunityKickUser(
                 self.request,
                 _(
                     "{0} is not a current member of the {1} and cannot be kicked.".format(
-                        self.gamer.user.display_name, self.community.name
+                        self.gamer.display_name, self.community.name
                     )
                 ),
             )
@@ -926,7 +931,7 @@ class CommunityKickUser(
             self.request,
             _(
                 "{0} successfully kicked from {1}.".format(
-                    self.gamer.user.display_name, self.community.name
+                    self.gamer.display_name, self.community.name
                 )
             ),
         )
@@ -1059,7 +1064,7 @@ class GamerProfileDetailView(
                     self.request,
                     _(
                         "{} has blocked you from viewing their profiles, posts, and games.".format(
-                            self.object.user.display_name
+                            self.object.display_name
                         )
                     ),
                 )
@@ -1099,7 +1104,7 @@ class GamerFriendRequestView(
                     request,
                     _(
                         "You are already friends with {}".format(
-                            self.target_gamer.user.display_name
+                            self.target_gamer.display_name
                         )
                     ),
                 )
@@ -1143,7 +1148,7 @@ class GamerFriendRequestView(
                     self.request,
                     _(
                         "You already had a pending friend request from {}, which has now been accepted.".format(
-                            self.target_gamer.user.display_name
+                            self.target_gamer.display_name
                         )
                     ),
                 )
@@ -1245,7 +1250,7 @@ class GamerFriendRequestApprove(
                 self.request,
                 _(
                     "You are now friends with {}".format(
-                        friend_request.requestor.user.display_name
+                        friend_request.requestor.display_name
                     )
                 ),
             )
@@ -1267,7 +1272,7 @@ class GamerFriendRequestReject(GamerFriendRequestApprove):
                 self.request,
                 _(
                     "You have ignored the friend request from {}".format(
-                        friend_request.requestor.user.display_name
+                        friend_request.requestor.display_name
                     )
                 ),
             )
@@ -1497,16 +1502,12 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
         if created:
             messages.success(
                 self.request,
-                _(
-                    "You have successfully blocked {}".format(
-                        self.gamer.user.display_name
-                    )
-                ),
+                _("You have successfully blocked {}".format(self.gamer.display_name)),
             )
         else:
             messages.error(
                 self.request,
-                _("You have already blocked {}".format(self.gamer.user.display_name)),
+                _("You have already blocked {}".format(self.gamer.display_name)),
             )
         return HttpResponseRedirect(self.get_success_url())
 
@@ -1541,7 +1542,7 @@ class RemoveBlock(
     def form_valid(self, form):
         messages.success(
             self.request,
-            _("You have unblocked {}".format(self.get_object().blockee.user.username)),
+            _("You have unblocked {}".format(self.get_object().blockee.username)),
         )
         return super().form_valid(form)
 
@@ -1591,16 +1592,12 @@ class MuteGamer(LoginRequiredMixin, generic.CreateView):
         if created:
             messages.success(
                 self.request,
-                _(
-                    "You have successfully muted {}.".format(
-                        self.gamer.user.display_name
-                    )
-                ),
+                _("You have successfully muted {}.".format(self.gamer.display_name)),
             )
         else:
             messages.error(
                 self.request,
-                _("You have already muted {}.".format(self.gamer.user.display_name)),
+                _("You have already muted {}.".format(self.gamer.display_name)),
             )
         return HttpResponseRedirect(self.get_success_url())
 
