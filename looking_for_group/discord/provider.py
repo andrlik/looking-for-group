@@ -17,4 +17,4 @@ class DiscordProviderWithGuilds(DiscordProvider):
         return ['email', 'identify', 'guilds']  # pragma: no cover
 
 
-provider_classes = [DiscordProviderWithGuilds,]
+provider_classes = [DiscordProviderWithGuilds, ]

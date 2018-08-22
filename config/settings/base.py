@@ -250,11 +250,17 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_ADAPTER = "looking_for_group.users.adapters.AccountAdapter"
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 SOCIALACCOUNT_ADAPTER = "looking_for_group.users.adapters.SocialAccountAdapter"
+<<<<<<< HEAD
 # SOCIALACCOUNT_PROVIDERS = {
 #     "discord_with_guilds": {
 #         'SCOPE': ['email', 'identify', 'guilds'],
 #     },
 # }
+=======
+SOCIALACCOUNT_PROVIDERS = {
+    "discord_with_guilds": {},
+}
+>>>>>>> 95b5d3d... ✨ Add support for authentication via discord scoped to check guild membership.
 
 # Custom user app defaults
 # Select the correct user model
