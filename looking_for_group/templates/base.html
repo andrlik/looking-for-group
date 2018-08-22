@@ -54,7 +54,7 @@
           {% if request.user.is_authenticated %}
           <li data-equalizer-watch="menu">
               {# URL provided by django-allauth/account/urls.py #}
-              <a href="{% url 'users:detail' request.user.username  %}">{% trans "My Profile" %} {% avatar request.user 30 class="profile_circle_small" %}</a>
+              <a href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}">{% trans "My Profile" %} {% avatar request.user 30 class="profile_circle_small" %}</a>
           </li>
           <li data-equalizer-watch="menu">
               {# URL provided by django-allauth/account/urls.py #}

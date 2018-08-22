@@ -1,12 +1,14 @@
 import logging
 import urllib
 from rules.contrib.views import PermissionRequiredMixin
+from django.db import transaction
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.utils.http import is_safe_url
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.views import generic
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy, reverse
@@ -15,7 +17,7 @@ from django.http import HttpResponseRedirect, HttpResponseNotAllowed
 from django.forms import modelform_factory
 from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
 from . import models
-from .forms import OwnershipTransferForm, BlankDistructiveForm
+from .forms import OwnershipTransferForm, BlankDistructiveForm, GamerProfileForm
 
 
 logger = logging.getLogger("gamer_profiles")
@@ -1315,31 +1317,52 @@ class GamerProfileUpdateView(
     Update view for gamer profile.
     """
 
-    model = models.GamerProfile
-    select_related = ["user"]
-    pk_url_kwarg = "profile"
+    model = get_user_model()
+    select_related = ["gamerprofile"]
     permission_required = "profile.edit_profile"
-    template_name = "gamer_profiles/profile_edit.html"
+    template_name = "gamer_profiles/profile_update.html"
     fields = [
-        "rpg_experience",
-        "ttgame_experience",
-        "playstyle",
-        "will_gm",
-        "player_status",
-        "adult_themes",
-        "one_shots",
-        "adventures",
-        "campaigns",
-        "online_games",
-        "local_games",
-        "preferred_games",
-        "preferred_systems",
+        "display_name",
+        "bio",
+        "homepage_url",
     ]
 
     def get_success_url(self):
-        return reverse_lazy(
-            "gamer_profiles:profile-detail", kwargs={"profile": self.object.pk}
-        )
+        return self.get_object().gamerprofile.get_absolute_url()
+
+    def get_object(self):
+        if hasattr(self, 'object'):
+            return self.object
+        self.object = self.request.user
+        return self.object
+
+    def get_permission_object(self):
+        return self.get_object().gamerprofile
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['gamer'] = self.get_object().gamerprofile
+        if self.request.POST:
+            profile_form = GamerProfileForm(self.request.POST, prefix='profile', instance=self.get_object().gamerprofile)
+            profile_form.is_valid()  # Just to trigger validation.
+            context['profile_form'] = profile_form
+        else:
+            context['profile_form'] = GamerProfileForm(instance=self.get_object().gamerprofile, prefix='profile')
+        return context
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('There are issues with your submission. Please review the errors below.'))
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        profile_form = GamerProfileForm(self.request.POST, prefix='profile', instance=self.get_object().gamerprofile)
+        if not profile_form.is_valid():
+            return self.form_invalid(form)
+        with transaction.atomic():
+            form.save()
+            profile_form.save()
+            messages.success(self.request, _('Profile updated!'))
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class CreateGamerNote(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
