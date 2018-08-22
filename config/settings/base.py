@@ -249,9 +249,11 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_ADAPTER = "looking_for_group.users.adapters.AccountAdapter"
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 SOCIALACCOUNT_ADAPTER = "looking_for_group.users.adapters.SocialAccountAdapter"
-SOCIALACCOUNT_PROVIDERS = {
-    "discord_with_guilds": {},
-}
+# SOCIALACCOUNT_PROVIDERS = {
+#     "discord_with_guilds": {
+#         'SCOPE': ['email', 'identify', 'guilds'],
+#     },
+# }
 
 # Custom user app defaults
 # Select the correct user model
