@@ -1,5 +1,5 @@
 {% extends "gamer_profiles/base.html" %}
-{% load avatar_tags i18n humanize %}
+{% load avatar_tags i18n humanize ratings %}
 {% block subtitle %}{{ gamer.display_name }} - {% endblock %}
 {% block content %}
 <h1>{{ gamer.display_name }} ({{ gamer.username }})</h1>
@@ -60,7 +60,7 @@
     <dt>{% trans "Average Rating" %}</dt>
     <dd>{{ gamer.avg_gamer_rating }}</dd>
     <dt>{% trans "Rate gamer" %}</dt>
-    <dd>Some cool star form here</dd>
+    <dd>{% ratings gamer %}</dd>
     <dt>{% trans "Your notes on this gamer" %}</dt>
     <dd>
       <ol>

@@ -1057,9 +1057,6 @@ class GamerProfileDetailView(
         context["gamer_notes"] = models.GamerNote.objects.filter(
             author=self.request.user.gamerprofile, gamer=self.get_object()
         )
-        context["your_rating"], created = models.GamerRating.objects.get_or_create(
-            gamer=self.get_object(), rater=self.request.user.gamerprofile
-        )
         return context
 
     def handle_no_permission(self):
@@ -1468,35 +1465,6 @@ class RemoveGamerNote(
     def form_valid(self, form):
         messages.success(self.request, _("You have deleted the selected gamer note."))
         return super().form_valid(form)
-
-
-class RateGamer(
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    SelectRelatedMixin,
-    generic.edit.UpdateView,
-):
-    """
-    Update or create a rating for a given gamer.
-    """
-
-    model = models.GamerRating
-    pk_url_kwarg = "rating"
-    permission_required = "profile.view_details"
-    http_method_names = ["post", "put"]
-    fields = ["rating"]
-
-    def dispatch(self, request, *args, **kwargs):
-        self.gamer = get_object_or_404(models.GamerProfile, username=kwargs.pop("profile"))
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_permission_object(self):
-        return self.gamer
-
-    def get_object(self):
-        obj, created = models.GamerRating.objects.get_or_create(
-            rater=self.request.user.gamerprofile, gamer=self.gamer
-        )
 
 
 class BlockGamer(LoginRequiredMixin, generic.CreateView):

@@ -77,14 +77,12 @@ class GamerProfileSerializer(serializers.ModelSerializer):
             "preferred_games",
             "preferred_systems",
             "communities",
-            "median_gamer_rating",
             "reputation_score",
         )
         read_only_fields = (
             "id",
             "user",
             "communities",
-            "median_gamer_rating",
             "reputation_score",
         )
 
@@ -154,20 +152,6 @@ class GamerNoteSerializer(serializers.ModelSerializer):
         model = models.GamerNote
         fields = ("id", "author", "gamer", "title", "body", "created", "modified")
         read_only_fields = ("id", "author", "gamer", "created", "modified")
-
-
-class GamerRatingSerializer(serializers.ModelSerializer):
-    """
-    A rating a gamer gives another.
-    """
-
-    rater = GamerProfileSerializer()
-    gamer = GamerProfileSerializer()
-
-    class Meta:
-        model = models.GamerRating
-        fields = ("id", "rater", "gamer", "rating")
-        read_only_fields = ("id", "rater", "gamer")
 
 
 class BlockedUserSerializer(serializers.ModelSerializer):
