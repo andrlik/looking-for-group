@@ -43,6 +43,7 @@ django-rest-framework-rules = "*"
 bleach = "*"
 bleach-whitelist = "*"
 django-star-ratings = "*"
+django-q = "*"
 
 [dev-packages]
 werkzeug = "*"
