@@ -87,6 +87,7 @@ LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
     "looking_for_group.game_catalog.apps.GameCatalogConfig",
     "looking_for_group.gamer_profiles.apps.GamerProfilesConfig",
+    "looking_for_group.discord",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -248,6 +249,9 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_ADAPTER = "looking_for_group.users.adapters.AccountAdapter"
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 SOCIALACCOUNT_ADAPTER = "looking_for_group.users.adapters.SocialAccountAdapter"
+SOCIALACCOUNT_PROVIDERS = {
+    "discord_with_guilds": {},
+}
 
 # Custom user app defaults
 # Select the correct user model
