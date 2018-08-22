@@ -1,7 +1,11 @@
 {
     "_meta": {
         "hash": {
+<<<<<<< HEAD
             "sha256": "3ced9b824bedd80c3c6d08f04c2d65a348e0dbbf417cad9bf639f09fc42ab2bd"
+=======
+            "sha256": "f0d73874ddf4ebb754c0c857ae82d32a56587f4ff1640892d556c2049f5f7451"
+>>>>>>> 204004a... 🚧 Working on signals for maintaining discord server links.
         },
         "pipfile-spec": 6,
         "requires": {
@@ -67,6 +71,7 @@
             ],
             "version": "==1.15.0"
         },
+<<<<<<< HEAD
         "boto3": {
             "hashes": [
                 "sha256:0b9b24fd96f5bf7ae931982bfa029e3617680057d6dfc8c6d178fcb9c336c14e",
@@ -82,6 +87,8 @@
             ],
             "version": "==1.11.2"
         },
+=======
+>>>>>>> 204004a... 🚧 Working on signals for maintaining discord server links.
         "certifi": {
             "hashes": [
                 "sha256:376690d6f16d32f9d1fe8932551d80b23e9d393a8578c5633a2ed39a64861638",
@@ -546,7 +553,10 @@
                 "sha256:1adb80e7a782c12e52ef9a8182bebeb73f1d7e24e374397af06fb4956c8dc5c0",
                 "sha256:e27001de32f627c22380a688bcc43ce83504a7bc5da472209b4c70f02829f0b8"
             ],
+<<<<<<< HEAD
             "markers": "python_version >= '2.7'",
+=======
+>>>>>>> 204004a... 🚧 Working on signals for maintaining discord server links.
             "version": "==2.7.3"
         },
         "python-stdnum": {
