@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from .models import GamerCommunity
+from .models import GamerCommunity, GamerProfile
 
 
 class OwnershipTransferForm(forms.ModelForm):
@@ -24,3 +24,30 @@ class BlankDistructiveForm(forms.ModelForm):
 
     class Meta:
         fields = []
+
+
+class GamerProfileForm(forms.ModelForm):
+    """
+    A profile form that will typically be populated with the userform.
+    Note: Default profiles are created automatically, so this can only
+    be used for updating an existing instance.
+    """
+
+    class Meta:
+        model = GamerProfile
+        fields = (
+            "private",
+            "rpg_experience",
+            "ttgame_experience",
+            "playstyle",
+            "player_status",
+            "will_gm",
+            "adult_themes",
+            "one_shots",
+            "adventures",
+            "campaigns",
+            "online_games",
+            "local_games",
+            "preferred_games",
+            "preferred_systems",
+        )

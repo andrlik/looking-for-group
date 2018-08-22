@@ -684,8 +684,14 @@ class CommunityKickUserTest(AbstractViewTest):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.view_str = "gamer_profiles:community-kick-gamer"
-        self.url_kwargs = {"community": self.community1.slug, "gamer": self.gamer2.username}
-        self.bad_url_kwargs = {"community": self.community1.slug, "gamer": self.gamer3.username}
+        self.url_kwargs = {
+            "community": self.community1.slug,
+            "gamer": self.gamer2.username,
+        }
+        self.bad_url_kwargs = {
+            "community": self.community1.slug,
+            "gamer": self.gamer3.username,
+        }
         self.post_data = {
             "reason": "Jerk",
             "end_date": (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%d %H:%M"),
@@ -863,8 +869,14 @@ class CommunityBanUserTest(AbstractViewTest):
         super().setUp()
         self.community1.add_member(self.gamer2)
         self.view_str = "gamer_profiles:community-ban-gamer"
-        self.url_kwargs = {"community": self.community1.slug, "gamer": self.gamer2.username}
-        self.bad_url_kwargs = {"community": self.community1.slug, "gamer": self.gamer3.username}
+        self.url_kwargs = {
+            "community": self.community1.slug,
+            "gamer": self.gamer2.username,
+        }
+        self.bad_url_kwargs = {
+            "community": self.community1.slug,
+            "gamer": self.gamer3.username,
+        }
         self.post_data = {"reason": "Jerk"}
         self.bad_post_data = {}
 
@@ -1063,6 +1075,104 @@ class GamerProfileDetailTest(AbstractViewTest):
         self.community1.add_member(self.gamer3)
         with self.login(username=self.gamer3.username):
             self.assertGoodView(self.view_str, **self.url_kwargs)
+
+
+class GamerProfileUpdateTest(AbstractViewTest):
+    """
+    Test the updating of both user model and gamer profile
+    in save view.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_str = "gamer_profiles:profile-edit"
+        self.valid_post = {
+            "display_name": "Charles",
+            "bio": "Born in the USA",
+            "homepage_url": "https://www.google.com",
+            "profile-private": 1,
+            "profile-rpg_experience": "I dabble",
+            "profile-ttg_experience": "A few rounds of Catan",
+            "profile-player_status": "searching",
+            "profile-one_shots": 1,
+            "profile-online_games": 1,
+        }
+        self.invalid_user_post = {
+            "display_name": "Charles",
+            "bio": """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ipsum nibh, tempus et feugiat sit amet, egestas tincidunt tortor. Fusce pellentesque laoreet ultrices. Proin luctus ullamcorper erat, in rhoncus ipsum semper sit amet. Suspendisse felis risus, placerat a semper sed, commodo eu velit. Sed feugiat venenatis ultricies. Vivamus ullamcorper, leo eget mollis mollis, libero nisl pulvinar nisi, non pharetra nulla odio vitae purus. Pellentesque et libero eros, sed tincidunt ligula. Phasellus id metus justo. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Ut mollis tincidunt bibendum.
+
+Pellentesque faucibus, risus eu mattis viverra, tortor tellus lobortis nibh, vel suscipit justo odio euismod mauris. Etiam consectetur, lorem sit amet iaculis rhoncus, nulla sapien dictum erat, id eleifend ligula neque congue sapien. Proin in posuere risus. Nullam porttitor venenatis velit, id malesuada urna egestas eget. Praesent eget turpis vitae elit suscipit luctus et vel lectus. Etiam sapien nulla, imperdiet porta accumsan in, facilisis et lacus. Etiam risus dui, ornare eget fringilla eget, consequat vel odio. Nam diam leo, lacinia sit amet sagittis vel, blandit nec felis. Pellentesque mattis malesuada orci, ac lobortis lacus pellentesque sit amet. Morbi tempus diam eu quam luctus tempor. Mauris pretium, lectus id elementum faucibus, turpis urna dignissim metus, eu viverra nibh purus id nisi. Nunc id nunc quam. Suspendisse vitae lacus nisl, vel placerat libero. Donec dui enim, congue ac dictum id, ullamcorper sit amet elit. Maecenas nunc purus, viverra id placerat vitae, mollis a orci. Curabitur mi augue, sagittis ut eleifend ut, tincidunt ut dui. Etiam sed neque mauris, sed sagittis augue. Quisque eu tellus mi, non vehicula sem.
+
+Vestibulum aliquam tincidunt sodales. Cras gravida metus sollicitudin odio consectetur quis aliquam ligula volutpat. Sed ac urna lacus, a iaculis tortor. Praesent nunc purus, egestas non auctor id, suscipit vitae sem. Ut congue libero eget est condimentum ac vestibulum sem vestibulum. Quisque vitae placerat lacus. Nam porta hendrerit pretium. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Vestibulum luctus ipsum quis ante malesuada porttitor. Phasellus sagittis pulvinar ante vel ultricies. Curabitur ut pulvinar elit. Proin odio dui, scelerisque vel blandit quis, commodo nec ligula. Maecenas ut imperdiet neque. Suspendisse ligula nisi, aliquam vitae dignissim ut, consectetur sit amet nibh. Nunc euismod tempor commodo. Morbi eget enim augue. Aliquam tempus, velit a fringilla fermentum, tellus dolor hendrerit mauris, at fermentum nibh nisi vulputate velit. Sed orci eros, porta quis sodales at, malesuada id tortor. Quisque dictum orci a mauris dictum gravida. Morbi nec nisi sollicitudin eros rhoncus tincidunt a in lacus.
+
+Duis hendrerit nibh vel neque rutrum quis rhoncus lorem porta. Phasellus magna ipsum, laoreet vitae malesuada eu, ultricies et neque. Phasellus auctor tincidunt lectus, vitae interdum tellus gravida eu. Donec tempus tellus a metus blandit blandit. Praesent placerat faucibus auctor. Duis non gravida enim. Fusce in sem magna. Vivamus luctus fermentum bibendum. Morbi orci libero, accumsan ac feugiat nec, mattis id dui. Morbi malesuada varius vulputate. Morbi sagittis ultrices tellus vel lobortis. Suspendisse a lorem ac tellus porttitor auctor. Maecenas imperdiet faucibus cursus. Sed vestibulum leo in leo tincidunt tristique. Praesent eu elit augue.
+
+Nunc auctor rutrum ligula ut consectetur. Integer eget lorem elementum diam hendrerit ullamcorper sit amet sodales odio. Phasellus tellus arcu, tempor et consequat eu, malesuada in odio. Aliquam mollis, ipsum et tristique euismod, augue urna porttitor mauris, quis iaculis ipsum risus ac erat. Phasellus urna nisi, pharetra vitae semper sed, pretium non odio. Cras diam justo, mollis a vulputate non, condimentum in ligula. Proin vulputate tincidunt accumsan. Duis urna justo, dapibus vitae bibendum ac, facilisis at purus. Phasellus euismod adipiscing nunc eget pulvinar. Nullam dui leo, malesuada sed lobortis eget, rutrum vel justo. Phasellus ipsum nunc, aliquet eu aliquet eget, blandit id est. Maecenas eu est massa, sit amet tempus nisl. In vel nulla vitae turpis blandit ultricies. Aenean ornare justo at eros auctor nec interdum neque euismod. Aliquam laoreet, neque ac varius rutrum, purus purus consequat leo, nec pretium dui justo a nulla. Morbi suscipit euismod odio quis viverra. Integer commodo orci vehicula nisi varius euismod. Aenean egestas nulla sed ligula tincidunt id posuere dolor malesuada. """,
+            "homepage_url": "https://www.google.com",
+            "profile-private": 1,
+            "profile-rpg_experience": "I dabble",
+            "profile-ttg_experience": "A few rounds of Catan",
+            "profile-player_status": "searching",
+            "profile-one_shots": 1,
+            "profile-online_games": 1,
+        }
+        self.invalid_profile_post = {
+            "display_name": "Charles",
+            "bio": "Born in the USA",
+            "homepage_url": "https://www.google.com",
+            "profile-private": 1,
+            "profile-rpg_experience": "I dabble",
+            "profile-ttg_experience": "A few rounds of Catan",
+            "profile-player_status": "ooga shakka",
+            "profile-one_shots": 1,
+            "profile-online_games": 1,
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_str)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_str)
+
+    def test_invalid_user_form(self):
+        orig_bio = self.gamer1.user.bio
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_str, data=self.invalid_user_post)
+            self.response_200()
+            assert (
+                type(self.gamer1.user).objects.get(pk=self.gamer1.user.pk).bio
+                == orig_bio
+            )
+
+    def test_invalid_profile_form(self):
+        orig_status = self.gamer1.player_status
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_str, data=self.invalid_profile_post)
+            self.response_200()
+            assert (
+                models.GamerProfile.objects.get(pk=self.gamer1.pk).player_status
+                == orig_status
+            )
+
+    def test_valid_form(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_str, data=self.valid_post)
+            # form = self.get_context('form')
+            # if form.errors:
+            #     print(form.errors.as_data())
+            # profile_form = self.get_context('profile_form')
+            # if profile_form.errors:
+            #     print(profile_form.errors.as_data())
+            self.response_302()
+            assert (
+                type(self.gamer1.user).objects.get(pk=self.gamer1.user.pk).display_name
+                == "Charles"
+            )
+            assert (
+                models.GamerProfile.objects.get(pk=self.gamer1.pk).player_status
+                == "searching"
+            )
 
 
 class GamerFriendRequestTest(AbstractViewTest):

@@ -75,14 +75,35 @@ urlpatterns = [
         view=views.DeleteKickRecord.as_view(),
         name="community-kick-delete",
     ),
-    path("communities/<slug:community>/bans/", view=views.CommunityBannedUserList.as_view(), name='community-ban-list'),
-    path("communities/<slug:community>/members/<slug:gamer>/ban/", view=views.CommunityBanUser.as_view(), name='community-ban-gamer'),
-    path("communities/<slug:community>/bans/<uuid:ban>/edit/", view=views.CommunityUpdateBan.as_view(), name='community-ban-edit'),
-    path("communities/<slug:community>/bans/<uuid:ban>/delete/", view=views.CommunityDeleteBan.as_view(), name='community-ban-delete'),
+    path(
+        "communities/<slug:community>/bans/",
+        view=views.CommunityBannedUserList.as_view(),
+        name="community-ban-list",
+    ),
+    path(
+        "communities/<slug:community>/members/<slug:gamer>/ban/",
+        view=views.CommunityBanUser.as_view(),
+        name="community-ban-gamer",
+    ),
+    path(
+        "communities/<slug:community>/bans/<uuid:ban>/edit/",
+        view=views.CommunityUpdateBan.as_view(),
+        name="community-ban-edit",
+    ),
+    path(
+        "communities/<slug:community>/bans/<uuid:ban>/delete/",
+        view=views.CommunityDeleteBan.as_view(),
+        name="community-ban-delete",
+    ),
     path(
         "profiles/<slug:gamer>/",
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",
+    ),
+    path(
+        "me/edit/",
+        view=views.GamerProfileUpdateView.as_view(),
+        name="profile-edit",
     ),
     path(
         "profiles/<slug:gamer>/add_note/",
