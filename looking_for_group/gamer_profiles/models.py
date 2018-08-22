@@ -10,6 +10,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 from django.conf import settings
+from star_ratings.models import AbstractBaseRating
 from ..game_catalog.models import GameSystem, PublishedGame
 from ..game_catalog.utils import AbstractUUIDModel
 
@@ -148,7 +149,6 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
                 temp_slug = "{}-{}".format(temp_slug[:max_length - len(str(x)) - 1], x)
             self.slug = temp_slug
         super().save(*args, **kwargs)
-
 
     def get_absolute_url(self):
         return reverse("gamer_profiles:community-detail", kwargs={"community": self.slug})
@@ -409,16 +409,6 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     communities = models.ManyToManyField(
         through="CommunityMembership", to=GamerCommunity, blank=True
     )
-    avg_gamer_rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(5)],
-        default=0,
-        help_text=_("Average overall rating from other players."),
-    )
-    median_gamer_rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(5)],
-        default=0,
-        help_text=_("Median overall rating from other players."),
-    )
     reputation_score = models.IntegerField(
         default=0, help_text=_("Calculated overall reputation score.")
     )
@@ -466,32 +456,8 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         return role_obj.get_community_role_display()
 
 
-class GamerRating(TimeStampedModel, AbstractUUIDModel, models.Model):
-    """
-    A rating another gamer gives another.
-    """
-
-    rater = models.ForeignKey(
-        GamerProfile,
-        related_name="raters",
-        help_text=_("Who is rating this user?"),
-        on_delete=models.CASCADE,
-    )
-    gamer = models.ForeignKey(
-        GamerProfile,
-        help_text=_("Which gamer is being rated?"),
-        on_delete=models.CASCADE,
-    )
-    rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(5)],
-        default=0,
-        help_text=_("How are they rated?"),
-    )
-
-    def __str__(self):
-        return "[{0}] {1} rated {2} {3} stars".format(
-            self.created, self.rater, self.gamer, self.rating
-        )
+class MyRating(AbstractBaseRating):
+    object_id = models.CharField(max_length=50)
 
 
 class GamerNote(TimeStampedModel, AbstractUUIDModel, models.Model):

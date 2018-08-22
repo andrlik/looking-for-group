@@ -184,17 +184,6 @@ class GamerNoteViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     queryset = models.GamerNote.objects.all().select_related("author", "gamer")
 
 
-class GamerRatingViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
-    """
-    Generic view for ratings.
-    """
-
-    permission_required = "community.view_rating"
-    object_permission_required = "community.edit_rating"
-    serializer_class = serializers.GamerRatingSerializer
-    queryset = models.GamerRating.objects.all().select_related("rater", "gamer")
-
-
 class BlockedUserViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     """
     View for other users that the individual has blocked.

@@ -44,8 +44,3 @@ router.register(
 router.register(
     r"social/gamernotes", profile_api_views.GamerNoteViewSet, base_name="api-gamernotes"
 )
-router.register(
-    r"social/gamerrating",
-    profile_api_views.GamerRatingViewSet,
-    base_name="api-gamerrating",
-)

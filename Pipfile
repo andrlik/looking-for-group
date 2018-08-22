@@ -1,12 +1,9 @@
 [[source]]
-
 url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 pytz = "*"
 text-unidecode = "*"
 pillow = "*"
@@ -45,10 +42,9 @@ django-taggit-serializer = "*"
 django-rest-framework-rules = "*"
 bleach = "*"
 bleach-whitelist = "*"
-
+django-star-ratings = "*"
 
 [dev-packages]
-
 werkzeug = "*"
 ipdb = "*"
 sphinx = "*"
@@ -66,7 +62,5 @@ django-extensions = "*"
 django-coverage-plugin = "*"
 pytest-django = "*"
 
-
 [requires]
-
 python_version = "3.7"

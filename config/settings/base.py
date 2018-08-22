@@ -69,7 +69,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "foundation_formtags",  # Form layouts
-#    "django_extensions",
+    #    "django_extensions",
     # "cookielaw",
     "allauth",
     "allauth.account",
@@ -81,6 +81,7 @@ THIRD_PARTY_APPS = [
     "isbn_field",
     "taggit",
     "rules.apps.AutodiscoverRulesConfig",
+    "star_ratings",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -278,3 +279,12 @@ AVATAR_GRAVATAR_DEFAULT = "identicon"
 AVATAR_CLEANUP_DELETED = True
 AVATAR_AUTO_GENERATE_SIZES = (80, 30)
 AVATAR_GRAVATAR_BASE_URL = "https://www.gravatar.com/avatar/"
+
+
+# -----------------------------------------------------------------------------
+# Star Ratings
+# -----------------------------------------------------------------------------
+STAR_RATINGS_RATING_MODEL = "gamer_profiles.MyRating"
+STAR_RATINGS_OBJECT_ID_PATTERN = (
+    "[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}"
+)

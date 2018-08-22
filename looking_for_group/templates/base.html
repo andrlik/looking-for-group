@@ -28,7 +28,7 @@
     <link rel="stylesheet" type="text/x-scss" href="{% static 'sass/app.scss' %}">
     <link href="{% static 'css/project.css' %}" rel="stylesheet">
     {% endcompress %}
-
+    <link rel="stylesheet" type="text/css" href="{% static 'star-ratings/css/star-ratings.css' %}">
     {% endblock %}
 
   </head>
@@ -144,6 +144,7 @@
       <script>
         $(document).foundation();
       </script>
+      <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
     {% endblock javascript %}
   </body>
 </html>
