@@ -14,7 +14,7 @@ class DiscordGuildOAuth2Adapater(DiscordOAuth2Adapter):
     guilds_url = 'https://discordapp.com/api/users/@me/guilds'
     get_guild_url = 'https://discordapp.com/api/guilds'
 
-    def get_guilds_with_permissions(self, request, app, token, **kwargs):
+    def get_guilds_with_permissions(self, app, token, test_response=None, **kwargs):
         '''
         Fetches the current user's guild listings.
 
@@ -24,7 +24,10 @@ class DiscordGuildOAuth2Adapater(DiscordOAuth2Adapter):
             'Authorization': 'Bearer {0}'.format(token.token),
             'Content-Type': 'application/json',
         }
-        guild_data = requests.get(self.guilds_url, headers=headers).json()
+        if test_response:
+            guild_data = test_response.json()
+        else:
+            guild_data = requests.get(self.guilds_url, headers=headers).json()
         for guild in guild_data:
             guild['comm_role'] = self.parse_permissions(guild)
         return guild_data
@@ -39,7 +42,7 @@ class DiscordGuildOAuth2Adapater(DiscordOAuth2Adapter):
         permission_inspector = Permissions(guild_dict['permissions'])
         if permission_inspector.administrator:
             return 'admin'
-        if permission_inspector.manage_messages:
+        if permission_inspector.manage_messages or permission_inspector.manage_server:
             return 'moderator'
         return 'member'
 

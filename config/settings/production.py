@@ -200,6 +200,21 @@ LOGGING = {
             'handlers': ['console', 'sentry'],
             'propagate': False,
         },
+        'gamer_profiles': {
+            'level': 'ERROR',
+            'handlers': ['console', 'sentry'],
+            'propagate': False,
+        },
+        'rules': {
+            'level': 'ERROR',
+            'handlers': ['console', 'sentry'],
+            'propagate': False,
+        },
+        'discord': {
+            'level': 'INFO',
+            'handlers': ['console', 'sentry'],
+            'propagate': False,
+        },
     },
 }
 
@@ -209,3 +224,4 @@ RAVEN_CONFIG = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+Q_CLUSTER['django_redis'] = 'default'  # noqa:F405

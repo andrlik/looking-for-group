@@ -182,3 +182,34 @@ class TestFriendships(TestCase):
         req.deny()
         assert self.gamer1.friends.count() == 0
         assert GamerFriendRequest.objects.get(pk=req.pk).status == 'reject'
+
+
+class TestRoleComparisons(TestCase):
+    '''
+    Test whether roles are compared correctly.
+    '''
+
+    def setUp(self):
+        self.gamer1 = GamerProfileFactory()
+        self.gamer2 = GamerProfileFactory()
+        self.gamer3 = GamerProfileFactory()
+        self.community1 = GamerCommunityFactory(owner=self.gamer1)
+        self.community1.add_member(self.gamer2, 'moderator')
+        self.community1.add_member(self.gamer3)
+        self.gamer1_membership = CommunityMembership.objects.get(gamer=self.gamer1, community=self.community1)
+        self.gamer2_membership = CommunityMembership.objects.get(gamer=self.gamer2, community=self.community1)
+        self.gamer3_membership = CommunityMembership.objects.get(gamer=self.gamer3, community=self.community1)
+
+    def test_invalid_role_comparison(self):
+        with pytest.raises(ValueError):
+            self.gamer1_membership.less_than('god')
+
+    def test_comparisons(self):
+        for role in ['admin', 'moderator', 'member']:
+            assert not self.gamer1_membership.less_than(role)
+        assert self.gamer2_membership.less_than('admin')
+        for role in ['moderator', 'member']:
+            assert not self.gamer2_membership.less_than(role)
+        for role in ['admin', 'moderator']:
+            assert self.gamer3_membership.less_than(role)
+        assert not self.gamer3_membership.less_than('member')

@@ -542,6 +542,25 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
         help_text=_("Attendance percentage for sessions within community."),
     )
 
+    def less_than(self, role_choice):
+        '''
+        Compares a role to the current one and evaluates whether the current role
+        than the compared role.
+
+        :param role_choice:
+            The role to compare. Must be a value from COMMUNITY_ROLES
+
+        :returns: True or False
+        '''
+        role_choice_values = {
+            "admin": 3,
+            "moderator": 2,
+            "member": 1,
+        }
+        if role_choice not in role_choice_values.keys():
+            raise ValueError(_('Role must be one of "admin", "moderator", or "member"'))
+        return role_choice_values[self.community_role] < role_choice_values[role_choice]
+
     def __str__(self):
         return "{0} with role of {1} in {2}".format(
             self.gamer.user.username, self.community_role, self.community.name

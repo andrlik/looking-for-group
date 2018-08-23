@@ -69,7 +69,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "foundation_formtags",  # Form layouts
-    #    "django_extensions",
+    "django_extensions",
     # "cookielaw",
     "allauth",
     "allauth.account",
@@ -82,6 +82,7 @@ THIRD_PARTY_APPS = [
     "taggit",
     "rules.apps.AutodiscoverRulesConfig",
     "star_ratings",
+    "django_q",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -294,3 +295,11 @@ STAR_RATINGS_RATING_MODEL = "gamer_profiles.MyRating"
 STAR_RATINGS_OBJECT_ID_PATTERN = (
     "[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}"
 )
+
+# ------------------------------------------------------------------------------
+# Django Q
+# ------------------------------------------------------------------------------
+
+Q_CLUSTER = {
+    'name': 'looking_for_group',
+}
