@@ -87,5 +87,9 @@ LOGGING = {
             "propagate": False,
         },
         "rules": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }
+
+Q_CLUSTER['sync'] = True  # noqa:F405
+Q_CLUSTER['orm'] = 'default'  # noqa: F405
