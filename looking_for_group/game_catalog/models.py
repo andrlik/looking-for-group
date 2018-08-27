@@ -26,6 +26,9 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
     def get_absolute_url(self):
         return reverse("game_catalog:pub_detail", kwargs={"publisher": self.id})
 
+    class Meta:
+        ordering = ['name']
+
 
 class GameSystem(
     TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
@@ -67,6 +70,9 @@ class GameSystem(
 
     def get_absolute_url(self):
         return reverse("game_catalog:system_detail", kwargs={"system": self.id})
+
+    class Meta:
+        ordering = ['name']
 
 
 class PublishedGame(

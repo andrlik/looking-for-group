@@ -5,7 +5,9 @@ from .models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 
 
 class GamePublisherAdmin(admin.ModelAdmin):
-    pass
+
+    class Meta:
+        ordering = ['name']
 
 
 class GameSystemAdmin(admin.ModelAdmin):
@@ -20,7 +22,7 @@ class PublishedModuleAdmin(admin.ModelAdmin):
     pass
 
 
-admin.register(GamePublisher, GamePublisherAdmin)
-admin.register(GameSystem, GameSystemAdmin)
-admin.register(PublishedGame, PublishedGameAdmin)
-admin.register(PublishedModule, PublishedModuleAdmin)
+admin.site.register(GamePublisher, GamePublisherAdmin)
+admin.site.register(GameSystem, GameSystemAdmin)
+admin.site.register(PublishedGame, PublishedGameAdmin)
+admin.site.register(PublishedModule, PublishedModuleAdmin)
