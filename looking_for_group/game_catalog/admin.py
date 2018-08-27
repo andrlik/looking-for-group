@@ -5,9 +5,7 @@ from .models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 
 
 class GamePublisherAdmin(admin.ModelAdmin):
-
-    class Meta:
-        ordering = ['name']
+    ordering = ['name']
 
 
 class GameSystemAdmin(admin.ModelAdmin):
@@ -15,7 +13,8 @@ class GameSystemAdmin(admin.ModelAdmin):
 
 
 class PublishedGameAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('title', 'edition', 'game_system', 'publisher')
+    date_hierarchy = 'publication_date'
 
 
 class PublishedModuleAdmin(admin.ModelAdmin):
