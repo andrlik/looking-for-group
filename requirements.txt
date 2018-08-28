@@ -52,15 +52,15 @@ pillow==5.2.0
 psycopg2==2.7.5
 pwned-passwords-django==1.2.1
 pycparser==2.18
-pytest-runner==4.2
-python-dateutil==2.7.3
+pytest-runner==4.2;
+python-dateutil==2.7.3;
 python-stdnum==1.9
 python3-openid==3.1.0
 pytz==2018.5
 raven==6.9.0
 rcssmin==1.0.6
 redis==2.10.6
-requests-oauthlib==1.0.0
+requests-oauthlib==1.0.0;
 requests==2.19.1
 rjsmin==1.0.12
 rules==2.0
@@ -69,7 +69,7 @@ six==1.11.0
 swapper==1.1.0
 text-unidecode==1.2
 uritemplate==3.0.0
-urllib3==1.23
+urllib3==1.23;
 waitress==1.1.0
 wcwidth==0.1.7
 webencodings==0.5.1
