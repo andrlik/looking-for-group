@@ -5,9 +5,9 @@
 <h1>{% trans "My Community Applications" %}</h1>
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">
-  <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% blocktrans count counter=applications|length %}Pending ({{ counter }}){% endblocktrans %}</a></li>
-  <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% blocktrans count counter=approved_applications|length %}Approved ({{ counter }}){% endblocktrans %}</a></li>
-  <li class="tabs-title"><a deta-tabs-target="rejected_panel" href="#rejected_panel">{% blocktrans count counter=rejected_applications|length %}Rejected ({{ counter }}){% endblocktrans %}</a></li>
+  <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ applications|length }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% trans "Approved" %} ({{ approved_applications|length }})</a></li>
+  <li class="tabs-title"><a deta-tabs-target="rejected_panel" href="#rejected_panel">{% trans "Rejected" %} ({{ rejected_applications|length }})</a></li>
 </ul>
 
 <div class="tabs-content" data-tabs-content="my-applications-tabs">
