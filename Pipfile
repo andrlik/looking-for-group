@@ -44,6 +44,7 @@ bleach = "*"
 bleach-whitelist = "*"
 django-star-ratings = "*"
 django-q = "*"
+django-extensions = "*"
 
 [dev-packages]
 werkzeug = "*"
@@ -59,7 +60,6 @@ coverage = "*"
 factory-boy = "*"
 django-test-plus = "*"
 django-debug-toolbar = "*"
-django-extensions = "*"
 django-coverage-plugin = "*"
 pytest-django = "*"
 
