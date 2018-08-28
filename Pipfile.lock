@@ -1,11 +1,7 @@
 {
     "_meta": {
         "hash": {
-<<<<<<< HEAD
             "sha256": "3ced9b824bedd80c3c6d08f04c2d65a348e0dbbf417cad9bf639f09fc42ab2bd"
-=======
-            "sha256": "f0d73874ddf4ebb754c0c857ae82d32a56587f4ff1640892d556c2049f5f7451"
->>>>>>> 204004a... 🚧 Working on signals for maintaining discord server links.
         },
         "pipfile-spec": 6,
         "requires": {
@@ -71,7 +67,6 @@
             ],
             "version": "==1.15.0"
         },
-<<<<<<< HEAD
         "boto3": {
             "hashes": [
                 "sha256:0b9b24fd96f5bf7ae931982bfa029e3617680057d6dfc8c6d178fcb9c336c14e",
@@ -87,8 +82,6 @@
             ],
             "version": "==1.11.2"
         },
-=======
->>>>>>> 204004a... 🚧 Working on signals for maintaining discord server links.
         "certifi": {
             "hashes": [
                 "sha256:376690d6f16d32f9d1fe8932551d80b23e9d393a8578c5633a2ed39a64861638",
@@ -545,7 +538,7 @@
                 "sha256:d23f117be39919f00dd91bffeb4f15e031ec797501b717a245e377aee0f577be",
                 "sha256:d987fec1e31287592ffe1cb823a8c613c533db4c6aaca0ee1191dbc91e2fcc61"
             ],
-            "markers": "python_version >= '2.7' and python_version != '3.1' and python_version != '3.0'",
+            "markers": "python_version != '3.1' and python_version >= '2.7' and python_version != '3.0'",
             "version": "==4.2"
         },
         "python-dateutil": {
@@ -553,10 +546,7 @@
                 "sha256:1adb80e7a782c12e52ef9a8182bebeb73f1d7e24e374397af06fb4956c8dc5c0",
                 "sha256:e27001de32f627c22380a688bcc43ce83504a7bc5da472209b4c70f02829f0b8"
             ],
-<<<<<<< HEAD
             "markers": "python_version >= '2.7'",
-=======
->>>>>>> 204004a... 🚧 Working on signals for maintaining discord server links.
             "version": "==2.7.3"
         },
         "python-stdnum": {
@@ -617,6 +607,7 @@
                 "sha256:8886bfec5ad7afb391ed5443b1f697c6f4ae98d0e5620839d8b4499c032ada3f",
                 "sha256:e21232e2465808c0e892e0e4dbb8c2faafec16ac6dc067dd546e9b466f3deac8"
             ],
+            "markers": "python_version != '3.0.*' and python_version != '3.3.*' and python_version != '3.2.*' and python_version < '4' and python_version >= '2.6' and python_version != '3.1.*'",
             "version": "==1.0.0"
         },
         "rjsmin": {
@@ -673,7 +664,7 @@
                 "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
                 "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
             ],
-            "markers": "python_version >= '2.6' and python_version != '3.2.*' and python_version != '3.1.*' and python_version != '3.3.*' and python_version < '4' and python_version != '3.0.*'",
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version < '4' and python_version != '3.3.*' and python_version >= '2.6' and python_version != '3.2.*'",
             "version": "==1.23"
         },
         "waitress": {
@@ -720,7 +711,7 @@
                 "sha256:37228cda29411948b422fae072f57e31d3396d2ee1c9783775980ee9c9990af6",
                 "sha256:58587dd4dc3daefad0487f6d9ae32b4542b185e1c36db6993290e7c41ca2b47c"
             ],
-            "markers": "python_version != '3.2.*' and python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version != '3.3.*' and python_version >= '2.7' and python_version != '3.2.*'",
             "version": "==1.5"
         },
         "appnope": {
@@ -861,7 +852,7 @@
                 "sha256:a7a84d5fa07a089186a329528f127c9d73b9de57f1a1131b82bb5320ee651f6a",
                 "sha256:fc155a6b553c66c838d1a22dba1dc9f5f505c43285a878c6f74a79c024750b83"
             ],
-            "markers": "python_version != '3.2.*' and python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version != '3.3.*' and python_version >= '2.7' and python_version != '3.2.*'",
             "version": "==1.5.0"
         },
         "factory-boy": {
@@ -877,6 +868,7 @@
                 "sha256:ea7cfd3aeb1544732d08bd9cfba40c5b78e3a91e17b1a0698ab81bfc5554c628",
                 "sha256:f6d67f04abfb2b4bea7afc7fa6c18cf4c523a67956e455668be9ae42bccc21ad"
             ],
+            "markers": "python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.1.*' and python_version >= '2.7'",
             "version": "==0.9.0"
         },
         "flake8": {
@@ -991,7 +983,7 @@
                 "sha256:6e3836e39f4d36ae72840833db137f7b7d35105079aee6ec4a62d9f80d594dd1",
                 "sha256:95eb8364a4708392bae89035f45341871286a333f749c3141c20573d2b3876e1"
             ],
-            "markers": "python_version != '3.2.*' and python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version != '3.3.*' and python_version >= '2.7' and python_version != '3.2.*'",
             "version": "==0.7.1"
         },
         "prompt-toolkit": {
@@ -1110,7 +1102,7 @@
                 "sha256:e4500cd0509ec4a26535f7d4112a8cc0f17d3a41c29ffd4eab479d2a55b30805",
                 "sha256:f275cb48a73fc61a6710726348e1da6d68a978f0ec0c54ece5a5fae5977e5a08"
             ],
-            "markers": "python_version != '3.2.*' and python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version != '3.3.*' and python_version >= '2.7' and python_version != '3.2.*'",
             "version": "==0.2"
         },
         "pytest-sugar": {
@@ -1184,7 +1176,7 @@
                 "sha256:68ca7ff70785cbe1e7bccc71a48b5b6d965d79ca50629606c7861a21b206d9dd",
                 "sha256:9de47f375baf1ea07cdb3436ff39d7a9c76042c10a769c52353ec46e4e8fc3b9"
             ],
-            "markers": "python_version != '3.2.*' and python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version != '3.3.*' and python_version >= '2.7' and python_version != '3.2.*'",
             "version": "==1.1.0"
         },
         "sqlparse": {
@@ -1220,7 +1212,7 @@
                 "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
                 "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
             ],
-            "markers": "python_version >= '2.6' and python_version != '3.2.*' and python_version != '3.1.*' and python_version != '3.3.*' and python_version < '4' and python_version != '3.0.*'",
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version < '4' and python_version != '3.3.*' and python_version >= '2.6' and python_version != '3.2.*'",
             "version": "==1.23"
         },
         "wcwidth": {
