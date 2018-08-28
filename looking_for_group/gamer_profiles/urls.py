@@ -187,7 +187,7 @@ urlpatterns = [
     ),
     path(
         "me/applications/community/",
-        view=views.CreateApplication.as_view(),
+        view=views.MyApplicationList.as_view(),
         name="my-application-list",
     ),
     path(
