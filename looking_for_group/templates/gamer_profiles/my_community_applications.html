@@ -1,0 +1,111 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n humanize social_tags %}
+{% block subtitle %}{% trans "My Community Applications" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "My Community Applications" %}</h1>
+
+<ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">
+  <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% blocktrans count counter=applications|length %}Pending ({{ counter }}){% endblocktrans %}</a></li>
+  <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% blocktrans count counter=approved_applications|length %}Approved ({{ counter }}){% endblocktrans %}</a></li>
+  <li class="tabs-title"><a deta-tabs-target="rejected_panel" href="#rejected_panel">{% blocktrans count counter=rejected_applications|length %}Rejected ({{ counter }}){% endblocktrans %}</a></li>
+</ul>
+
+<div class="tabs-content" data-tabs-content="my-applications-tabs">
+  <div class="tabs-panel is-active" id="pending_panel">
+    {% if applications %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Community" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in applications %}
+        <tr>
+          <td><a href="{{ application.community.get_absolute_url }}">{{ application.community.name }}</a></td>
+          <td>{{ application.message|truncatewords:25 }}</td>
+          <td>{{ application.get_display_status }}</td>
+          <td>{{ application.created }}</td>
+          <td>{{ application.modified }}</td>
+          <td><a href="{% url 'gamer_profiles:update-application' application=application.pk %}" class="button primary">{% trans "Edit" %}</a></td>
+          <td><a class="button alert" href="{% url 'gamer_profiles:delete-application' application=application.pk %}">{% trans "Withdraw" %}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No pending applications." %}</p>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="approved_panel">
+    {% if approved_applications %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Community" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in approved_applications %}
+        <tr>
+          <td><a href="{{ app.community.get_absolute_url }}">{{ app.community.name }}</a></td>
+          <td>{{ app.message|truncatewords:25 }}</td>
+          <td>{{ app.get_display_status }}</td>
+          <td>{{ app.created }}</td>
+          <td>{{ app.modified }}</td>
+          <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>
+          <td><a class="button alert" href="{% url 'gamer_profiles:delete-application' application=app.pk %}">{% trans "Delete" %}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No approved applications" %}</p>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="rejected_panel">
+    {% if rejected_applications %}
+    <table class="hover stack">
+      <thead>
+        <tr>
+          <th>{% trans "Community" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in rejected_applications %}
+        <tr>
+        <td>{{ app.message|truncatewords:25 }}</td>
+        <td>{{ app.get_display_status }}</td>
+        <td>{{ app.created }}</td>
+        <td>{{ app.modified }}</td>
+        <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>
+        <td><a class="button alert" href="{% url 'gamer_profiles:delete-application' application=app.pk %}">{% trans "Delete" %}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No rejected applications" %} 😄</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

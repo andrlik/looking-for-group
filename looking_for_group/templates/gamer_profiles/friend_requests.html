@@ -2,7 +2,7 @@
 {% load avatar_tags i18n humanize %}
 {% block subtitle %}{% trans "Friend Requests" %} - {% endblock %}
 {% block content %}
-<h1>{% trans "Your Friend Requests" %}</h1>
+<h1>{% trans "My Friend Requests" %}</h1>
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="friend-request-tabs">
   <li class="tabs-title is-active"><a href="#received_panel" aria-selected="true">{% blocktrans %}Received ({{ pending_requests.count }}){% endblocktrans %}</a></li>
