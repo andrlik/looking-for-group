@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+echo "Removing pipfile and pipfile.lock"
+if [[ -f "requirements.txt" ]]; then
+	rm Pipfile Pipfile.lock
+        echo "Successfully removed."
+else
+	echo "You are missing a requirements.txt. This build is going to fail."
+        exit 1
+fi

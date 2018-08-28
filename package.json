@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "dependencies": {},
   "devDependencies": {
-    "browser-sync": "^2.14.0",
+    "browser-sync": "^2.24.7",
     "del": "^2.2.2",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^5.0.0",

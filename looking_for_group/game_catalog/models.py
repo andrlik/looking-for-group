@@ -26,6 +26,9 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
     def get_absolute_url(self):
         return reverse("game_catalog:pub_detail", kwargs={"publisher": self.id})
 
+    class Meta:
+        ordering = ['name']
+
 
 class GameSystem(
     TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
@@ -68,6 +71,9 @@ class GameSystem(
     def get_absolute_url(self):
         return reverse("game_catalog:system_detail", kwargs={"system": self.id})
 
+    class Meta:
+        ordering = ['name']
+
 
 class PublishedGame(
     TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
@@ -90,6 +96,7 @@ class PublishedGame(
     game_system = models.ForeignKey(
         GameSystem,
         null=True,
+        blank=True,
         help_text=_("Rules system the game is based upon."),
         on_delete=models.CASCADE,
     )
@@ -111,10 +118,13 @@ class PublishedGame(
     )
 
     def __str__(self):
-        return self.name  # pragma: no cover
+        return "{0} ({1})".format(self.title, self.edition)  # pragma: no cover
 
     def get_absolute_url(self):
         return reverse("game_catalog:game_detail", kwargs={"game": self.id})
+
+    class Meta:
+        ordering = ['title', '-publication_date']
 
 
 class PublishedModule(
@@ -160,3 +170,6 @@ class PublishedModule(
 
     def get_absolute_url(self):
         return reverse("game_catalog:module_detail", kwargs={"module": self.id})
+
+    class Meta:
+        ordering = ['title', '-publication_date']

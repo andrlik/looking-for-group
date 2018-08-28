@@ -5,7 +5,7 @@ from .models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 
 
 class GamePublisherAdmin(admin.ModelAdmin):
-    pass
+    ordering = ['name']
 
 
 class GameSystemAdmin(admin.ModelAdmin):
@@ -13,14 +13,15 @@ class GameSystemAdmin(admin.ModelAdmin):
 
 
 class PublishedGameAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('title', 'edition', 'game_system', 'publisher')
+    date_hierarchy = 'publication_date'
 
 
 class PublishedModuleAdmin(admin.ModelAdmin):
     pass
 
 
-admin.register(GamePublisher, GamePublisherAdmin)
-admin.register(GameSystem, GameSystemAdmin)
-admin.register(PublishedGame, PublishedGameAdmin)
-admin.register(PublishedModule, PublishedModuleAdmin)
+admin.site.register(GamePublisher, GamePublisherAdmin)
+admin.site.register(GameSystem, GameSystemAdmin)
+admin.site.register(PublishedGame, PublishedGameAdmin)
+admin.site.register(PublishedModule, PublishedModuleAdmin)
