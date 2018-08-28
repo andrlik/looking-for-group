@@ -63,6 +63,7 @@ django-test-plus = "*"
 django-debug-toolbar = "*"
 django-coverage-plugin = "*"
 pytest-django = "*"
+pytest-env = "*"
 
 [requires]
 python_version = "3.7"

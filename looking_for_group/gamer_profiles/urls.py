@@ -95,11 +95,7 @@ urlpatterns = [
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",
     ),
-    path(
-        "me/edit/",
-        view=views.GamerProfileUpdateView.as_view(),
-        name="profile-edit",
-    ),
+    path("me/edit/", view=views.GamerProfileUpdateView.as_view(), name="profile-edit"),
     path(
         "profiles/<slug:gamer>/add_note/",
         view=views.CreateGamerNote.as_view(),
@@ -179,6 +175,11 @@ urlpatterns = [
         "me/blocks/<uuid:block>/unblock/?next=<path:next>",
         view=views.RemoveBlock.as_view(),
         name="unblock-gamer",
+    ),
+    path(
+        "me/communities/",
+        view=views.MyCommunitiesListView.as_view(),
+        name="my-community-list",
     ),
     path(
         "me/applications/community/",
