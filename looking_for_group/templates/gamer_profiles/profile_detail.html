@@ -41,7 +41,7 @@
 
 <ul>
   {% for game in gamer.preferred_games.all %}
-  <li><a href="{% url 'game_catalog:game-detail' game=game.pk %}">{{ game.title }}</a></li>
+  <li><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></li>
   {% empty %}
   <p>{% blocktrans with gname=gamer.display_name %}{{ gname }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
   {% endfor %}
@@ -49,7 +49,7 @@
 <h3>{% trans "Preferred Systems" %}</h3>
 <ul>
   {% for system in gamer.preferred_systems.all %}
-  <li><a href="{% url 'game_catalog:system-detail' system=system.pk %}">{{ system.name }}</a></li>
+  <li><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></li>
   {% empty %}
   <p>{% blocktrans with gname=gamer.display_name %}{{ gname }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
   {% endfor %}
