@@ -1,4 +1,4 @@
-from waitress import server
+from waitress import serve
 from config import wsgi
 
 open('/tmp/app-initialized', 'w').close()

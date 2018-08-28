@@ -1,3 +1,3 @@
-web: bin/start-nginx bin/start-pgbouncer waitress-serve python config/run.py
+release: python manage.py migrate
+web: bin/start-nginx bin/start-pgbouncer python config/run.py
 worker: bin/start-pgbouncer python manage.py qcluster
-

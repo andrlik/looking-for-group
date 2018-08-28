@@ -1,0 +1,15 @@
+#! /usr/bin/env python
+
+import os
+
+def main():
+    pipenv_time = os.path.getmtime('Pipfile.lock')
+    requirements_time = os.path.getmtime('requirements.txt')
+
+    if pipenv_time > requirements_time:
+        print("Your requirements.txt file is out of date and will break deployments. Run your pipenv-to-pip command and add the changes to the index.")
+        print("Example: bin/pipenv-to-pip Pipfile.lock > requirements.txt")
+        exit(1)
+
+if __name__ == '__main__':
+    main()
