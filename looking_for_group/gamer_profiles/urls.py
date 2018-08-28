@@ -6,11 +6,6 @@ app_name = "gamer_profiles"
 urlpatterns = [
     path("communities/", view=views.CommunityListView.as_view(), name="community-list"),
     path(
-        "communities/mine/",
-        view=views.MyCommunitiesListView.as_view(),
-        name="my-community-list",
-    ),
-    path(
         "communities/<slug:community>/",
         view=views.CommunityDetailView.as_view(),
         name="community-detail",
@@ -187,7 +182,7 @@ urlpatterns = [
     ),
     path(
         "me/applications/community/",
-        view=views.CreateApplication.as_view(),
+        view=views.MyApplicationList.as_view(),
         name="my-application-list",
     ),
     path(
