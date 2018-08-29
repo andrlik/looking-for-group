@@ -8,7 +8,6 @@ from . import models
 from ..users.models import User
 
 logger = logging.getLogger("gamer_profiles")
-logger.debug("Signals loaded...")
 
 
 @receiver(pre_save, sender=models.GamerProfile)
