@@ -35,3 +35,5 @@ PreCommit:
   CustomScript:
     enabled: true
     required_executable: './bin/verify_valid_requirements'
+  CapitalizedSubject:
+    enabled: false
