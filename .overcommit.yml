@@ -36,5 +36,6 @@ PreCommit:
     enabled: true
     required_executable: './bin/verify_valid_requirements'
 
+CommitMsg:
   CapitalizedSubject:
     enabled: false
