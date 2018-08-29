@@ -48,3 +48,13 @@ test:
     DJANGO_SETTINGS_MODULE: "config.settings.test"
   script:
   - pipenv run pytest -n 2
+
+production:
+  type: deploy
+  script:
+  - apt-get update -qy
+  - apt-get install -y ruby-dev
+  - gem install dpl
+  - dpl --provider=heroku --app=geek-looking-for-group --api-key=$HEROKU_PRODUCTION_API_KEY
+  only:
+  - master
