@@ -72,7 +72,7 @@ class GameSystem(
         return reverse("game_catalog:system_detail", kwargs={"system": self.id})
 
     class Meta:
-        ordering = ['name']
+        ordering = ['name', '-publication_date']
 
 
 class PublishedGame(
@@ -124,7 +124,7 @@ class PublishedGame(
         return reverse("game_catalog:game_detail", kwargs={"game": self.id})
 
     class Meta:
-        ordering = ['title', '-publication_date']
+        ordering = ['-publication_date__year', 'title', '-publication_date']
 
 
 class PublishedModule(
