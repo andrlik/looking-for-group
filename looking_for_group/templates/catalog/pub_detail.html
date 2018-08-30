@@ -3,8 +3,8 @@
 {% block subtitle %}{{ publisher.name }} - {% endblock %}
 {% block content %}
 <h1>{{ publisher.name }}</h1>
-
-<h2><a href="{{ publisher.get_absolute_url }}">{{ publisher.name }}</a></h2>
+{% if publisher.logo %}<img class="thumbnail" alt="Logo for {{ publisher.name }}" src="{{ publisher.logo.url }}" />{% endif %}
+{% if publisher.url %}<p><a href="{{ publisher.url }}">{% trans "Publisher Website" %}</a></p>{% endif %}
 <span class="meta">{% blocktrans with humcount=publisher.publishedgame_set.count|intcomma|apnumber count counter=publisher.publishedgame_set.count %}One Game{% plural %} {{ counter }} Games{% endblocktrans %}, {% blocktrans with humcount=publisher.gamesystem_set.count|intcomma|apnumber count counter=publisher.gamesystem_set.count %}one Game System{% plural %}{{ counter }} Game Systems{% endblocktrans %}, {% blocktrans with humcount=publisher.publishedmodule_set.count|intcomma|apnumber count counter=publisher.publishedmodule_set.count %}and one Game Module{% plural %}and {{ counter }} Game Modules.{% endblocktrans %}</span>
 <p>{{ publisher.description }}</p>
 
