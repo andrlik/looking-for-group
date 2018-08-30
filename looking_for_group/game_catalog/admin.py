@@ -15,7 +15,7 @@ class GameSystemAdmin(admin.ModelAdmin):
 class PublishedGameAdmin(admin.ModelAdmin):
     list_display = ('title', 'edition', 'game_system', 'publisher')
     date_hierarchy = 'publication_date'
-    ordering = ['title']
+    ordering = ['title', '-publication_date']
     list_filter = ('publisher', )
     list_select_related = ('publisher', )
     search_fields = ['title']
