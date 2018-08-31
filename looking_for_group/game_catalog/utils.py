@@ -82,8 +82,9 @@ class AbstractTaggedLinkedModel(models.Model):
         '''
         tag_list = self.get_inherited_tags()
         tag_names = []
-        for tag in tag_list:
-            tag_names.append(tag.name)
+        if tag_list:
+            for tag in tag_list:
+                tag_names.append(tag.name)
         return tag_names
 
     class Meta:
