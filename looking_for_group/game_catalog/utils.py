@@ -73,6 +73,10 @@ class AbstractTaggedLinkedModel(models.Model):
                         else:
                             logger.debug('Merging tags into existing queryset')
                             parent_tags = parent_tags.union(tags_qs.all())
+        if not parent_tags:
+            parent_tags = self.tags.all()
+        else:
+            parent_tags = parent_tags.union(self.tags.all())
         return parent_tags
 
     @cached_property
@@ -81,6 +85,7 @@ class AbstractTaggedLinkedModel(models.Model):
         Fetches just the tag names.
         '''
         tag_list = self.get_inherited_tags()
+        print(tag_list)
         tag_names = []
         if tag_list:
             for tag in tag_list:
