@@ -95,8 +95,8 @@
         <tr>
           <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
           <td><a href="{{ game.parent_game.get_absolute_url }}">{{ game.parent_game.title }}</a></td>
-          <td>{{ game.isbn }}</td>
           <td>{{ game.publication_date|date:"Y" }}</td>
+          <td>{{ game.isbn }}</td>
           <td>{% if game.url %}<a href="{{ game.url }}" target="_blank">{% trans "Official Page" %}</a>{% endif %}</td>
           <td>{{ game.inherited_tag_names|join:", " }}</td>
         </tr>
