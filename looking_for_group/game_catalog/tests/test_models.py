@@ -51,3 +51,7 @@ class TestTagInheritance(TestCase):
         assert (
             len(PublishedModule.objects.get(pk=self.module.pk).inherited_tags) == 1
         )
+
+    def test_tag_names_only(self):
+        tag_names = self.game.inherited_tag_names
+        assert tag_names == ['weird', 'monkey']

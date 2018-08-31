@@ -40,7 +40,7 @@
           <td>{{ game.publication_date|date:"Y" }}</td>
           <td>{{ game.isbn }}</td>
           <td>{% if game.url %}<a href="{{ game.url }}" target="_blank">{% trans "Official Page" %}</a>{% endif %}</td>
-          <td>{{ game.tags.names|join:", " }}</td>
+          <td>{{ game.inherited_tag_names|join:", " }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -98,7 +98,7 @@
           <td>{{ game.isbn }}</td>
           <td>{{ game.publication_date|date:"Y" }}</td>
           <td>{% if game.url %}<a href="{{ game.url }}" target="_blank">{% trans "Official Page" %}</a>{% endif %}</td>
-          <td>{{ game.tags.names|join:", " }}</td>
+          <td>{{ game.inherited_tag_names|join:", " }}</td>
         </tr>
         {% endfor %}
       </tbody>

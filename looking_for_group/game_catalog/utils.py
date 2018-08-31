@@ -49,6 +49,9 @@ class AbstractTaggedLinkedModel(models.Model):
 
     @cached_property
     def inherited_tags(self):
+        return self.get_inherited_tags()
+
+    def get_inherited_tags(self):
         """
         Fetches tags for itself and all other linked model instances.
         """
@@ -71,6 +74,17 @@ class AbstractTaggedLinkedModel(models.Model):
                             logger.debug('Merging tags into existing queryset')
                             parent_tags = parent_tags.union(tags_qs.all())
         return parent_tags
+
+    @cached_property
+    def inherited_tag_names(self):
+        '''
+        Fetches just the tag names.
+        '''
+        tag_list = self.get_inherited_tags()
+        tag_names = []
+        for tag in tag_list:
+            tag_names.append(tag.name)
+        return tag_names
 
     class Meta:
         abstract = True
