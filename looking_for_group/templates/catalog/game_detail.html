@@ -3,7 +3,7 @@
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block content %}
 <h1>{{ game.title }}</h1>
-{% if game.image %}<img class="thumbnail" src="{{ image.url }}" />{% endif %}
+{% if game.image %}<img class="thumbnail" src="{{ game.image.url }}" />{% endif %}
 {% if game.url %}<h2><a href="{{ game.url }}">{% trans "Offical site" %}</a></h2>{% endif %}
 <span class="meta">{% trans "Published by" %} <a href="{{ game.publisher.get_absolute_url}}">{{ game.publisher.name }}</a>. {% trans "System: " %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>. {% trans "It has" %}{% blocktrans count counter=game.publishedmodule_set|length %} one additional Game Module{% plural %}{{ counter|humanize }} additional Game Modules.{% endblocktrans %}</span>
 <p>{{ game.description }}</p>
