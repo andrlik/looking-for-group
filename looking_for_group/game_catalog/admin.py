@@ -9,7 +9,9 @@ class GamePublisherAdmin(admin.ModelAdmin):
 
 
 class GameSystemAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'original_publisher')
+    list_select_related = ('original_publisher', )
+    ordering = ['name', '-publication_date']
 
 
 class PublishedGameAdmin(admin.ModelAdmin):
@@ -22,7 +24,12 @@ class PublishedGameAdmin(admin.ModelAdmin):
 
 
 class PublishedModuleAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('title', 'parent_game', 'publisher', 'parent_game__game_system')
+    date_hierarchy = 'publication_date'
+    ordering = ['title', '-publication_date']
+    search_fields = ['title']
+    list_filter = ('parent_game', )
+    list_select_related = ('publisher', 'parent_game')
 
 
 admin.site.register(GamePublisher, GamePublisherAdmin)
