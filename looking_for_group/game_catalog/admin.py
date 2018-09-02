@@ -24,7 +24,7 @@ class PublishedGameAdmin(admin.ModelAdmin):
 
 
 class PublishedModuleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'parent_game', 'publisher', 'parent_game__game_system')
+    list_display = ('title', 'parent_game', 'publisher')
     date_hierarchy = 'publication_date'
     ordering = ['title', '-publication_date']
     search_fields = ['title']
