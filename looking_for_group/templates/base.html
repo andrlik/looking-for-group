@@ -56,9 +56,12 @@
               {# URL provided by django-allauth/account/urls.py #}
               <a href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}">{% trans "My Profile" %} {% avatar request.user 30 class="profile_circle_small" %}</a>
           </li>
+  {% if request.user.is_superuser %}
+ <li data-equalizer-watch="menu"><a href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
+{% endif %}
           <li data-equalizer-watch="menu">
               {# URL provided by django-allauth/account/urls.py #}
-              <a href="{% url 'account_logout' %}">{% trans "Sign out" %}</a>
+             <a href="{% url 'account_logout' %}">{% trans "Sign out" %}</a>
           </li>
           {% else %}
           <li data-equalizer-watch="menu">
