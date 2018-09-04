@@ -29,7 +29,6 @@ raven = "*"
 "psycopg2" = "*"
 django-anymail = "*"
 django-storages = "*"
-django-registration = {git = "https://github.com/ubernostrum/django-registration.git", editable = true}
 django-avatar = "*"
 pwned-passwords-django = "*"
 django-cookie-law = "*"
@@ -50,6 +49,7 @@ django-q = "*"
 django-extensions = "*"
 "boto3" = "*"
 newrelic = "*"
+django-registration = "*"
 
 
 [dev-packages]
