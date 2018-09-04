@@ -53,5 +53,5 @@ class TestTagInheritance(TestCase):
         )
 
     def test_tag_names_only(self):
-        tag_names = sorted(self.game.inherited_tag_names)
+        tag_names = self.game.inherited_tag_names
         assert tag_names == ['discovery', 'monkey', 'weird']

@@ -77,7 +77,7 @@ class AbstractTaggedLinkedModel(models.Model):
             parent_tags = self.tags.all()
         else:
             parent_tags = parent_tags.union(self.tags.all())
-        return parent_tags
+        return parent_tags.order_by('name')
 
     @cached_property
     def inherited_tag_names(self):
