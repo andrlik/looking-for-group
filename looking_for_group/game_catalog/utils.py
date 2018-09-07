@@ -85,7 +85,6 @@ class AbstractTaggedLinkedModel(models.Model):
         Fetches just the tag names.
         '''
         tag_list = self.get_inherited_tags()
-        print(tag_list)
         tag_names = []
         if tag_list:
             for tag in tag_list:

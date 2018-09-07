@@ -24,7 +24,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:pub_detail", kwargs={"publisher": self.id})
+        return reverse("game_catalog:pub-detail", kwargs={"publisher": self.id})
 
     class Meta:
         ordering = ['name']
@@ -69,7 +69,7 @@ class GameSystem(
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:system_detail", kwargs={"system": self.id})
+        return reverse("game_catalog:system-detail", kwargs={"system": self.id})
 
     class Meta:
         ordering = ['name', '-publication_date']
@@ -121,7 +121,7 @@ class PublishedGame(
         return "{0} ({1})".format(self.title, self.edition)  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:game_detail", kwargs={"game": self.id})
+        return reverse("game_catalog:game-detail", kwargs={"game": self.id})
 
     class Meta:
         ordering = ['-publication_date__year', 'title', '-publication_date']
@@ -169,7 +169,7 @@ class PublishedModule(
         )  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:module_detail", kwargs={"module": self.id})
+        return reverse("game_catalog:module-detail", kwargs={"module": self.id})
 
     class Meta:
         ordering = ['title', '-publication_date']
