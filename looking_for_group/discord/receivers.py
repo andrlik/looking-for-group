@@ -6,6 +6,7 @@ from allauth.socialaccount.signals import social_account_added, social_account_u
 from allauth.socialaccount.models import SocialLogin, SocialAccount
 from .tasks import prune_servers, sync_discord_servers_from_discord_account
 from .signals import updated_discord_social_account
+from .models import GamerDiscordLink
 
 logger = logging.getLogger('discord')
 
@@ -22,6 +23,11 @@ def check_signal_from_allauth(sender, request, sociallogin, *args, **kwargs):
 @receiver(updated_discord_social_account, sender=SocialAccount)
 def create_or_update_server_list(sender, gamer, socialaccount, test_response=None, *args, **kwargs):
     logger.debug('Sending async task to update gamer servers.')
+    gamer_discord, created = GamerDiscordLink.objects.get_or_create(
+        gamer=gamer, socialaccount=socialaccount
+    )
+    gamer_discord.sync_status = 'pending'
+    gamer_discord.save()
     async_task(sync_discord_servers_from_discord_account, gamer, socialaccount, test_response=test_response)
 
 

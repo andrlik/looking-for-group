@@ -69,6 +69,8 @@ def sync_discord_servers_from_discord_account(gamerprofile, socialaccount, test_
         gamer_discord, created = GamerDiscordLink.objects.get_or_create(
             gamer=gamer, socialaccount=socialaccount
         )
+        gamer_discord.sync_status = 'syncing'
+        gamer_discord.save()
         current_servers = gamer_discord.get_server_discord_id_list()
         logger.debug("Current servers are: {}".format(current_servers))
         updated_servers = []
@@ -160,6 +162,8 @@ def sync_discord_servers_from_discord_account(gamerprofile, socialaccount, test_
             memberships_updated,
         )
     )
+    gamer_discord.sync_status = 'synced'
+    gamer_discord.save()
     if unlinks:
         # Since we've unlinked, let's practice good housekeeping and prune any
         # unneeded servers.
