@@ -1,8 +1,9 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
 {% block subtitle %}{{ system.name }} - {% endblock %}
+{% block sectiontitle %}<h2>{% trans "Game System" %}</h2>{% endblock %}
 {% block content %}
-<h1>{{ system.name }}</h1>
+<h2>{{ system.name }}</h2>
 {% if system.image %}<img class="thumbnail" src="{{ system.image.url }}" />{% endif %}
 {% if system.url %}<p><a href="{{ system.url }}">{% trans "Offical site" %}</a></p>{% endif %}
 <span class="meta">{% trans "Published by" %} <a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a>. {% blocktrans count counter=system.publishedgame_set|length %}One Game{% plural %} {{ counter|humanize }} Games{% endblocktrans %}.</span>

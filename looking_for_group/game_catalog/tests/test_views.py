@@ -52,36 +52,36 @@ class AbstractViewTest(TestCase):
 
 class PublisherViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:pub_list")
+        self.assertGoodView("game_catalog:pub-list")
         assert len(self.get_context("object_list")) == 2
 
     def test_detail_retrieval(self):
-        self.assertGoodView("game_catalog:pub_detail", publisher=self.mcg.pk)
-        self.assertGoodView("game_catalog:pub_detail", publisher=self.wotc.pk)
+        self.assertGoodView("game_catalog:pub-detail", publisher=self.mcg.pk)
+        self.assertGoodView("game_catalog:pub-detail", publisher=self.wotc.pk)
 
 
 class GameSystemViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:system_list")
+        self.assertGoodView("game_catalog:system-list")
 
     def test_detail_retrieval(self):
-        self.assertGoodView("game_catalog:system_detail", system=self.cypher.pk)
-        self.assertGoodView("game_catalog:system_detail", system=self.fivesrd.pk)
+        self.assertGoodView("game_catalog:system-detail", system=self.cypher.pk)
+        self.assertGoodView("game_catalog:system-detail", system=self.fivesrd.pk)
 
 
 class PublishedGameViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:game_list")
+        self.assertGoodView("game_catalog:game-list")
 
     def test_detail_retrieval(self):
         for g in [self.numen, self.strange, self.ddfive]:
-            self.assertGoodView("game_catalog:game_detail", game=g.pk)
+            self.assertGoodView("game_catalog:game-detail", game=g.pk)
 
 
 class PublishedModuleViews(AbstractViewTest):
     def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:module_list")
+        self.assertGoodView("game_catalog:module-list")
 
     def test_detail_retrieval(self):
         for m in [self.cos, self.tiamat, self.vv]:
-            self.assertGoodView("game_catalog:module_detail", module=m.pk)
+            self.assertGoodView("game_catalog:module-detail", module=m.pk)

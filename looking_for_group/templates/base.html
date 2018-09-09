@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
     <link rel="apple-touch-icon" href="{% static 'images/Icon@120.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/Icon@180.png' %}">
     <link rel="apple-touch-icon" sizes="152x152" href="{% static 'images/Icon@152.png' %}">
@@ -26,7 +27,7 @@
 
     {% compress css %}
     <link rel="stylesheet" type="text/x-scss" href="{% static 'sass/app.scss' %}">
-    <link href="{% static 'css/project.css' %}" rel="stylesheet">
+    <link type="text/x-scss" href="{% static 'sass/project.scss' %}" rel="stylesheet">
     {% endcompress %}
     <link rel="stylesheet" type="text/css" href="{% static 'star-ratings/css/star-ratings.css' %}">
     {% endblock %}
@@ -34,52 +35,89 @@
   </head>
 
   <body>
-
-    <div class="title-bar" data-responsive-toggle="menu" data-hide-for="medium">
-      <button class="menu-icon" type="button" data-toggle></button>
-      <div class="title-bar-title">Menu</div>
+<div class="app-dashboard shrink-medium">
+  <div class="row expanded app-dashboard-top-nav-bar">
+    <div class="columns medium-2">
+      <button data-toggle="app-dashboard-sidebar" class="menu-icon hide-for-medium"></button>
+      <a class="app-dashboard-logo" href="/">LFG Directory</a>
     </div>
-
-    <div class="top-bar" data-equalizer="topbar" data-equalizer-on="medium" id="menu">
-      <div class="top-bar-left hide-for-small-only" data-equalizer-watch>
-        <ul class="dropdown menu">
-          <li class="menu-text"><img height="30" width="30" src="{% static 'images/Icon@120.png' %}" />&nbsp;&nbsp;Geek Looking for Group</li>
-        </ul>
+    <div class="columns show-for-medium">
+      <div class="app-dashboard-search-bar-container">
+        <input class="app-dashboard-search" type="search" placeholder="Search">
+        <i class="app-dashboard-search-icon fa fa-search"></i>
       </div>
+    </div>
+    <div class="columns shrink app-dashboard-top-bar-actions" data-equalizer data-equilize-on="medium" id="top-bar-actions">
+      <ul class="menu">
+      {% if request.user.is_authenticated %}
+        <li><a class="button hollow" href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}" data-equalizer-watch>{% trans "My Profile" %} {% avatar request.user 20 class="profile_circle_small" %}</a></li>
+        {% if request.user.is_superuser %}
+            <li><a class="button hollow" data-equalizer-watch href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
+        {% endif %}
+        <li><a href="{% url 'account_logout' %}" data-equalizer-watch class="button hollow">{% trans "Logout" %}</a></li>
+      {% else %}
+        <li><a class="button hollow" data-equalizer-watch href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+        <li><a class="button hollow" data-equalizer-watch href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a></li>
+      {% endif %}
+        <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li>
+      </ul>
+    </div>
+  </div>
 
-      <div class="top-bar-right" data-equalizer-watch="topbar">
-        <ul class="vertical medium-horizontal menu" data-equalizer="menu">
-          <li data-equalizer-watch="menu"> <a href="{% url 'home' %}">Home</a></li>
-          <li data-equalizer-watch="menu"><a href="{% url 'about' %}">About</a></li>
+  <div class="app-dashboard-body off-canvas-wrapper">
+    <div id="app-dashboard-sidebar" class="app-dashboard-sidebar position-left off-canvas off-canvas-absolute reveal-for-medium" data-off-canvas>
+      <div class="app-dashboard-sidebar-title-area">
+        <div class="app-dashboard-close-sidebar">
+          <h3 class="app-dashboard-sidebar-block-title">Menu</h3>
+          <!-- Close button -->
+          <button id="close-sidebar" data-app-dashboard-toggle-shrink class="app-dashboard-sidebar-close-button show-for-medium" aria-label="Close menu" type="button">
+            <span aria-hidden="true"><a href="#"><i class="large fa fa-angle-double-left"></i></a></span>
+          </button>
+        </div>
+        <div class="app-dashboard-open-sidebar">
+          <button id="open-sidebar" data-app-dashboard-toggle-shrink class="app-dashboard-open-sidebar-button show-for-medium" aria-label="open menu" type="button">
+            <span aria-hidden="true"><a href="#"><i class="large fa fa-angle-double-right"></i></a></span>
+          </button>
+        </div>
+      </div>
+      <div class="app-dashboard-sidebar-inner">
+        <ul class="menu vertical">
+          <li><a>
+            <i class="large fa fa-tachometer-alt"></i><span class="app-dashboard-sidebar-text">Dashboard</span>
+          </a></li>
+          <li><a>
+            <i class="large fa fa-calendar-alt"></i><span class="app-dashboard-sidebar-text">Calendar</span>
+          </a></li>
+          <li><a>
+            <i class="large fa fa-dice"></i><span class="app-dashboard-sidebar-text">Games</span>
+          </a></li>
+          <li><a href="{% url 'gamer_profiles:community-list' %}">
+            <i class="large fa fa-users"></i><span class="app-dashboard-sidebar-text">Communities</span>
+          </a></li>
+          <li><a href="{% url 'game_catalog:game-list' %}" class="is-active">
+            <i class="large fa fa-database"></i><span class="app-dashboard-sidebar-text">RPG Database</span>
+          </a></li>
           {% if request.user.is_authenticated %}
-          <li data-equalizer-watch="menu">
-              {# URL provided by django-allauth/account/urls.py #}
-              <a href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}">{% trans "My Profile" %} {% avatar request.user 30 class="profile_circle_small" %}</a>
-          </li>
-  {% if request.user.is_superuser %}
- <li data-equalizer-watch="menu"><a href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
-{% endif %}
-          <li data-equalizer-watch="menu">
-              {# URL provided by django-allauth/account/urls.py #}
-             <a href="{% url 'account_logout' %}">{% trans "Sign out" %}</a>
-          </li>
-          {% else %}
-          <li data-equalizer-watch="menu">
-              {# URL provided by django-allauth/account/urls.py #}
-              <a id="sign-up-link" href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
-          </li>
-          <li data-equalizer-watch="menu">
-              {# URL provided by django-allauth/account/urls.py #}
-              <a id="log-in-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
-            </li>
-            {% endif %}
+          <li><a href="{% url 'gamer_profiles:my-gamer-friend-requests' %}">
+            <i class="large fa fa-user-friends"></i><span class="app-dashboard-sidebar-text">Friend Requests</span>
+          </a> </li>
+          <li><a href="{% url 'gamer_profiles:my-block-list' %}">
+            <i class="large fa fa-ban"></i><span class="app-dashboard-sidebar-text">Blocked Users</span>
+          </a></li>
+          <li><a href="{% url 'gamer_profiles:profile-edit' %}">
+            <i class="large fa fa-user-circle"></i><span class="app-dashboard-sidebar-text">Edit Profile</span>
+          </a> </li>
+          <li><a>
+            <i class="large fa fa-cog"></i><span class="app-dashboard-sidebar-text">Settings</span>
+          </a></li>
+          {% endif %}
         </ul>
       </div>
-
     </div>
 
-    <div class="row">
-
+    <div class="app-dashboard-body-content off-canvas-content" data-off-canvas-content id="content">
+      {% block innernav %}
+      {% endblock %}
       <div class="medium-6 medium-offset-3 columns">
           {# cookielaw_banner #}
         {% if messages %}
@@ -93,37 +131,24 @@
           {% endfor %}
         {% endif %}
       </div>
+
+{% block content %}
+      <h2 class="text-center">Lorem Ipsum</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus blandit ligula eget est feugiat viverra. Duis a arcu laoreet, rhoncus libero imperdiet, placerat velit. Vestibulum euismod mi et ornare sodales. Donec efficitur mattis blandit. Proin in massa elit. Praesent malesuada iaculis nisl, a venenatis dui. Nullam venenatis tincidunt placerat. Suspendisse egestas urna a aliquet pretium.</p>
+
+      <p>Curabitur ullamcorper mollis lobortis. Integer a scelerisque turpis, sed dictum lorem. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nam quis placerat sem. Suspendisse vulputate, leo ac sollicitudin lobortis, dui dui blandit justo, ut molestie justo sem in ipsum. Vestibulum convallis ex ac est tristique tincidunt. Vivamus dui dui, viverra et urna vitae, aliquam facilisis erat. Nam lorem nibh, elementum semper commodo at, fermentum quis justo. Donec finibus sapien eget scelerisque rhoncus. Nullam at nisi sed mi congue vestibulum. Vivamus nec scelerisque orci, vel fringilla nisi. Sed dictum, leo in consectetur porttitor, quam nibh aliquet nisi, in pulvinar sapien ante id dui. Aliquam massa nisl, auctor eget nisl in, faucibus gravida lectus. Nullam mattis orci at turpis finibus egestas. Nam vitae lorem accumsan, tempus lectus vitae, rutrum diam. Integer pulvinar placerat magna aliquam scelerisque.</p>
+
+      <p>Duis consectetur magna velit, nec porttitor velit fermentum pulvinar. Duis varius justo eu varius pellentesque. Curabitur aliquet velit mauris, quis aliquam leo pharetra in. Integer rhoncus ut dui in rhoncus. Maecenas nec libero neque. Duis ac lacus at justo ullamcorper efficitur. Praesent ornare urna ante. Aliquam dapibus posuere nisl sit amet vestibulum. Quisque dapibus iaculis justo non egestas. Curabitur interdum semper justo, eget condimentum orci bibendum nec.</p>
+
+      <p>Vivamus pharetra massa non risus sollicitudin iaculis. Donec semper finibus hendrerit. Nam ut volutpat mauris, sit amet molestie nisi. Curabitur ac nisi urna. Nulla id turpis nec dui ornare tempor in ac justo. Cras quis cursus nisi. Donec vel pellentesque ante. Maecenas non nisi risus. Praesent posuere scelerisque varius. Cras vitae mollis quam. Etiam ut dui massa. Etiam mattis aliquam enim, eget facilisis erat elementum eu. Proin et lorem volutpat, pretium massa a, venenatis mi. Suspendisse quam orci, feugiat eget suscipit ac, vehicula a ante. Nam ut mauris at tortor cursus interdum.</p>
+
+      <p>Nullam hendrerit tincidunt risus. Sed nec nibh vel nibh euismod lobortis sed a sem. Nulla nec libero dolor. Pellentesque non sodales orci. Phasellus odio ligula, varius non orci ac, fermentum pulvinar nibh. Aliquam erat volutpat. Curabitur vehicula varius porttitor. Integer purus sapien, placerat sodales eros et, interdum vestibulum sem. Duis faucibus felis vitae augue ultricies, aliquet tempor orci vestibulum. Duis eu justo mi. Praesent feugiat, ante interdum fringilla auctor, ex nibh aliquet neque, sed feugiat tellus tortor non dui. Suspendisse potenti. Aliquam fringilla sapien felis, at faucibus justo interdum congue.</p>
+{% endblock %}
+
     </div>
+  </div>
+</div>
 
-    {% block content %}
-    <div class="grid-y medium-grid-frame">
-      <div class="cell shrink header medium-cell-block-container">
-        <h1>XY grid example with Grid Frame (Foundation 6.4!!!)</h1>
-      </div>
-      <div class="cell medium-auto medium-cell-block-container">
-        <div class="grid-x grid-padding-x">
-          <div class="cell medium-4 medium-cell-block-y">
-            <h2>Independent scrolling sidebar</h2>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer lacus odio, accumsan id ullamcorper eget, varius nec erat. Nulla facilisi. Donec dui felis, euismod nec finibus vitae, dapibus quis arcu. Maecenas tempor et ipsum quis venenatis. Ut posuere sed augue sit amet efficitur. Sed imperdiet, justo id tempus rhoncus, est est viverra turpis, non vulputate magna lectus et nisl. Pellentesque ultrices porttitor vehicula. Ut aliquet efficitur ligula, a consectetur felis. Proin tristique ut augue nec luctus. Curabitur a sapien pretium, auctor elit a, efficitur erat. Donec tincidunt dui vel velit bibendum euismod. Cras vitae nibh dui. Aliquam erat volutpat. Etiam sit amet arcu a erat efficitur facilisis. Ut viverra dapibus turpis, et ornare justo. Integer in dui cursus, dignissim tortor a, hendrerit risus.</p>
-
-            <p>Suspendisse pulvinar, massa iaculis feugiat lobortis, dolor sapien vestibulum nulla, vel cursus tellus leo in lorem. Aliquam eu placerat urna. Suspendisse sed viverra orci, ut mattis neque. Fusce non ultrices nisi. In sagittis varius mollis. Quisque dolor quam, consectetur eu lacinia ac, ullamcorper vel arcu. Nullam mattis imperdiet nulla sed ornare. Praesent tristique, est id eleifend vestibulum, neque nibh condimentum ex, nec lobortis purus justo a libero. Phasellus id ex ac nunc hendrerit hendrerit. Nullam urna ipsum, rutrum at fringilla vel, venenatis non purus. Maecenas egestas ex vitae venenatis molestie. Ut et odio egestas, accumsan neque et, viverra nisl. Sed faucibus nec nulla sed imperdiet. Fusce quis sem ac urna semper tempor a id elit. Nulla fringilla vitae sapien a vehicula.</p>
-
-          </div>
-          <div class="cell medium-8 medium-cell-block-y">
-            <h2>Independent scrolling body</h2>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer lacus odio, accumsan id ullamcorper eget, varius nec erat. Nulla facilisi. Donec dui felis, euismod nec finibus vitae, dapibus quis arcu. Maecenas tempor et ipsum quis venenatis. Ut posuere sed augue sit amet efficitur. Sed imperdiet, justo id tempus rhoncus, est est viverra turpis, non vulputate magna lectus et nisl. Pellentesque ultrices porttitor vehicula. Ut aliquet efficitur ligula, a consectetur felis. Proin tristique ut augue nec luctus. Curabitur a sapien pretium, auctor elit a, efficitur erat. Donec tincidunt dui vel velit bibendum euismod. Cras vitae nibh dui. Aliquam erat volutpat. Etiam sit amet arcu a erat efficitur facilisis. Ut viverra dapibus turpis, et ornare justo. Integer in dui cursus, dignissim tortor a, hendrerit risus.</p>
-            <p>Suspendisse pulvinar, massa iaculis feugiat lobortis, dolor sapien vestibulum nulla, vel cursus tellus leo in lorem. Aliquam eu placerat urna. Suspendisse sed viverra orci, ut mattis neque. Fusce non ultrices nisi. In sagittis varius mollis. Quisque dolor quam, consectetur eu lacinia ac, ullamcorper vel arcu. Nullam mattis imperdiet nulla sed ornare. Praesent tristique, est id eleifend vestibulum, neque nibh condimentum ex, nec lobortis purus justo a libero. Phasellus id ex ac nunc hendrerit hendrerit. Nullam urna ipsum, rutrum at fringilla vel, venenatis non purus. Maecenas egestas ex vitae venenatis molestie. Ut et odio egestas, accumsan neque et, viverra nisl. Sed faucibus nec nulla sed imperdiet. Fusce quis sem ac urna semper tempor a id elit. Nulla fringilla vitae sapien a vehicula.</p>
-            <p>Nullam vestibulum lorem nec lectus egestas, nec ullamcorper diam maximus. Maecenas condimentum, nibh at blandit semper, ex erat tempus magna, id maximus neque velit accumsan nibh. Aenean dignissim lorem eu nisl laoreet vestibulum. Vivamus efficitur et augue vitae tincidunt. Etiam et magna felis. Integer mattis, nisi aliquet scelerisque blandit, ex mi sodales ante, eget accumsan quam magna et ligula. Curabitur id tristique leo. Proin rutrum mi vitae enim rhoncus, at cursus neque eleifend. Integer ultrices volutpat tellus ac porta. Fusce sollicitudin venenatis lacinia. Fusce ante lorem, gravida semper varius non, pharetra non erat. Sed dapibus arcu turpis, ac sollicitudin nibh lacinia vel. Nullam at enim porta, luctus metus sit amet, rutrum odio. Cras tempor enim vel pellentesque sollicitudin. Maecenas ullamcorper, sem non accumsan volutpat, neque tortor pulvinar orci, ut ultrices ligula lorem ut risus.</p>
-            <p>Aliquam facilisis, nibh eget posuere suscipit, arcu sapien iaculis odio, in molestie dolor lectus vitae sem. Cras id nunc mollis mi rutrum dapibus. Quisque rutrum a augue at scelerisque. Praesent faucibus ac enim vitae gravida. Sed et sodales elit. Duis magna lectus, interdum sit amet metus a, sagittis varius magna. Proin nibh lectus, egestas a luctus ut, dapibus et enim. Curabitur fringilla ipsum vitae nunc imperdiet consectetur eget non neque. Suspendisse ultricies odio quis lorem vulputate, ac vulputate turpis feugiat. Maecenas posuere rhoncus orci, in ornare velit suscipit tempor. Curabitur pretium nisl id lorem placerat consequat. In quis quam eros. Nam mattis elit eu quam sagittis, in varius erat tempor.</p>
-            <p>Fusce felis magna, pellentesque eget mollis a, rutrum id eros. Curabitur auctor varius arcu a consequat. Phasellus quis pulvinar enim, eu ultricies justo. Pellentesque risus libero, dapibus at erat ultricies, gravida varius erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nulla tempus, justo ut laoreet mollis, nunc tellus convallis urna, vel pretium dui velit eget ligula. Aliquam semper sed nulla a molestie. Maecenas at egestas massa, vitae aliquam mi. Fusce nec sem egestas, pretium lacus non, tincidunt sapien. Sed tristique odio at ultricies vulputate. Integer et convallis augue, eu aliquam enim. Mauris ut faucibus diam. Donec vulputate nunc sed congue accumsan. Etiam lobortis nisi quis lacinia pharetra.</p>
-          </div>
-        </div>
-      </div>
-      <div class="cell shrink footer">
-        <h3>Here's my footer</h3>
-      </div>
-    </div>
-    {% endblock content %}
 
     {% block modal %}{% endblock modal %}
 
@@ -146,6 +171,10 @@
 
       <script>
         $(document).foundation();
+        $('[data-app-dashboard-toggle-shrink]').on('click', function(e) {
+          e.preventDefault();
+          $(this).parents('.app-dashboard').toggleClass('shrink-medium').toggleClass('shrink-large');
+        });
       </script>
       <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
     {% endblock javascript %}

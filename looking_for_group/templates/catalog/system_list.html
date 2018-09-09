@@ -1,15 +1,59 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
 {% block subtitle %}{% trans "Game Systems" %} - {% endblock %}
+{% block sectiontitle %}<h2>{% trans "Game Systems" %}</h2>{% endblock %}
 {% block content %}
-<h1>{% trans "Game Systems" %}</h1>
 
-{% for system in object_list %}
-<h2><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></h2>
-<span class="meta">{% trans "Published by" %} <a href="{{system.original_publisher.get_absolute_url}}">{{ system.original_publisher.name }}</a>. {% blocktrans count counter=system.publishedgame_set|length %}Powers one Game{% plural %}Powers {{ counter|humanize }} Games{% endblocktrans %}.</span>
-<p>{{ system.description|truncatewords:100 }}</p>
-{% empty %}
-<p>{% trans "No game systems found." %}</p>
-{% endfor %}
+{% if not object_list.exists %}
+<p>{% trans "No publishers found" %}</p>
+{% endif %}
+<table>
+  <thead>
+    <tr>
+      <th>{% trans "Name" %}</th>
+      <th>{% trans "Publisher" %}</th>
+      <th>{% trans "Description" %}</th>
+      <th class="text-right">{% trans "Published" %}</th>
+      <th class="text-right">{% trans "Associated Games" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for system in object_list %}
+    <tr>
+      <td><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></td>
+      <td><a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a></td>
+      <td>{{ system.original_publisher.description|truncatewords:25 }}</td>
+      <td class="text-right">{{ system.publication_date|date:"Y" }}</td>
+      <td class="text-right">{{ system.publishedgame_set.count }}</td>
+    </tr>
+    {% empty %}
+    <!-- No results -->
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'game_catalog:system-list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span> </a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'game_catalog:system-list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'game_catalog:system-list' page=page_obj.next_page_number %}" aria-label="Next page">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
 
 {% endblock %}
