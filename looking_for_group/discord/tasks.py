@@ -73,7 +73,7 @@ def sync_discord_servers_from_discord_account(gamerprofile, socialaccount, test_
         logger.debug("Current servers are: {}".format(current_servers))
         updated_servers = []
         # We create a dummy request here since we can't pickle it.
-        request = requests.get('/sync/guilds/')
+        request = requests.get('http://localhost:8000/')
         discord_adapter = DiscordGuildOAuth2Adapater(request)
         if test_response:
             guild_list = discord_adapter.get_guilds_with_permissions(stoken.app, stoken, test_response=test_response)
