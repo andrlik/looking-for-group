@@ -39,7 +39,7 @@
   <div class="row expanded app-dashboard-top-nav-bar">
     <div class="columns medium-2">
       <button data-toggle="app-dashboard-sidebar" class="menu-icon hide-for-medium"></button>
-      <a class="app-dashboard-logo">LFG Directory</a>
+      <a class="app-dashboard-logo" href="/">LFG Directory</a>
     </div>
     <div class="columns show-for-medium">
       <div class="app-dashboard-search-bar-container">
@@ -48,17 +48,19 @@
       </div>
     </div>
     <div class="columns shrink app-dashboard-top-bar-actions" data-equalizer data-equilize-on="medium" id="top-bar-actions">
+      <ul class="menu">
       {% if request.user.is_authenticated %}
-      <a class="button hollow" href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}" data-equalizer-watch>{% trans "My Profile" %} {% avatar request.user 20 class="profile_circle_small" %}</a>
-      {% if request.user.is_superuser %}
-      <a class="button hollow" data-equalizer-watch href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
-      {% endif %}
-      <a href="{% url 'account_logout' %}" data-equalizer-watch class="button hollow">{% trans "Logout" %}</a>
+        <li><a class="button hollow" href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}" data-equalizer-watch>{% trans "My Profile" %} {% avatar request.user 20 class="profile_circle_small" %}</a></li>
+        {% if request.user.is_superuser %}
+            <li><a class="button hollow" data-equalizer-watch href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
+        {% endif %}
+        <li><a href="{% url 'account_logout' %}" data-equalizer-watch class="button hollow">{% trans "Logout" %}</a></li>
       {% else %}
-      <a class="button hollow" data-equalizer-watch href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
-      <a class="button hollow" data-equalizer-watch href="{% url 'account_signup' %}"{% trans "Sign Up" %}</a>
+        <li><a class="button hollow" data-equalizer-watch href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+        <li><a class="button hollow" data-equalizer-watch href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a></li>
       {% endif %}
-      <a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a>
+        <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li>
+      </ul>
     </div>
   </div>
 
@@ -66,7 +68,7 @@
     <div id="app-dashboard-sidebar" class="app-dashboard-sidebar position-left off-canvas off-canvas-absolute reveal-for-medium" data-off-canvas>
       <div class="app-dashboard-sidebar-title-area">
         <div class="app-dashboard-close-sidebar">
-          <h3 class="app-dashboard-sidebar-block-title">Items</h3>
+          <h3 class="app-dashboard-sidebar-block-title">Menu</h3>
           <!-- Close button -->
           <button id="close-sidebar" data-app-dashboard-toggle-shrink class="app-dashboard-sidebar-close-button show-for-medium" aria-label="Close menu" type="button">
             <span aria-hidden="true"><a href="#"><i class="large fa fa-angle-double-left"></i></a></span>
@@ -80,38 +82,42 @@
       </div>
       <div class="app-dashboard-sidebar-inner">
         <ul class="menu vertical">
+          <li><a>
+            <i class="large fa fa-tachometer-alt"></i><span class="app-dashboard-sidebar-text">Dashboard</span>
+          </a></li>
+          <li><a>
+            <i class="large fa fa-calendar-alt"></i><span class="app-dashboard-sidebar-text">Calendar</span>
+          </a></li>
+          <li><a>
+            <i class="large fa fa-dice"></i><span class="app-dashboard-sidebar-text">Games</span>
+          </a></li>
+          <li><a href="{% url 'gamer_profiles:community-list' %}">
+            <i class="large fa fa-users"></i><span class="app-dashboard-sidebar-text">Communities</span>
+          </a></li>
           <li><a href="{% url 'game_catalog:game-list' %}" class="is-active">
-            <i class="large fa fa-book"></i><span class="app-dashboard-sidebar-text">RPG Catalog</span>
+            <i class="large fa fa-database"></i><span class="app-dashboard-sidebar-text">RPG Database</span>
           </a></li>
+          {% if request.user.is_authenticated %}
+          <li><a href="{% url 'gamer_profiles:my-gamer-friend-requests' %}">
+            <i class="large fa fa-user-friends"></i><span class="app-dashboard-sidebar-text">Friend Requests</span>
+          </a> </li>
+          <li><a href="{% url 'gamer_profiles:my-block-list' %}">
+            <i class="large fa fa-ban"></i><span class="app-dashboard-sidebar-text">Blocked Users</span>
+          </a></li>
+          <li><a href="{% url 'gamer_profiles:profile-edit' %}">
+            <i class="large fa fa-user-circle"></i><span class="app-dashboard-sidebar-text">Edit Profile</span>
+          </a> </li>
           <li><a>
-            <i class="large fa fa-hourglass"></i><span class="app-dashboard-sidebar-text">Time</span>
+            <i class="large fa fa-cog"></i><span class="app-dashboard-sidebar-text">Settings</span>
           </a></li>
-          <li><a>
-            <i class="large fa fa-industry"></i><span class="app-dashboard-sidebar-text">Industry</span>
-          </a></li>
-          <li><a href="#" class="is-active">
-            <i class="large fa fa-institution"></i><span class="app-dashboard-sidebar-text">Buildings</span>
-          </a></li>
-          <li><a>
-            <i class="large fa fa-hourglass"></i><span class="app-dashboard-sidebar-text">Time</span>
-          </a></li>
-          <li><a>
-            <i class="large fa fa-industry"></i><span class="app-dashboard-sidebar-text">Industry</span>
-          </a></li>
-          <li><a href="#" class="is-active">
-            <i class="large fa fa-institution"></i><span class="app-dashboard-sidebar-text">Buildings</span>
-          </a></li>
-          <li><a>
-            <i class="large fa fa-hourglass"></i><span class="app-dashboard-sidebar-text">Time</span>
-          </a></li>
-          <li><a>
-            <i class="large fa fa-industry"></i><span class="app-dashboard-sidebar-text">Industry</span>
-          </a></li>
+          {% endif %}
         </ul>
       </div>
     </div>
 
-    <div class="app-dashboard-body-content off-canvas-content" data-off-canvas-content>
+    <div class="app-dashboard-body-content off-canvas-content" data-off-canvas-content id="content">
+      {% block innernav %}
+      {% endblock %}
       <div class="medium-6 medium-offset-3 columns">
           {# cookielaw_banner #}
         {% if messages %}

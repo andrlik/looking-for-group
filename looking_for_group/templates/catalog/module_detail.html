@@ -1,8 +1,9 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
 {% block subtitle %}{{ module.title }} - {% endblock %}
+{% block sectiontitle %}<h2>{% trans "Published Module" %}</h2>{% endblock %}
 {% block content %}
-<h1>{{ module.title }}</h1>
+<h2>{{ module.title }}</h2>
 
 {% if module.image %}<img class="thumbnail" src="{{ module.image.url }}" />{% endif %}
 

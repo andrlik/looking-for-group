@@ -1,8 +1,9 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
 {% block subtitle %}{{ publisher.name }} - {% endblock %}
+{% block sectiontitle %}<h2>{% trans "Publisher" %}</h2>{% endblock %}
 {% block content %}
-<h1>{{ publisher.name }}</h1>
+<h2>{{ publisher.name }}</h2>
 {% if publisher.logo %}<img class="thumbnail" alt="Logo for {{ publisher.name }}" src="{{ publisher.logo.url }}" />{% endif %}
 {% if publisher.url %}<p><a href="{{ publisher.url }}">{% trans "Publisher Website" %}</a></p>{% endif %}
 <span class="meta">{% blocktrans with humcount=publisher.publishedgame_set.count|intcomma|apnumber count counter=publisher.publishedgame_set.count %}One Game{% plural %} {{ counter }} Games{% endblocktrans %}, {% blocktrans with humcount=publisher.gamesystem_set.count|intcomma|apnumber count counter=publisher.gamesystem_set.count %}one Game System{% plural %}{{ counter }} Game Systems{% endblocktrans %}, {% blocktrans with humcount=publisher.publishedmodule_set.count|intcomma|apnumber count counter=publisher.publishedmodule_set.count %}and one Game Module{% plural %}and {{ counter }} Game Modules.{% endblocktrans %}</span>
@@ -23,10 +24,10 @@
       <thead>
         <tr>
           <th>{% trans "Title" %}</th>
-          <th>{% trans "Edition" %}</th>
+          <th class="text-right">{% trans "Edition" %}</th>
           <th>{% trans "System" %}</th>
-          <th>{% trans "Published" %}</th>
-          <th>{% trans "ISBN" %}</th>
+          <th class="text-right">{% trans "Published" %}</th>
+          <th class="text-right">{% trans "ISBN" %}</th>
           <th>{% trans "Source" %}</th>
           <th>{% trans "Tagged with" %}</th>
         </tr>
@@ -35,10 +36,10 @@
         {% for game in publisher.publishedgame_set.all %}
         <tr>
           <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
-          <td>{{ game.edition }}</td>
+          <td class="text-right">{{ game.edition }}</td>
           <td><a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a></td>
-          <td>{{ game.publication_date|date:"Y" }}</td>
-          <td>{{ game.isbn }}</td>
+          <td class="text-right">{{ game.publication_date|date:"Y" }}</td>
+          <td class="text-right">{{ game.isbn|default_if_none:"" }}</td>
           <td>{% if game.url %}<a href="{{ game.url }}" target="_blank">{% trans "Official Page" %}</a>{% endif %}</td>
           <td>{{ game.inherited_tag_names|join:", " }}</td>
         </tr>
@@ -56,7 +57,7 @@
         <tr>
           <th>{% trans "Title" %}</th>
           <th>{% trans "OGL?" %}</th>
-          <th>{% trans "Published" %}</th>
+          <th class="text-right">{% trans "Published" %}</th>
           <th>{% trans "Source" %}</th>
           <th>{% trans "Tagged with" %}</th>
         </tr>
@@ -66,7 +67,7 @@
         <tr>
           <td><a href="{{ game.get_absolute_url }}">{{ game.name }}</a></td>
           <td>{{ game.ogl_license|yesno:"Yes,No" }}</td>
-          <td>{{ game.publication_date|date:"Y" }}</td>
+          <td class="text-right">{{ game.publication_date|date:"Y" }}</td>
           <td>{% if game.url %}<a href="{{ game.url }}" target="_blank">{% trans "Official Page" %}</a>{% endif %}</td>
           <td>{{ game.tags.names|join:", " }}</td>
         </tr>
@@ -84,8 +85,8 @@
         <tr>
           <th>{% trans "Title" %}</th>
           <th>{% trans "Game" %}</th>
-          <th>{% trans "Published" %}</th>
-          <th>{% trans "ISBN" %}</th>
+          <th class="text-right">{% trans "Published" %}</th>
+          <th class="text-right">{% trans "ISBN" %}</th>
           <th>{% trans "Source" %}</th>
           <th>{% trans "Tagged with" %}</th>
         </tr>
@@ -95,8 +96,8 @@
         <tr>
           <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
           <td><a href="{{ game.parent_game.get_absolute_url }}">{{ game.parent_game.title }}</a></td>
-          <td>{{ game.publication_date|date:"Y" }}</td>
-          <td>{{ game.isbn }}</td>
+          <td class="text-right">{{ game.publication_date|date:"Y" }}</td>
+          <td class="text-right">{{ game.isbn|default_if_none:"" }}</td>
           <td>{% if game.url %}<a href="{{ game.url }}" target="_blank">{% trans "Official Page" %}</a>{% endif %}</td>
           <td>{{ game.inherited_tag_names|join:", " }}</td>
         </tr>

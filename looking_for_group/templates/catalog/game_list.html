@@ -1,8 +1,8 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize cache %}
 {% block subtitle %}{% trans "Games" %} - {% endblock %}
+{% block sectiontitle %}<h2>{% trans "Published Games" %}</h2>{% endblock %}
 {% block content %}
-<h2>{% trans "Published Games" %}</h2>
 
 {% if not object_list %}
 <p>{% trans "No published games found." %}</p>
@@ -17,7 +17,7 @@
       <th>{% trans "System" %}</th>
       <th>{% trans "Description" %}</th>
       <th class="text-right">{% trans "Published" %}</th>
-      <th>{% trans "ISBN" %}</th>
+      <th class="text-right">{% trans "ISBN" %}</th>
       <th class="text-right">{% trans "Additional Modules" %}</th>
       <th>{% trans "Tags" %}</th>
     </tr>
@@ -32,7 +32,7 @@
       <td><a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a></td>
       <td>{{ game.description|truncatewords:25 }}</td>
       <td class="text-right">{{ game.publication_date|date:"Y" }}</td>
-      <td>{{ game.isbn|default_if_none:"" }}</td>
+      <td class="text-right">{{ game.isbn|default_if_none:"" }}</td>
       <td class="text-right">{{ game.publishedmodule_set.count }}</td>
       <td>{{ game.inherited_tag_names|join:", " }}</td>
     </tr>

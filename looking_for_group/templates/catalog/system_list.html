@@ -1,8 +1,8 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
 {% block subtitle %}{% trans "Game Systems" %} - {% endblock %}
+{% block sectiontitle %}<h2>{% trans "Game Systems" %}</h2>{% endblock %}
 {% block content %}
-<h2>{% trans "Game Systems" %}</h2>
 
 {% if not object_list.exists %}
 <p>{% trans "No publishers found" %}</p>
