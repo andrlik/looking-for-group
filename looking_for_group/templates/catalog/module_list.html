@@ -1,15 +1,58 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize %}
+{% load i18n humanize cache %}
 {% block subtitle %}{% trans "Modules" %} - {% endblock %}
 {% block content %}
-<h1>{% trans "Published Game Modules" %}</h1>
+<h2>{% trans "Published Game Modules" %}</h2>
+{% if not object_list.exists %}
+<p>{% trans "No published modules found" %}</p>
+{% endif %}
+<table>
+  <thead>
+    <tr>
+      <th>{% trans "Title" %}</th>
+      <th>{% trans "Publisher" %}</th>
+      <th>{% trans "Parent Game" %}</th>
+      <th class="text-right">{% trans "Published" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% cache 600 modules page_obj.number %}
+    {% for module in object_list %}
+    <tr>
+      <td><a href="{{ module.get_absolute_url }}">{{ module.title }}</a></td>
+      <td><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></td>
+      <td><a href="{{ module.parent_game.get_absolute_url }}">{{ module.parent_game.title }}</a></td>
+      <td class="text-right">{{ module.publication_date|date:"Y" }}</td>
+    </tr>
+    {% empty %}
+    <!-- No results -->
+    {% endfor %}
+    {% endcache %}
+  </tbody>
+</table>
 
-{% for module in object_list %}
-<h2><a href="{{ module.get_absolute_url }}">{{ module.title }}</a></h2>
-<span class="meta">{% trans "An adventure for" %} <a href="{{ module.parent_game.get_absolute_url }}">{{ module.parent_game.title }}</a>. {% trans "Published by" %} <a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></span>
-<p>{{ module.description|truncatewords:100 }}</p>
-{% empty %}
-<p>{% trans "No published modules found." %}</p>
-{% endfor %}
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'game_catalog:module-list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span> </a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'game_catalog:module-list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'game_catalog:module-list' page=page_obj.next_page_number %}" aria-label="Next page">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
 
 {% endblock %}

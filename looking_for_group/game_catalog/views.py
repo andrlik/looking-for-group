@@ -15,6 +15,8 @@ class GamePublisherListView(PrefetchRelatedMixin, generic.ListView):
     prefetch_related = ["gamesystem_set", "publishedgame_set", "publishedmodule_set"]
     template_name = "catalog/pub_list.html"
     ordering = ["name"]
+    paginate_by = 30
+    paginate_orphans = 4
 
 
 class GamePublisherDetailView(PrefetchRelatedMixin, generic.DetailView):
@@ -31,6 +33,8 @@ class GameSystemListView(SelectRelatedMixin, PrefetchRelatedMixin, generic.ListV
     prefetch_related = ["publishedgame_set"]
     template_name = "catalog/system_list.html"
     ordering = ["name"]
+    paginate_by = 30
+    paginate_orphans = 4
 
 
 class GameSystemDetailView(
@@ -70,6 +74,8 @@ class PublishedModuleListView(SelectRelatedMixin, generic.ListView):
     select_related = ["parent_game", "publisher", "parent_game__game_system"]
     template_name = "catalog/module_list.html"
     ordering = ["title", "parent_game__name"]
+    paginate_by = 30
+    paginate_orphans = 4
 
 
 class PublishedModuleDetailView(SelectRelatedMixin, generic.DetailView):

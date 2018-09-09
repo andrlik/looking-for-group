@@ -7,11 +7,21 @@ app_name = "game_catalog"
 urlpatterns = [
     path("publishers/", view=views.GamePublisherListView.as_view(), name="pub-list"),
     path(
+        "publishers/page<int:page>/",
+        view=views.GamePublisherListView.as_view(),
+        name="pub-list",
+    ),
+    path(
         "publishers/<uuid:publisher>/",
         view=views.GamePublisherDetailView.as_view(),
         name="pub-detail",
     ),
     path("systems/", view=views.GameSystemListView.as_view(), name="system-list"),
+    path(
+        "systems/page<int:page>/",
+        view=views.GameSystemListView.as_view(),
+        name="system-list",
+    ),
     path(
         "systems/<uuid:system>/",
         view=views.GameSystemDetailView.as_view(),
@@ -32,6 +42,11 @@ urlpatterns = [
     ),
     path(
         "publishedmodules/",
+        view=views.PublishedModuleListView.as_view(),
+        name="module-list",
+    ),
+    path(
+        "publishedmodules/page<int:page>/",
         view=views.PublishedModuleListView.as_view(),
         name="module-list",
     ),

@@ -287,3 +287,8 @@ $app-dashboard-top-nav-height: 55px;
     @include shrunk-sidebar()
   }
 }
+
+.table-image {
+  max-height: 50%;
+  max-width: 50%;
+}
