@@ -75,7 +75,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
     title = models.CharField(
         max_length=255, help_text=_("What is the title of your campaign/game?")
     )
-    gm = models.ForeignKey(GamerProfile, on_delete=models.CASCADE, related_name="gmed_games")
+    gm = models.ForeignKey(GamerProfile, null=True, on_delete=models.CASCADE, related_name="gmed_games")
     mix_players = models.PositiveIntegerField(
         default=3,
         help_text=_(
@@ -153,6 +153,13 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     def get_absolute_url(self):
         return reverse("games:game-posting-detail", kwargs={"game": self.pk})
+
+    def schedule(self, num_sessions=8):
+        '''
+        Based on the definition of the gameposting, created up to ``num_sessions``
+        instances on the calendar.
+        '''
+        pass
 
 
 class Player(TimeStampedModel, AbstractUUIDModel, models.Model):

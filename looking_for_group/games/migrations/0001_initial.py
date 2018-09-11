@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ('sessions', models.PositiveIntegerField(default=0)),
                 ('communities', models.ManyToManyField(to='gamer_profiles.GamerCommunity')),
                 ('game_system', models.ForeignKey(blank=True, help_text='What game system will you be using?', null=True, on_delete=django.db.models.deletion.SET_NULL, to='game_catalog.GameSystem')),
-                ('gm', models.ManyToManyField(blank=True, null=True, related_name='gmed_games', to='gamer_profiles.GamerProfile')),
+                ('gm', models.ForeignKey(blank=True, null=True, related_name='gmed_games', on_delete=django.db.models.deletion.SET_NULL, to='gamer_profiles.GamerProfile')),
             ],
             options={
                 'abstract': False,
