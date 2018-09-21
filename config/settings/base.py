@@ -83,6 +83,7 @@ THIRD_PARTY_APPS = [
     "rules.apps.AutodiscoverRulesConfig",
     "star_ratings",
     "django_q",
+    "schedule",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
