@@ -3,11 +3,26 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
+from schedule.models import Event, Occurrence, Rule
 from ..game_catalog.utils import AbstractUUIDModel
 from ..game_catalog.models import PublishedGame, GameSystem, PublishedModule
 from ..gamer_profiles.models import GamerProfile, GamerCommunity
 
+
 logger = logging.getLogger("games")
+
+
+def get_rules_as_tuple(*args, **kwargs):
+    """
+    Lazily extract the rules from the database and provide as a tuple.
+    """
+    default_list = [("na", _("Not Applicable")), ("Custom", _("Custom"))]
+    result_list = default_list + [
+        (i.name, _(i.description))
+        for i in Rule.objects.filter(*args, **kwargs).order_by("name")
+    ]
+    return tuple(result_list)
+
 
 GAME_TYPE_CHOICES = (
     ("oneshot", _("One-Shot")),
@@ -75,7 +90,9 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
     title = models.CharField(
         max_length=255, help_text=_("What is the title of your campaign/game?")
     )
-    gm = models.ForeignKey(GamerProfile, null=True, on_delete=models.CASCADE, related_name="gmed_games")
+    gm = models.ForeignKey(
+        GamerProfile, null=True, on_delete=models.CASCADE, related_name="gmed_games"
+    )
     mix_players = models.PositiveIntegerField(
         default=3,
         help_text=_(
@@ -131,10 +148,21 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
     )
     game_frequency = models.CharField(
         max_length=15,
-        choices=GAME_FREQUENCY_CHOICES,
-        default="weekly",
+        choices=get_rules_as_tuple(),
+        default="na",
         help_text=_("How often will this be played?"),
         db_index=True,
+    )
+    start_time = models.DateTimeField(
+        null=True, blank=True, help_text=_("Date and time of first session.")
+    )
+    session_length = models.DecimalField(
+        verbose_name=_("Length (hours)"),
+        decimal_places=2,
+        max_digits=4,
+        null=True,
+        blank=True,
+        help_text=_("Your estimate for how long a session will take in hours."),
     )
     game_description = models.TextField(
         blank=True, null=True, help_text=_("Description of the game.")
@@ -147,19 +175,15 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
     communities = models.ManyToManyField(GamerCommunity)
     sessions = models.PositiveIntegerField(default=0)
     players = models.ManyToManyField(GamerProfile, through="Player")
+    event = models.ForeignKey(
+        Event, null=True, blank=True, related_name="games", on_delete=models.SET_NULL
+    )
 
     def __str__(self):
         return "Game: {0} [{1}]".format(self.title, self.id)
 
     def get_absolute_url(self):
         return reverse("games:game-posting-detail", kwargs={"game": self.pk})
-
-    def schedule(self, num_sessions=8):
-        '''
-        Based on the definition of the gameposting, created up to ``num_sessions``
-        instances on the calendar.
-        '''
-        pass
 
 
 class Player(TimeStampedModel, AbstractUUIDModel, models.Model):
@@ -205,7 +229,7 @@ class Character(TimeStampedModel, AbstractUUIDModel, models.Model):
 
 class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
-    An instance of a posted game.
+    An instance of a posted game. Only generated once played.
     """
 
     game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
@@ -222,7 +246,8 @@ class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
         Player, help_text=_("Players in attendance?")
     )
     players_missing = models.ManyToManyField(
-        Player, related_name='missed_sessions',
+        Player,
+        related_name="missed_sessions",
         help_text=_(
             "Are there any players missing here for reasons that don't have to do with the story?"
         ),
@@ -235,3 +260,6 @@ class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
         ),
     )
     gm_notes_rendered = models.TextField(null=True, blank=True)
+    occurrence = models.ForeignKey(
+        Occurrence, null=True, blank=True, on_delete=models.SET_NULL
+    )

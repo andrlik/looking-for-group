@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class GamesConfig(AppConfig):
-    name = "games"
+    name = "looking_for_group.games"
     verbose_name = "Games"
 
     def ready(self):
