@@ -7,6 +7,7 @@ from schedule.models import Event, Occurrence, Rule
 from ..game_catalog.utils import AbstractUUIDModel
 from ..game_catalog.models import PublishedGame, GameSystem, PublishedModule
 from ..gamer_profiles.models import GamerProfile, GamerCommunity
+from .utils import check_table_exists
 
 
 logger = logging.getLogger("games")
@@ -16,6 +17,8 @@ def get_rules_as_tuple(*args, **kwargs):
     """
     Lazily extract the rules from the database and provide as a tuple.
     """
+    if not check_table_exists('schedule_rule') or Rule.objects.count() == 0:
+        return GAME_FREQUENCY_CHOICES
     default_list = [("na", _("Not Applicable")), ("Custom", _("Custom"))]
     result_list = default_list + [
         (i.name, _(i.description))
