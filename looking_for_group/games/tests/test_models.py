@@ -35,8 +35,9 @@ class GameEventProxyMethods(AbstractViewTest):
     Test that the methods for our proxy model work correctly.
     '''
     def setUp(self):
-        self.rule1 = Rule.objects.get_or_create(name='weekly', defaults={'description': "Weekly", 'frequency': 'WEEKLY'})
-        self.rule2 = Rule.objects.get_or_create(name='monthly', defaults={'description': "Monthly", 'frequency': 'MONTHLY'})
+        super().setUp()
+        self.rule1, created = Rule.objects.get_or_create(name='weekly', defaults={'description': "Weekly", 'frequency': 'WEEKLY'})
+        self.rule2, created = Rule.objects.get_or_create(name='monthly', defaults={'description': "Monthly", 'frequency': 'MONTHLY'})
         self.master_calendar = Calendar.objects.create(name="{}'s Calendar".format(self.gamer1.username), slug=self.gamer1.username)
         self.player_calendar1 = Calendar.objects.create(name="{}'s Calendar".format(self.gamer2.username), slug=self.gamer2.username)
         self.player_calendar2 = Calendar.objects.create(name="{}'s Calendar".format(self.gamer3.username), slug=self.gamer3.username)
@@ -45,10 +46,10 @@ class GameEventProxyMethods(AbstractViewTest):
         self.master_event = models.GameEvent.objects.create(start=self.start_time, end=self.end_time, calendar=self.master_calendar, creator=self.gamer1.user, rule=self.rule1)
 
     def test_create_child_events(self):
-        assert self.master_event.child_events.count() == 0
+        assert self.master_event.get_child_events().count() == 0
         events_added = self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
         assert events_added == 2
-        assert self.master_event.child_events.count() == 2
+        assert self.master_event.get_child_events().count() == 2
 
     def test_event_type_evaluation(self):
         self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
@@ -60,9 +61,9 @@ class GameEventProxyMethods(AbstractViewTest):
 
     def test_remove_child_events(self):
         self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        assert self.master_event.child_events.count() == 2
+        assert self.master_event.get_child_events().count() == 2
         self.master_event.remove_child_events()
-        assert self.master_event.child_events.count() == 0
+        assert self.master_event.get_child_events().count() == 0
 
     def test_cascade_deletes(self):
         self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
@@ -77,7 +78,7 @@ class GameEventProxyMethods(AbstractViewTest):
         self.master_event.rule = self.rule2
         with mute_signals(post_save):
             self.master_event.save()
-            assert self.update_child_events() == 2
+            assert self.master_event.update_child_events() == 2
 
 
 class GamePostingModelMethods(TestCase):

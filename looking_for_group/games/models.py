@@ -21,7 +21,7 @@ class GameEvent(Event):
     """
 
     def get_child_events(self):
-        return self.objects.get_for_object(self, "playerevent")
+        return type(self).objects.get_for_object(self, "playerevent")
 
     def generate_or_update_child_events(self, playerlist):
         '''
@@ -65,8 +65,8 @@ class GameEvent(Event):
                 user = GamerProfile.objects.get(username=calendar.slug).user
                 if not existing_events.filter(calendar=calendar):
                     with transaction.atomic():
-                        child_event = self.objects.create(start=self.start, end=self.end, title=self.title, description=self.description, creator=user, rule=self.rule, end_recurring_period=self.end_recurring_period, calendar=calendar, color_event=self.color_event)
-                        self.objects.create_relation(child_event, distinction='playerevent')
+                        child_event = type(self).objects.create(start=self.start, end=self.end, title=self.title, description=self.description, creator=user, rule=self.rule, end_recurring_period=self.end_recurring_period, calendar=calendar, color_event=self.color_event)
+                        EventRelation.objects.create_relation(event=self, content_object=child_event, distinction='playerevent')
                         events_added += 1
         return events_added
 
