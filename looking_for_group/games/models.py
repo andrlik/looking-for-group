@@ -74,16 +74,6 @@ class GameEvent(Event):
         child_events = GameEvent.objects.filter(id__in=[er.event.id for er in eventrelations])
         return child_events
 
-    def generate_or_update_child_events(self, playerlist):
-        '''
-        Generate any missing player events and then run a bulk SQL update.
-        '''
-        with transaction.atomic():
-            logger.debug("Checking for missing player events.")
-            events_added = self.generate_missing_child_events(self.get_player_calendars())
-            logger.debug("Added {} missing events.".format(events_added))
-            self.update_child_events()
-
     def update_child_events(self):
         existing_events = self.get_child_events()
         logger.debug("Running update for {} child events...".format(existing_events.count()))
@@ -93,16 +83,6 @@ class GameEvent(Event):
 
     def remove_child_events(self):
         return self.get_child_events().delete()
-
-    def get_player_calendars(self, playerlist):
-        '''
-        Generates any missing player calendars
-        '''
-        player_calendars = []
-        for player in playerlist:
-            calendar, created = Calendar.objects.get_or_create(slug=player.gamer.username, defaults={"name": "{}'s Calendar".format(player.gamer.username)})
-            player_calendars.append(player_calendars)
-        return player_calendars
 
     def generate_missing_child_events(self, calendarlist):
         '''
@@ -338,6 +318,22 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     def get_absolute_url(self):
         return reverse("games:game-posting-detail", kwargs={"game": self.pk})
+
+    def get_player_calendars(self):
+        '''
+        Generates any missing player calendars
+        '''
+        player_calendars = []
+        for player in self.players.all():
+            calendar, created = Calendar.objects.get_or_create(slug=player.username, defaults={"name": "{}'s Calendar".format(player.username)})
+            player_calendars.append(calendar)
+        return player_calendars
+
+    def generate_player_events_from_master_event(self):
+        events_generated = 0
+        if self.event:
+            events_generated = self.event.generate_missing_child_events(self.get_player_calendars())
+        return events_generated
 
 
 class Player(TimeStampedModel, AbstractUUIDModel, models.Model):

@@ -27,7 +27,16 @@ class AbstractGamesModelTest(AbstractViewTest):
     '''
 
     def setUp(self):
-        pass
+        super().setUp()
+        self.rule1, created = Rule.objects.get_or_create(name='weekly', defaults={'description': "Weekly", 'frequency': 'WEEKLY'})
+        self.rule2, created = Rule.objects.get_or_create(name='monthly', defaults={'description': "Monthly", 'frequency': 'MONTHLY'})
+        self.start_time = timezone.now() + timedelta(days=2)
+        self.end_time = self.start_time + timedelta(hours=3)
+        self.game_posting = models.GamePosting.objects.create(game_type='campaign', title='My Awesome Adventure', min_players=2, max_players=5, session_length=2.5, game_description="We will roll dice!", gm=self.gamer1)
+        self.game_posting.communities.add(self.community1)
+        self.player1 = models.Player.objects.create(gamer=self.gamer2, game=self.game_posting)
+        self.player2 = models.Player.objects.create(gamer=self.gamer3, game=self.game_posting)
+
 
 
 class GameEventProxyMethods(AbstractViewTest):
@@ -49,6 +58,10 @@ class GameEventProxyMethods(AbstractViewTest):
         assert self.master_event.get_child_events().count() == 0
         events_added = self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
         assert events_added == 2
+        assert self.master_event.get_child_events().count() == 2
+        # Now ensure we don't duplicate
+        events_added = self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
+        assert events_added == 0
         assert self.master_event.get_child_events().count() == 2
 
     def test_event_type_evaluation(self):
@@ -81,11 +94,22 @@ class GameEventProxyMethods(AbstractViewTest):
             assert self.master_event.update_child_events() == 2
 
 
-class GamePostingModelMethods(TestCase):
+class GamePostingModelMethods(AbstractGamesModelTest):
     '''
     Test methods associated with the game posting model.
     '''
-    pass
+    def setUp(self):
+        super().setUp()
+
+    def test_event_initially_blank(self):
+        assert not self.game_posting.event
+
+    def test_event_created_when_sufficient_data_added(self):
+        self.game_posting.start_time = self.start_time
+        self.game_posting.game_frequency = 'weekly'
+        self.game_posting.save()
+        self.game_posting.refresh_from_db()
+        assert self.game_posting.event
 
 
 class GameSessionModelMethods(TestCase):

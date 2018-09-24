@@ -12,10 +12,10 @@ logger = logging.getLogger('games')
 
 @receiver(pre_save, sender=models.GamePosting)
 def render_markdown_description(sender, instance, *args, **kwargs):
-    if instance.description:
-        instance.description_rendered = markdown(instance.description)
+    if instance.game_description:
+        instance.game_description_rendered = markdown(instance.game_description)
     else:
-        instance.description_rendered = None
+        instance.game_description_rendered = None
 
 
 @receiver(pre_save, sender=models.GameSession)
@@ -36,7 +36,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
     '''
     If the game has enough information to generate an event, check if one already exists and link to it.
     '''
-    if instance.start_date and instance.session_length and instance.game_frequency not in ('na', 'Custom'):
+    if instance.start_time and instance.session_length and instance.game_frequency not in ('na', 'Custom'):
         logger.debug("Game posting has enough data to have a corresponding event.")
         if instance.event:
             logger.debug("Event already exists. Reviewing to see if changes are required...")
@@ -59,6 +59,10 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 except ObjectDoesNotExist:
                     # Something is very wrong here.
                     raise ValueError("Invalid frequency type!")
+            if instance.event.title != instance.title or instance.event.description != instance.game_description:
+                needs_edit = True
+                instance.event.title = instance.title
+                instance.event.description = instance.game_description
             if needs_edit:
                 logger.debug("Changes were made, saving.")
                 instance.event.save()
@@ -69,7 +73,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             calendar, created = Calendar.objects.get_or_create(slug=instance.gm.username, defaults={'name': "{}'s Calendar".format(instance.gm.username)})
             if created:
                 logger.debug("Created new calendar for user {}".format(instance.gm.username))
-            instance.event = Event.objects.create(start=instance.start_time, end=(instance.start_time + timedelta(minutes=(60 * instance.session_length))), title=instance.name, description=instance.description, creator=instance.gm, rule=Rule.objects.get(name=instance.game_frequency), calendar=calendar)
+            instance.event = models.GameEvent.objects.create(start=instance.start_time, end=(instance.start_time + timedelta(minutes=(60 * instance.session_length))), title=instance.title, description=instance.game_description, creator=instance.gm.user, rule=Rule.objects.get(name=instance.game_frequency), calendar=calendar)
     else:
         logger.debug("Insufficient data for an event.")
         if instance.event:
@@ -77,3 +81,15 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             event_to_kill = instance.event
             instance.event = None
             event_to_kill.delete()
+
+
+@receiver(post_save, sender=models.GameEvent)
+def update_child_events_when_master_event_updated(sender, instance, created, *args, **kwargs):
+    if instance.is_master_event() and instance.child_events.count() > 0:
+        instance.update_child_events()
+
+
+@receiver(post_save, sender=models.GamePosting)
+def create_player_events_as_needed(sender, instance, created, *args, **kwargs):
+    if instance.event and instance.players.count() > 0:
+        instance.generate_player_events_from_master_event()
