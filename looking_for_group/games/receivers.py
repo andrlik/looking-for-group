@@ -4,7 +4,7 @@ from markdown import markdown
 from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch import receiver
 from django.db.models.signals import pre_save, post_save
-from schedule.models import Rule, Event, Calendar
+from schedule.models import Rule, Calendar
 from . import models
 
 logger = logging.getLogger('games')
@@ -50,6 +50,10 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                     instance.event.end = instance.start_time + timedelta(minutes=(60 * instance.session_length))
                     logger.debug("Updating end time to {}".format(instance.event.end))
                     needs_edit = True
+                if instance.event.end_recurring_period != instance.end_date:
+                    logger.debug("End date has changed...")
+                    instance.event.end_recurring_period = instance.end_date
+                    needs_edit = True
                 try:
                     rrule = Rule.objects.get(name=instance.game_frequency)
                     if instance.event.rule != rrule:
@@ -73,7 +77,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             calendar, created = Calendar.objects.get_or_create(slug=instance.gm.username, defaults={'name': "{}'s Calendar".format(instance.gm.username)})
             if created:
                 logger.debug("Created new calendar for user {}".format(instance.gm.username))
-            instance.event = models.GameEvent.objects.create(start=instance.start_time, end=(instance.start_time + timedelta(minutes=(60 * instance.session_length))), title=instance.title, description=instance.game_description, creator=instance.gm.user, rule=Rule.objects.get(name=instance.game_frequency), calendar=calendar)
+            instance.event = models.GameEvent.objects.create(start=instance.start_time, end=(instance.start_time + timedelta(minutes=(60 * instance.session_length))), end_recurring_period=instance.end_date, title=instance.title, description=instance.game_description, creator=instance.gm.user, rule=Rule.objects.get(name=instance.game_frequency), calendar=calendar)
     else:
         logger.debug("Insufficient data for an event.")
         if instance.event:

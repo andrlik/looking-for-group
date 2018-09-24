@@ -7,7 +7,15 @@ from django.utils.functional import cached_property
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from schedule.models import Event, EventManager, Occurrence, Rule, EventRelation, EventRelationManager, Calendar
+from schedule.models import (
+    Event,
+    EventManager,
+    Occurrence,
+    Rule,
+    EventRelation,
+    EventRelationManager,
+    Calendar,
+)
 from ..game_catalog.utils import AbstractUUIDModel
 from ..game_catalog.models import PublishedGame, GameSystem, PublishedModule
 from ..gamer_profiles.models import GamerProfile, GamerCommunity
@@ -44,10 +52,12 @@ class GameEventRelationManager(EventRelationManager):
 
     pass
 
+
 class GameEventRelation(EventRelation):
     """
     Override to make sure that we can fetch GameEvent objects.
     """
+
     objects = GameEventRelationManager()
 
     class Meta:
@@ -55,9 +65,10 @@ class GameEventRelation(EventRelation):
 
 
 class GameEventManager(EventManager):
-
-    def get_for_object(self, content_object, distinction='', inherit=True):
-        return GameEventRelation.objects.get_events_for_object(content_object, distinction=distinction, inherit=inherit)  # pragma: no cover
+    def get_for_object(self, content_object, distinction="", inherit=True):
+        return GameEventRelation.objects.get_events_for_object(
+            content_object, distinction=distinction, inherit=inherit
+        )  # pragma: no cover
 
 
 class GameEvent(Event):
@@ -69,15 +80,29 @@ class GameEvent(Event):
 
     def get_child_events(self):
         ct = ContentType.objects.get_for_model(self)
-        eventrelations = GameEventRelation.objects.filter(content_type=ct, object_id=self.id, distinction='playerevent')
+        eventrelations = GameEventRelation.objects.filter(
+            content_type=ct, object_id=self.id, distinction="playerevent"
+        )
         logger.debug("Found {} event relations".format(eventrelations.count()))
-        child_events = GameEvent.objects.filter(id__in=[er.event.id for er in eventrelations])
+        child_events = GameEvent.objects.filter(
+            id__in=[er.event.id for er in eventrelations]
+        )
         return child_events
 
     def update_child_events(self):
         existing_events = self.get_child_events()
-        logger.debug("Running update for {} child events...".format(existing_events.count()))
-        updated_rows = existing_events.update(start=self.start, end=self.end, title=self.title, description=self.description, rule=self.rule, end_recurring_period=self.end_recurring_period, color_event=self.color_event)
+        logger.debug(
+            "Running update for {} child events...".format(existing_events.count())
+        )
+        updated_rows = existing_events.update(
+            start=self.start,
+            end=self.end,
+            title=self.title,
+            description=self.description,
+            rule=self.rule,
+            end_recurring_period=self.end_recurring_period,
+            color_event=self.color_event,
+        )
         logger.debug("Updated {} existing child events".format(updated_rows))
         return updated_rows
 
@@ -85,11 +110,15 @@ class GameEvent(Event):
         return self.get_child_events().delete()
 
     def generate_missing_child_events(self, calendarlist):
-        '''
+        """
         Check the list of players and for each, evaluate if the event
         already exists in their calendar. If not, create it.
-        '''
-        logger.debug("Starting generation of missing child events for {} calendars...".format(len(calendarlist)))
+        """
+        logger.debug(
+            "Starting generation of missing child events for {} calendars...".format(
+                len(calendarlist)
+            )
+        )
         events_added = 0
         existing_events = self.get_child_events()
         logger.debug("Found {} existing child events".format(existing_events.count()))
@@ -99,9 +128,27 @@ class GameEvent(Event):
                 if not existing_events.filter(calendar=calendar):
                     logger.debug("Event missing from this calendar, creating")
                     with transaction.atomic():
-                        child_event = type(self).objects.create(start=self.start, end=self.end, title=self.title, description=self.description, creator=user, rule=self.rule, end_recurring_period=self.end_recurring_period, calendar=calendar, color_event=self.color_event)
-                        GameEventRelation.objects.create_relation(event=child_event, content_object=self, distinction='playerevent')
-                        logger.debug("Added event {} for calendar {}".format(child_event.title, calendar.slug))
+                        child_event = type(self).objects.create(
+                            start=self.start,
+                            end=self.end,
+                            title=self.title,
+                            description=self.description,
+                            creator=user,
+                            rule=self.rule,
+                            end_recurring_period=self.end_recurring_period,
+                            calendar=calendar,
+                            color_event=self.color_event,
+                        )
+                        GameEventRelation.objects.create_relation(
+                            event=child_event,
+                            content_object=self,
+                            distinction="playerevent",
+                        )
+                        logger.debug(
+                            "Added event {} for calendar {}".format(
+                                child_event.title, calendar.slug
+                            )
+                        )
                         events_added += 1
         return events_added
 
@@ -117,7 +164,9 @@ class GameEvent(Event):
     def get_master_event(self):
         ct = ContentType.objects.get_for_model(self)
         try:
-            masterevent = EventRelation.objects.filter(event=self, content_type=ct, distinction='playerevent')
+            masterevent = EventRelation.objects.filter(
+                event=self, content_type=ct, distinction="playerevent"
+            )
         except ObjectDoesNotExist:
             return False
         return masterevent
@@ -294,6 +343,13 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
         blank=True,
         help_text=_("Your estimate for how long a session will take in hours."),
     )
+    end_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "What date does this end? (Only used for adventures/campaigns.) You can set this later if you prefer."
+        ),
+    )
     game_description = models.TextField(
         blank=True, null=True, help_text=_("Description of the game.")
     )
@@ -320,19 +376,24 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
         return reverse("games:game-posting-detail", kwargs={"game": self.pk})
 
     def get_player_calendars(self):
-        '''
+        """
         Generates any missing player calendars
-        '''
+        """
         player_calendars = []
         for player in self.players.all():
-            calendar, created = Calendar.objects.get_or_create(slug=player.username, defaults={"name": "{}'s Calendar".format(player.username)})
+            calendar, created = Calendar.objects.get_or_create(
+                slug=player.username,
+                defaults={"name": "{}'s Calendar".format(player.username)},
+            )
             player_calendars.append(calendar)
         return player_calendars
 
     def generate_player_events_from_master_event(self):
         events_generated = 0
         if self.event:
-            events_generated = self.event.generate_missing_child_events(self.get_player_calendars())
+            events_generated = self.event.generate_missing_child_events(
+                self.get_player_calendars()
+            )
         return events_generated
 
 
