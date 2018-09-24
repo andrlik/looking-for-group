@@ -53,11 +53,11 @@ class GameEventProxyMethods(AbstractViewTest):
 
     def test_event_type_evaluation(self):
         self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        assert self.master_event.is_master_event
-        assert not self.master_event.is_player_event
+        assert self.master_event.is_master_event()
+        assert not self.master_event.is_player_event()
         for event in self.master_event.child_events:
-            assert not event.is_master_event
-            assert event.is_player_event
+            assert not event.is_master_event()
+            assert event.is_player_event()
 
     def test_remove_child_events(self):
         self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])

@@ -88,6 +88,7 @@ LOGGING = {
         },
         "rules": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "games": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }
 
