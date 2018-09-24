@@ -1,13 +1,15 @@
 import logging
 from datetime import timedelta
 from markdown import markdown
+from django_q.tasks import async_task
 from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch import receiver
-from django.db.models.signals import pre_save, post_save
-from schedule.models import Rule, Calendar
+from django.db.models.signals import pre_save, post_save, m2m_changed, post_delete
+from schedule.models import Rule, Calendar, Occurrence
 from . import models
+from .tasks import update_child_events_for_master, create_game_player_events, create_or_update_linked_occurences_on_edit, sync_calendar_for_arriving_player, clear_calendar_for_departing_player
 
-logger = logging.getLogger('games')
+logger = logging.getLogger("games")
 
 
 @receiver(pre_save, sender=models.GamePosting)
@@ -33,21 +35,35 @@ def calculate_attendance(sender, instance, created, *args, **kwargs):
 
 @receiver(pre_save, sender=models.GamePosting)
 def create_update_event_for_game(sender, instance, *args, **kwargs):
-    '''
+    """
     If the game has enough information to generate an event, check if one already exists and link to it.
-    '''
-    if instance.start_time and instance.session_length and instance.game_frequency not in ('na', 'Custom'):
+    """
+    if (
+        instance.start_time
+        and instance.session_length
+        and instance.game_frequency not in ("na", "Custom")
+    ):
         logger.debug("Game posting has enough data to have a corresponding event.")
         if instance.event:
-            logger.debug("Event already exists. Reviewing to see if changes are required...")
+            logger.debug(
+                "Event already exists. Reviewing to see if changes are required..."
+            )
             needs_edit = False
-            if instance.start_date and instance.session_length and instance.game_frequency not in ('na', 'Custom'):
+            if (
+                instance.start_date
+                and instance.session_length
+                and instance.game_frequency not in ("na", "Custom")
+            ):
                 if instance.start_time != instance.event.start:
                     needs_edit = True
                     logger.debug("Updating start time to {}".format(instance.start))
                     instance.event.start = instance.start_time
-                if instance.event.end != instance.start_time + timedelta(minutes=(60 * instance.session_length)):
-                    instance.event.end = instance.start_time + timedelta(minutes=(60 * instance.session_length))
+                if instance.event.end != instance.start_time + timedelta(
+                    minutes=(60 * instance.session_length)
+                ):
+                    instance.event.end = instance.start_time + timedelta(
+                        minutes=(60 * instance.session_length)
+                    )
                     logger.debug("Updating end time to {}".format(instance.event.end))
                     needs_edit = True
                 if instance.event.end_recurring_period != instance.end_date:
@@ -63,7 +79,10 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 except ObjectDoesNotExist:
                     # Something is very wrong here.
                     raise ValueError("Invalid frequency type!")
-            if instance.event.title != instance.title or instance.event.description != instance.game_description:
+            if (
+                instance.event.title != instance.title
+                or instance.event.description != instance.game_description
+            ):
                 needs_edit = True
                 instance.event.title = instance.title
                 instance.event.description = instance.game_description
@@ -73,11 +92,30 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             else:
                 logger.debug("No changes required.")
         else:
-            logger.debug("Event does not exist yet. Creating and adding to GM's calendar.")
-            calendar, created = Calendar.objects.get_or_create(slug=instance.gm.username, defaults={'name': "{}'s Calendar".format(instance.gm.username)})
+            logger.debug(
+                "Event does not exist yet. Creating and adding to GM's calendar."
+            )
+            calendar, created = Calendar.objects.get_or_create(
+                slug=instance.gm.username,
+                defaults={"name": "{}'s Calendar".format(instance.gm.username)},
+            )
             if created:
-                logger.debug("Created new calendar for user {}".format(instance.gm.username))
-            instance.event = models.GameEvent.objects.create(start=instance.start_time, end=(instance.start_time + timedelta(minutes=(60 * instance.session_length))), end_recurring_period=instance.end_date, title=instance.title, description=instance.game_description, creator=instance.gm.user, rule=Rule.objects.get(name=instance.game_frequency), calendar=calendar)
+                logger.debug(
+                    "Created new calendar for user {}".format(instance.gm.username)
+                )
+            instance.event = models.GameEvent.objects.create(
+                start=instance.start_time,
+                end=(
+                    instance.start_time
+                    + timedelta(minutes=(60 * instance.session_length))
+                ),
+                end_recurring_period=instance.end_date,
+                title=instance.title,
+                description=instance.game_description,
+                creator=instance.gm.user,
+                rule=Rule.objects.get(name=instance.game_frequency),
+                calendar=calendar,
+            )
     else:
         logger.debug("Insufficient data for an event.")
         if instance.event:
@@ -88,12 +126,36 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
 
 
 @receiver(post_save, sender=models.GameEvent)
-def update_child_events_when_master_event_updated(sender, instance, created, *args, **kwargs):
-    if instance.is_master_event() and instance.child_events.count() > 0:
-        instance.update_child_events()
+def update_child_events_when_master_event_updated(
+    sender, instance, created, *args, **kwargs
+):
+    async_task(update_child_events_for_master, instance)
 
 
 @receiver(post_save, sender=models.GamePosting)
 def create_player_events_as_needed(sender, instance, created, *args, **kwargs):
-    if instance.event and instance.players.count() > 0:
-        instance.generate_player_events_from_master_event()
+    async_task(create_game_player_events, instance)
+
+
+@receiver(post_save, sender=Occurrence)
+def create_or_update_player_occurence(sender, instance, created, *args, **kwargs):
+    async_task(create_or_update_linked_occurences_on_edit, instance, created)
+
+
+@receiver(m2m_changed, sender=models.GamePosting.players.through)
+def sync_calendar_on_player_clear(sender, instance, action, pk_set, *args, **kwargs):
+    if action == "post_clear":
+        # All players removed, let's clean up the calendars.
+        instance.event.get_child_events().delete()
+
+
+@receiver(post_save, sender=models.Player)
+def sync_calendar_on_player_add(sender, instance, created, *args, **kwargs):
+    if created and instance.game.event:
+        logger.debug("Syncing calendar for new player")
+        async_task(sync_calendar_for_arriving_player, instance)
+
+
+@receiver(post_delete, sender=models.Player)
+def clear_calendar_on_player_remove(sender, instance, *args, **kwargs):
+    async_task(clear_calendar_for_departing_player, instance)

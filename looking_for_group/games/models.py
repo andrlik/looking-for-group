@@ -189,12 +189,23 @@ class GameEvent(Event):
         proxy = True
 
 
+class ChildOccurenceLink(models.Model):
+    '''
+    An object to help keep a player occurrence linked to the master event occurrence.
+    '''
+    master_event_occurence = models.ForeignKey(Occurrence, related_name='child_occurence_link', on_delete=models.CASCADE)
+    child_event_occurence = models.ForeignKey(Occurrence, related_name='master_occurence_link', on_delete=models.CASCADE)
+
+    class Meta:
+        index_together = ['master_event_occurence', 'child_event_occurence']
+        unique_together = ['master_event_occurence', 'child_event_occurence']
+
 def get_rules_as_tuple(*args, **kwargs):
     """
     Lazily extract the rules from the database and provide as a tuple.
     """
     if not check_table_exists("schedule_rule") or Rule.objects.count() == 0:
-        return GAME_FREQUENCY_CHOICES
+        return GAME_FREQUENCY_CHOICES  # pragma: no cover
     default_list = [("na", _("Not Applicable")), ("Custom", _("Custom"))]
     result_list = default_list + [
         (i.name, _(i.description))

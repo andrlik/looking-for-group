@@ -1,17 +1,18 @@
 import pytest
 from factory.django import mute_signals
 from datetime import timedelta
-from test_plus import TestCase
 from schedule.models import Calendar, Rule
+from django.test import TransactionTestCase
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.core.exceptions import ObjectDoesNotExist
 from ...gamer_profiles.tests.test_views import AbstractViewTest
+from ...gamer_profiles.tests import factories
 from .. import models
 from ..utils import check_table_exists
 
 
-class UtilTest(TestCase):
+class UtilTest(TransactionTestCase):
     '''
     Basic test for tables.
     '''
@@ -21,13 +22,19 @@ class UtilTest(TestCase):
         assert not check_table_exists('jkdfjlsdjdsfj')
 
 
-class AbstractGamesModelTest(AbstractViewTest):
+class AbstractGamesModelTest(TransactionTestCase):
     '''
     Provides the repetitive setup needs.
     '''
 
     def setUp(self):
-        super().setUp()
+        self.gamer1 = factories.GamerProfileFactory()
+        self.gamer2 = factories.GamerProfileFactory()
+        self.gamer3 = factories.GamerProfileFactory()
+        self.community1 = factories.GamerCommunityFactory(
+            owner=factories.GamerProfileFactory()
+        )
+        self.community2 = factories.GamerCommunityFactory(owner=self.gamer2)
         self.rule1, created = Rule.objects.get_or_create(name='weekly', defaults={'description': "Weekly", 'frequency': 'WEEKLY'})
         self.rule2, created = Rule.objects.get_or_create(name='monthly', defaults={'description': "Monthly", 'frequency': 'MONTHLY'})
         self.start_time = timezone.now() + timedelta(days=2)
@@ -39,7 +46,7 @@ class AbstractGamesModelTest(AbstractViewTest):
 
 
 
-class GameEventProxyMethods(AbstractViewTest):
+class GameEventProxyMethods(AbstractGamesModelTest):
     '''
     Test that the methods for our proxy model work correctly.
     '''
@@ -55,41 +62,45 @@ class GameEventProxyMethods(AbstractViewTest):
         self.master_event = models.GameEvent.objects.create(start=self.start_time, end=self.end_time, calendar=self.master_calendar, creator=self.gamer1.user, rule=self.rule1)
 
     def test_create_child_events(self):
-        assert self.master_event.get_child_events().count() == 0
-        events_added = self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        assert events_added == 2
-        assert self.master_event.get_child_events().count() == 2
-        # Now ensure we don't duplicate
-        events_added = self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        assert events_added == 0
-        assert self.master_event.get_child_events().count() == 2
+        with mute_signals(post_save):
+            assert self.master_event.get_child_events().count() == 0
+            events_added = self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
+            assert events_added == 2
+            assert self.master_event.get_child_events().count() == 2
+            # Now ensure we don't duplicate
+            events_added = self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
+            assert events_added == 0
+            assert self.master_event.get_child_events().count() == 2
 
     def test_event_type_evaluation(self):
-        self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        assert self.master_event.is_master_event()
-        assert not self.master_event.is_player_event()
-        for event in self.master_event.child_events:
-            assert not event.is_master_event()
-            assert event.is_player_event()
+        with mute_signals(post_save):
+            self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
+            assert self.master_event.is_master_event()
+            assert not self.master_event.is_player_event()
+            for event in self.master_event.child_events:
+                assert not event.is_master_event()
+                assert event.is_player_event()
 
     def test_remove_child_events(self):
-        self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        assert self.master_event.get_child_events().count() == 2
-        self.master_event.remove_child_events()
-        assert self.master_event.get_child_events().count() == 0
+        with mute_signals(post_save):
+            self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
+            assert self.master_event.get_child_events().count() == 2
+            self.master_event.remove_child_events()
+            assert self.master_event.get_child_events().count() == 0
 
     def test_cascade_deletes(self):
-        self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        ids_to_check = [f.id for f in self.master_event.child_events]
-        self.master_event.delete()
-        for idu in ids_to_check:
-            with pytest.raises(ObjectDoesNotExist):
-                models.GameEvent.objects.get(id=idu)
+        with mute_signals(post_save):
+            self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
+            ids_to_check = [f.id for f in self.master_event.child_events]
+            self.master_event.delete()
+            for idu in ids_to_check:
+                with pytest.raises(ObjectDoesNotExist):
+                    models.GameEvent.objects.get(id=idu)
 
     def test_update_child_events(self):
-        self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
-        self.master_event.rule = self.rule2
         with mute_signals(post_save):
+            self.master_event.generate_missing_child_events([self.player_calendar1, self.player_calendar2])
+            self.master_event.rule = self.rule2
             self.master_event.save()
             assert self.master_event.update_child_events() == 2
 
@@ -111,8 +122,7 @@ class GamePostingModelMethods(AbstractGamesModelTest):
         self.game_posting.refresh_from_db()
         assert self.game_posting.event
 
-
-class GameSessionModelMethods(TestCase):
+class GameSessionModelMethods(AbstractGamesModelTest):
     '''
     Test methods associated with game session models.
     '''
