@@ -51,7 +51,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             needs_edit = False
             if instance.start_time != instance.event.start:
                 needs_edit = True
-                logger.debug("Updating start time to {}".format(instance.start))
+                logger.debug("Updating start time to {}".format(instance.start_time))
                 instance.event.start = instance.start_time
             if instance.event.end != instance.start_time + timedelta(
                     minutes=(60 * instance.session_length)
@@ -75,6 +75,8 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 except ObjectDoesNotExist:
                     # Something is very wrong here.
                     raise ValueError("Invalid frequency type!")
+            else:
+                instance.event.rule = None
             if (
                 instance.event.title != instance.title
                 or instance.event.description != instance.game_description
