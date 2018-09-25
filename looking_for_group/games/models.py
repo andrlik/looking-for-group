@@ -200,6 +200,7 @@ class ChildOccurenceLink(models.Model):
         index_together = ['master_event_occurence', 'child_event_occurence']
         unique_together = ['master_event_occurence', 'child_event_occurence']
 
+
 def get_rules_as_tuple(*args, **kwargs):
     """
     Lazily extract the rules from the database and provide as a tuple.
