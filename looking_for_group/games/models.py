@@ -1,9 +1,8 @@
 import logging
+from datetime import timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models.query_utils import Q
 from django.urls import reverse
-from django.utils.functional import cached_property
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
@@ -190,15 +189,20 @@ class GameEvent(Event):
 
 
 class ChildOccurenceLink(models.Model):
-    '''
+    """
     An object to help keep a player occurrence linked to the master event occurrence.
-    '''
-    master_event_occurence = models.ForeignKey(Occurrence, related_name='child_occurence_link', on_delete=models.CASCADE)
-    child_event_occurence = models.ForeignKey(Occurrence, related_name='master_occurence_link', on_delete=models.CASCADE)
+    """
+
+    master_event_occurence = models.ForeignKey(
+        Occurrence, related_name="child_occurence_link", on_delete=models.CASCADE
+    )
+    child_event_occurence = models.ForeignKey(
+        Occurrence, related_name="master_occurence_link", on_delete=models.CASCADE
+    )
 
     class Meta:
-        index_together = ['master_event_occurence', 'child_event_occurence']
-        unique_together = ['master_event_occurence', 'child_event_occurence']
+        index_together = ["master_event_occurence", "child_event_occurence"]
+        unique_together = ["master_event_occurence", "child_event_occurence"]
 
 
 def get_rules_as_tuple(*args, **kwargs):
@@ -259,8 +263,8 @@ CHARACTER_STATUS_CHOICES = (
 
 SESSION_STATUS_CHOICES = (
     ("pending", _("Scheduled")),
-    ("cancel"),
-    _("Cancelled"),
+    ("cancel",
+    _("Cancelled")),
     ("complete", _("Completed")),
 )
 
@@ -408,10 +412,47 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
             )
         return events_generated
 
-    def get_next_session(self):
-        '''
+    def get_next_scheduled_session_occurrence(self):
+        """
         Retrieves the next session time (if available)
-        '''
+        """
+        if self.event:
+            date_cutoff = self.start_time - timedelta(days=1)
+            if self.sessions > 0:
+                latest_session = self.gamesession_set.filter(
+                    status__in=["complete", "cancel"]
+                ).latest("scheduled_time")
+                date_cutoff = latest_session.scheduled_time
+            occurrences = self.event.occurrences_after(after=date_cutoff)
+            next_occurrence = None
+            try:
+                next_occurrence = next(occurrences)
+            except StopIteration:  # pragma: no cover
+                pass  # There is no next occurrence.
+            return next_occurrence
+
+    def create_session_from_occurrence(self, occurrence):
+        """
+        For a given occurrence, generate the session placeholder.
+        Note: this will also persist an occurrence even if it does not already
+        exist.
+        """
+        if not occurrence:
+            return None
+        if occurrence.event.pk == self.event.pk:
+            occurrence.save()
+            session, created = GameSession.objects.get_or_create(
+                game=self, occurrence=occurrence, defaults={'status': 'pending', 'scheduled_time': occurrence.start})
+            if created:
+                # By default, assume all players are expected.
+                players = Player.objects.filter(game=self)
+                if players.count() > 0:
+                    session.players_expected.set(*list(players))
+        else:
+            raise ValueError(
+                "You can only tie a session to an occurrence from the same game."
+            )
+        return session
 
 
 class Player(TimeStampedModel, AbstractUUIDModel, models.Model):
@@ -421,12 +462,12 @@ class Player(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     gamer = models.ForeignKey(GamerProfile, null=True, on_delete=models.SET_NULL)
     game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
-    sessions_attended = models.PositiveIntegerField(default=0)
+    sessions_expected = models.PositiveIntegerField(default=0)
     sessions_missed = models.PositiveIntegerField(default=0)
 
     def get_attendance_rating_for_game(self):
-        if self.game.sessions > 0:
-            return float(self.sessions_attended) / float(self.get_sessions_missed)
+        if self.game.sessions > 0 and self.sessions_expected > 0:
+            return 1 - (float(self.sessions_missed) / float(self.sessions_expected))
         return None
 
     def get_attendance_average(self):
@@ -462,16 +503,15 @@ class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
     scheduled_time = models.DateTimeField()
-    status = (
-        models.CharField(
-            max_length=15,
-            choices=SESSION_STATUS_CHOICES,
-            default="pending",
-            db_index=True,
-        ),
+    status = models.CharField(
+        max_length=15,
+        choices=SESSION_STATUS_CHOICES,
+        default="pending",
+        db_index=True,
     )
-    players_present = models.ManyToManyField(
-        Player, help_text=_("Players in attendance?")
+
+    players_expected = models.ManyToManyField(
+        Player, help_text=_("Players who should be in attendance?")
     )
     players_missing = models.ManyToManyField(
         Player,
@@ -490,4 +530,66 @@ class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
     gm_notes_rendered = models.TextField(null=True, blank=True)
     occurrence = models.ForeignKey(
         Occurrence, null=True, blank=True, on_delete=models.SET_NULL
+    )
+
+    def move(self, new_schedule_time):
+        """
+        Reschedule the session in question.
+        """
+        with transaction.atomic():
+            self.scheduled_time = new_schedule_time
+            if self.occurrence:
+                self.occurrence.move(
+                    new_schedule_time,
+                    new_schedule_time
+                    + timedelta(minutes=(60 * self.game.session_length)),
+                )
+            self.save()
+
+    def cancel(self):
+        """
+        Cancel this session and the related occurrence.
+        """
+        with transaction.atomic():
+            self.status = "cancel"
+            self.occurrence.cancel()
+            self.save()
+
+    def uncancel(self):
+        """
+        Undo an erroneous cancel.
+        """
+        with transaction.atomic():
+            self.status = "pending"
+            self.occurrence.uncancel()
+            self.save()
+
+
+class AdventureLog(TimeStampedModel, AbstractUUIDModel, models.Model):
+    """
+    Represents an optional player-visible adventure log for a session.
+    This can be created at any time after the initial session is instantiated, provided that it is not in status cancelled.
+    """
+
+    session = models.ForeignKey(GameSession, on_delete=models.CASCADE)
+    initial_author = models.ForeignKey(
+        GamerProfile, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    title = models.CharField(
+        max_length=250, help_text=_("A good headline for this session.")
+    )
+    body = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "What happened during this session? (You can use Markdown for formatting/links.)"
+        ),
+    )
+    body_rendered = models.TextField(blank=True, null=True)
+    last_edited_by = models.ForeignKey(
+        GamerProfile,
+        null=True,
+        blank=True,
+        related_name="latest_editor_logs",
+        on_delete=models.SET_NULL,
     )
