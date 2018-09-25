@@ -25,7 +25,7 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
         # Check to ensure this is related to a game posting.
         try:
             game = models.GamePosting.objects.get(event=game_event)
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist:  # pragma: no cover
             return
         if game.players.count() > 0:
             # This is a game and we need to make sure the players have the event.
@@ -44,8 +44,8 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
                             polinks.count()
                         )
                     )
-                    child_occurences_to_update = models.Occurence.objects.filter(
-                        id__in=[p.id for p in polinks]
+                    child_occurences_to_update = Occurrence.objects.filter(
+                        id__in=[p.child_event_occurence.id for p in polinks]
                     )
                     updated_records = child_occurences_to_update.update(
                         title=occurence.title,
@@ -86,8 +86,8 @@ def sync_calendar_for_arriving_player(player):
     with transaction.atomic():
         events_created = player.game.generate_player_events_from_master_event()
         logger.debug("Created {} child events.".format(events_created))
-        player_event = player.game.event.get_child_event().filter(calendar__slug=player.gamer.username)[0]
-        occurences_to_sync = player.game.event.occurence_set.filter(start__gte=timezone.now())
+        player_event = player.game.event.get_child_events().filter(calendar__slug=player.gamer.username)[0]
+        occurences_to_sync = player.game.event.occurrence_set.filter(start__gte=timezone.now())
         if occurences_to_sync.count() > 0:
             logger.debug("Preparing to sync occurences.")
             synced_occurences = 0
@@ -103,14 +103,14 @@ def clear_calendar_for_departing_player(player):
 
     try:
         player_calendar = Calendar.objects.get(slug=player.gamer.username)
-    except ObjectDoesNotExist:
+    except ObjectDoesNotExist:  # pragma: no cover
         pass  # No need to delete anything.
     if player.game.event:
         candidate_events = player.game.event.get_child_events().filter(calendar=player_calendar)
         if candidate_events.count() == 1:
             logger.debug("Player leaving game has a child event, doing a cascade delete.")
             candidate_events[0].delete()
-        elif candidate_events.count() > 1:
+        elif candidate_events.count() > 1:  # pragma: no cover
             logger.debug("Player has more than 1 child event here. Something is very wrong but deleting anyway.")
             candidate_events.delete()
         else:
