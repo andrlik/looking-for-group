@@ -104,3 +104,25 @@ class MarkdownSignalTest(AbstractSyncTestCase):
             self.game.game_description = "I am very **strong**!"
             self.game.save()
             assert self.game.game_description_rendered == "<p>I am very <strong>strong</strong>!</p>"
+
+    def test_adventure_log_markdown(self):
+        with mute_signals(post_save):
+            self.game.game_frequency = 'weekly'
+            self.game.start_time = timezone.now() - timedelta(days=2)
+            self.game.save()
+            assert self.game.event
+            session = self.game.create_session_from_occurrence(self.game.get_next_scheduled_session_occurrence())
+            assert session
+            ad_log = models.AdventureLog.objects.create(session=session, initial_author=self.gamer2, title='My Log Entry', body="I am very **strong**!")
+            assert ad_log.body_rendered == "<p>I am very <strong>strong</strong>!</p>"
+
+    def test_gm_notes_markdown(self):
+        with mute_signals(post_save):
+            self.game.game_frequency = 'weekly'
+            self.game.start_time = timezone.now() - timedelta(days=2)
+            self.game.save()
+            session = self.game.create_session_from_occurrence(self.game.get_next_scheduled_session_occurrence())
+            assert session
+            session.gm_notes = "I am very **strong**!"
+            session.save()
+            assert session.gm_notes_rendered == "<p>I am very <strong>strong</strong>!</p>"

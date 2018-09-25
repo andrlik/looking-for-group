@@ -28,6 +28,14 @@ def render_markdown_notes(sender, instance, *args, **kwargs):
         instance.gm_notes_rendered = None
 
 
+@receiver(pre_save, sender=models.AdventureLog)
+def render_markdown_log_body(sender, instance, *args, **kwargs):
+    if instance.body:
+        instance.body_rendered = markdown(instance.body)
+    else:
+        instance.body_rendered = None
+
+
 @receiver(post_save, sender=models.GameSession)
 def calculate_attendance(sender, instance, created, *args, **kwargs):
     pass
