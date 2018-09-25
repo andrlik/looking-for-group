@@ -38,38 +38,34 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
     """
     If the game has enough information to generate an event, check if one already exists and link to it.
     """
-    if (
-        instance.start_time
-        and instance.session_length
-        and instance.game_frequency not in ("na", "Custom")
-    ):
+    if instance.start_time and instance.session_length:
+        if instance.game_frequency in ("na", "Custom"):
+            frequency = None
+        else:
+            frequency = instance.game_frequency
         logger.debug("Game posting has enough data to have a corresponding event.")
         if instance.event:
             logger.debug(
                 "Event already exists. Reviewing to see if changes are required..."
             )
             needs_edit = False
-            if (
-                instance.start_date
-                and instance.session_length
-                and instance.game_frequency not in ("na", "Custom")
-            ):
-                if instance.start_time != instance.event.start:
-                    needs_edit = True
-                    logger.debug("Updating start time to {}".format(instance.start))
-                    instance.event.start = instance.start_time
-                if instance.event.end != instance.start_time + timedelta(
+            if instance.start_time != instance.event.start:
+                needs_edit = True
+                logger.debug("Updating start time to {}".format(instance.start_time))
+                instance.event.start = instance.start_time
+            if instance.event.end != instance.start_time + timedelta(
                     minutes=(60 * instance.session_length)
-                ):
-                    instance.event.end = instance.start_time + timedelta(
-                        minutes=(60 * instance.session_length)
-                    )
-                    logger.debug("Updating end time to {}".format(instance.event.end))
-                    needs_edit = True
-                if instance.event.end_recurring_period != instance.end_date:
-                    logger.debug("End date has changed...")
-                    instance.event.end_recurring_period = instance.end_date
-                    needs_edit = True
+            ):
+                instance.event.end = instance.start_time + timedelta(
+                    minutes=(60 * instance.session_length)
+                )
+                logger.debug("Updating end time to {}".format(instance.event.end))
+                needs_edit = True
+            if instance.event.end_recurring_period != instance.end_date:
+                logger.debug("End date has changed...")
+                instance.event.end_recurring_period = instance.end_date
+                needs_edit = True
+            if frequency:
                 try:
                     rrule = Rule.objects.get(name=instance.game_frequency)
                     if instance.event.rule != rrule:
@@ -79,6 +75,8 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 except ObjectDoesNotExist:
                     # Something is very wrong here.
                     raise ValueError("Invalid frequency type!")
+            else:
+                instance.event.rule = None
             if (
                 instance.event.title != instance.title
                 or instance.event.description != instance.game_description
@@ -103,6 +101,9 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 logger.debug(
                     "Created new calendar for user {}".format(instance.gm.username)
                 )
+            rule = None
+            if frequency:
+                rule = Rule.objects.get(name=frequency)
             instance.event = models.GameEvent.objects.create(
                 start=instance.start_time,
                 end=(
@@ -113,7 +114,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 title=instance.title,
                 description=instance.game_description,
                 creator=instance.gm.user,
-                rule=Rule.objects.get(name=instance.game_frequency),
+                rule=rule,
                 calendar=calendar,
             )
     else:
