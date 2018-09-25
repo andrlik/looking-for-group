@@ -408,6 +408,11 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
             )
         return events_generated
 
+    def get_next_session(self):
+        '''
+        Retrieves the next session time (if available)
+        '''
+
 
 class Player(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
