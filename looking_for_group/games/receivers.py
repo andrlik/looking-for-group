@@ -7,7 +7,7 @@ from django.dispatch import receiver
 from django.db.models.signals import pre_save, post_save, m2m_changed, post_delete
 from schedule.models import Rule, Calendar, Occurrence
 from . import models
-from .tasks import update_child_events_for_master, create_game_player_events, create_or_update_linked_occurences_on_edit, sync_calendar_for_arriving_player, clear_calendar_for_departing_player
+from .tasks import update_child_events_for_master, create_game_player_events, create_or_update_linked_occurences_on_edit, sync_calendar_for_arriving_player, clear_calendar_for_departing_player, calculate_player_attendance
 
 logger = logging.getLogger("games")
 
@@ -37,8 +37,15 @@ def render_markdown_log_body(sender, instance, *args, **kwargs):
 
 
 @receiver(post_save, sender=models.GameSession)
+def update_complete_session_count(sender, instance, *args, **kwargs):
+    if instance.status == 'complete':
+        instance.game.update_completed_session_count()
+
+
+@receiver(post_save, sender=models.GameSession)
 def calculate_attendance(sender, instance, created, *args, **kwargs):
-    pass
+    if instance.status == "complete":
+        async_task(calculate_player_attendance, instance)
 
 
 @receiver(pre_save, sender=models.GamePosting)

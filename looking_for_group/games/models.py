@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
+from django.db.models import F
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
@@ -453,6 +454,10 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
                 "You can only tie a session to an occurrence from the same game."
             )
         return session
+
+    def update_completed_session_count(self):
+        self.sessions = self.gamesession_set.filter(status='complete').count()
+        self.save()
 
 
 class Player(TimeStampedModel, AbstractUUIDModel, models.Model):
