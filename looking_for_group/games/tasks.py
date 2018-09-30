@@ -115,3 +115,16 @@ def clear_calendar_for_departing_player(player):
             candidate_events.delete()
         else:
             logger.debug("No events to delete.")
+
+
+def calculate_player_attendance(gamesession):
+    '''
+    Takes all the players that were expected at the game session and
+    recalculates their attendance.
+    '''
+    game_players = gamesession.players_expected.all()
+    if game_players:
+        for player in game_players:
+            player.sessions_expected = player.gamesession_set.count()
+            player.sessions_missed = player.missed_sessions.count()
+            player.save()

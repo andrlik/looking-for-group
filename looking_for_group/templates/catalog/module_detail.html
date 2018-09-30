@@ -1,5 +1,6 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
+{% load ratings %}
 {% block subtitle %}{{ module.title }} - {% endblock %}
 {% block sectiontitle %}<h2>{% trans "Published Module" %}</h2>{% endblock %}
 {% block content %}
@@ -10,6 +11,9 @@
 {% if module.url %}<p><a href="{{ module.url }}">{% trans "Official site" %}</a></p>{% endif %}
 <span class="meta">{% trans "An adventure for "%}<a href="{{ module.parent_game.get_absolute_url }}">{{ module.parent_game.title}}</a>. {% trans "Published by " %}<a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></span>
 <p>{{ module.description }}</p>
+
+{% ratings module %}
+
 <span class='disclaimer'>{% blocktrans with pubname=module.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span>
 
 
