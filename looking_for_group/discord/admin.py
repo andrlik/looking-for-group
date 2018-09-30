@@ -2,14 +2,19 @@ from django.contrib import admin
 from . import models
 
 # Register your models here.
+
+
 class ServerAdmin(admin.ModelAdmin):
     pass
+
 
 class GamerLinkAdmin(admin.ModelAdmin):
     pass
 
+
 class CommLinkAdmin(admin.ModelAdmin):
     pass
+
 
 class ServerMembership(admin.ModelAdmin):
     pass
