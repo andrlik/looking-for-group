@@ -2,7 +2,6 @@ import logging
 from datetime import timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models import F
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
@@ -264,8 +263,7 @@ CHARACTER_STATUS_CHOICES = (
 
 SESSION_STATUS_CHOICES = (
     ("pending", _("Scheduled")),
-    ("cancel",
-    _("Cancelled")),
+    ("cancel", _("Cancelled")),
     ("complete", _("Completed")),
 )
 
@@ -443,7 +441,10 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
         if occurrence.event.pk == self.event.pk:
             occurrence.save()
             session, created = GameSession.objects.get_or_create(
-                game=self, occurrence=occurrence, defaults={'status': 'pending', 'scheduled_time': occurrence.start})
+                game=self,
+                occurrence=occurrence,
+                defaults={"status": "pending", "scheduled_time": occurrence.start},
+            )
             if created:
                 # By default, assume all players are expected.
                 players = Player.objects.filter(game=self)
@@ -456,7 +457,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
         return session
 
     def update_completed_session_count(self):
-        self.sessions = self.gamesession_set.filter(status='complete').count()
+        self.sessions = self.gamesession_set.filter(status="complete").count()
         self.save()
 
 
@@ -509,10 +510,7 @@ class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
     game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
     scheduled_time = models.DateTimeField()
     status = models.CharField(
-        max_length=15,
-        choices=SESSION_STATUS_CHOICES,
-        default="pending",
-        db_index=True,
+        max_length=15, choices=SESSION_STATUS_CHOICES, default="pending", db_index=True
     )
 
     players_expected = models.ManyToManyField(
