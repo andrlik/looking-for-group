@@ -51,8 +51,6 @@ django-scheduler = "*"
 django-ical = "*"
 
 [dev-packages]
-werkzeug = "*"
-ipdb = "*"
 sphinx = "*"
 "psycopg2" = "*"
 pytest = "*"
