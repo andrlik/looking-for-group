@@ -24,6 +24,8 @@
     <![endif]-->
 
     {% block css %}
+    {% block css_extra %}
+    {% endblock %}
 
     {% compress css %}
     <link rel="stylesheet" type="text/x-scss" href="{% static 'sass/app.scss' %}">
@@ -168,6 +170,9 @@
       {% endcompress %}
 
       <!-- Your stuff: Third-party javascript libraries go here -->
+
+      {% block js_extra %}
+      {% endblock %}
 
       <script>
         $(document).foundation();

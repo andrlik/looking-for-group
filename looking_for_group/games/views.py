@@ -6,6 +6,9 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
 from rules.contrib.views import PermissionRequiredMixin
+from schedule.models import Calendar
+from schedule.periods import Month
+from schedule.views import CalendarByPeriodsView
 from . import models
 
 # Create your views here.
@@ -383,3 +386,13 @@ class AdventureLogDelete(LoginRequiredMixin, SelectRelatedMixin, PermissionRequi
 
     def get_permission_object(self):
         return self.get_object().session.game
+
+
+class CalendarDetail(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, CalendarByPeriodsView):
+    '''
+    A calendar view of all of the user's games and whatnot. Links to actual events/sessions.
+    '''
+    permission_required = 'calendar.can_view'
+    select_related = ['event_set']
+    prefetch_related = ['event_set__gameposting_set']
+    periods = [Month]
