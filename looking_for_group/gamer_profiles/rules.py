@@ -1,10 +1,11 @@
-import rules
-from rules import predicate
 import logging
-from django.utils import timezone
-from django.core.exceptions import ObjectDoesNotExist
-from .models import NotInCommunity, BlockedUser, BannedUser, KickedUser
 
+import rules
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from rules import predicate
+
+from .models import BannedUser, BlockedUser, KickedUser, NotInCommunity
 
 logger = logging.getLogger("rules")
 

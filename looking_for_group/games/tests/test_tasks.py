@@ -1,11 +1,13 @@
 from datetime import timedelta
-from factory.django import mute_signals
-from test_plus import TestCase
-from django.db.models.signals import post_save, post_delete
+
+from django.db.models.signals import post_delete, post_save
 from django.utils import timezone
+from factory.django import mute_signals
 from schedule.models import Calendar, Rule
+from test_plus import TestCase
+
+from .. import models, tasks
 from ...gamer_profiles.tests import factories
-from .. import tasks, models
 
 
 class AbstractTaskTestCase(TestCase):

@@ -1,11 +1,11 @@
 import logging
 from uuid import uuid4
+
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from taggit.managers import TaggableManager
 from taggit.models import GenericUUIDTaggedItemBase, TaggedItemBase
-
 
 logger = logging.getLogger('util_models')
 

@@ -1,25 +1,18 @@
 import logging
 from datetime import timedelta
+
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.urls import reverse
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from schedule.models import (
-    Event,
-    EventManager,
-    Occurrence,
-    Rule,
-    EventRelation,
-    EventRelationManager,
-    Calendar,
-)
-from ..game_catalog.utils import AbstractUUIDModel
-from ..game_catalog.models import PublishedGame, GameSystem, PublishedModule
-from ..gamer_profiles.models import GamerProfile, GamerCommunity
-from .utils import check_table_exists
+from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
+from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule
+from ..game_catalog.utils import AbstractUUIDModel
+from ..gamer_profiles.models import GamerCommunity, GamerProfile
+from .utils import check_table_exists
 
 logger = logging.getLogger("games")
 

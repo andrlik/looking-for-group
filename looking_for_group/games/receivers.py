@@ -1,13 +1,22 @@
 import logging
 from datetime import timedelta
-from markdown import markdown
-from django_q.tasks import async_task
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
-from django.db.models.signals import pre_save, post_save, m2m_changed, post_delete
-from schedule.models import Rule, Calendar, Occurrence
+from django_q.tasks import async_task
+from markdown import markdown
+from schedule.models import Calendar, Occurrence, Rule
+
 from . import models
-from .tasks import update_child_events_for_master, create_game_player_events, create_or_update_linked_occurences_on_edit, sync_calendar_for_arriving_player, clear_calendar_for_departing_player, calculate_player_attendance
+from .tasks import (
+    calculate_player_attendance,
+    clear_calendar_for_departing_player,
+    create_game_player_events,
+    create_or_update_linked_occurences_on_edit,
+    sync_calendar_for_arriving_player,
+    update_child_events_for_master
+)
 
 logger = logging.getLogger("games")
 

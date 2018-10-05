@@ -1,4 +1,5 @@
 import rules
+
 from ..gamer_profiles.rules import is_community_member, is_friend
 
 

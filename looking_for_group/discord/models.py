@@ -1,9 +1,11 @@
+from allauth.socialaccount.models import SocialAccount
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from allauth.socialaccount.models import SocialAccount
+
 from ..game_catalog.utils import AbstractUUIDModel
-from ..gamer_profiles.models import GamerCommunity, GamerProfile, COMMUNITY_ROLES
+from ..gamer_profiles.models import COMMUNITY_ROLES, GamerCommunity, GamerProfile
+
 # Create your models here.
 
 SYNC_STATUS_CHOICES = (

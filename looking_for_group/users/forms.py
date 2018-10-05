@@ -1,6 +1,6 @@
+from allauth.account.forms import SignupForm
 from django import forms
 from django.utils.translation import ugettext_lazy as _
-from allauth.account.forms import SignupForm
 
 
 class LFGSignupForm(SignupForm):

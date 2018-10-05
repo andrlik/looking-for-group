@@ -1,11 +1,12 @@
-import pytest
 import factory.django
+import pytest
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models.signals import post_save
-from django.core.exceptions import PermissionDenied
 from test_plus import TestCase
-from ..models import NotInCommunity, AlreadyInCommunity, CommunityMembership, KickedUser, BannedUser, GamerFriendRequest
-from .factories import GamerProfileWithCommunityFactory, GamerProfileFactory, GamerCommunityFactory
+
+from ..models import AlreadyInCommunity, BannedUser, CommunityMembership, GamerFriendRequest, KickedUser, NotInCommunity
+from .factories import GamerCommunityFactory, GamerProfileFactory, GamerProfileWithCommunityFactory
 
 
 class FactoryTests(TestCase):

@@ -3,6 +3,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
+
 from looking_for_group.game_catalog.utils import AbstractUUIDModel
 
 

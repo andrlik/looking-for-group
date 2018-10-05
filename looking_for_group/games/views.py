@@ -1,14 +1,15 @@
-from django.views import generic
+from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_lazy as _
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
+from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar
 from schedule.periods import Month
 from schedule.views import CalendarByPeriodsView
+
 from . import models
 
 # Create your views here.

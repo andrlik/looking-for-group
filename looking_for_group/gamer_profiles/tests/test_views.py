@@ -1,12 +1,14 @@
-import pytest
 from datetime import timedelta
-from django.db import transaction
+
+import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 from test_plus import TestCase
-from .. import models
+
 from . import factories
+from .. import models
 
 
 class AbstractViewTest(TestCase):

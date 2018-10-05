@@ -1,6 +1,6 @@
 import factory
 import factory.django
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save, pre_save
 
 
 @factory.django.mute_signals(pre_save, post_save)

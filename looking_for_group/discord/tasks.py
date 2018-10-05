@@ -1,11 +1,12 @@
 import logging
-import requests
-from django_q.tasks import async_task
-from allauth.socialaccount.models import SocialToken
-from ..gamer_profiles.models import CommunityMembership
-from .models import DiscordServer, GamerDiscordLink, DiscordServerMembership
-from .views import DiscordGuildOAuth2Adapater
 
+import requests
+from allauth.socialaccount.models import SocialToken
+from django_q.tasks import async_task
+
+from ..gamer_profiles.models import CommunityMembership
+from .models import DiscordServer, DiscordServerMembership, GamerDiscordLink
+from .views import DiscordGuildOAuth2Adapater
 
 logger = logging.getLogger("discord")
 
@@ -42,7 +43,9 @@ def prune_servers(pretend=False):
     return delete_count
 
 
-def sync_discord_servers_from_discord_account(gamerprofile, socialaccount, test_response=None):
+def sync_discord_servers_from_discord_account(
+    gamerprofile, socialaccount, test_response=None
+):
     """
     Takes the gamer indicated and uses the discord account, to retrieve related
     servers. Calls an async task to prune servers afterwards before exiting.
@@ -60,27 +63,29 @@ def sync_discord_servers_from_discord_account(gamerprofile, socialaccount, test_
     new_memberships = 0
     memberships_updated = 0
     gamer = gamerprofile
-    stokens = SocialToken.objects.filter(account=socialaccount).order_by(
-        "-expires_at"
-    )
+    stokens = SocialToken.objects.filter(account=socialaccount).order_by("-expires_at")
     if stokens:
         logger.debug("Found a valid social token. Proceeding.")
         stoken = stokens[0]
         gamer_discord, created = GamerDiscordLink.objects.get_or_create(
             gamer=gamer, socialaccount=socialaccount
         )
-        gamer_discord.sync_status = 'syncing'
+        gamer_discord.sync_status = "syncing"
         gamer_discord.save()
         current_servers = gamer_discord.get_server_discord_id_list()
         logger.debug("Current servers are: {}".format(current_servers))
         updated_servers = []
         # We create a dummy request here since we can't pickle it.
-        request = requests.get('https://app.lfg.directory/')
+        request = requests.get("https://app.lfg.directory/")
         discord_adapter = DiscordGuildOAuth2Adapater(request)
         if test_response:
-            guild_list = discord_adapter.get_guilds_with_permissions(stoken.app, stoken, test_response=test_response)
+            guild_list = discord_adapter.get_guilds_with_permissions(
+                stoken.app, stoken, test_response=test_response
+            )
         else:
-            guild_list = discord_adapter.get_guilds_with_permissions(stoken.app, stoken)  # pragma: no cover
+            guild_list = discord_adapter.get_guilds_with_permissions(
+                stoken.app, stoken
+            )  # pragma: no cover
         # We will use this dict to provide quick reference for community roles.
         guild_dict = {}
         for guild in guild_list:
@@ -144,7 +149,7 @@ def sync_discord_servers_from_discord_account(gamerprofile, socialaccount, test_
                     )
                 )
                 if membership.community_role != guild_dict[
-                        server.pk
+                    server.pk
                 ] and membership.less_than(guild_dict[server.pk]):
                     logger.debug(
                         "Roles do not match and the discord role is higher than our current role"
@@ -162,7 +167,7 @@ def sync_discord_servers_from_discord_account(gamerprofile, socialaccount, test_
             memberships_updated,
         )
     )
-    gamer_discord.sync_status = 'synced'
+    gamer_discord.sync_status = "synced"
     gamer_discord.save()
     if unlinks:
         # Since we've unlinked, let's practice good housekeeping and prune any

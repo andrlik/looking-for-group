@@ -1,6 +1,7 @@
 import factory.django
 from django.db.models.signals import post_save
 from test_plus import APITestCase
+
 from ..models import CommunityMembership
 from .factories import GamerProfileFactory, GamerProfileWithCommunityFactory
 
