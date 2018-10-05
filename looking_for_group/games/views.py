@@ -8,9 +8,10 @@ from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar
 from schedule.periods import Month
-from schedule.views import CalendarByPeriodsView
+from schedule.views import CalendarByPeriodsView, _api_occurrences
 
 from . import models
+from .mixins import JSONResponseMixin
 
 # Create your views here.
 
@@ -59,7 +60,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
         "game_description",
         "communities",
     ]
-    template_name = 'games/game_create.html'
+    template_name = "games/game_create.html"
     allowed_communities = None
 
     def get_success_url(self):
@@ -72,7 +73,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['allowed_communities'] = self.get_allowed_communties()
+        context["allowed_communities"] = self.get_allowed_communties()
         return context
 
     def form_valid(self, form):
@@ -80,34 +81,58 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
         if self.game_posting.commmunities:
             for comm in self.game_posting.communities:
                 if comm not in self.get_allowed_communties():
-                    messages.error(self.request, _("You do not have permission to post games into community {}".format(comm.name)))
+                    messages.error(
+                        self.request,
+                        _(
+                            "You do not have permission to post games into community {}".format(
+                                comm.name
+                            )
+                        ),
+                    )
                     return self.form_invalid(form)
         self.game_posting.save()
         return HttpResponseRedirect(self.get_success_url())
 
 
-class GamePostingDetailView(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
-    '''
+class GamePostingDetailView(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.DetailView,
+):
+    """
     Detail view for a game posting.
-    '''
+    """
 
     model = models.GamePosting
-    select_related = ['event', 'published_game', 'game_system', 'published_module', 'gamesession_set', 'gamesession_set__adventurelog']
-    prefetch_related = ['players', 'communities']
-    permission_required = 'games.can_view_listing'
-    template_name = 'games/game_detail.html'
+    select_related = [
+        "event",
+        "published_game",
+        "game_system",
+        "published_module",
+        "gamesession_set",
+        "gamesession_set__adventurelog",
+    ]
+    prefetch_related = ["players", "communities"]
+    permission_required = "games.can_view_listing"
+    template_name = "games/game_detail.html"
+    pk_url_kwarg = "gameid"
 
     def get_queryset(self):
         return models.GamePosting.objects.all()
 
 
-class GamePostingUpdateView(LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView):
-    '''
+class GamePostingUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView
+):
+    """
     Update view for a game posting.
-    '''
+    """
+
     model = models.GamePosting
-    permission_required = 'games.can_edit_listing'
-    template_name = 'games/game_detail.html'
+    permission_required = "games.can_edit_listing"
+    template_name = "games/game_detail.html"
     fields = [
         "game_type",
         "title",
@@ -125,6 +150,7 @@ class GamePostingUpdateView(LoginRequiredMixin, PermissionRequiredMixin, generic
         "game_description",
         "communities",
     ]
+    pk_url_kwarg = "gameid"
     allowed_communities = None
 
     def get_success_url(self):
@@ -137,44 +163,81 @@ class GamePostingUpdateView(LoginRequiredMixin, PermissionRequiredMixin, generic
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['allowed_communities'] = self.get_allowed_communities()
+        context["allowed_communities"] = self.get_allowed_communities()
         return context
 
     def form_valid(self, form):
         if form.instance.communities:
             for comm in form.instance.communities:
                 if comm not in self.get_allowed_communities():
-                    messages.error(self.request, _("You do not have permission to post this game in community {}.".format(comm.name)))
+                    messages.error(
+                        self.request,
+                        _(
+                            "You do not have permission to post this game in community {}.".format(
+                                comm.name
+                            )
+                        ),
+                    )
                     return self.form_invalid(form)
         return super().form_valid(form)
 
 
-class GamePostingDeleteView(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.edit.DeleteView):
-    '''
+class GamePostingDeleteView(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.DeleteView,
+):
+    """
     Deletion view for a game posting.
-    '''
+    """
+
     model = models.GamePosting
-    select_related = ['event', 'gamesession_set', 'gamesession_set__adventurelog', 'published_game', 'game_system', 'published_module']
-    prefetch_related = ['players', 'communities', 'players__character_set']
-    permission_required = 'games.can_edit_listing'
-    template_name = 'games/game_delete.html'
+    select_related = [
+        "event",
+        "gamesession_set",
+        "gamesession_set__adventurelog",
+        "published_game",
+        "game_system",
+        "published_module",
+    ]
+    prefetch_related = ["players", "communities", "players__character_set"]
+    permission_required = "games.can_edit_listing"
+    template_name = "games/game_delete.html"
+    pk_url_kwarg = "gameid"
 
 
-class GameSessionList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.ListView):
-    '''
+class GameSessionList(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.ListView,
+):
+    """
     List sessions for a particular game.
-    '''
+    """
+
     model = models.GameSession
-    select_related = ['game', 'game__game_system', 'game__published_game', 'game__published_module', 'game__event', 'occurrence', 'adventurelog_set']
-    prefetch_related = ['players_expected', 'players_missing']
-    permission_required = 'games.is_member'
-    template_name = 'games/session_list.html'
-    ordering = ['-scheduled_time']
-    context_object_name = 'sessions'
+    select_related = [
+        "game",
+        "game__game_system",
+        "game__published_game",
+        "game__published_module",
+        "game__event",
+        "occurrence",
+        "adventurelog_set",
+    ]
+    prefetch_related = ["players_expected", "players_missing"]
+    permission_required = "games.is_member"
+    template_name = "games/session_list.html"
+    ordering = ["-scheduled_time"]
+    context_object_name = "sessions"
     paginate_by = 20
 
     def dispatch(self, request, *args, **kwargs):
-        game_pk = kwargs.pop('game', None)
+        game_pk = kwargs.pop("gameid", None)
         self.game = get_object_or_404(models.GamePosting, pk=game_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -185,44 +248,64 @@ class GameSessionList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMix
         return self.game.gamesession_set.all()
 
 
-class GameSessionCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
-    '''
+class GameSessionCreate(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView
+):
+    """
     Create a session.
-    '''
-    permission_required = 'games.can_edit_listing'
-    fields = ['game']
-    template_name = 'games/session_create.html'
+    """
+
+    permission_required = "games.can_edit_listing"
+    fields = ["game"]
+    template_name = "games/session_create.html"
 
     def dispatch(self, request, *args, **kwargs):
-        game_pk = kwargs.pop('game', None)
+        game_pk = kwargs.pop("game", None)
         self.game = get_object_or_404(models.GameSession, pk=game_pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = self.game
-        context['occurrence'] = self.game.get_next_scheduled_occurrence()
+        context["game"] = self.game
+        context["occurrence"] = self.game.get_next_scheduled_occurrence()
         return context
 
     def get_permission_object(self):
         return self.game
 
     def form_valid(self, form):
-        self.session = self.game.generate_session_from_occurence(self.game.get_next_scheduled_occurrence())
+        self.session = self.game.generate_session_from_occurence(
+            self.game.get_next_scheduled_occurrence()
+        )
         return HttpResponseRedirect(self.session.get_absolute_url())
 
 
-class GameSessionDetail(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
-    '''
+class GameSessionDetail(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.DetailView,
+):
+    """
     Show details for a given game session.
-    '''
+    """
+
     model = models.GameSession
-    select_related = ['game', 'game__game_system', 'game__published_game', 'game__published_module', 'game__event', 'occurrence', 'adventurelog_set']
-    prefetch_related = ['players_expected', 'players_missing']
-    permission_required = 'games.is_member'
-    template_name = 'games/session_detail.html'
-    context_object_name = 'session'
-    pk_url_kwarg = 'session'
+    select_related = [
+        "game",
+        "game__game_system",
+        "game__published_game",
+        "game__published_module",
+        "game__event",
+        "occurrence",
+        "adventurelog_set",
+    ]
+    prefetch_related = ["players_expected", "players_missing"]
+    permission_required = "games.is_member"
+    template_name = "games/session_detail.html"
+    context_object_name = "session"
+    pk_url_kwarg = "session"
 
     def get_permission_object(self):
         return self.get_object().game
@@ -231,21 +314,28 @@ class GameSessionDetail(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedM
         return models.GameSession.objects.all()
 
 
-class GameSessionUpdate(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.edit.UpdateView):
-    '''
+class GameSessionUpdate(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.UpdateView,
+):
+    """
     Update a session. (GM only)
-    '''
+    """
+
     model = models.GameSession
-    select_related = ['game']
-    prefetch_related = ['players_expected', 'players_missing']
-    permission_required = 'games.can_edit_listing'
-    template_name = 'games/session_edit.html'
-    context_object_name = 'session'
-    pk_url_kwarg = 'session'
+    select_related = ["game"]
+    prefetch_related = ["players_expected", "players_missing"]
+    permission_required = "games.can_edit_listing"
+    template_name = "games/session_edit.html"
+    context_object_name = "session"
+    pk_url_kwarg = "session"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['players'] = models.Player.objects.filter(game=context['session'].game)
+        context["players"] = models.Player.objects.filter(game=context["session"].game)
         return context
 
     def get_permission_object(self):
@@ -255,41 +345,62 @@ class GameSessionUpdate(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedM
         return models.GameSession.objects.all()
 
 
-class GameSessionDelete(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.edit.DeleteView):
-        '''
+class GameSessionDelete(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.DeleteView,
+):
+    """
         Delete a game session.
-        '''
+        """
 
-        model = models.GameSession
-        select_related = ['game', 'game__game_system', 'game__published_game', 'game__published_module', 'game__event', 'occurrence', 'adventurelog_set']
-        prefetch_related = ['players_expected', 'players_missing']
-        permission_required = 'games.can_edit_listing'
-        template_name = 'games/session_delete.html'
-        context_object_name = 'session'
-        pk_url_kwarg = 'session'
+    model = models.GameSession
+    select_related = [
+        "game",
+        "game__game_system",
+        "game__published_game",
+        "game__published_module",
+        "game__event",
+        "occurrence",
+        "adventurelog_set",
+    ]
+    prefetch_related = ["players_expected", "players_missing"]
+    permission_required = "games.can_edit_listing"
+    template_name = "games/session_delete.html"
+    context_object_name = "session"
+    pk_url_kwarg = "session"
 
-        def get_permission_object(self):
-            return self.get_object().game
+    def get_permission_object(self):
+        return self.get_object().game
 
-        def get_queryset(self):
-            return models.GameSession.objects.all()
+    def get_queryset(self):
+        return models.GameSession.objects.all()
 
 
-class AdventureLogList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.ListView):
-    '''
+class AdventureLogList(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.ListView,
+):
+    """
     List view for adventure logs.
-    '''
+    """
+
     model = models.AdventureLog
-    select_related = ['session', 'session__game']
-    prefetch_related = ['session__players_expected', 'session__players_missing']
+    select_related = ["session", "session__game"]
+    prefetch_related = ["session__players_expected", "session__players_missing"]
     paginate_by = 10
-    context_object_name = 'logs'
-    template = 'games/log_list.html'
-    permission_required = 'games.is_member'
-    ordering = ['-session__scheduled_time', '-created']
+    context_object_name = "logs"
+    template = "games/log_list.html"
+    permission_required = "games.is_member"
+    ordering = ["-session__scheduled_time", "-created"]
 
     def dispatch(self, request, *args, **kwargs):
-        game_pk = kwargs.pop('game', None)
+        game_pk = kwargs.pop("gameid", None)
         self.game = get_object_or_404(models.GamePosting, pk=game_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -297,26 +408,34 @@ class AdventureLogList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMi
         return self.game
 
     def get_queryset(self):
-        return models.AdventureLog.objects.filter(session__in=self.game.gamesession_set.all())
+        return models.AdventureLog.objects.filter(
+            session__in=self.game.gamesession_set.all()
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = self.game
+        context["game"] = self.game
         return context
 
 
-class AdventureLogDetail(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
-    '''
+class AdventureLogDetail(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.DetailView,
+):
+    """
     Detail view for an adventure log post.
-    '''
+    """
 
     model = models.AdventureLog
-    select_related = ['session', 'session__game']
-    prefetch_related = ['session__players_expected', 'session__players_missing']
-    permission_required = 'games.is_member'
-    context_object_name = 'log'
-    pk_url_kwarg = 'log'
-    template = 'games/log_detail.html'
+    select_related = ["session", "session__game"]
+    prefetch_related = ["session__players_expected", "session__players_missing"]
+    permission_required = "games.is_member"
+    context_object_name = "log"
+    pk_url_kwarg = "log"
+    template = "games/log_detail.html"
 
     def get_permission_object(self):
         return self.get_object().session.game
@@ -325,18 +444,20 @@ class AdventureLogDetail(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelated
         return models.AdventureLog.objects.all()
 
 
-class AdventureLogCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
-    '''
+class AdventureLogCreate(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView
+):
+    """
     Create view for an adventure log.
-    '''
+    """
 
     model = models.AdventureLog
-    permission_required = 'games.is_member'
-    template = 'games/log_create.html'
-    fields = ['title', 'body']
+    permission_required = "games.is_member"
+    template = "games/log_create.html"
+    fields = ["title", "body"]
 
     def dispatch(self, request, *args, **kwargs):
-        session_pk = kwargs.pop('session', None)
+        session_pk = kwargs.pop("session", None)
         self.session = get_object_or_404(models.GameSession, pk=session_pk)
         return super().dispatch(request, *args, **kwargs)
 
@@ -351,15 +472,21 @@ class AdventureLogCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.Cr
         return HttpResponseRedirect(self.log.get_absolute_url())
 
 
-class AdventureLogUpdate(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.edit.UpdateView):
-    '''
+class AdventureLogUpdate(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.UpdateView,
+):
+    """
     Update an existing log.
-    '''
+    """
+
     model = models.AdventureLog
-    permission_required = 'games.is_member'
-    template_name = 'games/log_edit.html'
-    pk_url_kwarg = 'log'
-    fields = ['title', 'body']
+    permission_required = "games.is_member"
+    template_name = "games/log_edit.html"
+    pk_url_kwarg = "log"
+    fields = ["title", "body"]
 
     def get_permission_object(self):
         return self.get_object().session.game
@@ -374,26 +501,77 @@ class AdventureLogUpdate(LoginRequiredMixin, SelectRelatedMixin, PermissionRequi
         return HttpResponseRedirect(obj.get_absolute_url())
 
 
-class AdventureLogDelete(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.edit.DeleteView):
-    '''
+class AdventureLogDelete(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.DeleteView,
+):
+    """
     Delete a log (only gm)
-    '''
+    """
+
     model = models.AdventureLog
-    select_related = ['session', 'session__game', 'initial_author', 'last_edited_by']
-    permission_required = 'games.can_edit_listing'
-    template_name = 'games/log_delete.html'
-    pk_url_kwarg = 'log'
-    context_object_name = 'log'
+    select_related = ["session", "session__game", "initial_author", "last_edited_by"]
+    permission_required = "games.can_edit_listing"
+    template_name = "games/log_delete.html"
+    pk_url_kwarg = "log"
+    context_object_name = "log"
 
     def get_permission_object(self):
         return self.get_object().session.game
 
 
-class CalendarDetail(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, CalendarByPeriodsView):
-    '''
+class CalendarDetail(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    CalendarByPeriodsView,
+):
+    """
     A calendar view of all of the user's games and whatnot. Links to actual events/sessions.
-    '''
-    permission_required = 'calendar.can_view'
-    select_related = ['event_set']
-    prefetch_related = ['event_set__gameposting_set']
+    """
+
+    model = Calendar
+    permission_required = "calendar.can_view"
+    select_related = ["event_set"]
+    prefetch_related = ["event_set__gameposting_set"]
     periods = [Month]
+    template_name = "games/calendar_detail.html"
+    slug_url_kwarg = "gamer"
+
+
+class CalendarJSONView(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    JSONResponseMixin,
+    generic.DetailView,
+):
+    """
+    A JSON response for an ajax request to load api data.
+    """
+
+    model = Calendar
+    permission_required = "calendar.can_view"
+    select_related = ["events"]
+    context_object_name = "calendar"
+    slug_url_kwarg = "calendar"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.start = request.GET.get("start")
+        self.end = request.GET.get("end")
+        self.timezone = request.GET.pop("timezone", None)
+        if not self.timezone:
+            pass  # We'll fetch user-defined timzone later after we define it.
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Calendar.objects.all()
+
+    def get_data(self, context):
+        return _api_occurrences(
+            self.start, self.end, context["calendar"].slug, self.timezone
+        )
