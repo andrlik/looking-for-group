@@ -1,13 +1,12 @@
 from django.core.exceptions import PermissionDenied
-from rest_framework import viewsets, status, permissions
-from rest_framework.response import Response
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework_rules.decorators import permission_required as action_permission_required
 from rest_framework_rules.mixins import PermissionRequiredMixin
-from rest_framework_rules.decorators import (
-    permission_required as action_permission_required
-)
+
 from . import models, serializers
-from .models import NotInCommunity, AlreadyInCommunity, CurrentlySuspended
+from .models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
 
 
 class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):

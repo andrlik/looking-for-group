@@ -1,4 +1,4 @@
-from django.db import connections, DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, connections
 
 
 def check_table_exists(table_name):

@@ -9,4 +9,12 @@
 {% block js_extra %}
 <script type="text/javascript" src="{% static 'js/vendor/moment-with-locales.min.js" />
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.js" />
+<script type="text/javascript">
+  $(document).ready(function() {
+    // initialize calendar view
+    $('#calendar').fullCalendar({
+      events: 'schedule/api/occurences/?calendar_slug={{ calendar_slug }}'
+    })
+  });
+</script>
 {% endblock %}

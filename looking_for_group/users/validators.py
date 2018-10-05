@@ -1,10 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from django_registration.validators import (
-    ReservedNameValidator,
-    validate_confusables,
-    validate_confusables_email,
-)
+from django_registration.validators import ReservedNameValidator, validate_confusables, validate_confusables_email
+
 from .models import User
 
 

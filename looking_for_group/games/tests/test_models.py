@@ -1,13 +1,15 @@
-import pytest
-from factory.django import mute_signals
 from datetime import timedelta
-from schedule.models import Calendar, Rule
+
+import pytest
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import post_save
 from django.test import TransactionTestCase
 from django.utils import timezone
-from django.db.models.signals import post_save
-from django.core.exceptions import ObjectDoesNotExist
-from ...gamer_profiles.tests import factories
+from factory.django import mute_signals
+from schedule.models import Calendar, Rule
+
 from .. import models
+from ...gamer_profiles.tests import factories
 from ..utils import check_table_exists
 
 

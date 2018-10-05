@@ -1,8 +1,9 @@
 import factory
 import factory.django
 from django.db.models.signals import post_save
-from ...users.tests import factories as userfac
+
 from .. import models
+from ...users.tests import factories as userfac
 
 
 @factory.django.mute_signals(post_save)
