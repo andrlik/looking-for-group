@@ -10,7 +10,7 @@ from schedule.models import Calendar
 from schedule.periods import Month
 from schedule.views import CalendarByPeriodsView, _api_occurrences
 
-from . import models
+from . import forms, models
 from .mixins import JSONResponseMixin
 
 # Create your views here.
@@ -43,23 +43,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
     """
 
     models = models.GamePosting
-    fields = [
-        "game_type",
-        "title",
-        "min_players",
-        "max_players",
-        "adult_themes",
-        "content_warning",
-        "privacy_level",
-        "game_system" "published_game",
-        "published_module",
-        "game_frequency",
-        "start_time",
-        "session_length",
-        "end_date",
-        "game_description",
-        "communities",
-    ]
+    form_class = forms.GamePostingForm
     template_name = "games/game_create.html"
     allowed_communities = None
 
@@ -75,6 +59,11 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
         context = super().get_context_data(**kwargs)
         context["allowed_communities"] = self.get_allowed_communties()
         return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["gamer"] = self.request.user.gamerprofile
+        return kwargs
 
     def form_valid(self, form):
         self.game_posting = form.save(commit=False)
@@ -133,28 +122,17 @@ class GamePostingUpdateView(
     model = models.GamePosting
     permission_required = "games.can_edit_listing"
     template_name = "games/game_detail.html"
-    fields = [
-        "game_type",
-        "title",
-        "min_players",
-        "max_players",
-        "adult_themes",
-        "content_warning",
-        "privacy_level",
-        "game_system" "published_game",
-        "published_module",
-        "game_frequency",
-        "start_time",
-        "session_length",
-        "end_date",
-        "game_description",
-        "communities",
-    ]
+    form_class = forms.GamePostingForm
     pk_url_kwarg = "gameid"
     allowed_communities = None
 
     def get_success_url(self):
         return self.get_object().get_absolute_url()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["gamer"] = self.request.user.gamerprofile
+        return kwargs
 
     def get_allowed_communities(self):
         if not self.allowed_communities:
@@ -270,6 +248,11 @@ class GameSessionCreate(
         context["occurrence"] = self.game.get_next_scheduled_occurrence()
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["game"] = self.game
+        return kwargs
+
     def get_permission_object(self):
         return self.game
 
@@ -330,6 +313,7 @@ class GameSessionUpdate(
     prefetch_related = ["players_expected", "players_missing"]
     permission_required = "games.can_edit_listing"
     template_name = "games/session_edit.html"
+    form_class = forms.GameSessionForm
     context_object_name = "session"
     pk_url_kwarg = "session"
 
@@ -337,6 +321,11 @@ class GameSessionUpdate(
         context = super().get_context_data(**kwargs)
         context["players"] = models.Player.objects.filter(game=context["session"].game)
         return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["game"] = self.game
+        return kwargs
 
     def get_permission_object(self):
         return self.get_object().game
