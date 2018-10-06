@@ -68,3 +68,13 @@ class GameSessionForm(forms.ModelForm):
     class Meta:
         model = models.GameSession
         fields = ["players_expected", "players_missing", "gm_notes"]
+
+
+class GameSessionRescheduleForm(forms.ModelForm):
+
+    class Meta:
+        model = models.GameSession
+        fields = ['scheduled_time']
+        widgets = {
+            'scheduled_time': forms.widgets.DateTimeInput(attrs={'class': 'dtp'})
+        }
