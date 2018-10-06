@@ -1,8 +1,9 @@
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
@@ -236,8 +237,11 @@ class GameSessionCreate(
     permission_required = "games.can_edit_listing"
     fields = ["game"]
     template_name = "games/session_create.html"
+    http_method_names = ["post"]
 
     def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() not in self.http_method_names:
+            return HttpResponseNotAllowed(['POST'])
         game_pk = kwargs.pop("game", None)
         self.game = get_object_or_404(models.GameSession, pk=game_pk)
         return super().dispatch(request, *args, **kwargs)
@@ -247,11 +251,6 @@ class GameSessionCreate(
         context["game"] = self.game
         context["occurrence"] = self.game.get_next_scheduled_occurrence()
         return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["game"] = self.game
-        return kwargs
 
     def get_permission_object(self):
         return self.game
@@ -332,6 +331,26 @@ class GameSessionUpdate(
 
     def get_queryset(self):
         return models.GameSession.objects.all()
+
+
+class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.UpdateView):
+    '''
+    Reschedule a game session.
+    '''
+    model = models.GameSession
+    permission_required = 'game.can_schedule'
+    template_name = 'games/session_reschedule.html'
+    pk_url_kwarg = 'session'
+    form_class = forms.GameSessionRescheduleForm  # Fill in later
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+    def form_valid(self, form):
+        # TODO: Add event conflict checking?
+        session = self.get_object()
+        session = session.move(form.cleaned_data['scheduled_time'])
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class GameSessionDelete(
