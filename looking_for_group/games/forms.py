@@ -57,14 +57,14 @@ class GameSessionForm(forms.ModelForm):
         cleaned_data = super().clean()
         players_expected = cleaned_data.get("players_expected")
         players_missing = cleaned_data.get("players_missing")
-
-        for player in players_missing:
-            if player not in players_expected:
-                raise forms.ValidationError(
-                    _(
-                        "You cannot list a player as missing if they were not also expected for this session."
+        if players_missing:
+            for player in players_missing:
+                if not players_expected or player not in players_expected:
+                    raise forms.ValidationError(
+                        _(
+                            "You cannot list a player as missing if they were not also expected for this session."
+                        )
                     )
-                )
 
     class Meta:
         model = models.GameSession
