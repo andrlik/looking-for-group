@@ -159,7 +159,8 @@ def update_child_events_when_master_event_updated(
 
 @receiver(post_save, sender=models.GamePosting)
 def create_player_events_as_needed(sender, instance, created, *args, **kwargs):
-    async_task(create_game_player_events, instance)
+    if instance.players.count() > 0:
+        async_task(create_game_player_events, instance)
 
 
 @receiver(post_save, sender=Occurrence)
