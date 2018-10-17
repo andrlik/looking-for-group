@@ -1,3 +1,4 @@
+import base64
 import logging
 from uuid import uuid4
 
@@ -25,6 +26,24 @@ class AbstractUUIDModel(models.Model):
     An abstract model that handles the default UUID primary key data.
     '''
     id = models.UUIDField(default=uuid4, primary_key=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class AbstractUUIDWithSlugModel(AbstractUUIDModel):
+    '''
+    Adds a base64 encoded slug of the uuid.
+    '''
+    slug = models.CharField(max_length=50, unique=True, db_index=True, null=True, blank=True)
+
+    def generate_uuid_slug(self):
+        self.slug = str(base64.urlsafe_b64encode(self.id.bytes)).replace('=', '')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.generate_uuid_slug()
+        return super().save(*args, **kwargs)
 
     class Meta:
         abstract = True

@@ -10,7 +10,7 @@ from model_utils.models import TimeStampedModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
 from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule
-from ..game_catalog.utils import AbstractUUIDModel
+from ..game_catalog.utils import AbstractUUIDModel, AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from .utils import check_table_exists
 
@@ -262,7 +262,7 @@ SESSION_STATUS_CHOICES = (
 
 
 # Create your models here.
-class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
+class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
     A user-created game.
     """
@@ -454,7 +454,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDModel, models.Model):
         self.save()
 
 
-class Player(TimeStampedModel, AbstractUUIDModel, models.Model):
+class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
     An abstract link to a game.
     """
@@ -476,7 +476,7 @@ class Player(TimeStampedModel, AbstractUUIDModel, models.Model):
         return self.gamer.attendance_record
 
 
-class Character(TimeStampedModel, AbstractUUIDModel, models.Model):
+class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
     Represents a character being played for a given game.
     """
@@ -495,7 +495,7 @@ class Character(TimeStampedModel, AbstractUUIDModel, models.Model):
         return "{0} ({1})".format(self.name, self.player.gamer.display_name)
 
 
-class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
+class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
     An instance of a posted game. Only generated once played.
     """
@@ -561,7 +561,7 @@ class GameSession(TimeStampedModel, AbstractUUIDModel, models.Model):
             self.save()
 
 
-class AdventureLog(TimeStampedModel, AbstractUUIDModel, models.Model):
+class AdventureLog(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
     Represents an optional player-visible adventure log for a session.
     This can be created at any time after the initial session is instantiated, provided that it is not in status cancelled.
