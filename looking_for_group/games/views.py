@@ -1,6 +1,7 @@
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models.query_utils import Q
 from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -21,7 +22,6 @@ class GamePostingListView(
     LoginRequiredMixin,
     SelectRelatedMixin,
     PrefetchRelatedMixin,
-    PermissionRequiredMixin,
     generic.ListView,
 ):
     """
@@ -31,11 +31,22 @@ class GamePostingListView(
     model = models.GamePosting
     select_related = ["game_system", "published_game", "published_module"]
     prefetch_related = ["players", "communities"]
-    permission_required = "games.can_view_listing"
     template_name = "games/game_list.html"
+    context_object_name = 'game_list'
+    paginate_by = 15
+    paginate_orphans = 3
 
     def get_queryset(self):
-        return models.GamePosting.objects.all()
+        gamer = self.request.user.gamerprofile
+        friends = gamer.friends.all()
+        communities = [f.id for f in gamer.communities.all()]
+        game_player_ids = [ obj.game.id for obj in models.Player.objects.filter(gamer=gamer).select_related('game')]
+        q_gm = Q(gm=gamer)
+        q_gm_is_friend = Q(gm__in=friends) & Q(privacy_level="community")
+        q_isplayer = Q(id__in=game_player_ids)
+        q_community = Q(communities__id__in=communities) & Q(privacy_level='community')
+        q_public = Q(privacy_level="public")
+        return models.GamePosting.objects.filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
 
 
 class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
@@ -107,7 +118,8 @@ class GamePostingDetailView(
     prefetch_related = ["players", "communities"]
     permission_required = "games.can_view_listing"
     template_name = "games/game_detail.html"
-    pk_url_kwarg = "gameid"
+    slug_url_kwarg = "gameid"
+    slug_field = 'slug'
 
     def get_queryset(self):
         return models.GamePosting.objects.all()
@@ -124,7 +136,8 @@ class GamePostingUpdateView(
     permission_required = "games.can_edit_listing"
     template_name = "games/game_detail.html"
     form_class = forms.GamePostingForm
-    pk_url_kwarg = "gameid"
+    slug_url_kwarg = "gameid"
+    slug_field = 'slug'
     allowed_communities = None
 
     def get_success_url(self):
@@ -184,7 +197,8 @@ class GamePostingDeleteView(
     prefetch_related = ["players", "communities", "players__character_set"]
     permission_required = "games.can_edit_listing"
     template_name = "games/game_delete.html"
-    pk_url_kwarg = "gameid"
+    slug_url_kwarg = "gameid"
+    slug_field = 'slug'
 
 
 class GameSessionList(
@@ -287,7 +301,8 @@ class GameSessionDetail(
     permission_required = "games.is_member"
     template_name = "games/session_detail.html"
     context_object_name = "session"
-    pk_url_kwarg = "session"
+    slug_url_kwarg = "session"
+    slug_field = 'slug'
 
     def get_permission_object(self):
         return self.get_object().game
@@ -314,7 +329,8 @@ class GameSessionUpdate(
     template_name = "games/session_edit.html"
     form_class = forms.GameSessionForm
     context_object_name = "session"
-    pk_url_kwarg = "session"
+    slug_url_kwarg = "session"
+    slug_field =  'slug'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -340,7 +356,8 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
     model = models.GameSession
     permission_required = 'game.can_schedule'
     template_name = 'games/session_reschedule.html'
-    pk_url_kwarg = 'session'
+    slug_url_kwarg = 'session'
+    slug_field = 'slug'
     form_class = forms.GameSessionRescheduleForm  # Fill in later
 
     def get_success_url(self):
@@ -378,7 +395,8 @@ class GameSessionDelete(
     permission_required = "games.can_edit_listing"
     template_name = "games/session_delete.html"
     context_object_name = "session"
-    pk_url_kwarg = "session"
+    slug_url_kwarg = "session"
+    slug_field = 'slug'
 
     def get_permission_object(self):
         return self.get_object().game
@@ -442,7 +460,8 @@ class AdventureLogDetail(
     prefetch_related = ["session__players_expected", "session__players_missing"]
     permission_required = "games.is_member"
     context_object_name = "log"
-    pk_url_kwarg = "log"
+    slug_url_kwarg = "log"
+    slug_field = 'slug'
     template = "games/log_detail.html"
 
     def get_permission_object(self):
@@ -493,7 +512,8 @@ class AdventureLogUpdate(
     model = models.AdventureLog
     permission_required = "games.is_member"
     template_name = "games/log_edit.html"
-    pk_url_kwarg = "log"
+    slug_url_kwarg = "log"
+    slug_field = 'slug'
     fields = ["title", "body"]
 
     def get_permission_object(self):
@@ -523,7 +543,8 @@ class AdventureLogDelete(
     select_related = ["session", "session__game", "initial_author", "last_edited_by"]
     permission_required = "games.can_edit_listing"
     template_name = "games/log_delete.html"
-    pk_url_kwarg = "log"
+    slug_url_kwarg = "log"
+    slug_field = 'slug'
     context_object_name = "log"
 
     def get_permission_object(self):
