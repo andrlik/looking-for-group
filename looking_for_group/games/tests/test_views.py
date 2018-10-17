@@ -22,6 +22,7 @@ class AbstractViewTestCase(object):
         self.gp2 = models.GamePosting.objects.create(game_type='campaign', title='A community campaign', gm=self.gamer1, privacy_level='community', min_players=1, max_players=5, game_frequency='weekly', session_length=2.5)
         self.gp2.communities.add(self.comm1)
         self.gp3 = models.GamePosting.objects.create(game_type='campaign', title='A private game', gm=self.gamer3, privacy_level='private', min_players=1, max_players=5, game_frequency='weekly', session_length=2.5)
+        self.gp5 = models.GamePosting.objects.create(game_type='campaign', status='cancel', title='A spoopy campaign', gm=self.gamer4, privacy_level='public', min_players=1, max_players=5, game_frequency='weekly', session_length=2.5)
 
 
 class AbstractViewTestCaseNoSignals(AbstractViewTestCase, TestCase):

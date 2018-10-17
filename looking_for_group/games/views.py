@@ -46,7 +46,7 @@ class GamePostingListView(
         q_isplayer = Q(id__in=game_player_ids)
         q_community = Q(communities__id__in=communities) & Q(privacy_level='community')
         q_public = Q(privacy_level="public")
-        return models.GamePosting.objects.filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
+        return models.GamePosting.objects.exclude(status__in=["cancel", "closed"]).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
 
 
 class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):

@@ -274,6 +274,13 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         db_index=True,
         help_text=_("Is this a campaign or something shorter?"),
     )
+    status = models.CharField(
+        max_length=10,
+        help_text=_("Current game status"),
+        choices=GAME_STATUS_CHOICES,
+        db_index=True,
+        default="open",
+    )
     title = models.CharField(
         max_length=255, help_text=_("What is the title of your campaign/game?")
     )
@@ -452,6 +459,9 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     def update_completed_session_count(self):
         self.sessions = self.gamesession_set.filter(status="complete").count()
         self.save()
+
+    class Meta:
+        ordering = ["status", "start_time", "-end_date", "-created"]
 
 
 class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
