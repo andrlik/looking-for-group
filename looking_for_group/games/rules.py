@@ -37,6 +37,38 @@ def is_game_member(user, game):
     return False
 
 
+@rules.predicate
+def is_gm(user, game):
+    return user.gamerprofile == game.gm
+
+
+@rules.predicate
+def is_not_blocked(user, game):
+    if user.gamerprofile.blocked_by(game.gm):
+        return False
+    return True
+
+
+game_is_viewable = is_gm | is_not_blocked
+
+
+@rules.predicate
+def is_open_to_players(user, game):
+    if game.status in ('open', 'replace'):
+        return True
+    return False
+
+
+@rules.predicate
+def is_applicant(user, application):
+    if user.gamerprofile == application.gamer:
+        return True
+    return False
+
+
+application_eligible = is_not_blocked & is_open_to_players
+
+
 can_see_private_game_listing = is_public_game | is_friend | is_same_community_as_game | is_game_member
 
 
@@ -49,7 +81,9 @@ def is_calendar_owner(user, calendar):
 
 
 rules.add_perm('game.edit_listing', is_game_gm)
-rules.add_perm('game.can_view_listing_summary', can_see_private_game_listing)
+rules.add_perm('game.can_view_listing', game_is_viewable)
+rules.add_perm('game.can_apply', application_eligible)
+rules.add_perm('game.edit_application', is_applicant)
 rules.add_perm('game.can_schedule', is_game_gm)
 rules.add_perm('game.is_member', is_game_member)
 rules.add_perm('game.can_view_listing_details', is_game_member)

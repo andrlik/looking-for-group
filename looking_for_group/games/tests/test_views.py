@@ -109,7 +109,28 @@ class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
 
 
 class GamePostingDetailTest(AbstractViewTestCaseNoSignals):
-    pass
+    '''
+    Test for game posting detail view and permissions.
+    Note that a private link **can** be used to view it,
+    but should get the apply view.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = 'games:game_detail'
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, gameid=self.gp2.slug)
+
+    def test_view_load(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, gameid=self.gp2.slug)
+
+    def test_applicant_view(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, gameid=self.gp2.slug)
+            self.response_302()
+            assert "/apply/" in self.last_response['location']
 
 
 class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):

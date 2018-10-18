@@ -19,10 +19,7 @@ from .mixins import JSONResponseMixin
 
 
 class GamePostingListView(
-    LoginRequiredMixin,
-    SelectRelatedMixin,
-    PrefetchRelatedMixin,
-    generic.ListView,
+    LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, generic.ListView
 ):
     """
     A generic list view for game postings.
@@ -32,7 +29,7 @@ class GamePostingListView(
     select_related = ["game_system", "published_game", "published_module"]
     prefetch_related = ["players", "communities"]
     template_name = "games/game_list.html"
-    context_object_name = 'game_list'
+    context_object_name = "game_list"
     paginate_by = 15
     paginate_orphans = 3
 
@@ -40,13 +37,18 @@ class GamePostingListView(
         gamer = self.request.user.gamerprofile
         friends = gamer.friends.all()
         communities = [f.id for f in gamer.communities.all()]
-        game_player_ids = [ obj.game.id for obj in models.Player.objects.filter(gamer=gamer).select_related('game')]
+        game_player_ids = [
+            obj.game.id
+            for obj in models.Player.objects.filter(gamer=gamer).select_related("game")
+        ]
         q_gm = Q(gm=gamer)
         q_gm_is_friend = Q(gm__in=friends) & Q(privacy_level="community")
         q_isplayer = Q(id__in=game_player_ids)
-        q_community = Q(communities__id__in=communities) & Q(privacy_level='community')
+        q_community = Q(communities__id__in=communities) & Q(privacy_level="community")
         q_public = Q(privacy_level="public")
-        return models.GamePosting.objects.exclude(status__in=["cancel", "closed"]).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
+        return models.GamePosting.objects.exclude(
+            status__in=["cancel", "closed"]
+        ).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
 
 
 class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
@@ -89,7 +91,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
                     )
                     return self.form_invalid(form)
         self.game_posting.save()
-        return HttpResponseRedirect(reverse_lazy('games:game_list'))
+        return HttpResponseRedirect(reverse_lazy("games:game_list"))
 
 
 class GamePostingDetailView(
@@ -113,13 +115,149 @@ class GamePostingDetailView(
         "gamesession_set__adventurelog",
     ]
     prefetch_related = ["players", "communities"]
-    permission_required = "games.can_view_listing"
+    permission_required = "game.can_view_listing"
     template_name = "games/game_detail.html"
     slug_url_kwarg = "gameid"
-    slug_field = 'slug'
+    slug_field = "slug"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.game = self.get_object()
+        if request.user.is_authenticated and request.user.gamerprofile not in self.game.players.all() and request.user.gamerprofile != self.game.gm:
+            return HttpResponseRedirect(reverse_lazy('games:game_apply', kwargs={'gameid': self.game.slug}))
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return models.GamePosting.objects.all()
+
+
+class GamePostingApplyView(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView
+):
+    """
+    View for managing applying to a game.
+    """
+
+    model = None
+    template_name = "games/game_apply.html"
+    permission_required = "game.can_apply"
+    fields = ["message"]
+
+    def dispatch(self, request, *args, **kwargs):
+        game_slug = kwargs.pop("gameid", None)
+        self.game = get_object_or_404(models.GamePosting, slug=game_slug)
+        if request.user.is_authenticated:
+            if request.user.gamerprofile in self.game.players.all() or request.user.gamerprofile == self.game.gm:
+                return HttpResponseRedirect(self.game.get_absolute_url())
+            if (
+                models.GameApplicant.objects.filter(
+                    game=self.game, gamer=request.user.gamerprofile, status="pending"
+                ).objects.count()
+                > 0
+            ):
+                messages.info(request, _("You already have an active application for this game."))
+                return HttpResponseRedirect(reverse_lazy("games:my-game-applications"))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.game
+
+    def form_valid(self, form):
+        application = form.save(commit=False)
+        application.gamer = self.request.user.gamerprofile
+        application.game = self.game
+        application.save()
+        return HttpResponseRedirect(application.get_absolute_url())
+
+
+class GamePostingApplicationDetailView(
+    LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.DetailView
+):
+    """
+    View for an application detail.
+    """
+
+    model = models.GamePostingApplication
+    context_object_name = "application"
+    slug_url_kwarg = "application"
+    slug_field = "slug"
+    permission_required = "game.view_application"
+    template_name = "games/game_apply_detail.html"
+
+
+class GamePostingApplicationUpdateView(
+    LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.UpdateView
+):
+    """
+    Update view for a game application.
+    """
+
+    model = models.GamePostingApplication
+    slug_url_kwarg = "application"
+    select_related = ["game"]
+    slug_field = "slug"
+    permission_required = "game.edit_application"
+    template_name = "games/game_apply_update.html"
+    fields = ["message"]
+
+    def get_success_url(self):
+        return self.get_object().get_absolute_url()
+
+    def form_valid(self, form):
+        if "submit_app" in self.request.POST.keys():
+            try:
+                if self.get_object().submit_application():
+                    messages.success(
+                        self.request, _("Application successfully submitted.")
+                    )
+            except models.CurrentlyBlocked as e:
+                messages.error(self.request, str(e))
+            except models.GameClosed as e:
+                messages.error(self.request, str(e))
+            return HttpResponseRedirect(self.get_object().get_absolute_url())
+        return super().form_valid(form)
+
+
+class GamePostingWithdrawApplication(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.DeleteView,
+):
+    """
+    Delete view for an application.
+    """
+
+    model = models.GamePostingApplication
+    template_name = "games/game_apply_delete.html"
+    permission_required = "game.edit_application"
+    select_related = ["game"]
+    context_object_name = "application"
+
+
+class GamePostingAppliedList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
+    """
+    View of a user's personal application list.
+    """
+
+    select_related = ["game"]
+    template_name = "games/game_application_list.html"
+    model = models.GamePostingApplication
+    context_object_name = "application_list"
+
+    def get_queryset(self):
+        self.model.objects.filter(
+            gamer=self.request.user.gamerprofile, status__in=("new", "pending")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["approved_application_list"] = self.model.objects.filter(
+            gamer=self.request.user.gamerprofile, status="approve"
+        )
+        context["rejected_application_list"] = self.model.objects.filter(
+            gamer=self.request.user.gamerprofile, status="deny"
+        )
+        return context
 
 
 class GamePostingUpdateView(
@@ -134,7 +272,7 @@ class GamePostingUpdateView(
     template_name = "games/game_detail.html"
     form_class = forms.GamePostingForm
     slug_url_kwarg = "gameid"
-    slug_field = 'slug'
+    slug_field = "slug"
     allowed_communities = None
 
     def get_success_url(self):
@@ -195,7 +333,7 @@ class GamePostingDeleteView(
     permission_required = "games.can_edit_listing"
     template_name = "games/game_delete.html"
     slug_url_kwarg = "gameid"
-    slug_field = 'slug'
+    slug_field = "slug"
 
 
 class GameSessionList(
@@ -252,7 +390,7 @@ class GameSessionCreate(
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in self.http_method_names:
-            return HttpResponseNotAllowed(['POST'])
+            return HttpResponseNotAllowed(["POST"])
         game_pk = kwargs.pop("game", None)
         self.game = get_object_or_404(models.GameSession, pk=game_pk)
         return super().dispatch(request, *args, **kwargs)
@@ -299,7 +437,7 @@ class GameSessionDetail(
     template_name = "games/session_detail.html"
     context_object_name = "session"
     slug_url_kwarg = "session"
-    slug_field = 'slug'
+    slug_field = "slug"
 
     def get_permission_object(self):
         return self.get_object().game
@@ -327,7 +465,7 @@ class GameSessionUpdate(
     form_class = forms.GameSessionForm
     context_object_name = "session"
     slug_url_kwarg = "session"
-    slug_field =  'slug'
+    slug_field = "slug"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -347,14 +485,15 @@ class GameSessionUpdate(
 
 
 class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.UpdateView):
-    '''
+    """
     Reschedule a game session.
-    '''
+    """
+
     model = models.GameSession
-    permission_required = 'game.can_schedule'
-    template_name = 'games/session_reschedule.html'
-    slug_url_kwarg = 'session'
-    slug_field = 'slug'
+    permission_required = "game.can_schedule"
+    template_name = "games/session_reschedule.html"
+    slug_url_kwarg = "session"
+    slug_field = "slug"
     form_class = forms.GameSessionRescheduleForm  # Fill in later
 
     def get_success_url(self):
@@ -363,7 +502,7 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
     def form_valid(self, form):
         # TODO: Add event conflict checking?
         session = self.get_object()
-        session = session.move(form.cleaned_data['scheduled_time'])
+        session = session.move(form.cleaned_data["scheduled_time"])
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -393,7 +532,7 @@ class GameSessionDelete(
     template_name = "games/session_delete.html"
     context_object_name = "session"
     slug_url_kwarg = "session"
-    slug_field = 'slug'
+    slug_field = "slug"
 
     def get_permission_object(self):
         return self.get_object().game
@@ -458,7 +597,7 @@ class AdventureLogDetail(
     permission_required = "games.is_member"
     context_object_name = "log"
     slug_url_kwarg = "log"
-    slug_field = 'slug'
+    slug_field = "slug"
     template = "games/log_detail.html"
 
     def get_permission_object(self):
@@ -510,7 +649,7 @@ class AdventureLogUpdate(
     permission_required = "games.is_member"
     template_name = "games/log_edit.html"
     slug_url_kwarg = "log"
-    slug_field = 'slug'
+    slug_field = "slug"
     fields = ["title", "body"]
 
     def get_permission_object(self):
@@ -541,7 +680,7 @@ class AdventureLogDelete(
     permission_required = "games.can_edit_listing"
     template_name = "games/log_delete.html"
     slug_url_kwarg = "log"
-    slug_field = 'slug'
+    slug_field = "slug"
     context_object_name = "log"
 
     def get_permission_object(self):

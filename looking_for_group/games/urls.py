@@ -16,11 +16,7 @@ urlpatterns = [
         UpcomingGamesFeed(),
         name="upcoming_events_feed",
     ),
-    path(
-        "schedule/ical/calendar/<uuid:gamer>/",
-        GamesICalFeed(),
-        name="calendar_ical",
-    ),
+    path("schedule/ical/calendar/<uuid:gamer>/", GamesICalFeed(), name="calendar_ical"),
     path("schedule/calendar/", views.CalendarDetail.as_view(), name="calendar_detail"),
     path(
         "sessions/<slug:session>/",
@@ -74,6 +70,31 @@ urlpatterns = [
         "game/<slug:gameid>/delete/",
         views.GamePostingDeleteView.as_view(),
         name="game_delete",
+    ),
+    path(
+        "game/<slug:gameid>/apply/",
+        views.GamePostingApplyView.as_view,
+        name="game_apply",
+    ),
+    path(
+        "applications/<slug:application>/",
+        views.GamePostingApplicationDetailView.as_view(),
+        name="game_application_detail",
+    ),
+    path(
+        "applications/<slug:application>/edit/",
+        views.GamePostingApplicationUpdateView.as_view(),
+        name="game_application_update",
+    ),
+    path(
+        "applications/<slug:application>/delete/",
+        views.GamePostingWithdrawApplication.as_view(),
+        name="game_application_delete",
+    ),
+    path(
+        "applications/",
+        views.GamePostingAppliedList.as_view(),
+        name="my-game-applications",
     ),
     path("create/", views.GamePostingCreateView.as_view(), name="game_create"),
     path("", views.GamePostingListView.as_view(), name="game_list"),
