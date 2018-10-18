@@ -59,12 +59,9 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
     template_name = "games/game_create.html"
     allowed_communities = None
 
-    def get_success_url(self):
-        return self.game_posting.get_absolute_url()
-
     def get_allowed_communties(self):
         if not self.allowed_communities:
-            self.allowed_communities = self.request.user.gamerprofile.communties.all()
+            self.allowed_communities = self.request.user.gamerprofile.communities.all()
         return self.allowed_communities
 
     def get_context_data(self, **kwargs):
@@ -79,8 +76,8 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         self.game_posting = form.save(commit=False)
-        if self.game_posting.commmunities:
-            for comm in self.game_posting.communities:
+        if self.game_posting.communities:
+            for comm in self.game_posting.communities.all():
                 if comm not in self.get_allowed_communties():
                     messages.error(
                         self.request,
@@ -92,7 +89,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
                     )
                     return self.form_invalid(form)
         self.game_posting.save()
-        return HttpResponseRedirect(self.get_success_url())
+        return HttpResponseRedirect(reverse_lazy('games:game_list'))
 
 
 class GamePostingDetailView(

@@ -31,16 +31,16 @@
     {% for game in game_list %}
     <tr>
       <td>{{ game.title }}</td>
-      <td>{{ game.get_display_game_type }}</td>
-      <td>{{ game.get_display_status }}</td>
+      <td>{{ game.get_game_type_display }}</td>
+      <td>{{ game.get_status_display }}</td>
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
       <td><a href="{{ game.gm.get_absolute_url }}">{% avatar 20 game.gm.user %} {{ game.gm.username }}</a></td>
       <td>{{ game.game_get_display_game_frequency }} </td>
       <td class="text-right">{{ game.session_length }}</td>
-      <td>{{ game.adult_themes|yesno:"Yes,No"</td>
+      <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
       <td>{{ game.content_warning }}</td>
-      <td>{{ game.get_display_privacy_level }}</td>
+      <td>{{ game.get_privacy_level_display }}</td>
       <td><strong>{{ game.players.count }}</strong>/{{ game.min_players }}/{{ game.max_players }}</td>
       <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.title }}</a>{% else %}N/A{% endif %}</td>
       <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}N/A{% endif %}</td>

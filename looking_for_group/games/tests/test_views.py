@@ -65,7 +65,47 @@ class GamePostingListTest(AbstractViewTestCaseNoSignals):
 
 
 class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
-    pass
+    '''
+    Test creation of a game posting.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = 'games:game_create'
+        self.valid_post_data = {
+            "title": "A Valid Campaign",
+            "game_type": "campaign",
+            "privacy_level": "private",
+            "min_players": 1,
+            "max_players": 3,
+            "session_length": 2.5,
+            "game_frequency": "weekly",
+            "communities": [self.comm1.pk],
+        }
+
+    def test_login_required(self):
+        previous_count = models.GamePosting.objects.count()
+        self.assertLoginRequired(self.view_name)
+        self.post(self.view_name, data=self.valid_post_data)
+        assert "accounts/login" in self.last_response['location']
+        assert previous_count == models.GamePosting.objects.count()
+
+    def test_form_load(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name)
+
+    def test_invalid_community_submission(self):
+        with self.login(username=self.gamer2.username):
+            self.post(self.view_name, data=self.valid_post_data)
+            self.response_200()
+            assert len(self.get_context('form').errors) > 0
+
+    def test_valid_submission(self):
+        previous_count = models.GamePosting.objects.count()
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.valid_post_data)
+            self.response_302()
+            assert models.GamePosting.objects.count() - previous_count == 1
 
 
 class GamePostingDetailTest(AbstractViewTestCaseNoSignals):

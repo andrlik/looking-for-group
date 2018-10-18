@@ -35,10 +35,10 @@ class AbstractUUIDWithSlugModel(AbstractUUIDModel):
     '''
     Adds a base64 encoded slug of the uuid.
     '''
-    slug = models.CharField(max_length=50, unique=True, db_index=True, null=True, blank=True)
+    slug = models.CharField(max_length=50, unique=True, db_index=True, blank=True)
 
     def generate_uuid_slug(self):
-        self.slug = str(base64.urlsafe_b64encode(self.id.bytes)).replace('=', '')
+        self.slug = base64.urlsafe_b64encode(self.id.bytes).decode('utf-8').replace('=', '')
 
     def save(self, *args, **kwargs):
         if not self.slug:
