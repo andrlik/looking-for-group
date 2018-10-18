@@ -133,6 +133,26 @@ class GamePostingDetailTest(AbstractViewTestCaseNoSignals):
             assert "/apply/" in self.last_response['location']
 
 
+class GamePostingApplyViewTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class GamePostinApplyDetailViewTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class GamePostingApplyUpdateViewTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class GamePostingApplyWithdrawViewTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class GamePostingAppliedListTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
 class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
     pass
 
