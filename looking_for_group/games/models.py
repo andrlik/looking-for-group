@@ -11,10 +11,18 @@ from schedule.models import Calendar, Event, EventManager, EventRelation, EventR
 
 from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule
 from ..game_catalog.utils import AbstractUUIDModel, AbstractUUIDWithSlugModel
-from ..gamer_profiles.models import GamerCommunity, GamerProfile
+from ..gamer_profiles.models import BlockedUser, GamerCommunity, GamerProfile
 from .utils import check_table_exists
 
 logger = logging.getLogger("games")
+
+
+class CurrentlyBlocked(Exception):
+    pass
+
+
+class GameClosed(Exception):
+    pass
 
 
 class GameEventRelationManager(EventRelationManager):
@@ -238,12 +246,7 @@ GAME_STATUS_CHOICES = (
 
 GAME_PRIVACY_CHOICES = (
     ("private", _("Private Link (unlisted)")),
-    (
-        "community",
-        _(
-            "Friends/Selected Communities"
-        ),
-    ),
+    ("community", _("Friends/Selected Communities")),
     ("public", _("Public")),
 )
 
@@ -258,6 +261,13 @@ SESSION_STATUS_CHOICES = (
     ("pending", _("Scheduled")),
     ("cancel", _("Cancelled")),
     ("complete", _("Completed")),
+)
+
+GAME_APPLICATION_STATUS_CHOICES = (
+    ("new", _("Awaiting submission.")),
+    ("pending", _("Pending Review")),
+    ("deny", _("Denied")),
+    ("approve", _("Approved")),
 )
 
 
@@ -462,6 +472,38 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     class Meta:
         ordering = ["status", "start_time", "-end_date", "-created"]
+
+
+class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+    """
+    An application for a game.
+    """
+
+    game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
+    gamer = models.ForeignKey(GamerProfile, on_delete=models.CASCADE)
+    message = models.TextField(
+        help_text=_("Please include a message with your application.")
+    )
+    status = models.CharField(max_length=15, choices=GAME_APPLICATION_STATUS_CHOICES, db_index=True, default="new")
+
+    def __str__(self):
+        return "Application to {} from {}".format(self.game.title, self.gamer.username)
+
+    def get_absolute_url(self):
+        return reverse_lazy(
+            "games:game_application_detail", kwargs={"application": self.slug}
+        )
+
+    def submit_application(self):
+        if self.game.status not in ['open', 'replace']:
+            raise GameClosed(_('This game is currently closed and not accepting additional players.'))
+        if self.gamer.user.has_perm('games.can_apply', self.game):
+            self.status = 'pending'
+            self.save()
+            return True
+        else:
+            raise CurrentlyBlocked(_("You are currently blocked by the GM from joining this game."))
+        return False
 
 
 class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
