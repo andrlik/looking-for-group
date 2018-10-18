@@ -75,6 +75,6 @@ urlpatterns = [
         views.GamePostingDeleteView.as_view(),
         name="game_delete",
     ),
-    path("game/create/", views.GamePostingCreateView.as_view(), name="game_create"),
-    path("/", views.GamePostingListView.as_view(), name="game_list"),
+    path("create/", views.GamePostingCreateView.as_view(), name="game_create"),
+    path("", views.GamePostingListView.as_view(), name="game_list"),
 ]

@@ -14,8 +14,12 @@ class GamePostingForm(forms.ModelForm):
         gamer = kwargs.pop("gamer", False)
         if not gamer:
             raise KeyError(_("You must instantiate this form with a gamer profile"))
+        allowed_communities = gamer.communities.all()
         super().__init__(*args, **kwargs)
-        self.fields["communities"].queryset = gamer.communities.all()
+        if allowed_communities.count() == 0:
+            self.fields.pop('communities')
+        if "communities" in self.fields.keys():
+            self.fields["communities"].queryset = allowed_communities
 
     class Meta:
         model = models.GamePosting

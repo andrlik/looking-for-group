@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
@@ -237,14 +237,14 @@ GAME_STATUS_CHOICES = (
 )
 
 GAME_PRIVACY_CHOICES = (
-    ("private", _("Only someone I explicitly share the link with can join.")),
+    ("private", _("Private Link (unlisted)")),
     (
         "community",
         _(
-            "My friends and communities where I have posted this can see and join this game."
+            "Friends/Selected Communities"
         ),
     ),
-    ("public", _("Anyone can see this posting and apply to join.")),
+    ("public", _("Public")),
 )
 
 CHARACTER_STATUS_CHOICES = (
@@ -388,7 +388,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         return "Game: {0} [{1}]".format(self.title, self.id)
 
     def get_absolute_url(self):
-        return reverse("games:game-posting-detail", kwargs={"game": self.pk})
+        return reverse_lazy("games:game_detail", kwargs={"gameid": self.slug})
 
     def get_player_calendars(self):
         """

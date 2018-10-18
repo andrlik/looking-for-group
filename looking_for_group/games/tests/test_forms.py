@@ -33,6 +33,8 @@ class GamePostingFormTest(AbstractFormTest):
         form2 = GamePostingForm(gamer=self.gamer1)
         assert form2.fields["communities"].queryset.count() == 2
         assert self.comm2 in form2.fields["communities"].queryset.all()
+        form3 = GamePostingForm(gamer=self.gamer4)
+        assert "communities" not in form3.fields.keys()
 
     def test_invalid_call(self):
         with pytest.raises(KeyError):
@@ -54,7 +56,6 @@ class GameSessionFormTest(AbstractFormTest):
         self.game2 = GamePosting.objects.create(gm=self.gamer2, game_type='campaign', min_players=1, title='A silly adventure', max_players=5, game_frequency='weekly', session_length=3.0)
         self.player4 = Player.objects.create(gamer=self.gamer1, game=self.game2)
 
-
     def test_player_queryset(self):
         form = GameSessionForm(game=self.game)
         assert form.fields['players_expected'].queryset.count() == 3
@@ -68,13 +69,13 @@ class GameSessionFormTest(AbstractFormTest):
             GameSessionForm()
 
     def test_validate_only_valid_players(self):
-        form = GameSessionForm({'scheduled_time': timezone.now() + timedelta(days=1), 'players_expected': [self.player1, self.player2, self.player4], 'players_missing':[]}, game=self.game)
+        form = GameSessionForm({'scheduled_time': timezone.now() + timedelta(days=1), 'players_expected': [self.player1, self.player2, self.player4], 'players_missing': []}, game=self.game)
         assert not form.is_valid()
 
     def test_validate_missing_not_exceed_expected(self):
-        form = GameSessionForm({'scheduled_time': timezone.now() + timedelta(days=1), 'players_expected': [self.player1, self.player2], 'players_missing':[self.player3]}, game=self.game)
+        form = GameSessionForm({'scheduled_time': timezone.now() + timedelta(days=1), 'players_expected': [self.player1, self.player2], 'players_missing': [self.player3]}, game=self.game)
         assert not form.is_valid()
-        form2 = GameSessionForm({'scheduled_time': timezone.now() + timedelta(days=1), 'players_expected': [], 'players_missing':[self.player3]}, game=self.game)
+        form2 = GameSessionForm({'scheduled_time': timezone.now() + timedelta(days=1), 'players_expected': [], 'players_missing': [self.player3]}, game=self.game)
         assert not form2.is_valid()
 
     def test_validate_good_data(self):
