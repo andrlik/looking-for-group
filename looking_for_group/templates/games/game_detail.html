@@ -1,0 +1,78 @@
+{% extends "games/base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{{ game.title }} - {% endblock %}
+{% block content %}
+<h1>{{ game.title }}</h1>
+<dl>
+  <dt>{% trans "GM" %}</dt>
+  <dd>{% avatar 30 game.gm.user %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
+  <dt>{% trans "Description" %}</dt>
+  <dd>{{ game.description_rendered|safe }}</dd>
+  <dt>{% trans "Details" %}</dt>
+  <dd>
+  <table class="hover stack">
+    <tbody>
+      <tr>
+        <td>{% trans "Status" %}</td>
+        <td>{{ game.get_status_display }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Game Type" %}</td>
+        <td>{{ game.get_game_type_display }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Starts" %}</td>
+        <td>{{ game.start_time }}</td>
+      </tr>
+      {% if game.game_type != "oneshot" %}
+      <tr>
+        <td>{% trans "Game Frequency" %}</td>
+        <td>{{ game.get_game_frequency_display }}</td>
+      </tr>
+      {% if game.end_date %}
+      <tr>
+        <td>{% trans "End Date" %}</td>
+        <td>{{ game.end_date }}</td>
+      </tr>
+      {% endif %}
+      {% endif %}
+      <tr>
+        <td>{% trans "Playing" %}</td>
+        <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.title }}</a>{% else %}{% trans "Homebrew" %}{% endif %}</td>
+      </tr>
+      <tr>
+        <td>{% trans "System" %}</td>
+        <td>
+          {% if game.published_game %}{% if game.published_game.game_system %}<a href="{{ game.published_game.game_system.get_absolute_url }}">{{ game.published_game.game_system.name }}</a>{% else %}{% trans "N/A" %}{% endif %}{% elif game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}{% trans "Homebrew" %}{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>{% trans "Published module?" %}</td>
+        <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}{% trans "N/A" %}{% endif %}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Current Players" %}</td>
+        <td class="text-right"><strong>{{ game.players.count }}</strong></td>
+      </tr>
+      <tr>
+        <td>{% trans "Min Players" %}</td>
+        <td class="text-right">{{ game.min_players }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Max Players" %}</td>
+        <td class="text-right">{{ game.max_players }}</td>
+      </tr>
+      {% if game.sessions %}
+      <tr>
+        <td>{% trans "Sessions Completed" %}</td>
+        <td class="text-right">{{ game.sessions }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  </dd>
+</dl>
+{% block details_and_controls %}
+{# Add actual details here #}
+{% endblock %}
+{% endblock %}
