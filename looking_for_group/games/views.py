@@ -233,21 +233,19 @@ class GamePostingApplicationUpdateView(
     template_name = "games/game_apply_update.html"
     fields = ["message"]
 
+    def dispatch(self, request, *args, **kwargs):
+        self.application = self.get_object()
+        if request.user.is_authenticated and request.user.gamerprofile == self.application.gamer and self.application.status not in ['new', 'pending']:
+            messages.error(request, _("This application has been processed and can no longer be edited."))
+            return HttpResponseRedirect(self.application.get_absolute_url())
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         return self.get_object().get_absolute_url()
 
     def form_valid(self, form):
         if "submit_app" in self.request.POST.keys():
-            try:
-                if self.get_object().submit_application():
-                    messages.success(
-                        self.request, _("Application successfully submitted.")
-                    )
-            except models.CurrentlyBlocked as e:
-                messages.error(self.request, str(e))
-            except models.GameClosed as e:
-                messages.error(self.request, str(e))
-            return HttpResponseRedirect(self.get_object().get_absolute_url())
+            form.instance.status = 'pending'
         return super().form_valid(form)
 
 
