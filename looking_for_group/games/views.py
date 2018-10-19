@@ -219,7 +219,7 @@ class GamePostingApplicationDetailView(
 
 
 class GamePostingApplicationUpdateView(
-    LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.UpdateView
+    LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.edit.UpdateView
 ):
     """
     Update view for a game application.
@@ -230,6 +230,7 @@ class GamePostingApplicationUpdateView(
     select_related = ["game"]
     slug_field = "slug"
     permission_required = "game.edit_application"
+    context_object_name = 'application'
     template_name = "games/game_apply_update.html"
     fields = ["message"]
 
@@ -264,6 +265,10 @@ class GamePostingWithdrawApplication(
     permission_required = "game.edit_application"
     select_related = ["game"]
     context_object_name = "application"
+    slug_url_kwarg = 'application'
+
+    def get_success_url(self):
+        return self.get_object().game.get_absolute_url()
 
 
 class GamePostingAppliedList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
