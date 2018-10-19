@@ -393,7 +393,33 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
 
 
 class GamePostingDeleteTest(AbstractViewTestCaseNoSignals):
-    pass
+    """
+    Test for deleting a game posting.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:game_delete"
+        self.url_kwargs = {"gameid": self.gp2.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_other_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_delete(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data={}, **self.url_kwargs)
+            self.response_302()
+            with pytest.raises(ObjectDoesNotExist):
+                models.GamePosting.objects.get(pk=self.gp2.pk)
 
 
 class GameSessionListTest(AbstractViewTestCaseNoSignals):

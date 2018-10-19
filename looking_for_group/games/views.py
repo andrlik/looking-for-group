@@ -360,17 +360,23 @@ class GamePostingDeleteView(
     model = models.GamePosting
     select_related = [
         "event",
-        "gamesession_set",
-        "gamesession_set__adventurelog",
         "published_game",
         "game_system",
         "published_module",
     ]
     prefetch_related = ["players", "communities", "players__character_set"]
-    permission_required = "games.can_edit_listing"
+    permission_required = "game.can_edit_listing"
     template_name = "games/game_delete.html"
     slug_url_kwarg = "gameid"
     slug_field = "slug"
+    context_object_name = 'game'
+
+    def get_success_url(self):
+        return reverse_lazy('games:game_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, _("You have deleted game {}".format(self.get_object().title)))
+        return super().form_valid(form)
 
 
 class GameSessionList(
