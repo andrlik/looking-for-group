@@ -79,17 +79,17 @@ urlpatterns = [
     path(
         "applications/<slug:application>/",
         views.GamePostingApplicationDetailView.as_view(),
-        name="game_application_detail",
+        name="game_apply_detail",
     ),
     path(
         "applications/<slug:application>/edit/",
         views.GamePostingApplicationUpdateView.as_view(),
-        name="game_application_update",
+        name="game_apply_update",
     ),
     path(
         "applications/<slug:application>/delete/",
         views.GamePostingWithdrawApplication.as_view(),
-        name="game_application_delete",
+        name="game_apply_delete",
     ),
     path(
         "applications/",

@@ -211,6 +211,7 @@ class GamePostingApplicationDetailView(
 
     model = models.GamePostingApplication
     context_object_name = "application"
+    select_related = ['game', 'gamer']
     slug_url_kwarg = "application"
     slug_field = "slug"
     permission_required = "game.view_application"

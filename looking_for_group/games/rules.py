@@ -31,6 +31,13 @@ def is_scribe(user, game):
 
 
 @rules.predicate
+def is_gm_for_game_applied(user, application):
+    if user == application.game.gm.user and application.status != 'new':
+        return True
+    return False
+
+
+@rules.predicate
 def is_game_member(user, game):
     if user.gamerprofile in game.players.all() or user.gamerprofile == game.gm:
         return True
@@ -66,6 +73,9 @@ def is_applicant(user, application):
     return False
 
 
+is_application_viewer = is_applicant | is_gm_for_game_applied
+
+
 application_eligible = is_not_blocked & is_open_to_players
 
 
@@ -83,6 +93,7 @@ def is_calendar_owner(user, calendar):
 rules.add_perm('game.edit_listing', is_game_gm)
 rules.add_perm('game.can_view_listing', game_is_viewable)
 rules.add_perm('game.can_apply', application_eligible)
+rules.add_perm('game.view_application', is_application_viewer)
 rules.add_perm('game.edit_application', is_applicant)
 rules.add_perm('game.can_schedule', is_game_gm)
 rules.add_perm('game.is_member', is_game_member)

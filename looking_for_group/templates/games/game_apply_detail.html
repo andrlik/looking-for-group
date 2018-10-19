@@ -1,0 +1,26 @@
+{% extends "games/game_detail.html" %}
+{% load i18n foundation_formtags avatar_tags %}
+{% block subtitle %}{% trans "Application detail" %} - {% endblock %}
+{% block details_and_controls %}
+<h2>{% trans "Current Application" %}</h2>
+<p>{% blocktrans with title=application.title %}Application to game {{ title }}:{% endblocktrans %}</p>
+<dl>
+  <dt>{% trans "Applicant" %}</dt>
+  <dd>{% avatar 20 application.gamer.user %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer.username }}</a></dd>
+  <dt>{% trans "Updated" %}</dt>
+  <dd>{{ application.modified }}</dd>
+  <dt>{% trans "Status" %}</dt>
+  <dd>{{ application.get_status_display }}</dd>
+  {% if application.game.gm.user == request.user %}
+  {# Add in some gamer reputation stats here #}
+  {% endif %}
+</dl>
+{% if application.gamer.user == request.user %}
+<p>
+  <a href="{% url 'games:game_apply_update' application=application.slug %}" class="button">{% trans "Edit Application" %}</a> <a href="{% url 'games:game_apply_delete' application=application.slug %}" class="button alert">{% trans "Withdraw Application" %}</a>
+</p>
+{% endif %}
+{% if application.game.gm.user == request.user %}
+{# Add approve and deny controls here. #}
+{% endif %}
+{% endblock %}
