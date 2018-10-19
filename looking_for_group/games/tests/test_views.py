@@ -446,3 +446,23 @@ class CalendarDetailTest(AbstractViewTestCaseNoSignals):
 
 class CalendarJSONTest(AbstractViewTestCaseNoSignals):
     pass
+
+
+class PlayerLeaveTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class CharacterCreateTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class CharacterDetailTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class CharacterUpdateTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
+class CharacterDeleteTest(AbstractViewTestCaseNoSignals):
+    pass
