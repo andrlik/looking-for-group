@@ -4,14 +4,14 @@ from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
 from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule
-from ..game_catalog.utils import AbstractUUIDModel, AbstractUUIDWithSlugModel
-from ..gamer_profiles.models import BlockedUser, GamerCommunity, GamerProfile
+from ..game_catalog.utils import AbstractUUIDWithSlugModel
+from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from .utils import check_table_exists
 
 logger = logging.getLogger("games")
@@ -439,6 +439,21 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
             except StopIteration:  # pragma: no cover
                 pass  # There is no next occurrence.
             return next_occurrence
+        return None
+
+    @property
+    def next_session_time(self):
+        return self.get_next_scheduled_session_occurrence().start
+
+    @property
+    def next_session(self):
+        try:
+            session = GameSession.objects.get(
+                game=self, occurrence=self.get_next_scheduled_session_occurrence()
+            )
+        except ObjectDoesNotExist:
+            return None
+        return session
 
     def create_session_from_occurrence(self, occurrence):
         """
@@ -484,7 +499,12 @@ class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, models
     message = models.TextField(
         help_text=_("Please include a message with your application.")
     )
-    status = models.CharField(max_length=15, choices=GAME_APPLICATION_STATUS_CHOICES, db_index=True, default="new")
+    status = models.CharField(
+        max_length=15,
+        choices=GAME_APPLICATION_STATUS_CHOICES,
+        db_index=True,
+        default="new",
+    )
 
     def __str__(self):
         return "Application to {} from {}".format(self.game.title, self.gamer.username)
@@ -495,14 +515,18 @@ class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, models
         )
 
     def submit_application(self):
-        if self.game.status not in ['open', 'replace']:
-            raise GameClosed(_('This game is currently closed and not accepting additional players.'))
-        if self.gamer.user.has_perm('games.can_apply', self.game):
-            self.status = 'pending'
+        if self.game.status not in ["open", "replace"]:
+            raise GameClosed(
+                _("This game is currently closed and not accepting additional players.")
+            )
+        if self.gamer.user.has_perm("games.can_apply", self.game):
+            self.status = "pending"
             self.save()
             return True
         else:
-            raise CurrentlyBlocked(_("You are currently blocked by the GM from joining this game."))
+            raise CurrentlyBlocked(
+                _("You are currently blocked by the GM from joining this game.")
+            )
         return False
 
 
@@ -527,6 +551,20 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         """
         return self.gamer.attendance_record
 
+    @property
+    def user(self):
+        return self.gamer.user
+
+    @property
+    def username(self):
+        return self.gamer.username
+
+    @property
+    def current_character(self):
+        return Character.objects.filter(
+            status__in=["pending", "approved"], player=self
+        ).order_by("-created")[0]
+
 
 class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
@@ -545,6 +583,9 @@ class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     def __str__(self):
         return "{0} ({1})".format(self.name, self.player.gamer.display_name)
+
+    def get_absolute_url(self):
+        return reverse_lazy("games:character_detail", kwargs={"character": self.slug})
 
 
 class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
@@ -579,6 +620,9 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     occurrence = models.ForeignKey(
         Occurrence, null=True, blank=True, on_delete=models.SET_NULL
     )
+
+    def get_absolute_url(self):
+        return reverse_lazy("games:session_detail", kwargs={"session": self.slug})
 
     def move(self, new_schedule_time):
         """
