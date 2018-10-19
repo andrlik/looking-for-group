@@ -282,7 +282,66 @@ class GamePostinApplyDetailViewTest(AbstractViewTestCaseNoSignals):
 
 
 class GamePostingApplyUpdateViewTest(AbstractViewTestCaseNoSignals):
-    pass
+    """
+    Test for application update view.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.application = models.GamePostingApplication.objects.create(
+            game=self.gp2, gamer=self.gamer4, message="Hi", status="new"
+        )
+        self.view_name = "games:game_apply_update"
+        self.url_kwargs = {"application": self.application.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_other_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_post_without_submit(self):
+        with self.login(username=self.gamer4.username):
+            post_data = {"message": "I would like to play"}
+            self.post(self.view_name, data=post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                "I would like to play"
+                == models.GamePostingApplication.objects.get(
+                    pk=self.application.id
+                ).message
+            )
+            assert (
+                models.GamePostingApplication.objects.get(pk=self.application.id).status
+                == "new"
+            )
+
+    def test_post_with_submit(self):
+        with self.login(username=self.gamer4.username):
+            post_data = {"message": "I would like to play", "submit_app": None}
+            self.post(self.view_name, data=post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                "I would like to play"
+                == models.GamePostingApplication.objects.get(
+                    pk=self.application.id
+                ).message
+            )
+            assert (
+                models.GamePostingApplication.objects.get(pk=self.application.id).status
+                == "pending"
+            )
 
 
 class GamePostingApplyWithdrawViewTest(AbstractViewTestCaseNoSignals):
