@@ -36,7 +36,7 @@ urlpatterns = [
     path(
         "game/<slug:gameid>/sessions/",
         views.GameSessionList.as_view(),
-        name="session_list_for_game",
+        name="session_list",
     ),
     path(
         "game/<slug:gameid>/logs/",
@@ -95,6 +95,36 @@ urlpatterns = [
         "applications/",
         views.GamePostingAppliedList.as_view(),
         name="my-game-applications",
+    ),
+    path(
+        "game/<slug:game>/<slug:player>/characters/create/",
+        views.CharacterCreate.as_view(),
+        name="character_create",
+    ),
+    path(
+        "character/<slug:character>/",
+        views.CharacterDetail.as_view(),
+        name="character_detail",
+    ),
+    path(
+        "character/<slug:character>/edit/",
+        views.CharacterUpdate.as_view(),
+        name="character_update",
+    ),
+    path(
+        "character/<slug:character>/delete/",
+        views.CharacterDelete.as_view(),
+        name="character_delete",
+    ),
+    path(
+        "game/<slug:game>/<slug:player>/leave/",
+        views.PlayerLeaveGameView.as_view(),
+        name="player_leave",
+    ),
+    path(
+        "game/<slug:game>/<slug:player>/kick/",
+        views.PlayerKickView.as_view(),
+        name="player_kick",
     ),
     path("create/", views.GamePostingCreateView.as_view(), name="game_create"),
     path("", views.GamePostingListView.as_view(), name="game_list"),
