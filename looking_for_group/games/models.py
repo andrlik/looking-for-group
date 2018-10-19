@@ -511,7 +511,7 @@ class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, models
 
     def get_absolute_url(self):
         return reverse_lazy(
-            "games:game_application_detail", kwargs={"application": self.slug}
+            "games:game_apply_detail", kwargs={"application": self.slug}
         )
 
     def submit_application(self):
