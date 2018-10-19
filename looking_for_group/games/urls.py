@@ -73,7 +73,7 @@ urlpatterns = [
     ),
     path(
         "game/<slug:gameid>/apply/",
-        views.GamePostingApplyView.as_view,
+        views.GamePostingApplyView.as_view(),
         name="game_apply",
     ),
     path(

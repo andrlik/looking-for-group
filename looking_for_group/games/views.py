@@ -163,7 +163,7 @@ class GamePostingApplyView(
     View for managing applying to a game.
     """
 
-    model = None
+    model = models.GamePostingApplication
     template_name = "games/game_apply.html"
     permission_required = "game.can_apply"
     fields = ["message"]
@@ -178,9 +178,9 @@ class GamePostingApplyView(
             ):
                 return HttpResponseRedirect(self.game.get_absolute_url())
             if (
-                models.GameApplicant.objects.filter(
+                models.GamePostingApplication.objects.filter(
                     game=self.game, gamer=request.user.gamerprofile, status="pending"
-                ).objects.count()
+                ).count()
                 > 0
             ):
                 messages.info(
@@ -194,6 +194,8 @@ class GamePostingApplyView(
 
     def form_valid(self, form):
         application = form.save(commit=False)
+        if "submit_app" in self.request.POST.keys():
+            application.status = 'pending'
         application.gamer = self.request.user.gamerprofile
         application.game = self.game
         application.save()

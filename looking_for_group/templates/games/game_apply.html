@@ -1,0 +1,10 @@
+{% extends "games/game_detail.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Apply to join game" %} - {% endblock %}
+{% block details_and_controls %}
+<h2>{% trans "Apply to join game" %}</h2>
+<form action="" method="post">
+  {{ form|as_foundation }}
+  <a href="{% url 'games:game_list' %}" class="button secondary">{% trans "Back to game list" %}</a>  <input type="submit" class="button primary" value="{% trans 'Save' %}" />  <input type="submit" id="id_submit_app" name="submit_app" value="{% trans 'Save and submit to GM' %}" class="button success" />
+</form>
+{% endblock %}
