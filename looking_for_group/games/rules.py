@@ -13,9 +13,7 @@ def is_same_community_as_game(user, game):
 
 @rules.predicate
 def is_game_gm(user, game):
-    if user.gamerprofile in game.gm.all():
-        return True
-    return False
+    return game.gm == user.gamerprofile
 
 
 @rules.predicate
@@ -90,7 +88,7 @@ def is_calendar_owner(user, calendar):
     return user.username == calendar.slug
 
 
-rules.add_perm('game.edit_listing', is_game_gm)
+rules.add_perm('game.can_edit_listing', is_game_gm)
 rules.add_perm('game.can_view_listing', game_is_viewable)
 rules.add_perm('game.can_apply', application_eligible)
 rules.add_perm('game.view_application', is_application_viewer)

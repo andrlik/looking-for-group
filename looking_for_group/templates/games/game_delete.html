@@ -1,0 +1,17 @@
+{% extends "games/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Delete game" %} - {% endblock %}
+{% block content %}
+<h2>{% trans "Delete game" %}</h2>
+<div class="alert callout">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans with gametitle=game.title %}If you delete {{ gametitle }} you will also delete all the following pieces of information: {% endblocktrans %}</p>
+  <ul>
+    <li>{% blocktrans count counter=game.gamesession_set|length %}{{ counter }} session and its associated adventure log.{% plural %}{{ counter }} sessions and their associated adventure logs.{% endblocktrans %}</li>
+    <li>{% blocktrans count counter=game.players|length %}{{ counter }} player record and associated character records.{% plural %}{{ counter }} player records and their associated character records.{% endblocktrans %}</li>
+  </ul>
+</div>
+<form action="" method="post">
+  <p><a href="{{ game.get_absolute_url }}" class="button secondary">{% trans "Go back" %}</a> <input type="submit" class="button alert" value="{% trans 'Delete game' %}" /></p>
+</form>
+{% endblock %}
