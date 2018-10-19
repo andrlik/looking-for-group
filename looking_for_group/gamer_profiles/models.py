@@ -437,6 +437,10 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     def display_name(self):
         return self.user.display_name
 
+    def block(self, blocker):
+        block, created = BlockedUser.objects.get_or_create(blocker=blocker, blockee=self)
+        return
+
     def blocked_by(self, gamer):
         '''
         Check to see if self is blocked by indicated gamer.
