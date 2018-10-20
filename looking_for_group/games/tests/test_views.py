@@ -416,7 +416,57 @@ class GamePostingAppliedListTest(AbstractViewTestCaseNoSignals):
 
 
 class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
-    pass
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:game_edit"
+        self.url_kwargs = {"gameid": self.gp2.slug}
+        self.valid_post_data = {
+            "title": "A Valid Campaign",
+            "game_type": "campaign",
+            "privacy_level": "private",
+            "min_players": 1,
+            "max_players": 3,
+            "session_length": 2.5,
+            "game_frequency": "weekly",
+            "communities": [self.comm1.pk],
+        }
+        self.invalid_post_data = {
+            "title": "A Valid Campaign",
+            "game_type": "campaign",
+            "privacy_level": "private",
+            "min_players": 1,
+            "max_players": 3,
+            "session_length": 2.5,
+            "game_frequency": "weekly",
+            "communities": [self.comm2.pk],
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_other_user(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_invalid_community(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.invalid_post_data, **self.url_kwargs)
+            self.response_200()
+            assert len(self.get_context("form").errors) > 0
+
+    def test_valid_submission(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.valid_post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.GamePosting.objects.get(pk=self.gp2.pk).title
+                == "A Valid Campaign"
+            )
 
 
 class GamePostingDeleteTest(AbstractViewTestCaseNoSignals):
