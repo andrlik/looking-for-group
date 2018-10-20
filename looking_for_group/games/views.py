@@ -554,7 +554,7 @@ class GameSessionDelete(
         "game__published_module",
         "game__event",
         "occurrence",
-        "adventurelog_set",
+        "adventurelog",
     ]
     prefetch_related = ["players_expected", "players_missing"]
     permission_required = "games.can_edit_listing"
