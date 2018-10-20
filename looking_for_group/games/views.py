@@ -305,12 +305,13 @@ class GamePostingUpdateView(
     """
 
     model = models.GamePosting
-    permission_required = "games.can_edit_listing"
-    template_name = "games/game_detail.html"
+    permission_required = "game.can_edit_listing"
+    template_name = "games/game_update.html"
     form_class = forms.GamePostingForm
     slug_url_kwarg = "gameid"
     slug_field = "slug"
     allowed_communities = None
+    context_object_name = 'game'
 
     def get_success_url(self):
         return self.get_object().get_absolute_url()
@@ -329,21 +330,6 @@ class GamePostingUpdateView(
         context = super().get_context_data(**kwargs)
         context["allowed_communities"] = self.get_allowed_communities()
         return context
-
-    def form_valid(self, form):
-        if form.instance.communities:
-            for comm in form.instance.communities:
-                if comm not in self.get_allowed_communities():
-                    messages.error(
-                        self.request,
-                        _(
-                            "You do not have permission to post this game in community {}.".format(
-                                comm.name
-                            )
-                        ),
-                    )
-                    return self.form_invalid(form)
-        return super().form_valid(form)
 
 
 class GamePostingDeleteView(
