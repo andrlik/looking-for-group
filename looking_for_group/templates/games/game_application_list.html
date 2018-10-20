@@ -1,0 +1,118 @@
+{% extends "games/base.html" %}
+{% load i18n avatar_tags humanize social_tags %}
+{% block subtitle %}{% trans "My Game Applications" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "My Game Applications" %}</h1>
+
+<ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">
+  <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ application_list|length }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% trans "Approved" %} ({{ approved_application_list|length }})</a></li>
+  <li class="tabs-title"><a deta-tabs-target="rejected_panel" href="#rejected_panel">{% trans "Rejected" %} ({{ rejected_application_list|length }})</a></li>
+</ul>
+
+<div class="tabs-content" data-tabs-content="my-applications-tabs">
+  <div class="tabs-panel is-active" id="pending_panel">
+    {% if applications %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Game" %}</th>
+          <th>{% trans "GM" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in application_list %}
+        <tr>
+          <td><a href="{{ application.game.get_absolute_url }}">{{ application.game.title }}</a></td>
+          <td>{% avatar 20 application.game.gm.user %} <a href="{{ application.game.gm.get_absolute_url }}">{{ application.game.gm.username }}</a></td>
+          <td>{{ application.message|truncatewords:25 }}</td>
+          <td>{{ application.get_display_status }}</td>
+          <td>{{ application.created }}</td>
+          <td>{{ application.modified }}</td>
+          <td><a href="{% url 'games:game_apply_update' application=application.slug %}" class="button primary">{% trans "Edit" %}</a></td>
+          <td><a class="button alert" href="{% url 'games:game_apply_delete' application=application.slug %}">{% trans "Delete/Withdraw" %}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No pending applications." %}</p>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="approved_panel">
+    {% if approved_application_list %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Game" %}</th>
+          <th>{% trans "GM" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in approved_application_list %}
+        <tr>
+          <td><a href="{{ app.game.get_absolute_url }}">{{ app.game.title }}</a></td>
+          <td>{% avatar 20 app.game.gm.user %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm.username }}</a></td>
+          <td>{{ app.message|truncatewords:25 }}</td>
+          <td>{{ app.get_display_status }}</td>
+          <td>{{ app.created }}</td>
+          <td>{{ app.modified }}</td>
+          <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>
+          <td><a class="button alert" href="{% url 'games:game_apply_delete' application=app.slug %}">{% trans "Delete/Withdraw" %}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No approved applications" %}</p>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="rejected_panel">
+    {% if rejected_applications %}
+    <table class="hover stack">
+      <thead>
+        <tr>
+          <th>{% trans "Game" %}</th>
+          <th>{% trans "GM" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in rejected_application_list %}
+        <tr>
+          <td>{{ app.game.title }}</td>
+          <td>{% avatar 20 app.game.gm.user %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm.username }}</a></td>
+        <td>{{ app.message|truncatewords:25 }}</td>
+        <td>{{ app.get_display_status }}</td>
+        <td>{{ app.created }}</td>
+        <td>{{ app.modified }}</td>
+        <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>
+        <td><a class="button alert" href="{% url 'games:game_apply_delete' application=app.pk %}">{% trans "Delete/Withdraw" %}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No rejected applications" %} 😄</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

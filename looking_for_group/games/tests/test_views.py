@@ -385,7 +385,34 @@ class GamePostingApplyWithdrawViewTest(AbstractViewTestCaseNoSignals):
 
 
 class GamePostingAppliedListTest(AbstractViewTestCaseNoSignals):
-    pass
+    """
+    Test user's personal application list.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:my-game-applications"
+        self.application1 = models.GamePostingApplication.objects.create(
+            game=self.gp2, gamer=self.gamer4, message="Hi", status="pending"
+        )
+        self.application2 = models.GamePostingApplication.objects.create(
+            game=self.gp3, gamer=self.gamer4, message="Pick me!", status="new"
+        )
+        self.application3 = models.GamePostingApplication.objects.create(
+            game=self.gp2, gamer=self.gamer4, message="Try again", status="deny"
+        )
+        self.application4 = models.GamePostingApplication.objects.create(
+            game=self.gp2, gamer=self.gamer3, message="You up?", status="approve"
+        )
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_good_load(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name)
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name)
 
 
 class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
