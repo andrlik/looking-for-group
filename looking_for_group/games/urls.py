@@ -39,16 +39,6 @@ urlpatterns = [
         name="session_list",
     ),
     path(
-        "game/<slug:gameid>/logs/",
-        views.AdventureLogList.as_view(),
-        name="log_list_for_game",
-    ),
-    path(
-        "game/<slug:gameid>/logs/<uuid:log>/",
-        views.AdventureLogDetail.as_view(),
-        name="log_detail",
-    ),
-    path(
         "game/<slug:gameid>/logs/<uuid:log>/edit/",
         views.AdventureLogUpdate.as_view(),
         name="log_edit",
