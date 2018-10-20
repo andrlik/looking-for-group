@@ -523,14 +523,6 @@ class GameSessionDeleteTest(AbstractViewTestCaseNoSignals):
     pass
 
 
-class AdventureLogListTest(AbstractViewTestCaseNoSignals):
-    pass
-
-
-class AdventureLogDetailTest(AbstractViewTestCaseNoSignals):
-    pass
-
-
 class AdventureLogCreateTest(AbstractViewTestCaseNoSignals):
     pass
 
