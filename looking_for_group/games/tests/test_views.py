@@ -555,6 +555,10 @@ class PlayerLeaveTest(AbstractViewTestCaseNoSignals):
     pass
 
 
+class PlayerKickTest(AbstractViewTestCaseNoSignals):
+    pass
+
+
 class CharacterCreateTest(AbstractViewTestCaseNoSignals):
     pass
 

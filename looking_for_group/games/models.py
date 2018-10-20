@@ -663,7 +663,7 @@ class AdventureLog(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     This can be created at any time after the initial session is instantiated, provided that it is not in status cancelled.
     """
 
-    session = models.ForeignKey(GameSession, on_delete=models.CASCADE)
+    session = models.OneToOneField(GameSession, on_delete=models.CASCADE)
     initial_author = models.ForeignKey(
         GamerProfile, null=True, blank=True, on_delete=models.SET_NULL
     )
