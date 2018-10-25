@@ -1,0 +1,67 @@
+{% extends "games/base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% blocktrans with gametitle=game.title %}Sessions for {{ gametitle }}{% endblocktrans %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with gametitle=game.title %}Sessions for {{ gametitle }}{% endblocktrans %}</h1>
+{% if not session_list %}
+<p>{% trans "No sessions yet." %}</p>
+{% endif %}
+
+<table class="hover stack">
+  <thead>
+    <tr>
+      <th>{% trans "Date" %}</th>
+      <th>{% trans "Status" %}</th>
+      <th class="test-right">{% trans "Players Expected" %}</th>
+      <th class="text-right">{% trans "Players Missing" %}</th>
+      {% if request.user.gamerprofile == game.gm %}
+      <th>{% trans "GM Notes" %}</th>
+      {% endif %}
+      <th>{% trans "Session Title (if applicable)" %}</th>
+      <th>{% trans "Adventure Log" %}</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for session in session_list %}
+    <tr>
+      <td><a href="{{ session.get_absolute_url }}">{{ session.scheduled_time }}</a></td>
+      <td>{{ session.get_status_display }}</td>
+      <td class="text-right">{{ session.players_expected.count }}</td>
+      <td class="text-right">{{ session.players_missing.count }}</td>
+      {% if request.user.gamerprofile == game.gm %}
+      <td>{{ session.gm_notes_rendered|truncatewords_html:40 }}</td>
+      {% endif %}
+      <td>{{ session.adventurelog.title }}</td>
+      <td>{{ session.adventurelog.body_rendered|truncatewords_html:50 }}</td>
+      <td><a href="{{ session.get_absolute_url }}">{% trans "Details" %}</a></td>
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'games:session_list' gameid=game.slug page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'games:session_list' gameid=game.slug page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'games:session_list' gameid=game.slug page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

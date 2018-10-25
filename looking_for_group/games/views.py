@@ -387,22 +387,27 @@ class GameSessionList(
         "adventurelog_set",
     ]
     prefetch_related = ["players_expected", "players_missing"]
-    permission_required = "games.is_member"
+    permission_required = "game.can_view_listing_details"
     template_name = "games/session_list.html"
     ordering = ["-scheduled_time"]
-    context_object_name = "sessions"
+    context_object_name = "session_list"
     paginate_by = 20
 
     def dispatch(self, request, *args, **kwargs):
         game_pk = kwargs.pop("gameid", None)
-        self.game = get_object_or_404(models.GamePosting, pk=game_pk)
+        self.game = get_object_or_404(models.GamePosting, slug=game_pk)
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
         return self.game
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = self.game
+        return context
+
     def get_queryset(self):
-        return self.game.gamesession_set.all()
+        return self.game.gamesession_set.all().order_by('-scheduled_time')
 
 
 class GameSessionCreate(
