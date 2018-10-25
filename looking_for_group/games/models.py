@@ -375,9 +375,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
             "What date does this end? (Only used for adventures/campaigns.) You can set this later if you prefer."
         ),
     )
-    game_description = models.TextField(
-        blank=True, null=True, help_text=_("Description of the game.")
-    )
+    game_description = models.TextField(help_text=_("Description of the game."))
     game_description_rendered = models.TextField(
         blank=True,
         null=True,
@@ -474,12 +472,17 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
                 # By default, assume all players are expected.
                 players = Player.objects.filter(game=self)
                 if players.count() > 0:
-                    session.players_expected.set(*list(players))
+                    if players.count() == 1:
+                        session.players_expected.add(players[0])
+                    session.players_expected.set(*players)
         else:
             raise ValueError(
                 "You can only tie a session to an occurrence from the same game."
             )
         return session
+
+    def create_next_session(self):
+        return self.create_session_from_occurrence(self.get_next_scheduled_session_occurrence())
 
     def update_completed_session_count(self):
         self.sessions = self.gamesession_set.filter(status="complete").count()

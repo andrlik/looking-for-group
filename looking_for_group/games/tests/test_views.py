@@ -1,8 +1,12 @@
+from datetime import timedelta
+
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TransactionTestCase
+from django.utils import timezone
 from factory.django import mute_signals
 from test_plus import TestCase
+from test_plus.test import BaseTestCase
 
 from .. import models
 from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
@@ -27,6 +31,7 @@ class AbstractViewTestCase(object):
             max_players=5,
             game_frequency="weekly",
             session_length=2.5,
+            game_description="We will roll dice!",
         )
         self.gp4 = models.GamePosting.objects.create(
             game_type="campaign",
@@ -37,6 +42,7 @@ class AbstractViewTestCase(object):
             max_players=5,
             game_frequency="weekly",
             session_length=2.5,
+            game_description="We will roll more dice.",
         )
         self.gp2 = models.GamePosting.objects.create(
             game_type="campaign",
@@ -47,6 +53,7 @@ class AbstractViewTestCase(object):
             max_players=5,
             game_frequency="weekly",
             session_length=2.5,
+            game_description="we will pretend to be elves",
         )
         self.gp2.communities.add(self.comm1)
         self.gp3 = models.GamePosting.objects.create(
@@ -58,6 +65,7 @@ class AbstractViewTestCase(object):
             max_players=5,
             game_frequency="weekly",
             session_length=2.5,
+            game_description="We will eat snacks.",
         )
         self.gp5 = models.GamePosting.objects.create(
             game_type="campaign",
@@ -69,6 +77,7 @@ class AbstractViewTestCase(object):
             max_players=5,
             game_frequency="weekly",
             session_length=2.5,
+            game_description="We are fond of rolling dice.",
         )
 
 
@@ -76,7 +85,19 @@ class AbstractViewTestCaseNoSignals(AbstractViewTestCase, TestCase):
     pass
 
 
-class AbstractViewTestCaseSignals(AbstractViewTestCase, TransactionTestCase):
+class AbstractTestCaseSignals(TransactionTestCase, BaseTestCase):
+    """
+    Since we can't use test_plus here, we duplicate the API here for the thngs we use.
+    """
+
+    user_factory = None
+
+    def __init__(self, *args, **kwargs):
+        self.last_response = None
+        super().__init__(*args, **kwargs)
+
+
+class AbstractViewTestCaseSignals(AbstractViewTestCase, AbstractTestCaseSignals):
     pass
 
 
@@ -125,6 +146,7 @@ class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
             "privacy_level": "private",
             "min_players": 1,
             "max_players": 3,
+            "game_description": "We like pie.",
             "session_length": 2.5,
             "game_frequency": "weekly",
             "communities": [self.comm1.pk],
@@ -426,6 +448,7 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
             "privacy_level": "private",
             "min_players": 1,
             "max_players": 3,
+            "game_description": "Some of us enjoy cake, too.",
             "session_length": 2.5,
             "game_frequency": "weekly",
             "communities": [self.comm1.pk],
@@ -436,6 +459,7 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
             "privacy_level": "private",
             "min_players": 1,
             "max_players": 3,
+            "game_description": "I ate a whole pie once.",
             "session_length": 2.5,
             "game_frequency": "weekly",
             "communities": [self.comm2.pk],
@@ -499,8 +523,53 @@ class GamePostingDeleteTest(AbstractViewTestCaseNoSignals):
                 models.GamePosting.objects.get(pk=self.gp2.pk)
 
 
-class GameSessionListTest(AbstractViewTestCaseNoSignals):
-    pass
+class AbstractGameSessionnTest(AbstractViewTestCaseSignals):
+    """
+    Makes the process of setting up game session tests less repetitive.
+    """
+
+    fixtures = ["rule"]
+
+    def setUp(self):
+        super().setUp()
+        self.gp2.refresh_from_db()
+        self.gp2.start_time = timezone.now() - timedelta(days=6)
+        self.gp2.save()
+        assert self.gp2.event
+        self.session1 = self.gp2.create_next_session()
+        self.session1.status = "complete"
+        self.session1.save()
+        self.session2 = self.gp2.create_next_session()
+
+
+class GameSessionListTest(AbstractGameSessionnTest):
+    """
+    Posting for game session list.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:session_list"
+        self.url_kwargs = {"gameid": self.gp2.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_player(self):
+        models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            assert (
+                len(self.get_context("session_list"))
+                == models.GameSession.objects.filter(game=self.gp2).count()
+            )
 
 
 class GameSessionCreateTest(AbstractViewTestCaseNoSignals):

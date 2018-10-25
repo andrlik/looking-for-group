@@ -78,10 +78,10 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 logger.debug("Updating start time to {}".format(instance.start_time))
                 instance.event.start = instance.start_time
             if instance.event.end != instance.start_time + timedelta(
-                    minutes=(60 * instance.session_length)
+                    minutes=int(60 * instance.session_length)
             ):
                 instance.event.end = instance.start_time + timedelta(
-                    minutes=(60 * instance.session_length)
+                    minutes=int(60 * instance.session_length)
                 )
                 logger.debug("Updating end time to {}".format(instance.event.end))
                 needs_edit = True
@@ -132,7 +132,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 start=instance.start_time,
                 end=(
                     instance.start_time
-                    + timedelta(minutes=(60 * instance.session_length))
+                    + timedelta(minutes=int(60 * instance.session_length))
                 ),
                 end_recurring_period=instance.end_date,
                 title=instance.title,
