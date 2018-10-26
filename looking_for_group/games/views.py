@@ -481,7 +481,7 @@ class GameSessionDetail(
         "adventurelog_set",
     ]
     prefetch_related = ["players_expected", "players_missing"]
-    permission_required = "games.is_member"
+    permission_required = "game.can_view_listing_details"
     template_name = "games/session_detail.html"
     context_object_name = "session"
     slug_url_kwarg = "session"
@@ -576,7 +576,7 @@ class GameSessionDelete(
         "adventurelog",
     ]
     prefetch_related = ["players_expected", "players_missing"]
-    permission_required = "games.can_edit_listing"
+    permission_required = "game.can_edit_listing"
     template_name = "games/session_delete.html"
     context_object_name = "session"
     slug_url_kwarg = "session"
@@ -602,8 +602,8 @@ class AdventureLogCreate(
     fields = ["title", "body"]
 
     def dispatch(self, request, *args, **kwargs):
-        session_pk = kwargs.pop("session", None)
-        self.session = get_object_or_404(models.GameSession, pk=session_pk)
+        session_slug = kwargs.pop("session", None)
+        self.session = get_object_or_404(models.GameSession, slug=session_slug)
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):

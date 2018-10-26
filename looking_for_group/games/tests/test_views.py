@@ -543,6 +543,7 @@ class AbstractGameSessionTest(AbstractViewTestCaseSignals):
         self.session1.save()
         self.gp2.refresh_from_db()
         self.session2 = self.gp2.create_next_session()
+        models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
 
     def test_session_amount(self):
         assert models.GameSession.objects.filter(game=self.gp2).count() == 2
@@ -640,8 +641,30 @@ class GameSessionCreateTest(AbstractGameSessionTest):
                 newest_session = models.GameSession.objects.filter(game=self.gp2).latest('scheduled_time')
                 assert self.last_response['location'] == reverse('games:session_edit', kwargs={'session': newest_session.slug})
 
-class GameSessionDetailTest(AbstractViewTestCaseNoSignals):
-    pass
+class GameSessionDetailTest(AbstractGameSessionTest):
+    '''
+    Test for session detail view.
+    '''
+    def setUp(self):
+        super().setUp()
+        self.view_name = 'games:session_detail'
+        self.url_kwargs = {'session': self.session1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_player(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_gm_access(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
 
 
 class GameSessionUpdateTest(AbstractViewTestCaseNoSignals):
