@@ -1,3 +1,5 @@
+import logging
+
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
@@ -17,6 +19,8 @@ from . import forms, models
 from .mixins import JSONResponseMixin
 
 # Create your views here.
+
+logger = logging.getLogger('games')
 
 
 class GamePostingListView(
@@ -416,33 +420,43 @@ class GameSessionCreate(
     """
     Create a session.
     """
-
-    permission_required = "games.can_edit_listing"
+    model = models.GameSession
+    permission_required = "game.can_edit_listing"
     fields = ["game"]
-    template_name = "games/session_create.html"
+    # template_name = "games/session_create.html"
     http_method_names = ["post"]
 
     def dispatch(self, request, *args, **kwargs):
-        if request.method.lower() not in self.http_method_names:
-            return HttpResponseNotAllowed(["POST"])
-        game_pk = kwargs.pop("game", None)
-        self.game = get_object_or_404(models.GameSession, pk=game_pk)
+        if request.user.is_authenticated:
+            if request.method.lower() not in self.http_method_names:
+                logging.debug('Disallowed method.')
+                return HttpResponseNotAllowed(["POST"])
+            game_slug = kwargs.pop("gameid", None)
+            self.game = get_object_or_404(models.GamePosting, slug=game_slug)
+            if request.user.has_perm(self.permission_required, self.game):
+                if self.game.status == 'closed':
+                    logger.debug('Game is finiahed. Sessions cannot be added.')
+                    messages.error(request, _('This game is complete and new sessions cannot be created.'))
+                    return HttpResponseRedirect(self.game.get_absolute_url())
+                unfinished_sessions = models.GameSession.objects.filter(game=self.game).exclude(status='complete')
+                if models.GameSession.objects.filter(game=self.game).exclude(status='complete').count() > 0:
+                    logger.debug('Game has incomplete sessions. Redirecting to probable culprit.')
+                    messages.error(request, _('You cannot create a new session until you have completed the previous one.'))
+                    redirect_session = unfinished_sessions.latest('scheduled_time')
+                    return HttpResponseRedirect(redirect_session.get_absolute_url())
+            else:
+                raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["game"] = self.game
-        context["occurrence"] = self.game.get_next_scheduled_occurrence()
-        return context
 
     def get_permission_object(self):
         return self.game
 
     def form_valid(self, form):
-        self.session = self.game.generate_session_from_occurence(
-            self.game.get_next_scheduled_occurrence()
-        )
-        return HttpResponseRedirect(self.session.get_absolute_url())
+        logger.debug("Creating session...")
+        self.session = self.game.create_next_session()
+        logger.debug("Session created for {}".format(self.session.scheduled_time))
+        messages.success(self.request, _('Session successfully created. You may edit it as needed.'))
+        return HttpResponseRedirect(reverse_lazy('games:session_edit', kwargs={'session': self.session.slug}))
 
 
 class GameSessionDetail(
