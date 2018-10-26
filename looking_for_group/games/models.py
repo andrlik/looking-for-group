@@ -426,14 +426,18 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         if self.event:
             date_cutoff = self.start_time - timedelta(days=1)
             if self.sessions > 0:
+                logger.debug("Completed sessions: {}.".format(self.sessions))
                 latest_session = self.gamesession_set.filter(
                     status__in=["complete", "cancel"]
                 ).latest("scheduled_time")
-                date_cutoff = latest_session.scheduled_time
+                date_cutoff = latest_session.scheduled_time + timedelta(days=1)
+                logger.debug("Set new date cutoff of {}".format(date_cutoff))
+            logger.debug("Checking for occurrences after {}".format(date_cutoff))
             occurrences = self.event.occurrences_after(after=date_cutoff)
             next_occurrence = None
             try:
                 next_occurrence = next(occurrences)
+                logger.debug("found next occurrence starting at {}".format(next_occurrence.start))
             except StopIteration:  # pragma: no cover
                 pass  # There is no next occurrence.
             return next_occurrence
@@ -460,8 +464,10 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         exist.
         """
         if not occurrence:
+            logger.debug("no occurrence so no session")
             return None
         if occurrence.event.pk == self.event.pk:
+            logger.debug("Occurrence is valid; creating session.")
             occurrence.save()
             session, created = GameSession.objects.get_or_create(
                 game=self,
@@ -469,12 +475,21 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
                 defaults={"status": "pending", "scheduled_time": occurrence.start},
             )
             if created:
+                logger.debug("Created new session with slug {}".format(session.slug))
                 # By default, assume all players are expected.
+                logger.debug("Appending players to session record...")
                 players = Player.objects.filter(game=self)
                 if players.count() > 0:
                     if players.count() == 1:
+                        logger.debug("Only one player expected, adding.")
                         session.players_expected.add(players[0])
-                    session.players_expected.set(*players)
+                    else:
+                        logger.debug("Adding multiple players.")
+                        session.players_expected.set(*players)
+                else:
+                    logger.debug("No players found.")
+            else:
+                logger.debug("This is the same occurrence as the last one. Skipping.")
         else:
             raise ValueError(
                 "You can only tie a session to an occurrence from the same game."
@@ -485,7 +500,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         return self.create_session_from_occurrence(self.get_next_scheduled_session_occurrence())
 
     def update_completed_session_count(self):
-        self.sessions = self.gamesession_set.filter(status="complete").count()
+        self.sessions = GameSession.objects.filter(status='complete', game=self).count()
         self.save()
 
     class Meta:

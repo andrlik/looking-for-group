@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 from django_q.tasks import async_task
 from markdown import markdown
 from schedule.models import Calendar, Occurrence, Rule
@@ -19,6 +20,12 @@ from .tasks import (
 )
 
 logger = logging.getLogger("games")
+
+
+@receiver(pre_save, sender=models.GamePosting)
+def set_end_date_for_game_on_complete(sender, instance, *args, **kwargs):
+    if instance.status in ['closed', 'cancel'] and not instance.end_date:
+        instance.end_date = timezone.now()
 
 
 @receiver(pre_save, sender=models.GamePosting)
