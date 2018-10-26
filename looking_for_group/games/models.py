@@ -485,7 +485,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
                         session.players_expected.add(players[0])
                     else:
                         logger.debug("Adding multiple players.")
-                        session.players_expected.set(*players)
+                        session.players_expected.add(*list(players))
                 else:
                     logger.debug("No players found.")
             else:

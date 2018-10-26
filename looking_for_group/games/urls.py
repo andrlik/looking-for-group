@@ -20,39 +20,40 @@ urlpatterns = [
     path("schedule/calendar/", views.CalendarDetail.as_view(), name="calendar_detail"),
     path(
         "sessions/<slug:session>/",
-        views.GameSessionDetail.as_view(),
+        view=views.GameSessionDetail.as_view(),
         name="session_detail",
     ),
     path(
         "sessions/<slug:session>/edit/",
-        views.GameSessionUpdate.as_view(),
+        view=views.GameSessionUpdate.as_view(),
         name="session_edit",
     ),
     path(
         "sessions/<slug:session>/delete/",
-        views.GameSessionDelete.as_view(),
+        view=views.GameSessionDelete.as_view(),
         name="session_delete",
     ),
     path(
         "game/<slug:gameid>/sessions/",
-        views.GameSessionList.as_view(),
+        view=views.GameSessionList.as_view(),
         name="session_list",
     ),
     path(
         "game/<slug:gameid>/sessions/create/",
-        views.GameSessionCreate.as_view(),
+        view=views.GameSessionCreate.as_view(),
         name="session_create",
     ),
     path(
-        "game/<slug:gameid>/logs/<uuid:log>/edit/",
-        views.AdventureLogUpdate.as_view(),
+        "/logs/<slug:log>/edit/",
+        view=views.AdventureLogUpdate.as_view(),
         name="log_edit",
     ),
     path(
-        "game/<slug:gameid>/logs/<uuid:log>/delete/",
-        views.AdventureLogDelete.as_view(),
+        "logs/<slug:log>/delete/",
+        view=views.AdventureLogDelete.as_view(),
         name="log_delete",
     ),
+    path("logs/<slug:session>/create/", view=views.AdventureLogCreate.as_view(), name='log_create'),
     path(
         "game/<slug:gameid>/", views.GamePostingDetailView.as_view(), name="game_detail"
     ),
