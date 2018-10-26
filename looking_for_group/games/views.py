@@ -508,7 +508,7 @@ class GameSessionUpdate(
     model = models.GameSession
     select_related = ["game"]
     prefetch_related = ["players_expected", "players_missing"]
-    permission_required = "games.can_edit_listing"
+    permission_required = "game.can_edit_listing"
     template_name = "games/session_edit.html"
     form_class = forms.GameSessionForm
     context_object_name = "session"
@@ -522,7 +522,7 @@ class GameSessionUpdate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["game"] = self.game
+        kwargs["game"] = self.get_object().game
         return kwargs
 
     def get_permission_object(self):
@@ -538,7 +538,7 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
     """
 
     model = models.GameSession
-    permission_required = "game.can_schedule"
+    permission_required = "game.can_edit_listing"
     template_name = "games/session_reschedule.html"
     slug_url_kwarg = "session"
     slug_field = "slug"
