@@ -580,20 +580,21 @@ class GameSessionListTest(AbstractGameSessionTest):
 
 
 class GameSessionCreateTest(AbstractGameSessionTest):
-    '''
+    """
     Game Session create view.
-    '''
+    """
+
     def setUp(self):
         super().setUp()
         models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
-        self.view_name = 'games:session_create'
-        self.url_kwargs = {'gameid': self.gp2.slug}
-        self.post_data = {'game': self.gp2.pk}
+        self.view_name = "games:session_create"
+        self.url_kwargs = {"gameid": self.gp2.slug}
+        self.post_data = {"game": self.gp2.pk}
 
     def test_login_required(self):
         self.post(self.view_name, **self.url_kwargs)
         self.response_302()
-        assert 'accounts/login' in self.last_response['location']
+        assert "accounts/login" in self.last_response["location"]
 
     def get_not_allowed(self):
         with self.login(username=self.gamer1.username):
@@ -616,39 +617,55 @@ class GameSessionCreateTest(AbstractGameSessionTest):
                 session_count = models.GameSession.objects.filter(game=self.gp2).count()
                 self.post(self.view_name, data=self.post_data, **self.url_kwargs)
                 self.response_302()
-                assert session_count == models.GameSession.objects.filter(game=self.gp2).count()
+                assert (
+                    session_count
+                    == models.GameSession.objects.filter(game=self.gp2).count()
+                )
 
     def test_gm_game_over(self):
         with mute_signals(post_save):
-            self.session2.status = 'complete'
+            self.session2.status = "complete"
             self.session2.save()
-            self.gp2.status = 'closed'
+            self.gp2.status = "closed"
             self.gp2.save()
             with self.login(username=self.gamer1.username):
                 session_count = models.GameSession.objects.filter(game=self.gp2).count()
                 self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-                assert session_count == models.GameSession.objects.filter(game=self.gp2).count()
+                assert (
+                    session_count
+                    == models.GameSession.objects.filter(game=self.gp2).count()
+                )
 
     def test_gm_sessions_closed(self):
         with mute_signals(post_save):
-            self.session2.status = 'complete'
+            self.session2.status = "complete"
             self.session2.save()
             with self.login(username=self.gamer1.username):
                 session_count = models.GameSession.objects.filter(game=self.gp2).count()
                 self.post(self.view_name, data=self.post_data, **self.url_kwargs)
                 self.response_302()
-                assert models.GameSession.objects.filter(game=self.gp2).count() - session_count == 1
-                newest_session = models.GameSession.objects.filter(game=self.gp2).latest('scheduled_time')
-                assert self.last_response['location'] == reverse('games:session_edit', kwargs={'session': newest_session.slug})
+                assert (
+                    models.GameSession.objects.filter(game=self.gp2).count()
+                    - session_count
+                    == 1
+                )
+                newest_session = models.GameSession.objects.filter(
+                    game=self.gp2
+                ).latest("scheduled_time")
+                assert self.last_response["location"] == reverse(
+                    "games:session_edit", kwargs={"session": newest_session.slug}
+                )
+
 
 class GameSessionDetailTest(AbstractGameSessionTest):
-    '''
+    """
     Test for session detail view.
-    '''
+    """
+
     def setUp(self):
         super().setUp()
-        self.view_name = 'games:session_detail'
-        self.url_kwargs = {'session': self.session1.slug}
+        self.view_name = "games:session_detail"
+        self.url_kwargs = {"session": self.session1.slug}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_name, **self.url_kwargs)
@@ -667,8 +684,50 @@ class GameSessionDetailTest(AbstractGameSessionTest):
             self.assertGoodView(self.view_name, **self.url_kwargs)
 
 
-class GameSessionUpdateTest(AbstractViewTestCaseNoSignals):
-    pass
+class GameSessionUpdateTest(AbstractGameSessionTest):
+    """
+    Test for session update view.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:session_edit"
+        self.url_kwargs = {"session": self.session2.slug}
+        self.session2.refresh_from_db()
+        self.post_data = {
+            "players_expected": [f.pk for f in models.Player.objects.filter(game=self.gp2)],
+            "players_missing": [],
+            "gm_notes": "This will be wild and **wacky**!",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_player_only(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm_load(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_update(self):
+        with self.login(username=self.gamer1.username):
+            print(self.post_data)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors(self.last_response)
+            self.response_302()
+            assert (
+                models.GameSession.objects.get(pk=self.session2.pk).gm_notes
+                == "This will be wild and **wacky**!"
+            )
 
 
 class GameSessionMoveTest(AbstractViewTestCaseNoSignals):

@@ -56,6 +56,7 @@ class GameSessionForm(forms.ModelForm):
         game_players = models.Player.objects.filter(game=game)
         self.fields["players_expected"].queryset = game_players
         self.fields["players_missing"].queryset = game_players
+        self.fields['players_missing'].required = False
 
     def clean(self):
         cleaned_data = super().clean()
