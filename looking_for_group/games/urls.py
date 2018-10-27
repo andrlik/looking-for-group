@@ -44,7 +44,7 @@ urlpatterns = [
         name="session_create",
     ),
     path(
-        "/logs/<slug:log>/edit/",
+        "logs/<slug:log>/edit/",
         view=views.AdventureLogUpdate.as_view(),
         name="log_edit",
     ),
