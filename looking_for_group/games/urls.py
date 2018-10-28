@@ -29,6 +29,11 @@ urlpatterns = [
         name="session_edit",
     ),
     path(
+        "sessions/<slug:session>/move/",
+        view=views.GameSessionMove.as_view(),
+        name="session_move",
+    ),
+    path(
         "sessions/<slug:session>/delete/",
         view=views.GameSessionDelete.as_view(),
         name="session_delete",
@@ -53,7 +58,11 @@ urlpatterns = [
         view=views.AdventureLogDelete.as_view(),
         name="log_delete",
     ),
-    path("logs/<slug:session>/create/", view=views.AdventureLogCreate.as_view(), name='log_create'),
+    path(
+        "logs/<slug:session>/create/",
+        view=views.AdventureLogCreate.as_view(),
+        name="log_create",
+    ),
     path(
         "game/<slug:gameid>/", views.GamePostingDetailView.as_view(), name="game_detail"
     ),

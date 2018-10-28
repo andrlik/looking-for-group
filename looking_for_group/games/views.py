@@ -541,17 +541,21 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
     permission_required = "game.can_edit_listing"
     template_name = "games/session_reschedule.html"
     slug_url_kwarg = "session"
+    context_object_name = 'session'
     slug_field = "slug"
     form_class = forms.GameSessionRescheduleForm  # Fill in later
 
     def get_success_url(self):
         return self.object.get_absolute_url()
 
+    def get_permission_object(self):
+        return self.get_object().game
+
     def form_valid(self, form):
         # TODO: Add event conflict checking?
         session = self.get_object()
-        session = session.move(form.cleaned_data["scheduled_time"])
-        return HttpResponseRedirect(self.get_success_url())
+        session.move(form.cleaned_data["scheduled_time"])
+        return HttpResponseRedirect(session.get_absolute_url())
 
 
 class GameSessionDelete(
