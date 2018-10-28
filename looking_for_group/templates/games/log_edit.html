@@ -1,0 +1,38 @@
+{% extends "games/base.html" %}
+{% load i18n avatar_tags foundation_formtags %}
+{% block subtitle %}{% blocktrans with gametitle=log.session.game.title %}Editing log entry for {{ gametitle }}{% endblocktrans %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with gametitle=log.session.game.title sessiontime=log.session.scheduled_time %}Adding log entry for {{ gametitle }} session on {{ sessiontime }}{% endblocktrans %}:</h1>
+<h2>{% trans "Session info:" %}</h2>
+<dl>
+  <dt>{% trans "Game Title" %}</dt>
+  <dd>{{ log.session.game.title }}</dd>
+  <dt>{% trans "Session time" %}</dt>
+  <dd>{{ log.session.scheduled_time }}</dd>
+  <dt>{% trans "Expected players" %}</dt>
+  <dd>
+    <table class="hover stack">
+      <thead>
+        <tr>
+          <th>{% trans "Player" %}</th>
+          <th class="test-right">{% trans "Attended?" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for player in log.session.players_expected.all %}
+        <tr>
+          <td>{% avatar 20 player.gamer.user %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer.display_name }}</a></td>
+          <td class="text-right">{% if session.status != "complete" %}{% trans "N/A (session not complete)" %}{% else %}{% if player in session.players_missing.all %}😢{% else %}😄{% endif %}{% endif %}</td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </dd>
+</dl>
+<h2>{% trans "Edit your log entry below:" %}</h2>
+<form action="" method="post">
+  {{ form|as_foundation }}
+  <a href="{{ log.session.get_absolute_url }}" class="button secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button success" value="{% trans 'Save' %}" />
+</form>
+{% endblock %}

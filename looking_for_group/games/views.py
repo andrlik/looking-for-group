@@ -669,8 +669,8 @@ class AdventureLogCreate(
     """
 
     model = models.AdventureLog
-    permission_required = "games.is_member"
-    template = "games/log_create.html"
+    permission_required = "game.is_member"
+    template_name = "games/log_create.html"
     fields = ["title", "body"]
 
     def dispatch(self, request, *args, **kwargs):
@@ -681,12 +681,18 @@ class AdventureLogCreate(
     def get_permission_object(self):
         return self.session.game
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['session'] = self.session
+        return context
+
     def form_valid(self, form):
         self.log = form.save(commit=False)
         self.log.session = self.session
         self.log.initial_author = self.request.user.gamerprofile
         self.log.save()
-        return HttpResponseRedirect(self.log.get_absolute_url())
+        messages.success(self.request, _("You have successfully published a log entry."))
+        return HttpResponseRedirect(self.log.session.get_absolute_url())
 
 
 class AdventureLogUpdate(
@@ -700,10 +706,11 @@ class AdventureLogUpdate(
     """
 
     model = models.AdventureLog
-    permission_required = "games.is_member"
+    permission_required = "game.is_member"
     template_name = "games/log_edit.html"
     slug_url_kwarg = "log"
     slug_field = "slug"
+    context_object_name = 'log'
     fields = ["title", "body"]
 
     def get_permission_object(self):
@@ -716,7 +723,8 @@ class AdventureLogUpdate(
         obj = form.save(commit=False)
         obj.last_edited_by = self.request.user.gamerprofile
         obj.save()
-        return HttpResponseRedirect(obj.get_absolute_url())
+        messages.success(self.request, _("You have successfully updated this log entry."))
+        return HttpResponseRedirect(obj.session.get_absolute_url())
 
 
 class AdventureLogDelete(
@@ -731,7 +739,7 @@ class AdventureLogDelete(
 
     model = models.AdventureLog
     select_related = ["session", "session__game", "initial_author", "last_edited_by"]
-    permission_required = "games.can_edit_listing"
+    permission_required = "game.can_edit_listing"
     template_name = "games/log_delete.html"
     slug_url_kwarg = "log"
     slug_field = "slug"
@@ -739,6 +747,13 @@ class AdventureLogDelete(
 
     def get_permission_object(self):
         return self.get_object().session.game
+
+    def get_success_url(self):
+        return self.object.session.get_absolute_url()
+
+    def form_valid(self, form):
+        messages.success(self.request, _("You have successfully deleted this log entry."))
+        return super().form_valid(form)
 
 
 class CalendarDetail(

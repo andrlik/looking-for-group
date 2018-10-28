@@ -860,16 +860,129 @@ class GameSessionUncancelTest(AbstractGameSessionTest):
             assert not updated_session.occurrence.cancelled
 
 
-class AdventureLogCreateTest(AbstractViewTestCaseNoSignals):
-    pass
+class AdventureLogCreateTest(AbstractGameSessionTest):
+    """
+    Test for creation of an adventure log.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:log_create"
+        self.url_kwargs = {"session": self.session2.slug}
+        self.post_data = {
+            "title": "Mystery in the deep",
+            "body": "Our heroes encountered a lot of **stuff**.",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_player(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_submit_creation(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.AdventureLog.objects.filter(session=self.session2)
+                .latest("created")
+                .initial_author
+                == self.gamer4
+            )
 
 
-class AdventureLogUpdateTest(AbstractViewTestCaseNoSignals):
-    pass
+class AdventureLogUpdateTest(AbstractGameSessionTest):
+    """Test for editing an adventure log."""
+
+    def setUp(self):
+        super().setUp()
+        self.log = models.AdventureLog.objects.create(
+            session=self.session2,
+            initial_author=self.gamer4,
+            title="Mystery in the deep",
+            body="Our heroes encountered a lot of **stuff**",
+        )
+        self.view_name = "games:log_edit"
+        self.url_kwargs = {"log": self.log.slug}
+        self.post_data = {
+            "title": "Mystery in the deep",
+            "body": "Our heroes fight an octopus",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_update_submit(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            assert (
+                models.AdventureLog.objects.get(pk=self.log.pk).body
+                == "Our heroes fight an octopus"
+            )
+            assert (
+                models.AdventureLog.objects.get(pk=self.log.pk).last_edited_by
+                == self.gamer1
+            )
 
 
-class AdventureLogDeleteTest(AbstractViewTestCaseNoSignals):
-    pass
+class AdventureLogDeleteTest(AbstractGameSessionTest):
+    """
+    Test deletion of an adventure log.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.log = models.AdventureLog.objects.create(
+            session=self.session2,
+            initial_author=self.gamer4,
+            title="Mystery in the deep",
+            body="Our heroes encountered a lot of **stuff**",
+        )
+        self.view_name = "games:log_delete"
+        self.url_kwargs = {"log": self.log.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_player_only(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_deletion(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data={}, **self.url_kwargs)
+            with pytest.raises(ObjectDoesNotExist):
+                models.AdventureLog.objects.get(pk=self.log.pk)
 
 
 class CalendarDetailTest(AbstractViewTestCaseNoSignals):
