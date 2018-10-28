@@ -34,10 +34,11 @@ urlpatterns = [
         name="session_move",
     ),
     path(
-        "sessions/<slug:session>/delete/",
-        view=views.GameSessionDelete.as_view(),
-        name="session_delete",
+        "sessions/<slug:session>/cancel/",
+        view=views.GameSessionCancel.as_view(),
+        name="session_cancel",
     ),
+    path("sessions/<slug:session>/uncancel/", view=views.GameSessionUncancel.as_view(), name='session_uncancel'),
     path(
         "game/<slug:gameid>/sessions/",
         view=views.GameSessionList.as_view(),
