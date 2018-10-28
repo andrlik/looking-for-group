@@ -695,7 +695,9 @@ class GameSessionUpdateTest(AbstractGameSessionTest):
         self.url_kwargs = {"session": self.session2.slug}
         self.session2.refresh_from_db()
         self.post_data = {
-            "players_expected": [f.pk for f in models.Player.objects.filter(game=self.gp2)],
+            "players_expected": [
+                f.pk for f in models.Player.objects.filter(game=self.gp2)
+            ],
             "players_missing": [],
             "gm_notes": "This will be wild and **wacky**!",
         }
@@ -730,11 +732,51 @@ class GameSessionUpdateTest(AbstractGameSessionTest):
             )
 
 
-class GameSessionMoveTest(AbstractViewTestCaseNoSignals):
-    pass
+class GameSessionMoveTest(AbstractGameSessionTest):
+    """
+    Test for rescheduling a game session.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:session_move"
+        self.url_kwargs = {"session": self.session2.slug}
+        self.post_data = {
+            "scheduled_time": (
+                self.session2.scheduled_time + timedelta(days=1)
+            ).strftime("%Y-%m-%d %H:%M")
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            original_time = self.session2.scheduled_time
+            with mute_signals(post_save):
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+                if self.last_response.status_code == 200:
+                    self.print_form_errors()
+                self.response_302()
+                updated_session = models.GameSession.objects.get(pk=self.session2.pk)
+                assert original_time < updated_session.scheduled_time
+                assert (
+                    updated_session.scheduled_time == updated_session.occurrence.start
+                )
 
 
-class GameSessionDeleteTest(AbstractViewTestCaseNoSignals):
+class GameSessionCancelTest(AbstractViewTestCaseNoSignals):
     pass
 
 

@@ -652,7 +652,7 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
                 self.occurrence.move(
                     new_schedule_time,
                     new_schedule_time
-                    + timedelta(minutes=(60 * self.game.session_length)),
+                    + timedelta(minutes=int(60 * self.game.session_length)),
                 )
             self.save()
 

@@ -1,0 +1,13 @@
+{% extends "games/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% blocktrans with gametitle=session.game.title %}Reschedule session for {{ gametitle }}{% endblocktrans %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with gametitle=session.game.title %}Reschedule session for {{ gametitle }}{% endblocktrans %}</h1>
+<p>{% trans "Current scheduled time is:" %} <strong>{{ session.scheduled_time }}</strong></p>
+<p>{% trans "Select a new time below." %}</p>
+<form action="" method="post">
+  {{ form|as_foundation }}
+  <a href="{{ session.get_absolute_url }}" class="button secondary">{% trans "Return to session details" %}</a> <input type="submit" class="button success" value="{% trans 'Reschedule' %}" />
+</form>
+
+{% endblock %}
