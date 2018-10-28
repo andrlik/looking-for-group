@@ -1001,17 +1001,151 @@ class PlayerKickTest(AbstractViewTestCaseNoSignals):
     pass
 
 
-class CharacterCreateTest(AbstractViewTestCaseNoSignals):
-    pass
+class CharacterCreateTest(AbstractViewTestCaseSignals):
+    """
+    Test for player character models.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
+        self.view_name = "games:character_create"
+        self.url_kwargs = {"player": self.player1.slug}
+        self.post_data = {"name": "Magic Brian", "description": "Elven wizard"}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_creation(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            assert models.Character.objects.get(player=self.player1, name="Magic Brian")
 
 
 class CharacterDetailTest(AbstractViewTestCaseNoSignals):
+    """
+    Test for viewing character details.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
+        self.character1 = models.Character.objects.create(
+            player=self.player1, name="Magic Brian", description="Elven wizard"
+        )
+        self.view_name = "games:character_detail"
+        self.url_kwargs = {"character": self.character1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_users(self):
+        for gamer in [self.gamer1, self.gamer4]:
+            with self.login(username=gamer.username):
+                self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class CharacterListForGamerTest(AbstractViewTestCaseSignals):
     pass
 
 
-class CharacterUpdateTest(AbstractViewTestCaseNoSignals):
+class CharacterListForPlayerTest(AbstractViewTestCaseSignals):
+    """
+    Test for listing characters for a player in particular game.
+    """
+
     pass
 
 
-class CharacterDeleteTest(AbstractViewTestCaseNoSignals):
+class CharacterListForGameTest(AbstractViewTestCaseSignals):
+    """
+    Test for listing all characters for a particular game.
+    """
+
     pass
+
+
+class CharacterUpdateTest(AbstractViewTestCaseSignals):
+    """
+    Test for updating a character.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
+        self.character1 = models.Character.objects.create(
+            player=self.player1, name="Magic Brian", description="Elven wizard"
+        )
+        self.view_name = "games:character_edit"
+        self.url_kwargs = {"character": self.character1.slug}
+        self.post_data = {"name": "Magic Brian", "description": "Half-drow wizard"}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_users(self):
+        for gamer in [self.gamer4, self.gamer1]:
+            with self.login(username=gamer.username):
+                self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_submit_edit(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.Character.objects.get(pk=self.character1.pk).description
+                == "Half-drow wizard"
+            )
+
+
+class CharacterDeleteTest(AbstractViewTestCaseSignals):
+    """
+    Test for deleting a character.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
+        self.character1 = models.Character.objects.create(
+            player=self.player1, name="Magic Brian", description="Elven wizard"
+        )
+        self.view_name = "games:character_delete"
+        self.url_kwargs = {"character": self.character1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_users(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, self.url_kwargs)
+
+    def test_deletion(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data={}, **self.url_kwargs)

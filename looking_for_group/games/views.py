@@ -912,6 +912,130 @@ class CharacterCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
         return HttpResponseRedirect(self.character.get_aboslute_url)
 
 
+class CharacterApproveView(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.edit.UpdateView):
+    '''
+    Approve a character. TODO: add signal
+    '''
+
+    model = models.Character
+    slug_url_kwarg = 'character'
+    slug_field = 'slug'
+    permission_required = "game.can_edit_listing"
+    select_related = ['player', 'player__game']
+    fields = ['status']
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() not in ['post']:
+            return HttpResponseNotAllowed(['POST'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.get_object().player.game
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("You submitted invalid data."))
+        return HttpResponseRedirect(self.get_object().get_absolute_url())
+
+    def form_valid(self, form):
+        if form.cleaned_data['status'] != 'approved':
+            return self.form_invalid(form)
+        character = self.get_object()
+        character.status = form.cleaned_data['status']
+        character.save()
+        messages.success(self.request, _("Character {} has been {}.".format(character.name, form.cleaned_data['status'])))
+        return HttpResponseRedirect(character.get_absolute_url())
+
+
+class CharacterRejectView(CharacterApproveView):
+    '''
+    Reject view for a character.
+    '''
+
+    def form_valid(self, form):
+        if form.cleaned_data['status'] != 'rejected':
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+
+class CharacterMakeInactiveView(CharacterApproveView):
+    '''
+    View for gamer to make a character inactive.
+    '''
+
+    permission_required = 'game.edit_character'
+
+    def get_permission_object(self):
+        return self.get_object()
+
+    def form_valid(self, form):
+        if form.cleaned_data['status'] != 'inactive':
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+
+class CharacterListForGame(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.ListView):
+    '''
+    List of characters associated with game.
+    '''
+
+    model = models.Character
+    select_related = ['player', 'player__game']
+    permission_required = 'game.is_member'
+    template_name = 'games/game_character_list.html'
+    context_object_name = 'character_list'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.game:
+            game_slug = kwargs.pop('gameid', None)
+            self.game = get_object_or_404(models.GamePosting, slug=game_slug)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.game
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = self.game
+        return context
+
+    def get_queryset(self):
+        return models.Character.objects.filter(player__in=models.Player.objects.filter(game=self.game)).order_by('player__gamer.display_name', '-created', 'name')
+
+
+class CharacterListForPlayer(CharacterListForGame):
+    '''
+    List of characters for a single player.
+    '''
+    template_name = 'games/player_character_list.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        player_slug = kwargs.pop('player', None)
+        self.player = get_object_or_404(models.Player, slug=player_slug)
+        self.game = self.player.game
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['player'] = self.player
+        return context
+
+    def get_queryset(self):
+        return models.Character.objects.filter(player=self.player).order_by('-created')
+
+
+class CharacterListForGamer(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
+    '''
+    List of characters for a given gamer. Can only be accessed by the gamer themselves so no permissions required.
+    '''
+
+    context_object_name = 'character_list'
+    template_name = 'games/character_list.html'
+    select_related = ['player', 'player__game']
+
+    def get_queryset(self):
+        return models.Character.objects.filter(player__in=models.Player.objects.filter(gamer=self.request.user.gamerprofile)).order_by('-player__game.created', '-created')
+
+
 class CharacterDetail(
     LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.DetailView
 ):
@@ -936,6 +1060,7 @@ class CharacterUpdate(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
     model = models.Character
     fields = ["name", "sheet"]
     template_name = "games/character_update.html"
+    context_object_name = 'character'
     slug_field = "slug"
     slug_url_kwarg = "character"
     permission_required = "game.edit_character"
