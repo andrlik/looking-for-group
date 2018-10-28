@@ -1,0 +1,13 @@
+{% extends "games/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% blocktrans with gametitle=log.session.game.title sessiontime=log.session.scheduled_time %}Delete log for {{ gametitle }} session?{% endblocktrans %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with gametitle=log.session.game.title sessiontime=log.session.scheduled_time %}Delete log entry for {{ gametitle }} session on {{ sessiontime }}?{% endblocktrans %}</h1>
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans with logtitle=log.title sessiontime=log.session.scheduled_time gametitle=log.session.game.title %}This will permanently delete the log entry titled {{ logtitle }} from this session of {{ gametitle }}. Once this is done, you will need to create a new log for the session on {{ sessiontime }} if you want it included in the adventure log.{% endblocktrans %}</p>
+</div>
+<form action="" method="post">
+  <a href="{{ log.session.get_absolute_url }}" class="button secondary">{% trans "Return to session details without deleting" %}</a> <input type="submit" class="button alert" value="{% trans 'Delete' %}" />
+</form>
+{% endblock %}
