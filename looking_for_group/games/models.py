@@ -7,7 +7,15 @@ from django.db import models, transaction
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
+from schedule.models import (
+    Calendar,
+    Event,
+    EventManager,
+    EventRelation,
+    EventRelationManager,
+    Occurrence,
+    Rule,
+)
 
 from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule
 from ..game_catalog.utils import AbstractUUIDWithSlugModel
@@ -437,7 +445,9 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
             next_occurrence = None
             try:
                 next_occurrence = next(occurrences)
-                logger.debug("found next occurrence starting at {}".format(next_occurrence.start))
+                logger.debug(
+                    "found next occurrence starting at {}".format(next_occurrence.start)
+                )
             except StopIteration:  # pragma: no cover
                 pass  # There is no next occurrence.
             return next_occurrence
@@ -497,10 +507,12 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         return session
 
     def create_next_session(self):
-        return self.create_session_from_occurrence(self.get_next_scheduled_session_occurrence())
+        return self.create_session_from_occurrence(
+            self.get_next_scheduled_session_occurrence()
+        )
 
     def update_completed_session_count(self):
-        self.sessions = GameSession.objects.filter(status='complete', game=self).count()
+        self.sessions = GameSession.objects.filter(status="complete", game=self).count()
         self.save()
 
     class Meta:
@@ -592,12 +604,20 @@ class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     name = models.CharField(
         max_length=100, help_text=_("What is this character's name?")
     )
+    description = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_('A brief description of this character, e.g. "Half-elf monk"'),
+    )
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=15, choices=CHARACTER_STATUS_CHOICES, default="pending"
     )
     game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
-    sheet = models.FileField(help_text=_("Upload your character sheet here."))
+    sheet = models.FileField(
+        help_text=_("Upload your character sheet here."), null=True, blank=True
+    )
 
     def __str__(self):
         return "{0} ({1})".format(self.name, self.player.gamer.display_name)
