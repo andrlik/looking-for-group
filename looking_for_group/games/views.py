@@ -558,15 +558,15 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
         return HttpResponseRedirect(session.get_absolute_url())
 
 
-class GameSessionDelete(
+class GameSessionCancel(
     LoginRequiredMixin,
     SelectRelatedMixin,
     PrefetchRelatedMixin,
     PermissionRequiredMixin,
-    generic.edit.DeleteView,
+    generic.edit.UpdateView,
 ):
     """
-        Delete a game session.
+        Cancel a game session.
         """
 
     model = models.GameSession
@@ -585,12 +585,80 @@ class GameSessionDelete(
     context_object_name = "session"
     slug_url_kwarg = "session"
     slug_field = "slug"
+    fields = ['status']
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() not in ['post']:
+            return HttpResponseNotAllowed(['POST'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return self.get_object().get_absolute_url()
 
     def get_permission_object(self):
         return self.get_object().game
 
     def get_queryset(self):
         return models.GameSession.objects.all()
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("You have submitted invalid data."))
+        return HttpResponseRedirect(self.get_object().get_absolute_url())
+
+    def form_valid(self, form):
+        session = self.get_object()
+        if form.cleaned_data['status'] != 'cancel':
+            # Invalid use of this view.
+            messages.error(self.request, _('You cannot call this function to do anything other than cancel a session.'))
+        else:
+            messages.success(self.request, _('You have successfully cancelled this session.'))
+            session.cancel()
+        return HttpResponseRedirect(session.get_absolute_url())
+
+
+class GameSessionUncancel(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.edit.UpdateView):
+    """
+    Uncancel a session.
+    """
+
+    model = models.GameSession
+    select_related = [
+        "game",
+        "game__game_system",
+        "game__published_game",
+        "game__published_module",
+        "game__event",
+        "occurrence",
+        "adventurelog",
+    ]
+    prefetch_related = ["players_expected", "players_missing"]
+    permission_required = "game.can_edit_listing"
+    template_name = "games/session_delete.html"
+    context_object_name = "session"
+    slug_url_kwarg = "session"
+    slug_field = "slug"
+    fields = ['status']
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() not in ['post']:
+            return HttpResponseNotAllowed(['POST'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.get_object().game
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("You have submitted invalid data."))
+        return HttpResponseRedirect(self.get_object().get_absolute_url())
+
+    def form_valid(self, form):
+        session = self.get_object()
+        if form.cleaned_data['status'] != 'pending':
+            messages.error(self.request, _("You may not use this function for anything besides uncanceling a session."))
+        else:
+            session.uncancel()
+            messages.success(self.request, _("You have successfully uncanceled this session."))
+        return HttpResponseRedirect(session.get_absolute_url())
 
 
 class AdventureLogCreate(

@@ -776,8 +776,88 @@ class GameSessionMoveTest(AbstractGameSessionTest):
                 )
 
 
-class GameSessionCancelTest(AbstractViewTestCaseNoSignals):
-    pass
+class GameSessionCancelTest(AbstractGameSessionTest):
+    """
+    Test canceling a game session.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:session_cancel"
+        self.url_kwargs = {"session": self.session2.slug}
+        self.post_data = {"status": "cancel"}
+
+    def test_post_required(self):
+        self.get(self.view_name, **self.url_kwargs)
+        self.response_405()
+
+    def test_login_required(self):
+        self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+        self.response_302()
+        assert "accounts/login" in self.last_response["location"]
+        assert models.GameSession.objects.get(pk=self.session2.pk).status != "cancel"
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer1.username):
+            with mute_signals(post_save):
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            updated_session = models.GameSession.objects.get(pk=self.session2.pk)
+            assert updated_session.status == "cancel"
+            assert updated_session.occurrence.cancelled
+
+
+class GameSessionUncancelTest(AbstractGameSessionTest):
+    """
+    Test uncancelling a game session.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:session_uncancel"
+        self.url_kwargs = {"session": self.session2.slug}
+        self.post_data = {"status": "pending"}
+        with mute_signals(post_save):
+            self.session2.cancel()
+
+    def test_post_required(self):
+        self.get(self.view_name, **self.url_kwargs)
+        self.response_405()
+
+    def test_login_required(self):
+        self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+        self.response_302()
+        assert "accounts/login" in self.last_response["location"]
+        assert models.GameSession.objects.get(pk=self.session2.pk).status == "cancel"
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer1.username):
+            with mute_signals(post_save):
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            updated_session = models.GameSession.objects.get(pk=self.session2.pk)
+            assert updated_session.status == "pending"
+            assert not updated_session.occurrence.cancelled
 
 
 class AdventureLogCreateTest(AbstractViewTestCaseNoSignals):
