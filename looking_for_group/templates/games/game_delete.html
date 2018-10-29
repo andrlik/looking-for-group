@@ -12,6 +12,7 @@
   </ul>
 </div>
 <form action="" method="post">
+  {% csrf_token %}
   <p><a href="{{ game.get_absolute_url }}" class="button secondary">{% trans "Go back" %}</a> <input type="submit" class="button alert" value="{% trans 'Delete game' %}" /></p>
 </form>
 {% endblock %}

@@ -163,13 +163,13 @@ urlpatterns = [
         name="character_reactivate",
     ),
     path(
-        "game/<slug:game>/<slug:player>/leave/",
-        views.PlayerLeaveGameView.as_view(),
+        "game/<slug:gameid>/<slug:player>/leave/",
+        view=views.PlayerLeaveGameView.as_view(),
         name="player_leave",
     ),
     path(
-        "game/<slug:game>/<slug:player>/kick/",
-        views.PlayerKickView.as_view(),
+        "game/<slug:gameid>/<slug:player>/kick/",
+        view=views.PlayerKickView.as_view(),
         name="player_kick",
     ),
     path("create/", views.GamePostingCreateView.as_view(), name="game_create"),

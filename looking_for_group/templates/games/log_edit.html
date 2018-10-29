@@ -32,6 +32,7 @@
 </dl>
 <h2>{% trans "Edit your log entry below:" %}</h2>
 <form action="" method="post">
+  {% csrf_token %}
   {{ form|as_foundation }}
   <a href="{{ log.session.get_absolute_url }}" class="button secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button success" value="{% trans 'Save' %}" />
 </form>
