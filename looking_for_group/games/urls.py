@@ -38,7 +38,11 @@ urlpatterns = [
         view=views.GameSessionCancel.as_view(),
         name="session_cancel",
     ),
-    path("sessions/<slug:session>/uncancel/", view=views.GameSessionUncancel.as_view(), name='session_uncancel'),
+    path(
+        "sessions/<slug:session>/uncancel/",
+        view=views.GameSessionUncancel.as_view(),
+        name="session_uncancel",
+    ),
     path(
         "game/<slug:gameid>/sessions/",
         view=views.GameSessionList.as_view(),
@@ -121,6 +125,26 @@ urlpatterns = [
         "characters/<slug:character>/delete/",
         views.CharacterDelete.as_view(),
         name="character_delete",
+    ),
+    path(
+        "characters/<slug:character>/approve/",
+        view=views.CharacterApproveView.as_view(),
+        name="character_approve",
+    ),
+    path(
+        "characters/<slug:character>/reject/",
+        view=views.CharacterRejectView.as_view(),
+        name="character_reject",
+    ),
+    path(
+        "characters/<slug:character>/deactivate/",
+        view=views.CharacterMakeInactiveView.as_view(),
+        name="character_inactivate",
+    ),
+    path(
+        "characters/<slug:character>/reactivate/",
+        view=views.CharacterReactivateView.as_view(),
+        name="character_reactivate",
     ),
     path(
         "game/<slug:game>/<slug:player>/leave/",

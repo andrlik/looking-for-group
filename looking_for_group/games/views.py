@@ -1025,13 +1025,24 @@ class CharacterMakeInactiveView(CharacterApproveView):
     View for gamer to make a character inactive.
     """
 
-    permission_required = "game.edit_character"
+    permission_required = "game.delete_character"
 
     def get_permission_object(self):
         return self.get_object()
 
     def form_valid(self, form):
         if form.cleaned_data["status"] != "inactive":
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+
+class CharacterReactivateView(CharacterMakeInactiveView):
+    """
+    View for gamer to reactivate a character.
+    """
+
+    def form_valid(self, form):
+        if form.cleaned_data['status'] != 'pending':
             return self.form_invalid(form)
         return super().form_valid(form)
 
