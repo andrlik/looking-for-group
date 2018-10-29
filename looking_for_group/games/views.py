@@ -992,20 +992,25 @@ class CharacterApproveView(
         messages.error(self.request, _("You submitted invalid data."))
         return HttpResponseRedirect(self.get_object().get_absolute_url())
 
+    def get_permission_object(self):
+        return self.get_object().game
+
+    def get_valid_status(self):
+        return "approved"
+
+    def get_success_message_text(self, character):
+        return _(
+            "Character {} has been {}.".format(character.name, self.get_valid_status())
+        )
+
     def form_valid(self, form):
-        if form.cleaned_data["status"] != "approved":
+        if form.cleaned_data["status"] != self.get_valid_status():
             return self.form_invalid(form)
         character = self.get_object()
         character.status = form.cleaned_data["status"]
         character.save()
-        messages.success(
-            self.request,
-            _(
-                "Character {} has been {}.".format(
-                    character.name, form.cleaned_data["status"]
-                )
-            ),
-        )
+        messages.success(self.request, self.get_success_message_text(character))
+
         return HttpResponseRedirect(character.get_absolute_url())
 
 
@@ -1014,10 +1019,8 @@ class CharacterRejectView(CharacterApproveView):
     Reject view for a character.
     """
 
-    def form_valid(self, form):
-        if form.cleaned_data["status"] != "rejected":
-            return self.form_invalid(form)
-        return super().form_valid(form)
+    def get_valid_status(self):
+        return "rejected"
 
 
 class CharacterMakeInactiveView(CharacterApproveView):
@@ -1027,13 +1030,14 @@ class CharacterMakeInactiveView(CharacterApproveView):
 
     permission_required = "game.delete_character"
 
+    def get_success_message_text(self, character):
+        return _("Character {} has been made inactive.".format(character.name))
+
     def get_permission_object(self):
         return self.get_object()
 
-    def form_valid(self, form):
-        if form.cleaned_data["status"] != "inactive":
-            return self.form_invalid(form)
-        return super().form_valid(form)
+    def get_valid_status(self):
+        return "inactive"
 
 
 class CharacterReactivateView(CharacterMakeInactiveView):
@@ -1041,10 +1045,15 @@ class CharacterReactivateView(CharacterMakeInactiveView):
     View for gamer to reactivate a character.
     """
 
-    def form_valid(self, form):
-        if form.cleaned_data['status'] != 'pending':
-            return self.form_invalid(form)
-        return super().form_valid(form)
+    def get_valid_status(self):
+        return "pending"
+
+    def get_success_message_text(self, character):
+        return _(
+            "Character {} has been reactivated and is awaiting approval from the GM.".format(
+                character.name
+            )
+        )
 
 
 class CharacterListForGame(
