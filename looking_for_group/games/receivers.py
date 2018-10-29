@@ -191,4 +191,5 @@ def sync_calendar_on_player_add(sender, instance, created, *args, **kwargs):
 
 @receiver(post_delete, sender=models.Player)
 def clear_calendar_on_player_remove(sender, instance, *args, **kwargs):
-    async_task(clear_calendar_for_departing_player, instance)
+    if instance.game.event:
+        async_task(clear_calendar_for_departing_player, instance)

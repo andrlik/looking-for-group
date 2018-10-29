@@ -7,15 +7,7 @@ from django.db import models, transaction
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from schedule.models import (
-    Calendar,
-    Event,
-    EventManager,
-    EventRelation,
-    EventRelationManager,
-    Occurrence,
-    Rule,
-)
+from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
 from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule
 from ..game_catalog.utils import AbstractUUIDWithSlugModel
@@ -455,17 +447,23 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     @property
     def next_session_time(self):
-        return self.get_next_scheduled_session_occurrence().start
+        if self.event:
+            next_occurrence = self.get_next_scheduled_session_occurrence()
+            if next_occurrence:
+                return next_occurrence.start
+        return None
 
     @property
     def next_session(self):
-        try:
-            session = GameSession.objects.get(
-                game=self, occurrence=self.get_next_scheduled_session_occurrence()
-            )
-        except ObjectDoesNotExist:
-            return None
-        return session
+        if self.event:
+            try:
+                session = GameSession.objects.get(
+                    game=self, occurrence=self.get_next_scheduled_session_occurrence()
+                )
+            except ObjectDoesNotExist:
+                return None
+            return session
+        return None
 
     def create_session_from_occurrence(self, occurrence):
         """
@@ -580,14 +578,6 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         Convenience function to fetch the overall attendance average for the gamer.
         """
         return self.gamer.attendance_record
-
-    @property
-    def user(self):
-        return self.gamer.user
-
-    @property
-    def username(self):
-        return self.gamer.username
 
     @property
     def current_character(self):

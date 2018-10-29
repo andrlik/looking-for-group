@@ -4,6 +4,8 @@ from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models.query_utils import Q
 from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -937,7 +939,7 @@ class PlayerLeaveGameView(
     template_name = "games/player_leave.html"
 
     def dispatch(self, request, *args, **kwargs):
-        game_slug = kwargs.pop("game", None)
+        game_slug = kwargs.pop("gameid", None)
         self.game = get_object_or_404(models.GamePosting, slug=game_slug)
         return super().dispatch(request, *args, **kwargs)
 
@@ -949,6 +951,11 @@ class PlayerLeaveGameView(
             self.request, _("You have left game {}".format(self.game.title))
         )
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["game"] = self.game
+        return context
 
 
 class PlayerKickView(
@@ -970,14 +977,23 @@ class PlayerKickView(
     slug_field = "slug"
 
     def dispatch(self, request, *args, **kwargs):
-        game_slug = kwargs.pop("game", None)
+        game_slug = kwargs.pop("gameid", None)
         self.game = get_object_or_404(models.GamePosting, slug=game_slug)
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return self.game.get_absolute_url()
 
-    def form_valid(self, form):
+    def get_permission_object(self):
+        return self.game
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["game"] = self.game
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        logger.debug("Entering delete method...")
         messages.success(
             self.request,
             _(
@@ -986,7 +1002,12 @@ class PlayerKickView(
                 )
             ),
         )
-        return super().form_valid(form)
+        obj = self.get_object()
+        objpk = obj.pk
+        with transaction.atomic():
+            obj.delete()
+        logger.debug("Deleted object with pk {}...".format(objpk))
+        return HttpResponseRedirect(self.game.get_absolute_url())
 
 
 class CharacterCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):

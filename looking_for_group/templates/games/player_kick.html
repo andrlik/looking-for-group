@@ -1,0 +1,16 @@
+{% extends "games/game_detail.html" %}
+{% load i18n %}
+{% block subtitle %}{% blocktrans with gametitle=game.title pname=player.gamer.display_name %}Kick {{ pname }} from {{ gametitle }}?{% endblocktrans %} - {% endblock %}
+{% block details_and_controls %}
+<h2>{% blocktrans with gametitle=game.title pname=player.gamer.display_name %}Kick {{ pname }} from {{ gametitle }}?{% endblocktrans %}</h2>
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "Kicking this user from the game will require them to reapply which you can either approve or deny. They will lose access to game details and their characters will be removed from play." %}</p>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ game.get_absolute_url }}" class="button float-left secondary">{% trans "Go back to game details" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Kick player' %}" />
+  </div>
+</form>
+{% endblock %}

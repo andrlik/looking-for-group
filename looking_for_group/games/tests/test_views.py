@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -1016,12 +1016,81 @@ class CalendarJSONTest(AbstractViewTestCaseNoSignals):
     pass
 
 
-class PlayerLeaveTest(AbstractViewTestCaseNoSignals):
-    pass
+class PlayerLeaveTest(AbstractViewTestCaseSignals):
+    """
+    Test for player leave view
+    """
+
+    def setUp(self):
+        super().setUp()
+        with mute_signals(post_save):
+            self.player1 = models.Player.objects.create(
+                game=self.gp2, gamer=self.gamer4
+            )
+        self.view_name = "games:player_leave"
+        self.url_kwargs = {"gameid": self.gp2.slug, "player": self.player1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_leave_submit(self):
+        with self.login(username=self.gamer4.username):
+            with mute_signals(post_delete):
+                self.post(self.view_name, data={}, **self.url_kwargs)
+                self.response_302()
+            with pytest.raises(ObjectDoesNotExist):
+                models.Player.objects.get(pk=self.player1.pk)
 
 
-class PlayerKickTest(AbstractViewTestCaseNoSignals):
-    pass
+class PlayerKickTest(AbstractViewTestCaseSignals):
+    """
+    Test for kicking a player.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
+        self.view_name = "games:player_kick"
+        self.url_kwargs = {"gameid": self.gp2.slug, "player": self.player1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_kick_submit(self):
+        with self.login(username=self.gamer1.username):
+            with mute_signals(post_delete):
+                self.post(self.view_name, data={}, **self.url_kwargs)
+                self.response_302()
+            with pytest.raises(ObjectDoesNotExist):
+                models.Player.objects.get(pk=self.player1.pk)
 
 
 class CharacterCreateTest(AbstractViewTestCaseSignals):
