@@ -7,7 +7,7 @@ from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
 from factory.django import mute_signals
-from test_plus import TestCase
+from test_plus import APITestCase, TestCase
 from test_plus.test import BaseTestCase
 
 from .. import models
@@ -84,6 +84,10 @@ class AbstractViewTestCase(object):
 
 
 class AbstractViewTestCaseNoSignals(AbstractViewTestCase, TestCase):
+    pass
+
+
+class AbstractAPITestCase(AbstractViewTestCase, APITestCase):
     pass
 
 
@@ -1010,17 +1014,17 @@ class AdventureLogDeleteTest(AbstractGameSessionTest):
 
 class CalendarDetailTest(AbstractViewTestCaseNoSignals):
 
-    fixtures = ['rule']
+    fixtures = ["rule"]
 
     def setUp(self):
         super().setUp()
         self.gp2.start_time = timezone.now() + timedelta(days=2)
-        self.gp2.game_frequency = 'weekly'
+        self.gp2.game_frequency = "weekly"
         self.gp2.session_length = 2.5
         with mute_signals(post_save):
             self.gp2.save()
-        self.view_name = 'games:calendar_detail'
-        self.url_kwargs = {'gamer': self.gamer1.username}
+        self.view_name = "games:calendar_detail"
+        self.url_kwargs = {"gamer": self.gamer1.username}
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_name, **self.url_kwargs)
@@ -1035,8 +1039,44 @@ class CalendarDetailTest(AbstractViewTestCaseNoSignals):
             self.assertGoodView(self.view_name, **self.url_kwargs)
 
 
-class CalendarJSONTest(AbstractViewTestCaseNoSignals):
-    pass
+class CalendarJSONTest(AbstractAPITestCase):
+    fixtures = ["rule"]
+
+    def setUp(self):
+        super().setUp()
+        self.gp2.start_time = timezone.now() + timedelta(days=2)
+        self.gp2.game_frequency = "weekly"
+        self.gp2.session_length = 2.5
+        with mute_signals(post_save):
+            self.gp2.save()
+        self.view_name = "games:api_occurrences"
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.last_response = self.client.get(
+                "{}?calendar_slug={}&start={}&end={}".format(
+                    self.reverse(self.view_name),
+                    self.gamer1.username,
+                    (timezone.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
+                    (timezone.now() + timedelta(days=15)).strftime("%Y-%m-%d"),
+                )
+            )
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer1.username):
+            self.last_response = self.client.get(
+                "{}?calendar_slug={}&start={}&end={}".format(
+                    self.reverse(self.view_name),
+                    self.gamer1.username,
+                    (timezone.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
+                    (timezone.now() + timedelta(days=15)).strftime("%Y-%m-%d"),
+                )
+            )
+            self.response_200()
 
 
 class PlayerLeaveTest(AbstractViewTestCaseSignals):

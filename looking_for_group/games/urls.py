@@ -17,7 +17,11 @@ urlpatterns = [
         name="upcoming_events_feed",
     ),
     path("schedule/ical/calendar/<uuid:gamer>/", GamesICalFeed(), name="calendar_ical"),
-    path("schedule/calendar/", views.CalendarDetail.as_view(), name="calendar_detail"),
+    path(
+        "schedule/calendar/<slug:gamer>/",
+        views.CalendarDetail.as_view(),
+        name="calendar_detail",
+    ),
     path(
         "sessions/<slug:session>/",
         view=views.GameSessionDetail.as_view(),

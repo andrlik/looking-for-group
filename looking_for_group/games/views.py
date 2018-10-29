@@ -867,10 +867,9 @@ class AdventureLogDelete(
 
 class CalendarDetail(
     LoginRequiredMixin,
-    SelectRelatedMixin,
     PrefetchRelatedMixin,
     PermissionRequiredMixin,
-    CalendarByPeriodsView,
+    generic.DetailView,
 ):
     """
     A calendar view of all of the user's games and whatnot. Links to actual events/sessions.
@@ -878,8 +877,7 @@ class CalendarDetail(
 
     model = Calendar
     permission_required = "calendar.can_view"
-    select_related = ["event_set"]
-    prefetch_related = ["event_set__gameposting_set"]
+    prefetch_related = ["event_set"]
     periods = [Month]
     template_name = "games/calendar_detail.html"
     slug_url_kwarg = "gamer"
@@ -901,15 +899,20 @@ class CalendarJSONView(
     permission_required = "calendar.can_view"
     select_related = ["events"]
     context_object_name = "calendar"
-    slug_url_kwarg = "calendar"
 
     def dispatch(self, request, *args, **kwargs):
-        self.start = request.GET.get("start")
-        self.end = request.GET.get("end")
-        self.timezone = request.GET.pop("timezone", None)
+        self.start = request.GET.copy().get("start")
+        self.end = request.GET.copy().get("end")
+        self.timezone = request.GET.copy().pop("timezone", None)
+        self.calendar_slug = request.GET.copy().pop("calendar_slug", None)
         if not self.timezone:
             pass  # We'll fetch user-defined timzone later after we define it.
         return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        if not queryset:
+            queryset = self.get_queryset()
+        return get_object_or_404(self.model, slug=self.calendar_slug)
 
     def get_queryset(self):
         return Calendar.objects.all()
