@@ -1009,7 +1009,30 @@ class AdventureLogDeleteTest(AbstractGameSessionTest):
 
 
 class CalendarDetailTest(AbstractViewTestCaseNoSignals):
-    pass
+
+    fixtures = ['rule']
+
+    def setUp(self):
+        super().setUp()
+        self.gp2.start_time = timezone.now() + timedelta(days=2)
+        self.gp2.game_frequency = 'weekly'
+        self.gp2.session_length = 2.5
+        with mute_signals(post_save):
+            self.gp2.save()
+        self.view_name = 'games:calendar_detail'
+        self.url_kwargs = {'gamer': self.gamer1.username}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
 
 
 class CalendarJSONTest(AbstractViewTestCaseNoSignals):
