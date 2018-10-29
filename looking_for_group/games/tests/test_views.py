@@ -1031,9 +1031,9 @@ class CharacterCreateTest(AbstractViewTestCaseSignals):
             assert models.Character.objects.get(player=self.player1, name="Magic Brian")
 
 
-class CharacterDetailTest(AbstractViewTestCaseNoSignals):
+class AbstractCharacterManipTests(AbstractViewTestCaseSignals):
     """
-    Test for viewing character details.
+    Automates some of the setup for the following tests.
     """
 
     def setUp(self):
@@ -1045,6 +1045,15 @@ class CharacterDetailTest(AbstractViewTestCaseNoSignals):
             game=self.gp2,
             description="Elven wizard",
         )
+
+
+class CharacterDetailTest(AbstractCharacterManipTests):
+    """
+    Test for viewing character details.
+    """
+
+    def setUp(self):
+        super().setUp()
         self.view_name = "games:character_detail"
         self.url_kwargs = {"character": self.character1.slug}
 
@@ -1083,20 +1092,13 @@ class CharacterListForGameTest(AbstractViewTestCaseSignals):
     pass
 
 
-class CharacterUpdateTest(AbstractViewTestCaseSignals):
+class CharacterUpdateTest(AbstractCharacterManipTests):
     """
     Test for updating a character.
     """
 
     def setUp(self):
         super().setUp()
-        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
-        self.character1 = models.Character.objects.create(
-            player=self.player1,
-            name="Magic Brian",
-            game=self.gp2,
-            description="Elven wizard",
-        )
         self.view_name = "games:character_edit"
         self.url_kwargs = {"character": self.character1.slug}
         self.post_data = {"name": "Magic Brian", "description": "Half-drow wizard"}
@@ -1126,20 +1128,13 @@ class CharacterUpdateTest(AbstractViewTestCaseSignals):
             )
 
 
-class CharacterDeleteTest(AbstractViewTestCaseSignals):
+class CharacterDeleteTest(AbstractCharacterManipTests):
     """
     Test for deleting a character.
     """
 
     def setUp(self):
         super().setUp()
-        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
-        self.character1 = models.Character.objects.create(
-            player=self.player1,
-            name="Magic Brian",
-            game=self.gp2,
-            description="Elven wizard",
-        )
         self.view_name = "games:character_delete"
         self.url_kwargs = {"character": self.character1.slug}
 
@@ -1161,3 +1156,105 @@ class CharacterDeleteTest(AbstractViewTestCaseSignals):
     def test_deletion(self):
         with self.login(username=self.gamer4.username):
             self.post(self.view_name, data={}, **self.url_kwargs)
+
+
+class CharacterApproveTest(AbstractCharacterManipTests):
+    """
+    Test for character approval.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:character_approve"
+        self.url_kwargs = {"character": self.character1.slug}
+        self.post_data = {"status": "approved"}
+
+    def test_post_required(self):
+        self.get(self.view_name, **self.url_kwargs)
+        self.response_405()
+
+    def test_login_required(self):
+        self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+        self.response_302()
+        assert "accounts/login" in self.last_response["location"]
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.Character.objects.get(pk=self.character1.pk).status == "approved"
+            )
+
+
+class CharacterRejectTest(CharacterApproveTest):
+    """
+    Test for character rejection.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:character_reject"
+        self.post_data["status"] = "rejected"
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.Character.objects.get(pk=self.character1.pk).status == "rejected"
+            )
+
+
+class CharacterInactiveTest(CharacterApproveTest):
+    """
+    Test for making a character inactive.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:character_inactivate"
+        self.post_data["status"] = "inactive"
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            print(self.post_data)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.Character.objects.get(pk=self.character1.pk).status == "inactive"
+            )
+
+
+class CharacterReactivateTest(CharacterInactiveTest):
+    """
+    Test for character reactivation.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:character_reactivate"
+        self.post_data["status"] == "pending"
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.Character.objects.get(pk=self.character1.pk).status == "pending"
+            )
