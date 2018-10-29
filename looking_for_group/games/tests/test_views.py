@@ -134,6 +134,29 @@ class GamePostingListTest(AbstractViewTestCaseNoSignals):
             assert games.count() == 3
 
 
+class MyGameListTest(AbstractViewTestCaseSignals):
+    """
+    Test the view for a gamer's games.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:my_game_list"
+        self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
+        self.player2 = models.Player.objects.create(game=self.gp3, gamer=self.gamer4)
+        self.gp4.status = "closed"
+        self.gp4.save()
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name)
+            assert len(self.get_context("active_game_list")) == 3
+            assert len(self.get_context("completed_game_list")) == 2
+
+
 class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
     """
     Test creation of a game posting.
@@ -1072,26 +1095,6 @@ class CharacterDetailTest(AbstractCharacterManipTests):
             self.assertGoodView(self.view_name, **self.url_kwargs)
 
 
-class CharacterListForGamerTest(AbstractViewTestCaseSignals):
-    pass
-
-
-class CharacterListForPlayerTest(AbstractViewTestCaseSignals):
-    """
-    Test for listing characters for a player in particular game.
-    """
-
-    pass
-
-
-class CharacterListForGameTest(AbstractViewTestCaseSignals):
-    """
-    Test for listing all characters for a particular game.
-    """
-
-    pass
-
-
 class CharacterUpdateTest(AbstractCharacterManipTests):
     """
     Test for updating a character.
@@ -1258,3 +1261,84 @@ class CharacterReactivateTest(CharacterInactiveTest):
             assert (
                 models.Character.objects.get(pk=self.character1.pk).status == "pending"
             )
+
+
+class AbstractCharacterListTest(AbstractCharacterManipTests):
+    """
+    Abstract Test for list view
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.player2 = models.Player.objects.create(game=self.gp2, gamer=self.gamer2)
+        self.character2 = models.Character.objects.create(
+            player=self.player2,
+            game=self.gp2,
+            name="Taakko the wise",
+            description="Halfling shapeshifter",
+        )
+        self.expected_value = 1
+
+
+class CharacterGameListTest(AbstractCharacterListTest):
+    """
+    Test for list for a given game.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:character_game_list"
+        self.url_kwargs = {"gameid": self.gp2.slug}
+        self.expected_value = 2
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_members(self):
+        for gamer in [self.gamer2, self.gamer4, self.gamer1]:
+            with self.login(username=gamer.username):
+                self.assertGoodView(self.view_name, **self.url_kwargs)
+                assert self.expected_value == len(self.get_context("character_list"))
+
+
+class CharacterPlayerListTest(CharacterGameListTest):
+    """
+    Test for viewing list of characters associated with a single player in a game.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:character_player_list"
+        self.url_kwargs = {"player": self.player1.slug}
+        self.expected_value = 1
+
+
+class CharacterGamerList(AbstractCharacterListTest):
+    """
+    Test for character list for a given gamer.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.player3 = models.Player.objects.create(game=self.gp1, gamer=self.gamer2)
+        self.character3 = models.Character.objects.create(
+            player=self.player3,
+            game=self.gp1,
+            name="Rosebud",
+            description="A magical sled",
+        )
+        self.expected_value = 2
+        self.view_name = "games:character_gamer_list"
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_valid_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name)
+            assert self.expected_value == len(self.get_context("character_list"))
