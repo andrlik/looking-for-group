@@ -37,7 +37,7 @@ def is_gm_for_game_applied(user, application):
 
 @rules.predicate
 def is_game_member(user, game):
-    if user.gamerprofile in game.players.all() or user.gamerprofile == game.gm:
+    if game.gm.user == user or user.gamerprofile in game.players.all():
         return True
     return False
 
@@ -71,6 +71,16 @@ def is_applicant(user, application):
     return False
 
 
+@rules.predicate
+def is_character_editor(user, character):
+    return character.player.gamer.user == user or character.game.gm.user == user
+
+
+@rules.predicate
+def is_character_owner(user, character):
+    return character.player.gamer.user == user
+
+
 is_application_viewer = is_applicant | is_gm_for_game_applied
 
 
@@ -84,11 +94,21 @@ log_writer = is_game_gm | is_scribe
 
 
 @rules.predicate
+def is_player_owner(user, player):
+    return player.gamer.user == user
+
+
+@rules.predicate
 def is_calendar_owner(user, calendar):
     return user.username == calendar.slug
 
 
 rules.add_perm('game.can_edit_listing', is_game_gm)
+rules.add_perm('game.add_character', is_player_owner)
+rules.add_perm('game.approve_character', is_game_gm)
+rules.add_perm('game.edit_character', is_character_editor)
+rules.add_perm('game.view_character', is_game_member)
+rules.add_perm('game.delete_character', is_character_owner)
 rules.add_perm('game.can_view_listing', game_is_viewable)
 rules.add_perm('game.can_apply', application_eligible)
 rules.add_perm('game.view_application', is_application_viewer)

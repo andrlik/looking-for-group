@@ -1040,7 +1040,10 @@ class CharacterDetailTest(AbstractViewTestCaseNoSignals):
         super().setUp()
         self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
         self.character1 = models.Character.objects.create(
-            player=self.player1, name="Magic Brian", description="Elven wizard"
+            player=self.player1,
+            name="Magic Brian",
+            game=self.gp2,
+            description="Elven wizard",
         )
         self.view_name = "games:character_detail"
         self.url_kwargs = {"character": self.character1.slug}
@@ -1054,9 +1057,10 @@ class CharacterDetailTest(AbstractViewTestCaseNoSignals):
             self.response_403()
 
     def test_valid_users(self):
-        for gamer in [self.gamer1, self.gamer4]:
-            with self.login(username=gamer.username):
-                self.assertGoodView(self.view_name, **self.url_kwargs)
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+        with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
 
 
 class CharacterListForGamerTest(AbstractViewTestCaseSignals):
@@ -1088,7 +1092,10 @@ class CharacterUpdateTest(AbstractViewTestCaseSignals):
         super().setUp()
         self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
         self.character1 = models.Character.objects.create(
-            player=self.player1, name="Magic Brian", description="Elven wizard"
+            player=self.player1,
+            name="Magic Brian",
+            game=self.gp2,
+            description="Elven wizard",
         )
         self.view_name = "games:character_edit"
         self.url_kwargs = {"character": self.character1.slug}
@@ -1110,6 +1117,8 @@ class CharacterUpdateTest(AbstractViewTestCaseSignals):
     def test_submit_edit(self):
         with self.login(username=self.gamer4.username):
             self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
             self.response_302()
             assert (
                 models.Character.objects.get(pk=self.character1.pk).description
@@ -1126,7 +1135,10 @@ class CharacterDeleteTest(AbstractViewTestCaseSignals):
         super().setUp()
         self.player1 = models.Player.objects.create(game=self.gp2, gamer=self.gamer4)
         self.character1 = models.Character.objects.create(
-            player=self.player1, name="Magic Brian", description="Elven wizard"
+            player=self.player1,
+            name="Magic Brian",
+            game=self.gp2,
+            description="Elven wizard",
         )
         self.view_name = "games:character_delete"
         self.url_kwargs = {"character": self.character1.slug}
@@ -1144,7 +1156,7 @@ class CharacterDeleteTest(AbstractViewTestCaseSignals):
 
     def test_valid_users(self):
         with self.login(username=self.gamer4.username):
-            self.assertGoodView(self.view_name, self.url_kwargs)
+            self.assertGoodView(self.view_name, **self.url_kwargs)
 
     def test_deletion(self):
         with self.login(username=self.gamer4.username):
