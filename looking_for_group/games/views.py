@@ -1117,7 +1117,7 @@ class CharacterDetail(
 
     model = models.Character
     select_related = ["game", "player", "player__gamer"]
-    permission_required = "game.is_game_member"
+    permission_required = "game.is_member"
     template_name = "games/character_detail.html"
     context_object_name = "character"
     slug_url_kwarg = "character"
