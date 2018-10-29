@@ -44,6 +44,12 @@ urlpatterns = [
         name="session_uncancel",
     ),
     path(
+        "my/characters/",
+        view=views.CharacterListForGamer.as_view(),
+        name="character_gamer_list",
+    ),
+    path("my/games/", view=views.MyGameList.as_view(), name="my_game_list"),
+    path(
         "game/<slug:gameid>/sessions/",
         view=views.GameSessionList.as_view(),
         name="session_list",
@@ -82,6 +88,11 @@ urlpatterns = [
         name="game_delete",
     ),
     path(
+        "game/<slug:gameid>/characters/",
+        view=views.CharacterListForGame.as_view(),
+        name="character_game_list",
+    ),
+    path(
         "game/<slug:gameid>/apply/",
         views.GamePostingApplyView.as_view(),
         name="game_apply",
@@ -110,6 +121,11 @@ urlpatterns = [
         "players/<slug:player>/characters/create/",
         views.CharacterCreate.as_view(),
         name="character_create",
+    ),
+    path(
+        "players/<slug:player>/characters/",
+        view=views.CharacterListForPlayer.as_view(),
+        name="character_player_list",
     ),
     path(
         "characters/<slug:character>/",

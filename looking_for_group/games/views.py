@@ -31,7 +31,7 @@ class GamePostingListView(
     """
 
     model = models.GamePosting
-    select_related = ["game_system", "published_game", "published_module"]
+    select_related = ["game_system", "published_game", "published_module", "gm"]
     prefetch_related = ["players", "communities"]
     template_name = "games/game_list.html"
     context_object_name = "game_list"
@@ -54,6 +54,58 @@ class GamePostingListView(
         return models.GamePosting.objects.exclude(
             status__in=["cancel", "closed"]
         ).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
+
+
+class MyGameList(
+    LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, generic.ListView
+):
+    """
+    A list for games that the current user is involved with.
+    """
+
+    model = models.GamePosting
+    select_related = ["game_system", "published_game", "published_module", "gm"]
+    prefetch_related = ["players", "communities"]
+    template_name = "games/my_game_list.html"
+    context_object_name = "active_game_list"
+    paginate_by = 15
+    paginate_orphans = 3
+    stub_queryset = None
+
+    def get_stub_queryset(self):
+        if not self.stub_queryset:
+            gamer = self.request.user.gamerprofile
+            game_player_ids = [
+                obj.game.id
+                for obj in models.Player.objects.filter(gamer=gamer).select_related(
+                    "game"
+                )
+            ]
+            q_gm = Q(gm=gamer)
+            q_is_player = Q(id__in=game_player_ids)
+            self.stub_queryset = models.GamePosting.objects.filter(q_gm | q_is_player)
+        return self.stub_queryset
+
+    def get_queryset(self):
+        return (
+            self.get_stub_queryset()
+            .exclude(status__in=["cancel", "closed"])
+            .order_by("-modified")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["completed_game_list"] = (
+            self.get_stub_queryset()
+            .filter(status__in=["cancel", "closed"])
+            .order_by("-modified")
+        )
+        context[
+            "pending_game_application_count"
+        ] = models.GamePostingApplication.objects.filter(
+            gamer=self.request.user.gamerprofile, status="pending"
+        )
+        return context
 
 
 class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
@@ -1068,6 +1120,7 @@ class CharacterListForGame(
     permission_required = "game.is_member"
     template_name = "games/game_character_list.html"
     context_object_name = "character_list"
+    game = None
 
     def dispatch(self, request, *args, **kwargs):
         if not self.game:
@@ -1085,7 +1138,7 @@ class CharacterListForGame(
 
     def get_queryset(self):
         return models.Character.objects.filter(game=self.game).order_by(
-            "player__gamer.display_name", "-created", "name"
+            "player__created", "-created", "name"
         )
 
 
@@ -1117,7 +1170,7 @@ class CharacterListForGamer(LoginRequiredMixin, SelectRelatedMixin, generic.List
     """
 
     context_object_name = "character_list"
-    template_name = "games/character_list.html"
+    template_name = "games/my_character_list.html"
     select_related = ["player", "player__game"]
 
     def get_queryset(self):
@@ -1125,7 +1178,7 @@ class CharacterListForGamer(LoginRequiredMixin, SelectRelatedMixin, generic.List
             player__in=models.Player.objects.filter(
                 gamer=self.request.user.gamerprofile
             )
-        ).order_by("-player__game.created", "-created")
+        ).order_by("-player__game__created", "-created")
 
 
 class CharacterDetail(
