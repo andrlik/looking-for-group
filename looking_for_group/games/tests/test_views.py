@@ -1057,9 +1057,9 @@ class CharacterDetailTest(AbstractViewTestCaseNoSignals):
             self.response_403()
 
     def test_valid_users(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
         with self.login(username=self.gamer4.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+        with self.login(username=self.gamer1.username):
             self.assertGoodView(self.view_name, **self.url_kwargs)
 
 
