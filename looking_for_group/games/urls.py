@@ -103,22 +103,22 @@ urlpatterns = [
         name="my-game-applications",
     ),
     path(
-        "game/<slug:game>/<slug:player>/characters/create/",
+        "players/<slug:player>/characters/create/",
         views.CharacterCreate.as_view(),
         name="character_create",
     ),
     path(
-        "character/<slug:character>/",
+        "characters/<slug:character>/",
         views.CharacterDetail.as_view(),
         name="character_detail",
     ),
     path(
-        "character/<slug:character>/edit/",
+        "characters/<slug:character>/edit/",
         views.CharacterUpdate.as_view(),
-        name="character_update",
+        name="character_edit",
     ),
     path(
-        "character/<slug:character>/delete/",
+        "characters/<slug:character>/delete/",
         views.CharacterDelete.as_view(),
         name="character_delete",
     ),
