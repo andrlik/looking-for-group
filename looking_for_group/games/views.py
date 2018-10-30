@@ -4,20 +4,21 @@ from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.query_utils import Q
-from django.http import HttpResponseNotAllowed, HttpResponseRedirect
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar
 from schedule.periods import Month
-from schedule.views import CalendarByPeriodsView, _api_occurrences
+from schedule.views import _api_occurrences
 
 from . import forms, models
+from .utils import mkLastOfMonth, mkfirstOfmonth
 from .mixins import JSONResponseMixin
 
 # Create your views here.
@@ -881,6 +882,13 @@ class CalendarDetail(
     periods = [Month]
     template_name = "games/calendar_detail.html"
     slug_url_kwarg = "gamer"
+    context_object_name = "calendar"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["start_of_month"] = mkfirstOfmonth(timezone.now())
+        context["end_of_month"] = mkLastOfMonth(timezone.now())
+        return context
 
 
 class CalendarJSONView(
@@ -897,7 +905,6 @@ class CalendarJSONView(
 
     model = Calendar
     permission_required = "calendar.can_view"
-    select_related = ["events"]
     context_object_name = "calendar"
 
     def dispatch(self, request, *args, **kwargs):
@@ -905,6 +912,23 @@ class CalendarJSONView(
         self.end = request.GET.copy().get("end")
         self.timezone = request.GET.copy().pop("timezone", None)
         self.calendar_slug = request.GET.copy().pop("calendar_slug", None)
+        if not self.start:
+            self.start = mkfirstOfmonth(timezone.now()).strftime("%Y-%m-%d")
+        else:
+            self.start = self.start[0]
+        if not self.end:
+            self.end = mkLastOfMonth(timezone.now()).strftime("%Y-%m-%d")
+        else:
+            self.end = self.end[0]
+        if not self.timezone:
+            self.timezone = timezone.now().strftime("%z")
+        else:
+            self.timezone = self.timezone[0]
+        if not self.calendar_slug:
+            raise Http404
+        else:
+            self.calendar_slug = self.calendar_slug[0]
+        logger.debug("Received '{}' as calendar slug.".format(self.calendar_slug))
         if not self.timezone:
             pass  # We'll fetch user-defined timzone later after we define it.
         return super().dispatch(request, *args, **kwargs)
@@ -912,15 +936,19 @@ class CalendarJSONView(
     def get_object(self, queryset=None):
         if not queryset:
             queryset = self.get_queryset()
+        logger.debug(
+            "Trying to locate Calendar with slug {}".format(self.calendar_slug)
+        )
         return get_object_or_404(self.model, slug=self.calendar_slug)
+
+    def render_to_json_response(self, context, **response_kwargs):
+        return super().render_to_json_response(context, safe=False, **response_kwargs)
 
     def get_queryset(self):
         return Calendar.objects.all()
 
     def get_data(self, context):
-        return _api_occurrences(
-            self.start, self.end, context["calendar"].slug, self.timezone
-        )
+        return _api_occurrences(self.start, self.end, self.calendar_slug, self.timezone)
 
 
 class PlayerLeaveGameView(
