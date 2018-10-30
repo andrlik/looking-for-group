@@ -13,7 +13,7 @@
   $(document).ready(function() {
     // initialize calendar view
     $('#calendar').fullCalendar({
-      events: 'schedule/api/occurences/?calendar_slug={{ calendar_slug }}'
+      events: 'schedule/api/occurences/?calendar_slug={{ calendar_slug }}&start={% now "Y-m-01" %}&end={{ end_of_month|date:"Y-m-d" }}&timezone={{ TIME_ZONE|urlencode }}'
     })
   });
 </script>

@@ -130,7 +130,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             )
             if created:
                 logger.debug(
-                    "Created new calendar for user {}".format(instance.gm.username)
+                    "Created new calendar for user {} with slug {}".format(instance.gm.username, calendar.slug)
                 )
             rule = None
             if frequency:

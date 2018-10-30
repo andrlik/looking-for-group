@@ -1,4 +1,5 @@
 from datetime import timedelta
+import urllib
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,6 +12,7 @@ from test_plus import APITestCase, TestCase
 from test_plus.test import BaseTestCase
 
 from .. import models
+from ..utils import mkfirstOfmonth, mkLastOfMonth
 from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
 
 
@@ -1050,32 +1052,30 @@ class CalendarJSONTest(AbstractAPITestCase):
         with mute_signals(post_save):
             self.gp2.save()
         self.view_name = "games:api_occurrences"
+        self.query_values = {
+            "calendar_slug": self.gamer1.username,
+            "start": mkfirstOfmonth(timezone.now()).strftime("%Y-%m-%d"),
+            "end": mkLastOfMonth(timezone.now()).strftime("%Y-%m-%d"),
+            "timezone": timezone.now().strftime("%z"),
+        }
+        self.query_string = urllib.parse.urlencode(self.query_values)
+        self.request_url = "{}?{}".format(
+            self.reverse(self.view_name), self.query_string
+        )
 
     def test_login_required(self):
-        self.assertLoginRequired(self.view_name)
+        self.last_response = self.client.get(self.request_url)
+        self.response_302()
 
     def test_invalid_user(self):
+        print(self.request_url)
         with self.login(username=self.gamer3.username):
-            self.last_response = self.client.get(
-                "{}?calendar_slug={}&start={}&end={}".format(
-                    self.reverse(self.view_name),
-                    self.gamer1.username,
-                    (timezone.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
-                    (timezone.now() + timedelta(days=15)).strftime("%Y-%m-%d"),
-                )
-            )
+            self.last_response = self.client.get(self.request_url)
             self.response_403()
 
     def test_valid_user(self):
         with self.login(username=self.gamer1.username):
-            self.last_response = self.client.get(
-                "{}?calendar_slug={}&start={}&end={}".format(
-                    self.reverse(self.view_name),
-                    self.gamer1.username,
-                    (timezone.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
-                    (timezone.now() + timedelta(days=15)).strftime("%Y-%m-%d"),
-                )
-            )
+            self.last_response = self.client.get(self.request_url)
             self.response_200()
 
 
