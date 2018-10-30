@@ -1,0 +1,13 @@
+{% extends "games/game_detail.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Withdraw application" %}{% endblock %}
+{% block details_and_controls %}
+<h2>{% trans "Withdraw application?" %}</h2>
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans with gametitle=application.game.title %}Are you sure you want to withdraw your application from {{ gametitle }}? If you wish to reapply, you will need to start the process over again.{% endblocktrans %}</p>
+</div>
+<form action="" method="post">
+  <p><a href="{{ application.get_absolute_url }}" class="button secondary">{% trans "Go back" %}</a> <input type="submit" class="button alert" value="Withdraw Application" /></p>
+</form>
+{% endblock %}

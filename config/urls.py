@@ -1,12 +1,12 @@
 from django.conf import settings
-from django.urls import include, path
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.views.generic import TemplateView
+from django.urls import include, path
 from django.views import defaults as default_views
-from .api_routers import router
-from . import rating_url_override
+from django.views.generic import TemplateView
 
+from . import rating_url_override
+from .api_routers import router
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -23,6 +23,7 @@ urlpatterns = [
     path("catalog/", include("looking_for_group.game_catalog.urls")),
     path("social/", include("looking_for_group.gamer_profiles.urls")),
     path("social/avatar/", include('avatar.urls')),
+    path("games/", include('looking_for_group.games.urls')),
     path("ratings/", include(rating_url_override)),
     path("api-auth/", include('rest_framework.urls')),
     path("api/", include(router.urls)),

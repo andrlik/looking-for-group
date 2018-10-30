@@ -1,0 +1,11 @@
+{% extends "games/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Create game" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "Create game" %}</h1>
+<form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <p> <a class="button secondary" href="{% url 'games:game_list' %}">{% trans "Cancel and return to game listings" %}</a> <input type="submit" class="button success" value="{% trans 'Create' %}"></p>
+</form>
+{% endblock %}

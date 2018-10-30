@@ -1,12 +1,13 @@
+from django.urls import reverse
 from test_plus import APITestCase
+
 from ..models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 from ..serializers import (
-    PublishedGamerSerializer,
-    GameSystemSerializer,
     GamerPublisherSerializer,
-    PublishedModuleSerializer,
+    GameSystemSerializer,
+    PublishedGamerSerializer,
+    PublishedModuleSerializer
 )
-from django.urls import reverse
 
 
 class GameCatalogAbstractTestCase(APITestCase):
@@ -70,9 +71,7 @@ class PublisherViews(GameCatalogAbstractTestCase):
         self.get("api-publisher-detail", **url_kwargs, extra=self.extra)
         self.response_403()
         with self.login(username=self.user1.username):
-            self.get(
-                "api-publisher-detail", **url_kwargs, extra=self.extra
-            )
+            self.get("api-publisher-detail", **url_kwargs, extra=self.extra)
             serialized_data = GamerPublisherSerializer(self.mcg)
             assert serialized_data.data == self.last_response.data
 
@@ -108,7 +107,12 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
         self.get("api-publishedgame-detail", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
-            print(reverse("api-publishedgame-detail", kwargs={'pk': self.numen.pk, 'format': 'json'}))
+            print(
+                reverse(
+                    "api-publishedgame-detail",
+                    kwargs={"pk": self.numen.pk, "format": "json"},
+                )
+            )
             self.get("api-publishedgame-detail", **url_kwargs)
             serialized_object = PublishedGamerSerializer(self.numen)
             assert serialized_object.data == self.last_response.data

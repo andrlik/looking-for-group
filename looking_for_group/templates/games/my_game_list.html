@@ -1,0 +1,79 @@
+{% extends "games/base.html" %}
+{% load avatar_tags i18n humanize %}
+{% block subtitle %}{% trans "My Games" %} - {% endblock %}
+{% block content %}
+<h1>{% trans "My Games" %}</h1>
+{% if not active_game_list %}
+<p>{% trans "No active games found." %}</p>
+{% endif %}
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "Title" %}</th>
+      <th>{% trans "Type" %}</th>
+      <th>{% trans "Status" %}</th>
+      <th>{% trans "Start" %}</th>
+      <th>{% trans "End" %}</th>
+      <th>{% trans "GM" %}</th>
+      <th>{% trans "Frequency (if applicable)"</th>
+      <th class="text-right">{% trans "Session Length (hours)" %}</th>
+      <th>{% trans "Adult Themes?" %}</th>
+      <th>{% trans "Content Warning" %}</th>
+      <th>{% trans "Privacy Setting" %}</th>
+      <th>{% trans "Players (current/min/max)" %}</th>
+      <th>{% trans "Game Type" %}</th>
+      <th>{% trans "Game System" %}</th>
+      <th>{% trans "Module" %}</th>
+      <th>{% trans "Description" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for game in active_game_list %}
+    <tr>
+      <td>{{ game.title }}</td>
+      <td>{{ game.get_game_type_display }}</td>
+      <td>{{ game.get_status_display }}</td>
+      <td>{{ game.start_time|default_if_none:"Pending" }}</td>
+      <td>{{ game.end_date|default_if_none:"N/A" }}</td>
+      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar 20 game.gm.user %} {{ game.gm.username }}</a></td>
+      <td>{{ game.game_get_display_game_frequency }} </td>
+      <td class="text-right">{{ game.session_length }}</td>
+      <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
+      <td>{{ game.content_warning }}</td>
+      <td>{{ game.get_privacy_level_display }}</td>
+      <td><strong>{{ game.players.count }}</strong>/{{ game.min_players }}/{{ game.max_players }}</td>
+      <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.title }}</a>{% else %}N/A{% endif %}</td>
+      <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}N/A{% endif %}</td>
+      <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
+      <td>{{ game_description_rendered|truncatewords_html:20 }}</td>
+    </tr>
+    {% empty %}
+    <!-- No results -->
+    {% endfor %}
+  </tbody>
+</table>
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'games:my_game_list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'games:my_game_list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'games:my_game_list' page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+{% endblock %}

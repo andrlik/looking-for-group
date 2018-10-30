@@ -1,0 +1,59 @@
+{% extends "games/base.html" %}
+{% load i18n avatar_tags rules %}
+{% block subtitle %}{% blocktrans with cname=character.name gametitle=character.game.title %}Details for {{ cname }}{% endblocktrans %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with cname=character.name %}Details for character {{ cname }}{% endblocktrans %}</h1>
+<dl>
+  <dt>{% trans "Name" %}</dt>
+  <dd>{{ character.name }}</dd>
+  <dt>{% trans "Description" %}</dt>
+  <dd>{{ character.description }}</dd>
+  <dt>{% trans "Character Status" %}</dt>
+  <dd>{{ character.get_status_display }}</dd>
+  <dt>{% trans "Player" %}</dt>
+  <dd>{% avatar 20 character.player.gamer.user %} <a href="{{ character.player.gamer.get_absolute_url }}">{{ character.player.gamer.display_name }}</a></dd>
+  <dt>{% trans "Game" %}</dt>
+  <dd>{{ character.game.title }}</dd>
+  <dt>{% trans "Character Sheet" %}</dt>
+  <dd><a href="{{ character.character_sheet.url }}">{{ character.character_sheet.name }}</a> ({{ character.character_sheet.size|filesizeformat }})</dd>
+</dl>
+{% has_perm 'game.edit_character' request.user character as can_edit_character %}
+{% has_perm 'game.delete_character' request.user character as can_delete_character %}
+{% has_perm 'game.approve_character' request.user character.game as can_approve_character %}
+<div class="callout clearfix">
+  {% if can_edit_character %}
+  <a href="{% url 'games:character_edit' character=character.slug %}" class="button float-left">{% trans "Edit character" %}</a>
+  {% endif %}
+  {% if can_delete_character %}
+  {% if status != 'inactive' %}
+  <form action="{% url 'games:character_inactivate' character=character.slug %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="status" id="id_status" value="inactive" />
+    <input type="submit" class="button secondary float-center" value="{% trans 'Make inactive' %}" />
+  </form>
+  {% else %}
+  <form action="{% url 'games:character_reactivate' character=character.slug %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="status" id="id_status" value="pending" />
+    <input type="submit" class="button float-center"  value="{% trans 'Reactivate' %}" />
+  </form>
+  {% endif %}
+  <a href="{% url 'games:character_delete' character=character.slug %}" class="button float-right alert">{% trans "Delete" %}</a>
+</div>
+{% endif %}
+{% if can_approve_character %}
+<div class="callout clearfix">
+  <form action="{% url 'games:character_reject' character=character.slug %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="status" id="id_status" value="rejected" />
+    <input type="submit" class="button float-left alert" value="{% trans 'Reject character' %}" />
+  </form>
+  <form action="{% url 'games:character_approve' character=character.slug %}" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="status" id="id_status" value="approved" />
+    <input type="submit" class="button float-right success" value="{% trans 'Approve character' %}" />
+  </form>
+</div>
+{% endif %}
+<p><a href="{{ character.game.get_absolute_url }}" class="button secondary">{% trans "Back to game details" %}</a> </p>
+{% endblock %}

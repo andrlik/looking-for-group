@@ -1,0 +1,176 @@
+{% extends "games/base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{{ game.title }} - {% endblock %}
+{% block content %}
+<h1>{{ game.title }}</h1>
+<dl>
+  <dt>{% trans "GM" %}</dt>
+  <dd>{% avatar 30 game.gm.user %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
+  <dt>{% trans "Description" %}</dt>
+  <dd>{{ game.description_rendered|safe }}</dd>
+  <dt>{% trans "Details" %}</dt>
+  <dd>
+  <table class="hover stack">
+    <tbody>
+      <tr>
+        <td>{% trans "Status" %}</td>
+        <td>{{ game.get_status_display }}</td>
+      </tr>
+      {% if game.next_session_time %}
+      <tr>
+        <td>{% trans "Next session" %}</td>
+        <td>{% if game.next_session %}<a href="{{ game.next_session.get_absolute_url }}">{{ game.next_session_time }}</a>{% else %}{{ game.next_session_time }}{% endif %}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>{% trans "Game Type" %}</td>
+        <td>{{ game.get_game_type_display }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Starts" %}</td>
+        <td>{{ game.start_time }}</td>
+      </tr>
+      {% if game.game_type != "oneshot" %}
+      <tr>
+        <td>{% trans "Game Frequency" %}</td>
+        <td>{{ game.get_game_frequency_display }}</td>
+      </tr>
+      {% if game.end_date %}
+      <tr>
+        <td>{% trans "End Date" %}</td>
+        <td>{{ game.end_date }}</td>
+      </tr>
+      {% endif %}
+      {% endif %}
+      <tr>
+        <td>{% trans "Playing" %}</td>
+        <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.title }}</a>{% else %}{% trans "Homebrew" %}{% endif %}</td>
+      </tr>
+      <tr>
+        <td>{% trans "System" %}</td>
+        <td>
+          {% if game.published_game %}{% if game.published_game.game_system %}<a href="{{ game.published_game.game_system.get_absolute_url }}">{{ game.published_game.game_system.name }}</a>{% else %}{% trans "N/A" %}{% endif %}{% elif game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}{% trans "Homebrew" %}{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>{% trans "Published module?" %}</td>
+        <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}{% trans "N/A" %}{% endif %}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Current Players" %}</td>
+        <td class="text-right"><strong>{{ game.players.count }}</strong></td>
+      </tr>
+      <tr>
+        <td>{% trans "Min Players" %}</td>
+        <td class="text-right">{{ game.min_players }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Max Players" %}</td>
+        <td class="text-right">{{ game.max_players }}</td>
+      </tr>
+      {% if game.sessions %}
+      <tr>
+        <td>{% trans "Sessions Completed" %}</td>
+        <td class="text-right">{{ game.sessions }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  </dd>
+</dl>
+{% block details_and_controls %}
+{# Add actual details here. Application templates should extend this and override this block. #}
+{% if game.gm.user == request.user and pending_applicant_list %}
+<h2>{% trans "Applicants" %}</h2>
+<p>{% blocktrans count counter=pending_applicant_list|length %}You have {{ counter }} pending application.{% plural %}You have {{ counter }} pending applications.{% endblocktrans %}</p>
+<p><a href="{% url 'games:game_applicant_list' gameid=game.slug %}" class="button">{% trans "View applicants" %}</a></p>
+{% endif %}
+<h2>{% trans "Current Players" %}</h2>
+{% if not player_list %}
+<p>{% trans "No players yet" %}</p>
+{% else %}
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "Player" %}</th>
+      <th>{% trans "Character" %}</th>
+      <th>{% trans "Joined" %}</th>
+      <th>{% trans "Sessions (expected/missed/rating)" %}</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for player in player_list %}
+    <tr>
+      <td>{% avatar 20 player.user %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.username }}</a></td>
+      <td>{% if player.current_character %}<a href="{{ player.current_character.get_absolute_url }}"</a>{% else %}{% trans "Pending" %}{% endif %}</td>
+      <td>{{ player.created }}</td>
+      <td>{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game|default_if_none:"No data" }}</td>
+      {% if player.user == request.user %}
+      <td>
+        {% if player.current_character %}
+        <a href="{% url 'games:character_update' character=player.current_character.slug %}" class="button primary">{% trans "Manage Character" %}</a>
+        {% else %}
+        <a href="{% url 'games:character_create' game=game.slug player=player.slug %}" class="button primary">{% trans "Add Character" %}</a>
+        {% endif %}
+      </td>
+      <td>
+        <a href="{% url 'games:game_leave' game=game.slug player=player.slug %}" class="button alert">{% trans "Leave game" %}</a>
+      </td>
+      {% elif game.gm.user == request.user %}
+      <td>
+        <a href="" class="button">{% trans "Message" %}</a>
+      </td>
+      <td>
+        <a href="{% url 'games:player_kick' game=game.slug player=player.slug %}" class="button alert">{% trans "Kick player from game" %}</a>
+      </td>
+      {% else %}
+      <td></td>
+      <td></td>
+      {% endif %}
+  {% endfor %}
+    </tr>
+  </tbody>
+</table>
+{% endif %}
+{% if game.gm.user == request.user and game.next_session %}
+<form action="{% url 'games:create_session' game=game.slug %}" method="post">
+  {% csrf_token %}
+  <input id="id_game" name="game" type="hidden" value="{{ game.slug }}" />
+  <p>{% blocktrans with session_time=game.next_session.scheduled_time %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}
+  <input type="submit" class="button" value="{% trans 'Create' %}" />
+</form>
+{% endif %}
+{% if recent_sessions %}
+<h2>{% trans "Recent and Upcoming Sessions" %}</h2>
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "Date" %}</th>
+      <th>{% trans "Players present" %}</th>
+      <th>{% trans "Log" %}</th>
+      {% if game.gm.user == request.user %}
+      <th>{% trans "GM Notes" %}</th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for session in recent_sessions %}
+    <tr>
+      <td><a href="{{ session.get_absolute_url }}">{{ session.scheduled_time }}</a></td>
+      <td>{{ session.get_players_present|join:", " }}</td>
+      <td>{{ session.adventurelog.body_rendered|truncatewords_html:30 }}</td>
+      {% if game.gm.user == request.user %}
+      <td>{{ session.gm_notes_rendered|truncatewords_html:30 }}</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if game.sessions > recent_sessions.count %}
+<a href="{% url 'games:session_list' game=game.slug %}" class="button">{% trans "See all sessions" %}</a>
+{% endif %}
+{% endif %}
+{% endblock %}
+{% endblock %}

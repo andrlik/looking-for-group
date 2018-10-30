@@ -1,14 +1,16 @@
 from datetime import timedelta
+
 import pytest
-from test_plus import TestCase
-from factory.django import mute_signals
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import post_save
 from django.test import TransactionTestCase
 from django.utils import timezone
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import (post_save)
-from schedule.models import Rule, Calendar
-from ...gamer_profiles.tests import factories
+from factory.django import mute_signals
+from schedule.models import Calendar, Rule
+from test_plus import TestCase
+
 from .. import models
+from ...gamer_profiles.tests import factories
 
 
 class AbstractSyncTestCase(TestCase):
@@ -104,3 +106,25 @@ class MarkdownSignalTest(AbstractSyncTestCase):
             self.game.game_description = "I am very **strong**!"
             self.game.save()
             assert self.game.game_description_rendered == "<p>I am very <strong>strong</strong>!</p>"
+
+    def test_adventure_log_markdown(self):
+        with mute_signals(post_save):
+            self.game.game_frequency = 'weekly'
+            self.game.start_time = timezone.now() - timedelta(days=2)
+            self.game.save()
+            assert self.game.event
+            session = self.game.create_session_from_occurrence(self.game.get_next_scheduled_session_occurrence())
+            assert session
+            ad_log = models.AdventureLog.objects.create(session=session, initial_author=self.gamer2, title='My Log Entry', body="I am very **strong**!")
+            assert ad_log.body_rendered == "<p>I am very <strong>strong</strong>!</p>"
+
+    def test_gm_notes_markdown(self):
+        with mute_signals(post_save):
+            self.game.game_frequency = 'weekly'
+            self.game.start_time = timezone.now() - timedelta(days=2)
+            self.game.save()
+            session = self.game.create_session_from_occurrence(self.game.get_next_scheduled_session_occurrence())
+            assert session
+            session.gm_notes = "I am very **strong**!"
+            session.save()
+            assert session.gm_notes_rendered == "<p>I am very <strong>strong</strong>!</p>"

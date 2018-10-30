@@ -1,15 +1,31 @@
 import logging
 from datetime import timedelta
-from markdown import markdown
-from django_q.tasks import async_task
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
-from django.db.models.signals import pre_save, post_save, m2m_changed, post_delete
-from schedule.models import Rule, Calendar, Occurrence
+from django.utils import timezone
+from django_q.tasks import async_task
+from markdown import markdown
+from schedule.models import Calendar, Occurrence, Rule
+
 from . import models
-from .tasks import update_child_events_for_master, create_game_player_events, create_or_update_linked_occurences_on_edit, sync_calendar_for_arriving_player, clear_calendar_for_departing_player
+from .tasks import (
+    calculate_player_attendance,
+    clear_calendar_for_departing_player,
+    create_game_player_events,
+    create_or_update_linked_occurences_on_edit,
+    sync_calendar_for_arriving_player,
+    update_child_events_for_master
+)
 
 logger = logging.getLogger("games")
+
+
+@receiver(pre_save, sender=models.GamePosting)
+def set_end_date_for_game_on_complete(sender, instance, *args, **kwargs):
+    if instance.status in ['closed', 'cancel'] and not instance.end_date:
+        instance.end_date = timezone.now()
 
 
 @receiver(pre_save, sender=models.GamePosting)
@@ -28,9 +44,24 @@ def render_markdown_notes(sender, instance, *args, **kwargs):
         instance.gm_notes_rendered = None
 
 
+@receiver(pre_save, sender=models.AdventureLog)
+def render_markdown_log_body(sender, instance, *args, **kwargs):
+    if instance.body:
+        instance.body_rendered = markdown(instance.body)
+    else:
+        instance.body_rendered = None
+
+
+@receiver(post_save, sender=models.GameSession)
+def update_complete_session_count(sender, instance, *args, **kwargs):
+    if instance.status == 'complete':
+        instance.game.update_completed_session_count()
+
+
 @receiver(post_save, sender=models.GameSession)
 def calculate_attendance(sender, instance, created, *args, **kwargs):
-    pass
+    if instance.status == "complete":
+        async_task(calculate_player_attendance, instance)
 
 
 @receiver(pre_save, sender=models.GamePosting)
@@ -54,10 +85,10 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 logger.debug("Updating start time to {}".format(instance.start_time))
                 instance.event.start = instance.start_time
             if instance.event.end != instance.start_time + timedelta(
-                    minutes=(60 * instance.session_length)
+                    minutes=int(60 * instance.session_length)
             ):
                 instance.event.end = instance.start_time + timedelta(
-                    minutes=(60 * instance.session_length)
+                    minutes=int(60 * instance.session_length)
                 )
                 logger.debug("Updating end time to {}".format(instance.event.end))
                 needs_edit = True
@@ -99,7 +130,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             )
             if created:
                 logger.debug(
-                    "Created new calendar for user {}".format(instance.gm.username)
+                    "Created new calendar for user {} with slug {}".format(instance.gm.username, calendar.slug)
                 )
             rule = None
             if frequency:
@@ -108,7 +139,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 start=instance.start_time,
                 end=(
                     instance.start_time
-                    + timedelta(minutes=(60 * instance.session_length))
+                    + timedelta(minutes=int(60 * instance.session_length))
                 ),
                 end_recurring_period=instance.end_date,
                 title=instance.title,
@@ -135,7 +166,8 @@ def update_child_events_when_master_event_updated(
 
 @receiver(post_save, sender=models.GamePosting)
 def create_player_events_as_needed(sender, instance, created, *args, **kwargs):
-    async_task(create_game_player_events, instance)
+    if instance.players.count() > 0:
+        async_task(create_game_player_events, instance)
 
 
 @receiver(post_save, sender=Occurrence)
@@ -159,4 +191,5 @@ def sync_calendar_on_player_add(sender, instance, created, *args, **kwargs):
 
 @receiver(post_delete, sender=models.Player)
 def clear_calendar_on_player_remove(sender, instance, *args, **kwargs):
-    async_task(clear_calendar_for_departing_player, instance)
+    if instance.game.event:
+        async_task(clear_calendar_for_departing_player, instance)

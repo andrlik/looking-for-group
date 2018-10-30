@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from . import views, api_views
+from . import api_views, views
 
 app_name = "game_catalog"
 urlpatterns = [

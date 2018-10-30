@@ -1,5 +1,6 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
+{% load ratings %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block sectiontitle %}<h2>{% trans "Published Game" %}</h2>{% endblock %}
 {% block content %}
@@ -8,6 +9,8 @@
 {% if game.url %}<h2><a href="{{ game.url }}">{% trans "Offical site" %}</a></h2>{% endif %}
 <span class="meta">{% trans "Published by" %} <a href="{{ game.publisher.get_absolute_url}}">{{ game.publisher.name }}</a>. {% trans "System: " %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>. {% trans "It has" %}{% blocktrans count counter=game.publishedmodule_set|length %} one additional Game Module{% plural %}{{ counter|humanize }} additional Game Modules.{% endblocktrans %}</span>
 <p>{{ game.description }}</p>
+
+{% ratings game %}
 
 <p>{% blocktrans with tagnames=game.inherited_tag_names|join:", " %}Tagged with {{ tagnames }}.{% endblocktrans %}</p>
 <span class='disclaimer'>{% blocktrans with pubname=game.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span>

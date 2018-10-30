@@ -1,9 +1,11 @@
 import logging
+
 import bleach
-from bleach_whitelist.bleach_whitelist import markdown_tags, markdown_attrs
-from markdown import markdown
-from django.db.models.signals import pre_save, post_save
+from bleach_whitelist.bleach_whitelist import markdown_attrs, markdown_tags
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from markdown import markdown
+
 from . import models
 from ..users.models import User
 

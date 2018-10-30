@@ -1,5 +1,6 @@
 from rest_framework import viewsets
-from . import serializers, models
+
+from . import models, serializers
 
 # Note, we don't provide create, edit, or delete views for these now as we'll handle those via the admin.
 

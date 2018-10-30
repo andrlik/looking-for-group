@@ -1,12 +1,14 @@
 import logging
+
+from allauth.socialaccount.models import SocialAccount, SocialLogin
+from allauth.socialaccount.signals import social_account_added, social_account_updated
+from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_q.tasks import async_task
-from django.db.models.signals import post_delete
-from allauth.socialaccount.signals import social_account_added, social_account_updated
-from allauth.socialaccount.models import SocialLogin, SocialAccount
-from .tasks import prune_servers, sync_discord_servers_from_discord_account
-from .signals import updated_discord_social_account
+
 from .models import GamerDiscordLink
+from .signals import updated_discord_social_account
+from .tasks import prune_servers, sync_discord_servers_from_discord_account
 
 logger = logging.getLogger('discord')
 

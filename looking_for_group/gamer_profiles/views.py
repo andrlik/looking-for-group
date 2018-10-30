@@ -1,24 +1,25 @@
 import logging
 import urllib
-from rules.contrib.views import PermissionRequiredMixin
-from django.db import transaction
+
+from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
-from django.utils.http import is_safe_url
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.views import generic
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib import messages
-from django.urls import reverse_lazy, reverse
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponseRedirect, HttpResponseNotAllowed
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.db import transaction
 from django.forms import modelform_factory
-from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
-from . import models
-from .forms import OwnershipTransferForm, BlankDistructiveForm, GamerProfileForm
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.utils.http import is_safe_url
+from django.utils.translation import ugettext_lazy as _
+from django.views import generic
+from rules.contrib.views import PermissionRequiredMixin
 
+from . import models
+from .forms import BlankDistructiveForm, GamerProfileForm, OwnershipTransferForm
 
 logger = logging.getLogger("gamer_profiles")
 
