@@ -1,0 +1,25 @@
+{% extends "games/base.html" %}
+{% load static %}css_extra
+{% block css_extra %}
+<link href="{% static 'css/foundation-datepicker.min.css' %}" rel="stylesheet" />
+{% endblock %}
+
+{% block js_extra %}
+<script type="text/javascript" src="{% static 'js/foundation-datepicker.min.js' %}" ></script>
+{% block dtp_logic %}
+<script type="text/javascript">
+  $(function(){
+    $('.dp').fdatepicker({
+      format: 'mm-dd-yyyy',
+      disableDblClickSelection: true,
+    });
+    $('.dtp').fdatepicker({
+      format: 'mm-dd-yyyy hh:ii',
+      disableDblClickSelection: true,
+      pickTime: true
+    });
+  });
+
+</script>
+{% endblock %}
+{% endblock %}
