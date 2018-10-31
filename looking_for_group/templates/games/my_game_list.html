@@ -3,6 +3,11 @@
 {% block subtitle %}{% trans "My Games" %} - {% endblock %}
 {% block content %}
 <h1>{% trans "My Games" %}</h1>
+<div class="clearfix">
+  <div class="float-right">
+    <a href="{% url 'games:game_list' %}" class="button">{% trans  "All Games" %}</a> <a href="{% url 'games:game_create' %}" class="button">{% trans "Create a new game" %}</a>
+  </div>
+</div>
 {% if not active_game_list %}
 <p>{% trans "No active games found." %}</p>
 {% endif %}
@@ -15,7 +20,7 @@
       <th>{% trans "Start" %}</th>
       <th>{% trans "End" %}</th>
       <th>{% trans "GM" %}</th>
-      <th>{% trans "Frequency (if applicable)"</th>
+      <th>{% trans "Frequency (if applicable)" %}</th>
       <th class="text-right">{% trans "Session Length (hours)" %}</th>
       <th>{% trans "Adult Themes?" %}</th>
       <th>{% trans "Content Warning" %}</th>

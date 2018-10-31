@@ -78,6 +78,9 @@
   </table>
   </dd>
 </dl>
+{% if request.user == game.gm.user %}
+<a href="{% url 'games:game_edit' gameid=game.slug %}" class="button">{% trans "Edit Game Details" %}</a>
+{% endif %}
 {% block details_and_controls %}
 {# Add actual details here. Application templates should extend this and override this block. #}
 {% if game.gm.user == request.user and pending_applicant_list %}
