@@ -290,6 +290,7 @@ AVATAR_GRAVATAR_DEFAULT = "identicon"
 AVATAR_CLEANUP_DELETED = True
 AVATAR_AUTO_GENERATE_SIZES = (80, 30)
 AVATAR_GRAVATAR_BASE_URL = "https://www.gravatar.com/avatar/"
+AVATAR_GRAVATAR_FIELD = 'avatar_email'
 
 
 # -----------------------------------------------------------------------------
