@@ -30,12 +30,12 @@
   <tbody>
     {% for game in game_list %}
     <tr>
-      <td>{{ game.title }}</td>
+      <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
       <td>{{ game.get_game_type_display }}</td>
       <td>{{ game.get_status_display }}</td>
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
-      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar 20 game.gm.user %} {{ game.gm.username }}</a></td>
+      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 20  class="profile_circle_small" %} {{ game.gm.username }}</a></td>
       <td>{{ game.game_get_display_game_frequency }} </td>
       <td class="text-right">{{ game.session_length }}</td>
       <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>

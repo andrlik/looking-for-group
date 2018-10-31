@@ -29,6 +29,15 @@ class User(TimeStampedModel, AbstractUUIDModel, AbstractUser):
         _("Homepage"), blank=True, null=True, help_text=_("Your home on the web.")
     )
 
+    @property
+    def avatar_email(self):
+        if self.email:
+            return self.email
+        email_list = self.emailaddress_set.filter(primary=True)
+        if email_list.count() > 0:
+            return email_list[0]
+        return None
+
     def __str__(self):
         return self.username
 
