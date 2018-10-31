@@ -84,6 +84,7 @@ THIRD_PARTY_APPS = [
     "star_ratings",
     "django_q",
     "schedule",
+    'notifications',
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",

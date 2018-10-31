@@ -1,3 +1,4 @@
+import notifications.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -21,6 +22,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     path("catalog/", include("looking_for_group.game_catalog.urls")),
+    path("inbox/notifications/", include(notifications.urls, namespace='notifications')),
     path("social/", include("looking_for_group.gamer_profiles.urls")),
     path("social/avatar/", include('avatar.urls')),
     path("games/", include('looking_for_group.games.urls')),
