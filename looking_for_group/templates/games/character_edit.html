@@ -1,0 +1,12 @@
+{% extends "games/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{trans "Update character" %} {{ character.name }} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with gametitle=character.game.title cname=character.name %}Update character {{ cname }} for {{ gametitle }}{% endblocktrans %}</h1>
+<p>{% trans "Edit the character information below. You may also optionally upload a new character sheet." %}</p>
+<form enctype="multipart/form-data" method="post" action ="">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <a href="{{ character.get_absolute_url }}" class="button float-left secondary">{% trans "Go back to character details" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save' %}" />
+</form>
+{% endblock %}

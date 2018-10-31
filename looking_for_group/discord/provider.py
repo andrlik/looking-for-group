@@ -1,4 +1,4 @@
-from allauth.socialaccount.providers.discord.provider import DiscordProvider, DiscordAccount
+from allauth.socialaccount.providers.discord.provider import DiscordAccount, DiscordProvider
 
 
 class DiscordGuildAccount(DiscordAccount):

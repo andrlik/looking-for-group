@@ -1,0 +1,61 @@
+{% extends "games/base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% blocktrans with gametitle=session.game.title sesdate=session.scheduled_time %}Session ({{ sesdate }} of {{ gametitle }} - {% endblocktrans %}{% endblock %}
+{% block content %}
+<h1>{{ session.scheduled_time|date:"M d, Y" }} - {{ session.game.title }}</h1>
+<dl>
+  <dt>{% trans "Scheduled Time" %}</dt>
+  <dd>{{ session.scheduled_time }}</dd>
+  <dt>{% trans "Status" %}</dt>
+  <dd>{{ session.get_status_display }}</dd>
+</dl>
+
+<h2>{% trans "Players" %}</h2>
+{% if session.status != "complete" and session.status == "cancel" %}
+<p>This session has not been completed yet or was cancelled, so no attendence records are available. However, the players that were expected to attend are below.</p>
+{% endif %}
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "Player" %}</th>
+      <th>{% trans "Character" %}</th>
+      <th>{% trans "Attended/Missed" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      {% for player in session.players_expected.all %}
+      <td>{% avatar 20 player.gamer.user %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer.display_name }}</a></td>
+      {% if session.status != "complete" %}
+      <td>{% trans "N/A" %}</td>
+      <td>{% trans "N/A" %}</td>
+      {% else %}
+      <td><a href="{{ player.current_character.get_absolute_url }}">{{ player.current_character.name }}</a></td>
+      {% if player in session.players_missed.all %}
+      <td></td>
+      <td>😢</td>
+      {% else %}
+      <td>😄</td>
+      {% endif %}
+      {% endif %}
+      {% empty %}
+      {% endfor %}
+    </tr>
+  </tbody>
+</table>
+{% if request.user.gamerprofile == session.game.gm %}
+<h2>{% trans "GM Notes" %}</h2>
+{{ session.gm_notes_rendered|safe }}
+<a href="{% url 'games:session_edit' session=session.slug %}" class="button">{% trans "Edit Session Details" %}</a>
+{% endif %}
+<h2>{% trans "Adventure Log" %}</h2>
+{% if session.adventurelog %}
+<h3>{{ session.adventurelog.title }}</h3>
+<p class="meta">{% blocktrans with create=session.adventurelog.created mod=session.adventurelog.modified author=session.adventurelog.initial_author.display_name editor=session.adventurelog.last_edited_by.display_name %}Posted by {{ author }} at {{ create }}. Last edited by {{ editor }} at {{ mod }}.{% endblocktrans %}</p>
+{{ session.adventurelog.body_rendered|safe }}
+<a href="{% url 'games:log_edit' log=session.adventurelog.slug %}" class="button">{% trans "Edit Log Entry" %}</a> {% if request.user.gamerprofile == session.game.gm %} <a href="{% url 'games:log_delete' log=session.adventurelog.slug %}" class="button alert">{% trans "Delete Log Entry" %}</a>{% endif %}
+{% else %}
+<p>{% trans "The log entry for this session hasn't been created yet." %}</p>
+<a href="{% url 'games:log_create' session=session.slug %}" class="button">{% trans "Create Log Entry" %}</a>
+{% endif %}
+{% endblock %}

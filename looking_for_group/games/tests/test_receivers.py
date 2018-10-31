@@ -1,14 +1,16 @@
 from datetime import timedelta
+
 import pytest
-from test_plus import TestCase
-from factory.django import mute_signals
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import post_save
 from django.test import TransactionTestCase
 from django.utils import timezone
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import (post_save)
-from schedule.models import Rule, Calendar
-from ...gamer_profiles.tests import factories
+from factory.django import mute_signals
+from schedule.models import Calendar, Rule
+from test_plus import TestCase
+
 from .. import models
+from ...gamer_profiles.tests import factories
 
 
 class AbstractSyncTestCase(TestCase):

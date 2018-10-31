@@ -1,4 +1,5 @@
 from test_plus import TestCase
+
 from looking_for_group.users.models import User
 
 

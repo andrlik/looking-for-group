@@ -1,12 +1,13 @@
+from django.urls import reverse
 from test_plus import APITestCase
+
 from ..models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 from ..serializers import (
-    PublishedGamerSerializer,
-    GameSystemSerializer,
     GamerPublisherSerializer,
-    PublishedModuleSerializer,
+    GameSystemSerializer,
+    PublishedGamerSerializer,
+    PublishedModuleSerializer
 )
-from django.urls import reverse
 
 
 class GameCatalogAbstractTestCase(APITestCase):

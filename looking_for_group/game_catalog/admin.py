@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 
 # Register your models here.

@@ -1,16 +1,18 @@
 import itertools
-from django.db import models, transaction, IntegrityError
-from django.db.models import F
-from django.utils import timezone
-from django.utils.text import slugify
-from django.utils.functional import cached_property
+
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import IntegrityError, models, transaction
+from django.db.models import F
 from django.urls import reverse
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+from django.utils.functional import cached_property
+from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from django.conf import settings
 from star_ratings.models import AbstractBaseRating
+
 from ..game_catalog.models import GameSystem, PublishedGame
 from ..game_catalog.utils import AbstractUUIDModel
 
@@ -434,6 +436,10 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     @cached_property
     def display_name(self):
         return self.user.display_name
+
+    def block(self, blocker):
+        block, created = BlockedUser.objects.get_or_create(blocker=blocker, blockee=self)
+        return
 
     def blocked_by(self, gamer):
         '''

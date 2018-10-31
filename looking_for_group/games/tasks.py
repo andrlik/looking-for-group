@@ -1,10 +1,11 @@
 import logging
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import timezone
-from django.core.exceptions import ObjectDoesNotExist
-from schedule.models import Occurrence, Calendar
-from . import models
+from schedule.models import Calendar, Occurrence
 
+from . import models
 
 logger = logging.getLogger("games")
 

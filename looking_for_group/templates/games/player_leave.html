@@ -1,0 +1,16 @@
+{% extends "games/game_detail.html" %}
+{% load i18n %}
+{% block subtitle %}{% blocktrans with gametitle=game.title %}Leave {{ gametitle }}?{% endblocktrans %} - {% endblock %}
+{% block details_and_controls %}
+<h2>{% blocktrans with gametitle=game.title %}Leave {{ gametitle }}?{% endblocktrans %}</h2>
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "If you leave this game you will need to apply again to rejoin, and in the interim you will have no access to the game details. We will also dispose of any of your characters associated with this game." %}</p>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ game.get_absolute_url }}" class="button float-left secondary">{% trans "Go back to game details" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Leave game' %}" />
+  </div>
+</form>
+{% endblock %}

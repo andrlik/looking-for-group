@@ -1,4 +1,5 @@
 from test_plus import TestCase
+
 from .. import models
 
 

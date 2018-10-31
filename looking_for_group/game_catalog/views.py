@@ -1,5 +1,6 @@
+from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.views import generic
-from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
+
 from .models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 
 # Create your views here.

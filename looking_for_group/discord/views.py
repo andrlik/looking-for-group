@@ -1,8 +1,10 @@
 import requests
 from allauth.socialaccount.providers.discord.views import DiscordOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.views import OAuth2LoginView, OAuth2CallbackView
-from .provider import DiscordProviderWithGuilds
+from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView, OAuth2LoginView
+
 from .permissions import Permissions
+from .provider import DiscordProviderWithGuilds
+
 # Create your views here.
 
 

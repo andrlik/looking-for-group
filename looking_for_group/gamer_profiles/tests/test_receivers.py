@@ -1,5 +1,6 @@
 from test_plus import TestCase
-from ..models import GamerNote, GamerCommunity
+
+from ..models import GamerCommunity, GamerNote
 from .factories import GamerProfileFactory
 
 

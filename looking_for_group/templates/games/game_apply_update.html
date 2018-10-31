@@ -1,0 +1,11 @@
+{% extends "games/game_detail.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Edit application" %} - {% endblock %}
+{% block details_and_controls %}
+<h2>{% trans "Edit application" %}</h2>
+<form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <p><a href="{{ application.get_absolute_url }}" class="button secondary">{% trans "Go back" %}</a> <input type="submit" value="{% trans 'Save changes' %}" class="button" /> {% if application.status == "new" %}<input type="submit" id="id_submit_app" name="submit_app" value="{% trans 'Save and submit application' %}" class="button success" />{% endif %}</p>
+</form>
+{% endblock %}

@@ -1,7 +1,7 @@
-from django.conf import settings
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.utils import user_field
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from django.conf import settings
 
 
 class AccountAdapter(DefaultAccountAdapter):

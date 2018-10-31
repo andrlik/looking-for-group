@@ -1,21 +1,20 @@
 import factory.django
-from django.test import TransactionTestCase
-from django.contrib.sites.models import Site
-from django.test.client import RequestFactory
-from allauth.tests import MockedResponse, mocked_response, TestCase as AllAuthTestCase
-from allauth.socialaccount.tests import OAuth2TestsMixin
-from allauth.socialaccount.models import (
-    SocialApp,
-    SocialAccount,
-    SocialToken,
-)
 from allauth.socialaccount import providers
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
+from allauth.socialaccount.tests import OAuth2TestsMixin
+from allauth.tests import MockedResponse
+from allauth.tests import TestCase as AllAuthTestCase
+from allauth.tests import mocked_response
+from django.contrib.sites.models import Site
+from django.test import TransactionTestCase
+from django.test.client import RequestFactory
+
+from .. import models
 from ...gamer_profiles.tests import factories
 from ..provider import DiscordProviderWithGuilds
-from ..tasks import prune_servers, sync_discord_servers_from_discord_account
-from .. import models
-from ..views import DiscordGuildOAuth2Adapater
 from ..signals import updated_discord_social_account
+from ..tasks import prune_servers, sync_discord_servers_from_discord_account
+from ..views import DiscordGuildOAuth2Adapater
 
 # Create your tests here.
 

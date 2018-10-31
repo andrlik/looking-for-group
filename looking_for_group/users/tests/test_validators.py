@@ -1,6 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 from test_plus import TestCase
+
 from looking_for_group.users.validators import validate_usernames_icase
 
 

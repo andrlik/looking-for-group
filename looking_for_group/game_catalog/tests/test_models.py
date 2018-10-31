@@ -1,4 +1,5 @@
 from test_plus import TestCase
+
 from ..models import GamePublisher, GameSystem, PublishedGame, PublishedModule
 
 # Create your tests here.

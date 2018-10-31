@@ -1,11 +1,12 @@
 import logging
+
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
-from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel
 
+from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel
 
 # Create your models here.
 logger = logging.getLogger("catalog")

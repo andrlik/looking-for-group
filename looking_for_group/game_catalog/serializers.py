@@ -1,8 +1,9 @@
 import logging
+
 from rest_framework import serializers
 from taggit_serializer.serializers import TaggitSerializer, TagListSerializerField
-from . import models
 
+from . import models
 
 logger = logging.getLogger("catalog")
 
