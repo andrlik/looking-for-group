@@ -3,7 +3,11 @@
 {% block subtitle %}{% trans "Communities" %} - {% endblock %}
 {% block content %}
 <h1>{% trans "Communities" %}</h1>
-
+<div class="clearfix">
+  <div class="float-right">
+    <a href="{% url 'gamer_profiles:my-community-list' %}" class="button">{% trans "Your communities" %}</a> <a href="{% url 'gamer_profiles:my-application-list' %}" class="button">{% trans "Your community applications" %}</a>  <a href="{% url 'gamer_profiles:community-create' %}" class="button">{% trans "Create a new community" %}</a>
+  </div>
+</div>
 <ul>
   {% for community in object_list %}
   <li>

@@ -230,12 +230,18 @@ class CommunityCreateView(LoginRequiredMixin, generic.CreateView):
     ]
     template_name = "gamer_profiles/community_create.html"
 
+    def form_valid(self, form):
+        self.community = form.save(commit=False)
+        self.community.owner = self.request.user.gamerprofile
+        self.community.save()
+        return HttpResponseRedirect(self.get_success_url())
+
     def get_success_url(self):
-        messages.success(
-            _("Community {0} succesfully created!".format(self.object.name))
+        messages.success(self.request,
+            _("Community {0} succesfully created!".format(self.community.name))
         )
         return reverse_lazy(
-            "gamer_profiles:community-detail", kwargs={"community": self.object.pk}
+            "gamer_profiles:community-detail", kwargs={"community": self.community.slug}
         )
 
 
@@ -307,11 +313,12 @@ class CommunityUpdateView(
         "application_approval",
         "invites_allowed",
     ]
+    context_object_name = 'community'
 
     def get_success_url(self):
-        messages.success(_("{0} successfully updated.".format(self.object.name)))
+        messages.success(self.request, _("{0} successfully updated.".format(self.object.name)))
         return reverse_lazy(
-            "gamer_profiles/community-detail", kwargs={"community": self.object.pk}
+            "gamer_profiles:community-detail", kwargs={"community": self.object.slug}
         )
 
 

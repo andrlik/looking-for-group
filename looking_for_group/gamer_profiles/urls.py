@@ -6,6 +6,16 @@ app_name = "gamer_profiles"
 urlpatterns = [
     path("communities/", view=views.CommunityListView.as_view(), name="community-list"),
     path(
+        "communities/create/",
+        view=views.CommunityCreateView.as_view(),
+        name="community-create",
+    ),
+    path(
+        "communities/<slug:community>/edit/",
+        view=views.CommunityUpdateView.as_view(),
+        name="community-edit",
+    ),
+    path(
         "communities/<slug:community>/",
         view=views.CommunityDetailView.as_view(),
         name="community-detail",
