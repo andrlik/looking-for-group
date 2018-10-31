@@ -49,6 +49,7 @@ django-registration = "*"
 django-scheduler = "*"
 django-ical = "*"
 "psycopg2" = "*"
+django-notifications-hq = "*"
 
 [dev-packages]
 sphinx = "*"
