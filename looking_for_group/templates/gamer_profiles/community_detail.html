@@ -1,10 +1,27 @@
 {% extends "gamer_profiles/base.html" %}
-{% load i18n humanize %}
+{% load avatar_tags i18n rules humanize %}
 {% block subtitle %}{{ community.name }} - {% endblock %}
 {% block content %}
 <h1>{{ community.name }}</h1>
-<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.display_name }}</a></span>
+{% has_perm 'community.edit_community' request.user community as is_admin %}
+<div class="clearfix">
+  <div class="float-right">
+    <a href="{% url 'gamer_profiles:community-list' %}" class="button">{% trans "Back to community list" %}</a>{% if is_admin %} <a href="{% url 'gamer_profiles:community-edit' community=community.slug %}" class="button">{% trans "Edit Community" %}></a> <a href="{% 'gamer_profiles:community-discord-link' community=community.slug %}" class="button">{% trans "Manage Discord links" %}</a> <a href="{% url 'gamer_profiles:community-delete' community=community.slug %}" class="button alert">{% trans "Delete Community" %}</a>{% endif %}
+  </div>
+</div>
+<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.display_name }}</a>. {% blocktrans count counter=community.gameposting_set.count|length %}There is {{ counter }} game posted in this community.{% plural %}There are {{ counter }} games posted in this community. %}</span>
 <p>{{ community.description_rendered|safe }}</p>
+{% if community.linked_to_discord and community.discord %}
+<h2>{% trans "Discord Servers" %}</h2>
+<p>{% blocktrans count counter=community.discord.servers.all|length %}This community is linked to {{ counter }} Discord server.{% plural %}This community is linked to {{ counter }} Discord servers.{% endblocktrans %}</p>
+<ul>
+  {% for server in community.discord.servers.all %}
+  <li>{% if server.icon_url %}<img src="{{ server.icon_url }}" width="30" height="30" alt="Discord server icon" /> {% endif %}{{ server.name }}</li>
+  {% empty %}
+  {% endfor %}
+</ul>
+{% endif %}
+<h2>{% trans "Members" %}</h2>
 <div class="member-list">
   <ul>
     {% for member in community.get_members|slice:":20" %}
@@ -13,5 +30,55 @@
     <p><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "See all members..." %}</a></p>
   </ul>
 </div>
+<h2>{% trans "Current Games" %}</h2>
+{% if not current_games %}
+<p>{% trans "There are no active games here at the moment." %}</p>
+{% endif %}
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "Title" %}</th>
+      <th>{% trans "Type" %}</th>
+      <th>{% trans "Status" %}</th>
+      <th>{% trans "Start" %}</th>
+      <th>{% trans "End" %}</th>
+      <th>{% trans "GM" %}</th>
+      <th>{% trans "Frequency (if applicable)" %}</th>
+      <th class="text-right">{% trans "Session Length (hours)" %}</th>
+      <th>{% trans "Adult Themes?" %}</th>
+      <th>{% trans "Content Warning" %}</th>
+      <th>{% trans "Privacy Setting" %}</th>
+      <th>{% trans "Players (current/min/max)" %}</th>
+      <th>{% trans "Game Type" %}</th>
+      <th>{% trans "Game System" %}</th>
+      <th>{% trans "Module" %}</th>
+      <th>{% trans "Description" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for game in active_games %}
+    <tr>
+      <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
+      <td>{{ game.get_game_type_display }}</td>
+      <td>{{ game.get_status_display }}</td>
+      <td>{{ game.start_time|default_if_none:"Pending" }}</td>
+      <td>{{ game.end_date|default_if_none:"N/A" }}</td>
+      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 20  class="profile_circle_small" %} {{ game.gm.username }}</a></td>
+      <td>{{ game.game_get_display_game_frequency }} </td>
+      <td class="text-right">{{ game.session_length }}</td>
+      <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
+      <td>{{ game.content_warning }}</td>
+      <td>{{ game.get_privacy_level_display }}</td>
+      <td><strong>{{ game.players.count }}</strong>/{{ game.min_players }}/{{ game.max_players }}</td>
+      <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.title }}</a>{% else %}N/A{% endif %}</td>
+      <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}N/A{% endif %}</td>
+      <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
+      <td>{{ game_description_rendered|truncatewords_html:20 }}</td>
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+
 
 {% endblock %}

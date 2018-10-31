@@ -31,6 +31,11 @@ urlpatterns = [
         name="community-join",
     ),
     path(
+        "communities/<slug:community>/discord/",
+        view=views.CommunityDiscordLinkView.as_view(),
+        name="community-discord-link",
+    ),
+    path(
         "communities/<slug:community>/leave/",
         view=views.LeaveCommunity.as_view(),
         name="community-leave",

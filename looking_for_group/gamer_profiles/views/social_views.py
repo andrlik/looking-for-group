@@ -18,8 +18,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
-from . import models
-from .forms import BlankDistructiveForm, GamerProfileForm, OwnershipTransferForm
+from .. import models
+from ..forms import BlankDistructiveForm, GamerProfileForm, OwnershipTransferForm
 
 logger = logging.getLogger("gamer_profiles")
 
@@ -237,8 +237,9 @@ class CommunityCreateView(LoginRequiredMixin, generic.CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        messages.success(self.request,
-            _("Community {0} succesfully created!".format(self.community.name))
+        messages.success(
+            self.request,
+            _("Community {0} succesfully created!".format(self.community.name)),
         )
         return reverse_lazy(
             "gamer_profiles:community-detail", kwargs={"community": self.community.slug}
@@ -249,7 +250,7 @@ class CommunityDetailView(
     LoginRequiredMixin,
     PermissionRequiredMixin,
     SelectRelatedMixin,
-    # PrefetchRelatedMixin,
+    PrefetchRelatedMixin,
     generic.DetailView,
 ):
     """
@@ -261,7 +262,8 @@ class CommunityDetailView(
     permission_required = "community.list_communities"
     model = models.GamerCommunity
     template_name = "gamer_profiles/community_detail.html"
-    select_related = ["owner"]
+    select_related = ["owner", "discord"]
+    prefetch_related = ['discord__servers', 'gameposting_set']
     # prefetch_related = [
     #     "gamerprofile_set",
     #     "communityapplication_set",
@@ -292,6 +294,15 @@ class CommunityDetailView(
         logger.debug("user has permissions, proceeding with standard redirect")
         return super().get(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if context['community'].discord:
+            context['linked_discord_servers'] = context['community'].discord.servers.all()
+        else:
+            context['linked_discord_servers'] = None
+        context['active_games'] = context['community'].gameposting_set.exclude(status__in=['closed', 'cancel'])
+        return context
+
 
 class CommunityUpdateView(
     LoginRequiredMixin, PermissionRequiredMixin, generic.UpdateView
@@ -313,10 +324,12 @@ class CommunityUpdateView(
         "application_approval",
         "invites_allowed",
     ]
-    context_object_name = 'community'
+    context_object_name = "community"
 
     def get_success_url(self):
-        messages.success(self.request, _("{0} successfully updated.".format(self.object.name)))
+        messages.success(
+            self.request, _("{0} successfully updated.".format(self.object.name))
+        )
         return reverse_lazy(
             "gamer_profiles:community-detail", kwargs={"community": self.object.slug}
         )
@@ -1056,7 +1069,7 @@ class GamerProfileDetailView(
     prefetch_related = ["communities"]
     context_object_name = "gamer"
     slug_url_kwarg = "gamer"
-    slug_field = 'username'
+    slug_field = "username"
     permission_required = "profile.view_detail"
     template_name = "gamer_profiles/profile_detail.html"
 
@@ -1219,12 +1232,14 @@ class GamerFriendRequestWithdraw(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:gamer-friend", kwargs={"gamer": self.object.recipient.username}
+            "gamer_profiles:gamer-friend",
+            kwargs={"gamer": self.object.recipient.username},
         )
 
     def form_valid(self, form):
         self.success_url = reverse_lazy(
-            "gamer_profiles:gamer-friend", kwargs={"gamer": self.object.recipient.username}
+            "gamer_profiles:gamer-friend",
+            kwargs={"gamer": self.object.recipient.username},
         )
         messages.success(self.request, _("Friend request withdrawn."))
         return super().form_valid(form)
@@ -1326,17 +1341,13 @@ class GamerProfileUpdateView(
     select_related = ["gamerprofile"]
     permission_required = "profile.edit_profile"
     template_name = "gamer_profiles/profile_update.html"
-    fields = [
-        "display_name",
-        "bio",
-        "homepage_url",
-    ]
+    fields = ["display_name", "bio", "homepage_url"]
 
     def get_success_url(self):
         return self.get_object().gamerprofile.get_absolute_url()
 
     def get_object(self):
-        if hasattr(self, 'object'):
+        if hasattr(self, "object"):
             return self.object
         self.object = self.request.user
         return self.object
@@ -1346,27 +1357,38 @@ class GamerProfileUpdateView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['gamer'] = self.get_object().gamerprofile
+        context["gamer"] = self.get_object().gamerprofile
         if self.request.POST:
-            profile_form = GamerProfileForm(self.request.POST, prefix='profile', instance=self.get_object().gamerprofile)
+            profile_form = GamerProfileForm(
+                self.request.POST,
+                prefix="profile",
+                instance=self.get_object().gamerprofile,
+            )
             profile_form.is_valid()  # Just to trigger validation.
-            context['profile_form'] = profile_form
+            context["profile_form"] = profile_form
         else:
-            context['profile_form'] = GamerProfileForm(instance=self.get_object().gamerprofile, prefix='profile')
+            context["profile_form"] = GamerProfileForm(
+                instance=self.get_object().gamerprofile, prefix="profile"
+            )
         return context
 
     def form_invalid(self, form):
-        messages.error(self.request, _('There are issues with your submission. Please review the errors below.'))
+        messages.error(
+            self.request,
+            _("There are issues with your submission. Please review the errors below."),
+        )
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        profile_form = GamerProfileForm(self.request.POST, prefix='profile', instance=self.get_object().gamerprofile)
+        profile_form = GamerProfileForm(
+            self.request.POST, prefix="profile", instance=self.get_object().gamerprofile
+        )
         if not profile_form.is_valid():
             return self.form_invalid(form)
         with transaction.atomic():
             form.save()
             profile_form.save()
-            messages.success(self.request, _('Profile updated!'))
+            messages.success(self.request, _("Profile updated!"))
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1381,7 +1403,9 @@ class CreateGamerNote(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
     template_name = "gamer_profiles/gamernote_create.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.gamer = get_object_or_404(models.GamerProfile, username=self.kwargs.pop("gamer"))
+        self.gamer = get_object_or_404(
+            models.GamerProfile, username=self.kwargs.pop("gamer")
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
@@ -1486,7 +1510,9 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.method != "POST":
             return HttpResponseNotAllowed(["POST"])
-        self.gamer = get_object_or_404(models.GamerProfile, username=kwargs.pop("gamer"))
+        self.gamer = get_object_or_404(
+            models.GamerProfile, username=kwargs.pop("gamer")
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
@@ -1578,7 +1604,9 @@ class MuteGamer(LoginRequiredMixin, generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.method != "POST":
             return HttpResponseNotAllowed(["POST"])
-        self.gamer = get_object_or_404(models.GamerProfile, username=kwargs.pop("gamer", ""))
+        self.gamer = get_object_or_404(
+            models.GamerProfile, username=kwargs.pop("gamer", "")
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):

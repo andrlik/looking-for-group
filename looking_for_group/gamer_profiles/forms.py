@@ -52,3 +52,19 @@ class GamerProfileForm(forms.ModelForm):
             "preferred_games",
             "preferred_systems",
         )
+
+
+class CommunityDiscordForm(forms.ModelForm):
+    """
+    A form for linking/unlinking communites from discord servers.
+    """
+
+    def __init__(self, *args, **kwargs):
+        linkable_servers_qs = kwargs.pop('linkable_servers_queryset', None)
+        if not linkable_servers_qs:
+            raise KeyError(_('Must provide queryset of linkable servers.'))
+        super().__init__(*args, **kwargs)
+        self.fields['servers'].queryset = linkable_servers_qs
+
+    class Meta:
+        fields = ['servers']
