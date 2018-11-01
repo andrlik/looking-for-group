@@ -84,6 +84,7 @@ THIRD_PARTY_APPS = [
     "star_ratings",
     "django_q",
     "schedule",
+    'notifications',
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -289,6 +290,7 @@ AVATAR_GRAVATAR_DEFAULT = "identicon"
 AVATAR_CLEANUP_DELETED = True
 AVATAR_AUTO_GENERATE_SIZES = (80, 30)
 AVATAR_GRAVATAR_BASE_URL = "https://www.gravatar.com/avatar/"
+AVATAR_GRAVATAR_FIELD = 'avatar_email'
 
 
 # -----------------------------------------------------------------------------
@@ -304,3 +306,9 @@ STAR_RATINGS_OBJECT_ID_PATTERN = (
 # ------------------------------------------------------------------------------
 
 Q_CLUSTER = {"name": "looking_for_group"}
+
+# ------------------------------------------------------------------------------
+# Notifications
+# ------------------------------------------------------------------------------
+
+DJANGO_NOTIFICATIONS_CONFIG = {'USE_JSONFIELD': True}

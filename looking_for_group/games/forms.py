@@ -41,6 +41,10 @@ class GamePostingForm(forms.ModelForm):
             "game_description",
             "communities",
         ]
+        widgets = {
+            'start_time': forms.widgets.DateTimeInput(attrs={'class': 'dtp' }),
+            'end_date': forms.widgets.DateTimeInput(attrs={'class': 'dp'}),
+        }
 
 
 class GameSessionForm(forms.ModelForm):

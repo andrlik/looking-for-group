@@ -3,17 +3,25 @@
 
 {% block css_extra %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.print.css">
+<link rel="stylesheet" media="print" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.print.css">
   {% endblock %}
 
 {% block js_extra %}
-<script type="text/javascript" src="{% static 'js/vendor/moment-with-locales.min.js" />
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.js" />
+<script type="text/javascript" src="{% static 'js/vendor/moment-with-locales.min.js' %}"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.js"></script>
 <script type="text/javascript">
   $(document).ready(function() {
     // initialize calendar view
     $('#calendar').fullCalendar({
-      events: 'schedule/api/occurences/?calendar_slug={{ calendar_slug }}&start={% now "Y-m-01" %}&end={{ end_of_month|date:"Y-m-d" }}&timezone={{ TIME_ZONE|urlencode }}'
+      events: '{% url "games:api_occurrences" %}?calendar_slug={{ calendar_slug }}',
+      header: {
+        left: 'prev,next today',
+        center: 'title',
+        right: '',
+      },
+      selectable: true,
+      navLinks: true,
+      timezone: '{{ TIME_ZONE }}',
     })
   });
 </script>

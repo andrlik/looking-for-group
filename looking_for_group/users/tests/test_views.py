@@ -22,7 +22,7 @@ class TestUserRedirectView(BaseUserTestCase):
         view.request = request
         # Expect: '/users/testuser/', as that is the default username for
         #   self.make_user()
-        self.assertEqual(view.get_redirect_url(), "/users/testuser/")
+        self.assertEqual(view.get_redirect_url(), "/social/profiles/testuser/")
 
 
 class TestUserUpdateView(BaseUserTestCase):

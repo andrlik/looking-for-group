@@ -581,9 +581,10 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     @property
     def current_character(self):
-        return Character.objects.filter(
-            status__in=["pending", "approved"], player=self
-        ).order_by("-created")[0]
+        characters = Character.objects.filter(status__in=['pending', 'approved'], player=self)
+        if characters.count() > 0:
+            return characters[0]
+        return None
 
 
 class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):

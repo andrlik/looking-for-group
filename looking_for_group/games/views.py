@@ -6,7 +6,7 @@ from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models.query_utils import Q
-from django.http import HttpResponseNotAllowed, HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -18,8 +18,8 @@ from schedule.periods import Month
 from schedule.views import _api_occurrences
 
 from . import forms, models
-from .utils import mkLastOfMonth, mkfirstOfmonth
 from .mixins import JSONResponseMixin
+from .utils import mkfirstOfmonth, mkLastOfMonth
 
 # Create your views here.
 
@@ -179,6 +179,7 @@ class GamePostingDetailView(
     template_name = "games/game_detail.html"
     slug_url_kwarg = "gameid"
     slug_field = "slug"
+    context_object_name = 'game'
 
     def dispatch(self, request, *args, **kwargs):
         self.game = self.get_object()
@@ -884,10 +885,17 @@ class CalendarDetail(
     slug_url_kwarg = "gamer"
     context_object_name = "calendar"
 
+    def dispatch(self, request, *args, **kwargs):
+        slug_to_use = kwargs['gamer']
+        if request.user.is_authenticated and request.user.username == slug_to_use:
+            self.calendar, created = Calendar.objects.get_or_create(slug=slug_to_use, defaults={'name': "{}'s calendar".format(slug_to_use)})
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["start_of_month"] = mkfirstOfmonth(timezone.now())
         context["end_of_month"] = mkLastOfMonth(timezone.now())
+        context["calendar_slug"] = self.calendar.slug
         return context
 
 

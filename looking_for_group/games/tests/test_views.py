@@ -1,5 +1,5 @@
-from datetime import timedelta
 import urllib
+from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
@@ -12,8 +12,8 @@ from test_plus import APITestCase, TestCase
 from test_plus.test import BaseTestCase
 
 from .. import models
-from ..utils import mkfirstOfmonth, mkLastOfMonth
 from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
+from ..utils import mkfirstOfmonth, mkLastOfMonth
 
 
 class AbstractViewTestCase(object):
@@ -1056,7 +1056,7 @@ class CalendarJSONTest(AbstractAPITestCase):
             "calendar_slug": self.gamer1.username,
             "start": mkfirstOfmonth(timezone.now()).strftime("%Y-%m-%d"),
             "end": mkLastOfMonth(timezone.now()).strftime("%Y-%m-%d"),
-            "timezone": timezone.now().strftime("%z"),
+            "timezone": timezone.now().strftime("%Z"),
         }
         self.query_string = urllib.parse.urlencode(self.query_values)
         self.request_url = "{}?{}".format(

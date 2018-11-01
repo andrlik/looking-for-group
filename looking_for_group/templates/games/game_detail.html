@@ -5,7 +5,7 @@
 <h1>{{ game.title }}</h1>
 <dl>
   <dt>{% trans "GM" %}</dt>
-  <dd>{% avatar 30 game.gm.user %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
+  <dd>{% avatar game.gm.user 30 class='profile_circle_small' %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
   <dt>{% trans "Description" %}</dt>
   <dd>{{ game.description_rendered|safe }}</dd>
   <dt>{% trans "Details" %}</dt>
@@ -78,6 +78,9 @@
   </table>
   </dd>
 </dl>
+{% if request.user == game.gm.user %}
+<a href="{% url 'games:game_edit' gameid=game.slug %}" class="button">{% trans "Edit Game Details" %}</a>
+{% endif %}
 {% block details_and_controls %}
 {# Add actual details here. Application templates should extend this and override this block. #}
 {% if game.gm.user == request.user and pending_applicant_list %}
@@ -103,7 +106,7 @@
   <tbody>
     {% for player in player_list %}
     <tr>
-      <td>{% avatar 20 player.user %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.username }}</a></td>
+      <td>{% avatar player.user 20 class="profile_circle_small" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.username }}</a></td>
       <td>{% if player.current_character %}<a href="{{ player.current_character.get_absolute_url }}"</a>{% else %}{% trans "Pending" %}{% endif %}</td>
       <td>{{ player.created }}</td>
       <td>{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game|default_if_none:"No data" }}</td>
