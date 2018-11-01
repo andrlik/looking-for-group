@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
+from django.db.models import F
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -157,6 +158,13 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             event_to_kill.delete()
 
 
+@receiver(post_save, sender=models.GamePosting)
+def update_games_created_count(sender, instance, created, *args, **kwargs):
+    if created:
+        instance.gm.games_created = F('games_created') + 1
+        instance.gm.save()
+
+
 @receiver(post_save, sender=models.GameEvent)
 def update_child_events_when_master_event_updated(
     sender, instance, created, *args, **kwargs
@@ -189,7 +197,21 @@ def sync_calendar_on_player_add(sender, instance, created, *args, **kwargs):
         async_task(sync_calendar_for_arriving_player, instance)
 
 
+@receiver(post_save, sender=models.Player)
+def update_games_joined(sender, instance, created, *args, **kwargs):
+    if created:
+        instance.gamer.games_joined = F('games_joined') + 1
+        instance.gamer.save()
+
+
 @receiver(post_delete, sender=models.Player)
 def clear_calendar_on_player_remove(sender, instance, *args, **kwargs):
     if instance.game.event:
         async_task(clear_calendar_for_departing_player, instance)
+
+
+@receiver(post_delete, sender=models.Player)
+def update_games_left(sender, instance, *args, **kwargs):
+    gamer = instance.gamer
+    gamer.games_left = F('games_left') + 1
+    gamer.save()
