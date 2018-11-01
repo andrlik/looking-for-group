@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.forms import modelform_factory
-from django.http import HttpResponseNotAllowed, HttpResponseRedirect
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -192,26 +192,56 @@ class ChangeCommunityRole(
     """
 
     model = models.CommunityMembership
-    pk_url_kwarg = "member"
     permission_required = "community.edit_roles"
     template_name = "gamer_profiles/member_role.html"
     fields = ["community_role"]
     select_related = ["gamer", "community"]
+    context_object_name = "member"
 
     def dispatch(self, request, *args, **kwargs):
-        comm_pk = kwargs.pop("community", None)
-        self.community = get_object_or_404(models.GamerCommunity, slug=comm_pk)
+        comm_slug = kwargs.pop("community", None)
+        gamer_slug = kwargs.pop("gamer", None)
+        self.community = get_object_or_404(models.GamerCommunity, slug=comm_slug)
+        self.gamer = get_object_or_404(models.GamerProfile, username=gamer_slug)
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["community"] = self.community
+        context["gamer"] = self.gamer
+        return context
+
+    def get_object(self, queryset=None):
+        if hasattr(self, "object") and self.object:
+            return self.object
+        try:
+            self.object = models.CommunityMembership.objects.get(
+                community=self.community, gamer=self.gamer
+            )
+        except ObjectDoesNotExist:
+            raise Http404
+        return self.object
 
     def get_permission_object(self):
         return self.community
 
     def has_permission(self):
-        if self.request.user.has_perm(
-            "community.edit_gamer_role", self.object.gamer, self.object.community
+        if (
+            self.request.user.is_authenticated
+            and self.request.user == self.get_object().gamer.user
         ):
-            return super().has_permission()
-        return False
+            return False
+        return super().has_permission()
+
+    def get_success_url(self):
+        messages.success(
+            self.request,
+            _("You have successfully edit the role of {}".format(self.gamer)),
+        )
+        return reverse_lazy(
+            "gamer_profiles:community-member-list",
+            kwargs={"community": self.community.slug},
+        )
 
 
 class CommunityCreateView(LoginRequiredMixin, generic.CreateView):

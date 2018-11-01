@@ -4,6 +4,7 @@
 {% block content %}
 {% has_perm 'community.kick_user' request.user community as is_kicker %}
 {% has_perm 'community.ban_user' request.user community as is_banner %}
+{% has_perm 'community.edit_gamer_role' request.user community as is_admin %}
 <h1>{% blocktrans with cname=community.name %}Members of {{ cname }}{% endblocktrans %}</h1>
 <div class="clearfix">
   <div class="float-right">
@@ -20,6 +21,9 @@
       <th>{% trans "Games Joined" %}</th>
       <th>{% trans "Games Left" %}</th>
       <th>{% trans "Games Finished" %}</th>
+      {% if is_admin %}
+      <th></th>
+      {% endif %}
       {% if is_kicker %}
       <th></th>
       {% endif %}
@@ -38,6 +42,13 @@
       <td>{{ member.gamer.games_joined|default_if_none:"0" }}</td>
       <td>{{ member.gamer.games_left|default_if_none:"0" }}</td>
       <td>{{ member.gamer.games_finished|default_if_none:"0" }}</td>
+      {% if is_admin %}
+      {% if request.user == member.gamer.user %}
+      <td><button class="button disabled">{% trans "Edit Member Role" %}</button></td>
+      {% else %}
+      <td><a href="{% url 'gamer_profiles:community-edit-gamer-role' community=community.slug gamer=member.gamer.username %}" class="button">{% trans "Edit Member Role" %}</a> </td>
+      {% endif %}
+      {% endif %}
       {% if is_kicker %}
       <td><a href="{% url 'gamer_profiles:community-kick-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert">{% trans "Kick from community" %}</a></td>
       {% endif %}
@@ -49,4 +60,27 @@
     {% endfor %}
   </tbody>
 </table>
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'gamer_profiles:community-member-list' community=community.slug page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'gamer_profiles:community-member-list' community=community.slug page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'gamer_profiles:community-member-list' community=community.slug page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}

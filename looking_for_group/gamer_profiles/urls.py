@@ -31,6 +31,11 @@ urlpatterns = [
         name="community-transfer-owner",
     ),
     path(
+        "communities/<slug:community>/member/<slug:gamer>/edit/",
+        view=views.ChangeCommunityRole.as_view(),
+        name="community-edit-gamer-role",
+    ),
+    path(
         "communities/<slug:community>/apply/",
         view=views.CreateApplication.as_view(),
         name="community-apply",

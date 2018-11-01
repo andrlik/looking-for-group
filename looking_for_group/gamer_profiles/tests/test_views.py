@@ -336,6 +336,49 @@ class TestCommunityJoinView(AbstractViewTest):
                 self.community2.get_role(self.gamer3)
 
 
+class TestCommunityChangeRole(AbstractViewTest):
+    """
+    Test changing a community member's role.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-edit-gamer-role"
+        self.community2.add_member(self.gamer1)
+        self.url_kwargs = {
+            "community": self.community2.slug,
+            "gamer": self.gamer1.username,
+        }
+        self.post_data = {"community_role": "admin"}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_edit_self(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.community2.owner.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert (
+                models.CommunityMembership.objects.get(
+                    community=self.community2, gamer=self.gamer1
+                ).community_role
+                == "admin"
+            )
+
+
 class TestCommunityApplyView(AbstractViewTest):
     """
     Apply is always available. But not if you are banned or on
