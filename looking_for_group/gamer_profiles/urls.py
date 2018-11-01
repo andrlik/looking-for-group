@@ -6,9 +6,34 @@ app_name = "gamer_profiles"
 urlpatterns = [
     path("communities/", view=views.CommunityListView.as_view(), name="community-list"),
     path(
+        "communities/create/",
+        view=views.CommunityCreateView.as_view(),
+        name="community-create",
+    ),
+    path(
+        "communities/<slug:community>/edit/",
+        view=views.CommunityUpdateView.as_view(),
+        name="community-edit",
+    ),
+    path(
         "communities/<slug:community>/",
         view=views.CommunityDetailView.as_view(),
         name="community-detail",
+    ),
+    path(
+        "communities/<slug:community>/delete/",
+        view=views.CommunityDeleteView.as_view(),
+        name="community-delete",
+    ),
+    path(
+        "communities/<slug:community>/transfer/",
+        view=views.TransferCommunityOwnership.as_view(),
+        name="community-transfer-owner",
+    ),
+    path(
+        "communities/<slug:community>/member/<slug:gamer>/edit/",
+        view=views.ChangeCommunityRole.as_view(),
+        name="community-edit-gamer-role",
     ),
     path(
         "communities/<slug:community>/apply/",
@@ -19,6 +44,11 @@ urlpatterns = [
         "communities/<slug:community>/join/",
         view=views.JoinCommunity.as_view(),
         name="community-join",
+    ),
+    path(
+        "communities/<slug:community>/discord/",
+        view=views.CommunityDiscordLinkView.as_view(),
+        name="community-discord-link",
     ),
     path(
         "communities/<slug:community>/leave/",

@@ -644,7 +644,6 @@
                 "sha256:8886bfec5ad7afb391ed5443b1f697c6f4ae98d0e5620839d8b4499c032ada3f",
                 "sha256:e21232e2465808c0e892e0e4dbb8c2faafec16ac6dc067dd546e9b466f3deac8"
             ],
-            "markers": "python_version != '3.0.*' and python_version != '3.3.*' and python_version != '3.2.*' and python_version < '4' and python_version >= '2.6' and python_version != '3.1.*'",
             "version": "==1.0.0"
         },
         "rjsmin": {

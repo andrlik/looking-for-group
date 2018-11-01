@@ -43,6 +43,77 @@ class TestSetup(AbstractViewTest):
         assert self.gamer1 in self.gamer3.friends.all()
 
 
+class TestCommunityCreate(AbstractViewTest):
+    """
+    Test creating a community.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-create"
+        self.post_data = {
+            "name": "My cool new community",
+            "description": "We play fun games.",
+            "url": "",
+            "private": "",
+            "application_approval": "admin",
+            "invites_allowed": "admin",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer3.username):
+            self.assertGoodView(self.view_name)
+            previous_amount = models.GamerCommunity.objects.count()
+            self.post(self.view_name, data=self.post_data)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert models.GamerCommunity.objects.count() - previous_amount == 1
+
+
+class TestCommunityEdit(AbstractViewTest):
+    """
+    Test for editing a community.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-edit"
+        self.url_kwargs = {"community": self.community1.slug}
+        self.post_data = {
+            "name": "Can anyone hear me?",
+            "description": "I've been so lost.",
+            "url": "https://www.google.com",
+            "private": "",
+            "application_approval": "admin",
+            "invites_allowed": "admin",
+        }
+
+    def test_login_required(self):
+        print(self.url_kwargs)
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_community_owner(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert (
+                models.GamerCommunity.objects.get(pk=self.community1.pk).name
+                == "Can anyone hear me?"
+            )
+
+
 class TestCommunityList(AbstractViewTest):
     """
     Test viewing list of all communities with limited details.
@@ -103,7 +174,7 @@ class CommunityDetailViewTest(AbstractViewTest):
 
     def test_authenticated(self):
         with self.login(username=self.gamer1.username):
-            print(self.community1.pk)
+            print(self.community1.slug)
             print(reverse(self.view_name, kwargs={"community": self.community1.slug}))
             assert models.GamerCommunity.objects.get(pk=self.community1.pk)
             self.assertGoodView(self.view_name, community=self.community1.slug)
@@ -116,6 +187,58 @@ class CommunityDetailViewTest(AbstractViewTest):
             self.assertGoodView(self.view_name, community=self.community2.slug)
             self.get(self.view_name, community=self.community1.slug)
             self.response_302()
+
+
+class CommunityMemberListTest(AbstractViewTest):
+    """
+    Test for viewing community members.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-member-list"
+        self.url_kwargs = {"community": self.community1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class CommunityDeleteTest(AbstractViewTest):
+    """
+    Test for deleting a community.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-delete"
+        self.url_kwargs = {"community": self.community1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_deletion(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data={}, **self.url_kwargs)
+            with pytest.raises(ObjectDoesNotExist):
+                models.GamerCommunity.objects.get(pk=self.community1.pk)
 
 
 class TestCommunityJoinView(AbstractViewTest):
@@ -211,6 +334,49 @@ class TestCommunityJoinView(AbstractViewTest):
             self.response_403()
             with pytest.raises(models.NotInCommunity):
                 self.community2.get_role(self.gamer3)
+
+
+class TestCommunityChangeRole(AbstractViewTest):
+    """
+    Test changing a community member's role.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-edit-gamer-role"
+        self.community2.add_member(self.gamer1)
+        self.url_kwargs = {
+            "community": self.community2.slug,
+            "gamer": self.gamer1.username,
+        }
+        self.post_data = {"community_role": "admin"}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_edit_self(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_valid_user(self):
+        with self.login(username=self.community2.owner.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert (
+                models.CommunityMembership.objects.get(
+                    community=self.community2, gamer=self.gamer1
+                ).community_role
+                == "admin"
+            )
 
 
 class TestCommunityApplyView(AbstractViewTest):

@@ -3,7 +3,11 @@
 {% block subtitle %}{% trans "Communities" %} - {% endblock %}
 {% block content %}
 <h1>{% trans "Communities" %}</h1>
-
+<div class="clearfix">
+  <div class="float-right">
+    <a href="{% url 'gamer_profiles:my-community-list' %}" class="button">{% trans "Your communities" %}</a> <a href="{% url 'gamer_profiles:my-application-list' %}" class="button">{% trans "Your community applications" %}</a>  <a href="{% url 'gamer_profiles:community-create' %}" class="button">{% trans "Create a new community" %}</a>
+  </div>
+</div>
 <ul>
   {% for community in object_list %}
   <li>
@@ -11,8 +15,32 @@
 <span class="meta">{% if community.private %}<span class="privacy-flag">{% trans "Private" %}</span>{% endif %} {% blocktrans count counter=community.member_count %}1 Member{% plural %} {{ counter|humanize }} Members{% endblocktrans %}</span>
 <p>{{ community.description_rendered|truncatewords_html:100|safe }}</p>
   </li>
-{% empty %}
-<p>{% trans "No communities found." %}</p>
-{% endfor %}
+  {% empty %}
+  <p>{% trans "No communities found." %}</p>
+  {% endfor %}
 </ul>
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'gamer_profiles:community-list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'gamer_profiles:community-list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'gamer_profiles:community-list' page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
 {% endblock %}

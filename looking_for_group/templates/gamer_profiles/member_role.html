@@ -1,0 +1,15 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n foundation_formtags avatar_tags %}
+{% block subtitle %}{% blocktrans with gname=gamer.username %}Editing community role for {{ gname }}{% endblocktrans %}{% endblock %}
+{% block content %}
+<h1>{% blocktrans with cname=community.name gname=gamer.username %}Editing role for {{ gname }} in community {{ cname }}{% endblocktrans %}</h1>
+<form action="" method="post">
+  {% csrf_token %}
+  <p>{% avatar gamer.user 30 %} {{ gamer }}</p>
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}" class="button float-left secondary">{% trans "Back to community member list" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Save changes' %}" />
+  </div>
+</form>
+
+{% endblock %}

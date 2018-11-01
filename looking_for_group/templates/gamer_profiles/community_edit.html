@@ -1,0 +1,13 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Edit community" %} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with cname=community.name %}Editing community: {{ cname }}{% endblocktrans %}</h1>
+<form data-abide method="post" action="">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ community.get_absolute_url }}" class="button float-left secondary">{% trans "Return to community details" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Save changes' %}" />
+  </div>
+</form>
+{% endblock %}
