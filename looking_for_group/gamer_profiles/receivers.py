@@ -8,6 +8,7 @@ from markdown import markdown
 
 from . import models
 from ..users.models import User
+from ..discord.models import CommunityDiscordLink
 
 logger = logging.getLogger("gamer_profiles")
 
@@ -101,6 +102,15 @@ def add_owner_to_community(sender, instance, created, *args, **kwargs):
             "Ower is not in community {}; adding as admin".format(instance.name)
         )
         instance.add_member(instance.owner, role="admin")
+
+
+@receiver(post_save, sender=models.GamerCommunity)
+def create_placeholder_discord_link(sender, instance, created, *args, **kwargs):
+    """
+    add a placeholder object in the discord app. we use get_or_create to prevent duplicates. 
+    """
+    if created:
+        CommunityDiscordLink.objects.get_or_create(community=instance)
 
 
 @receiver(post_save, sender=models.BlockedUser)
