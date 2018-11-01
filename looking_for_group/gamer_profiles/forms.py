@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from .models import GamerCommunity, GamerProfile
+from .models import GamerCommunity, GamerProfile, KickedUser
 
 
 class OwnershipTransferForm(forms.ModelForm):
@@ -25,6 +25,17 @@ class BlankDistructiveForm(forms.ModelForm):
 
     class Meta:
         fields = []
+
+
+class KickUserForm(forms.ModelForm):
+    """
+    Used for kicking a single user.
+    """
+
+    class Meta:
+        model = KickedUser
+        fields = ['reason', 'end_date']
+        widgets = {'end_date': forms.widgets.DateInput(attrs={'class': 'dp'})}
 
 
 class GamerProfileForm(forms.ModelForm):

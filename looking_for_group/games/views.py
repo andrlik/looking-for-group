@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.db.models import F
 from django.db.models.query_utils import Q
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -138,6 +139,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
 
     def form_valid(self, form):
         self.game_posting = form.save(commit=False)
+        self.game_posting.gm = self.request.user.gamerprofile
         if self.game_posting.communities:
             for comm in self.game_posting.communities.all():
                 if comm not in self.get_allowed_communties():
@@ -179,7 +181,7 @@ class GamePostingDetailView(
     template_name = "games/game_detail.html"
     slug_url_kwarg = "gameid"
     slug_field = "slug"
-    context_object_name = 'game'
+    context_object_name = "game"
 
     def dispatch(self, request, *args, **kwargs):
         self.game = self.get_object()
@@ -400,6 +402,34 @@ class GamePostingUpdateView(
         context = super().get_context_data(**kwargs)
         context["allowed_communities"] = self.get_allowed_communities()
         return context
+
+    def form_valid(self, form):
+        prev_version = self.get_object()
+        obj_to_save = form.save(commit=False)
+        if prev_version.status != obj_to_save.status and "closed" in [
+            prev_version.status,
+            obj_to_save.status,
+        ]:
+            logger.debug("Detecting a game finished change.")
+            if prev_version.status != "closed" and obj_to_save.status == "closed":
+                logger.debug(
+                    "Game is newly completed. Adding to count for game and players"
+                )
+                value_to_add = 1
+            else:
+                logger.debug(
+                    "Game taken out of completed state. Decreasing count for game and players."
+                )
+                value_to_add = -1
+            with transaction.atomic():
+                obj_to_save.save()
+                obj_to_save.gm.games_finished = F("games_finished") + value_to_add
+                obj_to_save.gm.save()
+                for gamer in obj_to_save.players.all():
+                    gamer.games_finished = F("games_finished") + value_to_add
+                    gamer.save()
+            return HttpResponseRedirect(self.get_success_url())
+        return super().form_valid(form)
 
 
 class GamePostingDeleteView(
@@ -886,9 +916,11 @@ class CalendarDetail(
     context_object_name = "calendar"
 
     def dispatch(self, request, *args, **kwargs):
-        slug_to_use = kwargs['gamer']
+        slug_to_use = kwargs["gamer"]
         if request.user.is_authenticated and request.user.username == slug_to_use:
-            self.calendar, created = Calendar.objects.get_or_create(slug=slug_to_use, defaults={'name': "{}'s calendar".format(slug_to_use)})
+            self.calendar, created = Calendar.objects.get_or_create(
+                slug=slug_to_use, defaults={"name": "{}'s calendar".format(slug_to_use)}
+            )
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

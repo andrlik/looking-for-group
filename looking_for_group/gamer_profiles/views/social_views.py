@@ -19,7 +19,12 @@ from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
 from .. import models
-from ..forms import BlankDistructiveForm, GamerProfileForm, OwnershipTransferForm
+from ..forms import (
+    BlankDistructiveForm,
+    GamerProfileForm,
+    OwnershipTransferForm,
+    KickUserForm,
+)
 
 logger = logging.getLogger("gamer_profiles")
 
@@ -958,7 +963,7 @@ class CommunityKickUser(
     model = models.KickedUser
     permission_required = "community.kick_user"
     template_name = "gamer_profiles/community_kick_user.html"
-    fields = ["reason", "end_date"]
+    form_class = KickUserForm
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
@@ -976,7 +981,7 @@ class CommunityKickUser(
     def get_success_url(self):
         return reverse_lazy(
             "gamer_profiles:community-kick-list",
-            kwargs={"community": self.community.pk},
+            kwargs={"community": self.community.slug},
         )
 
     def get_permission_object(self):
@@ -1040,7 +1045,7 @@ class UpdateKickRecord(
     model = models.KickedUser
     select_related = ["community", "kicked_user"]
     template_name = "gamer_profiles/community_kick_edit.html"
-    fields = ["reason", "end_date"]
+    form_class = KickUserForm
     context_object_name = "kick"
     pk_url_kwarg = "kick"
     permission_required = "community.kick_user"
@@ -1071,7 +1076,7 @@ class UpdateKickRecord(
     def get_success_url(self):
         return reverse_lazy(
             "gamer_profiles:community-kick-list",
-            kwargs={"community": self.community.pk},
+            kwargs={"community": self.community.slug},
         )
 
 
@@ -1105,7 +1110,7 @@ class DeleteKickRecord(
     def get_success_url(self):
         return reverse_lazy(
             "gamer_profiles:community-kick-list",
-            kwargs={"community": self.community.pk},
+            kwargs={"community": self.community.slug},
         )
 
     def get_permission_object(self):
