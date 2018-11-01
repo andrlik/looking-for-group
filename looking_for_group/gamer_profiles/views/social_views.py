@@ -263,7 +263,7 @@ class CommunityDetailView(
     model = models.GamerCommunity
     template_name = "gamer_profiles/community_detail.html"
     select_related = ["owner", "discord"]
-    prefetch_related = ['discord__servers', 'gameposting_set']
+    prefetch_related = ["discord__servers", "gameposting_set"]
     # prefetch_related = [
     #     "gamerprofile_set",
     #     "communityapplication_set",
@@ -296,11 +296,15 @@ class CommunityDetailView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if context['community'].discord:
-            context['linked_discord_servers'] = context['community'].discord.servers.all()
+        if context["community"].discord:
+            context["linked_discord_servers"] = context[
+                "community"
+            ].discord.servers.all()
         else:
-            context['linked_discord_servers'] = None
-        context['active_games'] = context['community'].gameposting_set.exclude(status__in=['closed', 'cancel'])
+            context["linked_discord_servers"] = None
+        context["active_games"] = context["community"].gameposting_set.exclude(
+            status__in=["closed", "cancel"]
+        )
         return context
 
 
@@ -335,6 +339,35 @@ class CommunityUpdateView(
         )
 
 
+class CommunityDeleteView(
+    LoginRequiredMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.DeleteView,
+):
+    """
+    Delete view for a community. Can only be done by the owner.
+    """
+
+    model = models.GamerCommunity
+    slug_url_kwarg = "community"
+    slug_field = "slug"
+    permission_required = "community.transfer_ownership"
+    template_name = "gamer_profiles/community_delete.html"
+    prefetch_related = [
+        "members",
+        "gameposting_set",
+        "discord",
+        "communityapplication_set",
+    ]
+
+    def get_success_url(self):
+        messages.success(
+            self.request, _("You have successfully deleted this community.")
+        )
+        return reverse_lazy("gamer_profiles:community-list")
+
+
 class CommunityMemberList(
     LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.ListView
 ):
@@ -347,7 +380,7 @@ class CommunityMemberList(
     template_name = "gamer_profiles/community_member_list.html"
     permission_required = "community.view_details"
     paginate_by = 25
-    ordering = ["community_role", "gamer__display_name"]
+    ordering = ["community_role", "gamer__user__display_name"]
 
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)

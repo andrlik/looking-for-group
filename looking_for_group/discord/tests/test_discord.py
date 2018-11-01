@@ -64,7 +64,7 @@ class AbstractDiscordTest(TransactionTestCase):
             name="Nest of Vipers",
             icon_url="https://cdn.discordapp.com/icons/80351110224678952/8342729096ea3675442027381ff50dfe.png",
         )
-        self.comm_link = models.CommunityDiscordLink.objects.create(
+        self.comm_link = models.CommunityDiscordLink.objects.get(
             community=self.community1
         )
         self.community2 = factories.GamerCommunityFactory(owner=self.gamer2)
@@ -191,7 +191,7 @@ class TestDiscordServerRetrieval(AbstractDiscordTest):
         self.servermember2 = models.DiscordServerMembership.objects.create(
             gamer_link=self.gamerlink, server=self.discord_server3
         )
-        self.comm_link2 = models.CommunityDiscordLink.objects.create(
+        self.comm_link2 = models.CommunityDiscordLink.objects.get(
             community=self.community2
         )
         self.discord_server4 = models.DiscordServer.objects.create(
@@ -265,7 +265,7 @@ class TestSignals(AbstractDiscordTest):
         self.servermember2 = models.DiscordServerMembership.objects.create(
             gamer_link=self.gamerlink, server=self.discord_server3
         )
-        self.comm_link2 = models.CommunityDiscordLink.objects.create(
+        self.comm_link2 = models.CommunityDiscordLink.objects.get(
             community=self.community2
         )
         self.discord_server4 = models.DiscordServer.objects.create(

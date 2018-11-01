@@ -21,6 +21,16 @@ urlpatterns = [
         name="community-detail",
     ),
     path(
+        "communities/<slug:community>/delete/",
+        view=views.CommunityDeleteView.as_view(),
+        name="community-delete",
+    ),
+    path(
+        "communities/<slug:community>/transfer/",
+        view=views.TransferCommunityOwnership.as_view(),
+        name="community-transfer-owner",
+    ),
+    path(
         "communities/<slug:community>/apply/",
         view=views.CreateApplication.as_view(),
         name="community-apply",

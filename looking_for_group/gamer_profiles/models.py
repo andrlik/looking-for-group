@@ -422,8 +422,13 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         help_text=_("Overall attendance record for games sessions."),
     )
 
+    def display_name(self):
+        return self.user.display_name
+
     def __str__(self):
-        return "Game Profile: {}".format(self.user.username)
+        if self.user.display_name:
+            return "{} ({})".format(self.user.display_name, self.username)
+        return self.username
 
     def get_absolute_url(self):
         return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.username})
@@ -432,10 +437,6 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         if not self.username:
             self.username = self.user.username
         super().save(*args, **kwargs)
-
-    @cached_property
-    def display_name(self):
-        return self.user.display_name
 
     def block(self, blocker):
         block, created = BlockedUser.objects.get_or_create(blocker=blocker, blockee=self)

@@ -1,0 +1,26 @@
+{% extends "gamer_profiles/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Delete community" %} {{ community.name }} - {% endblock %}
+{% block content %}
+<h1>{% blocktrans with cname=community.name %}Delete community {{ cname }}?{% endblocktrans %}</h1>
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "Deleting this community is permanent and cannot be undone. This community consists of the following:" %}</p>
+  <dl>
+    <dt>{% trans "Members" %}</dt>
+    <dd>{{ community.members.count }}</dd>
+    <dt>{% trans "Linked Discord Servers" %}</dt>
+    <dd>{{ community.discord.servers.count }}</dd>
+    <dt>{% trans "Application Records" %}</dt>
+    <dd>{{ community.communityapplication_set.count }}</dd>
+    <dt>{% trans "Game Postings" %}</dt>
+    <dd>{{ community.gameposting_set.count }}</dd>
+  </dl>
+  <div class="clearfix">
+    <form action="" method="post">
+      {% csrf_token %}
+      <a href="{{ community.get_absolute_url }}" class="button secondary float-left">{% trans "Go back to community details" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Delete' %}" />
+    </form>
+  </div>
+</div>
+{% endblock %}

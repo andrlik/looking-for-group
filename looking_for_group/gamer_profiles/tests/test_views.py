@@ -174,7 +174,7 @@ class CommunityDetailViewTest(AbstractViewTest):
 
     def test_authenticated(self):
         with self.login(username=self.gamer1.username):
-            print(self.community1.pk)
+            print(self.community1.slug)
             print(reverse(self.view_name, kwargs={"community": self.community1.slug}))
             assert models.GamerCommunity.objects.get(pk=self.community1.pk)
             self.assertGoodView(self.view_name, community=self.community1.slug)
@@ -187,6 +187,58 @@ class CommunityDetailViewTest(AbstractViewTest):
             self.assertGoodView(self.view_name, community=self.community2.slug)
             self.get(self.view_name, community=self.community1.slug)
             self.response_302()
+
+
+class CommunityMemberListTest(AbstractViewTest):
+    """
+    Test for viewing community members.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-member-list"
+        self.url_kwargs = {"community": self.community1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class CommunityDeleteTest(AbstractViewTest):
+    """
+    Test for deleting a community.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-delete"
+        self.url_kwargs = {"community": self.community1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_deletion(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data={}, **self.url_kwargs)
+            with pytest.raises(ObjectDoesNotExist):
+                models.GamerCommunity.objects.get(pk=self.community1.pk)
 
 
 class TestCommunityJoinView(AbstractViewTest):

@@ -1,0 +1,52 @@
+{% extends "gamer_profiles/base.html" %}
+{% load avatar_tags i18n rules %}
+{% block subtitle %}{% blocktrans with cname=community.name %}Members of {{ cname }}{% endblocktrans %} - {% endblock %}
+{% block content %}
+{% has_perm 'community.kick_user' request.user community as is_kicker %}
+{% has_perm 'community.ban_user' request.user community as is_banner %}
+<h1>{% blocktrans with cname=community.name %}Members of {{ cname }}{% endblocktrans %}</h1>
+<div class="clearfix">
+  <div class="float-right">
+    <a href="{{ community.get_absolute_url }}" class="button">{% trans "Back to community details" %}</a>
+  </div>
+</div>
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "Member" %}</th>
+      <th>{% trans "Community Role" %}</th>
+      <th>{% trans "Member Since" %}</th>
+      <th>{% trans "Games Created" %}</th>
+      <th>{% trans "Games Joined" %}</th>
+      <th>{% trans "Games Left" %}</th>
+      <th>{% trans "Games Finished" %}</th>
+      {% if is_kicker %}
+      <th></th>
+      {% endif %}
+      {% if is_banner %}
+      <th></th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for member in object_list %}
+    <tr>
+      <td>{% avatar member.gamer.user 30 class="profile_circle_small" %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer }}</a></td>
+      <td>{{ member.get_community_role_display }}</td>
+      <td>{{ member.created|timesince }}</td>
+      <td>{{ member.gamer.games_created|default_if_none:"0" }}</td>
+      <td>{{ member.gamer.games_joined|default_if_none:"0" }}</td>
+      <td>{{ member.gamer.games_left|default_if_none:"0" }}</td>
+      <td>{{ member.gamer.games_finished|default_if_none:"0" }}</td>
+      {% if is_kicker %}
+      <td><a href="{% url 'gamer_profiles:community-kick-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert">{% trans "Kick from community" %}</a></td>
+      {% endif %}
+      {% if is_banner %}
+      <td><a href="{% url 'gamer_profiles:community-ban-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert">{% trans "Ban from Community" %}</a></td>
+      {% endif %}
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
