@@ -32,7 +32,7 @@ class CommunityDiscordLinkView(
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             self.community = get_object_or_404(GamerCommunity, slug=kwargs["community"])
-            if self.community.linked_to_discord:
+            if self.community.linked_with_discord:
                 messages.info(
                     request, _("This community is already linked to a discord server.")
                 )
@@ -96,13 +96,13 @@ class CommunityDiscordLinkView(
                 + immutable_servers
             )
             if len(new_list) > 0:
-                if not self.community.linked_to_discord:
-                    self.community.linked_to_discord = True
+                if not self.community.linked_with_discord:
+                    self.community.linked_with_discord = True
                     self.community.save()
                 self.community_discord_link.servers.set(*new_list)
             else:
-                if self.community.linked_to_discord:
-                    self.community.linked_to_discord = False
+                if self.community.linked_with_discord:
+                    self.community.linked_with_discord = False
                     self.community.save()
                 self.community_discord_link.servers.clear()
             messages.success(self.request, _("Changes have been successfully saved!"))

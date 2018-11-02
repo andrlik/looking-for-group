@@ -12,7 +12,7 @@
 </div>
 <span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} {% avatar community.owner.user 20 %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a>. {% blocktrans count counter=community.gameposting_set.count|length %}There is {{ counter }} game posted in this community.{% plural %}There are {{ counter }} games posted in this community. {% endblocktrans %}</span>
 <p>{{ community.description_rendered|safe }}</p>
-{% if community.linked_to_discord and community.discord %}
+{% if community.linked_with_discord and community.discord %}
 <h2>{% trans "Discord Servers" %}</h2>
 <p>{% blocktrans count counter=community.discord.servers.all|length %}This community is linked to {{ counter }} Discord server.{% plural %}This community is linked to {{ counter }} Discord servers.{% endblocktrans %}</p>
 <ul>
