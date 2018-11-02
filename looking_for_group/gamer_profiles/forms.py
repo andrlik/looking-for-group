@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from ..discord.models import CommunityDiscordLink
+from ..discord.models import CommunityDiscordLink, DiscordServer
 from .models import GamerCommunity, GamerProfile, KickedUser
 
 
@@ -76,7 +76,7 @@ class CommunityDiscordForm(forms.ModelForm):
         if not linkable_servers_qs:
             raise KeyError(_('Must provide queryset of linkable servers.'))
         super().__init__(*args, **kwargs)
-        self.fields['servers'].queryset = linkable_servers_qs
+        self.fields['servers'].queryset = DiscordServer.objects.filter(id__in=[s.server.id for s in linkable_servers_qs])
 
     class Meta:
         model = CommunityDiscordLink

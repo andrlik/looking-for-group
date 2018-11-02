@@ -83,7 +83,7 @@ class CommunityDiscordLinkView(
         with transaction.atomic:
             immutable_servers = list(
                 self.community_discord_link.servers.exclude(
-                    id__in=[s.id for s in self.linkable_servers.all()]
+                    id__in=[s.server.id for s in self.linkable_servers.all()]
                 )
             )
             temp_obj = form.save(commit=False)

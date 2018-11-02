@@ -56,6 +56,9 @@ class DiscordServerMembership(TimeStampedModel, AbstractUUIDModel):
     gamer_link = models.ForeignKey(GamerDiscordLink, on_delete=models.CASCADE)
     server_role = models.CharField(max_length=25, choices=COMMUNITY_ROLES)
 
+    def __str__(self):
+        return self.server.name
+
 
 class CommunityDiscordLink(TimeStampedModel, AbstractUUIDModel):
     '''
