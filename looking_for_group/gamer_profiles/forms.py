@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
+from ..discord.models import CommunityDiscordLink
 from .models import GamerCommunity, GamerProfile, KickedUser
 
 
@@ -78,4 +79,5 @@ class CommunityDiscordForm(forms.ModelForm):
         self.fields['servers'].queryset = linkable_servers_qs
 
     class Meta:
+        model = CommunityDiscordLink
         fields = ['servers']
