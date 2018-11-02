@@ -381,7 +381,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         null=True,
         help_text=_("Automated rendering of markdown text as HTML."),
     )
-    communities = models.ManyToManyField(GamerCommunity)
+    communities = models.ManyToManyField(GamerCommunity, help_text=_('Which communities would you like to post this in? (Optional)'))
     sessions = models.PositiveIntegerField(default=0)
     players = models.ManyToManyField(GamerProfile, through="Player")
     event = models.ForeignKey(
