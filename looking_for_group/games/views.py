@@ -254,6 +254,11 @@ class GamePostingApplyView(
     def get_permission_object(self):
         return self.game
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = self.game
+        return context
+
     def form_valid(self, form):
         application = form.save(commit=False)
         if "submit_app" in self.request.POST.keys():
@@ -278,6 +283,11 @@ class GamePostingApplicationDetailView(
     slug_field = "slug"
     permission_required = "game.view_application"
     template_name = "games/game_apply_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['application'].game
+        return context
 
 
 class GamePostingApplicationUpdateView(
@@ -321,6 +331,11 @@ class GamePostingApplicationUpdateView(
             form.instance.status = "pending"
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['application'].game
+        return context
+
 
 class GamePostingWithdrawApplication(
     LoginRequiredMixin,
@@ -341,6 +356,11 @@ class GamePostingWithdrawApplication(
 
     def get_success_url(self):
         return self.get_object().game.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['application'].game
+        return context
 
 
 class GamePostingAppliedList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
@@ -368,6 +388,34 @@ class GamePostingAppliedList(LoginRequiredMixin, SelectRelatedMixin, generic.Lis
         )
         return context
 
+
+class GamePostingApplicantList(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.ListView):
+    """
+    GM view of gamers that have applied to game.
+    """
+    model = models.GamePostingApplication
+    select_related = ['gamer', 'game']
+    context_object_name = 'applicants'
+    permission_required = "game.can_edit_listing"
+    template_name = "games/game_applicant_list.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        game_slug = kwargs.pop("gameid", None)
+        self.game = get_object_or_404(models.GamePosting, slug=game_slug)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.game
+
+    def get_queryset(self):
+        return self.model.objects.filter(game=self.game, status='pending')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['approved_applicants'] = self.model.objects.filter(game=self.game, status='approve').select_related('gamer').order_by('-modified')
+        context['rejected_applicants'] = self.model.objects.filter(game=self.game, status='deny').select_related('gamer').order_by('-modified')
+        context['game'] = self.game
+        return context
 
 class GamePostingUpdateView(
     LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView

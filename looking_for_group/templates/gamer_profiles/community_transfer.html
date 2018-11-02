@@ -1,0 +1,18 @@
+{% extends "gamer_profiles/community_base.html" %}
+{% load i18n foundation_formtags %}
+{% block transferactive %} class="is-active"{% endblock %}
+{% block subtitle %}{% trans "Transfer ownership" %}{% endblock %}
+{% block sectiontitle %}<h1>{% trans "Transfer Ownership" %}</h1>{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans with cname=community.cname %}Once you transfer ownership of {{ cname }} to another user, this cannot be undone except by the new owner.{% endblocktrans %}</p>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ community.get_absolute_url }}" class="button secondary float-left">{% trans "Discard changes and return to community details" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Complete transfer' %}" />
+  </div>
+</form>
+{% endblock %}

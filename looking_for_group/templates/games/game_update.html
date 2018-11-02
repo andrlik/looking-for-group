@@ -1,8 +1,10 @@
-{% extends "games/base_form.html" %}
+{% extends "games/game_base_form.html" %}
 {% load i18n foundation_formtags %}
 {% block subtitle %}{% trans "Edit game" %} - {% endblock %}
+{% block editactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}<h1>{% trans "Edit game" %}</h1>{% endblock %}
 {% block content %}
-<h1>{% trans "Edit game" %}</h1>
+<p>{% trans "You can edit the details of your game below." %}</p>
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}

@@ -1,8 +1,10 @@
-{% extends "games/base_form.html" %}
+{% extends "gamer_profiles/community_base_form.html" %}
 {% load i18n humanize foundation_formtags %}
 {% block subtitle %}{% blocktrans with cname=community.name gname=gamer.display_name %}Kick {{ gname }} from {{ cname }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}<h1>{% trans "Kick/suspend user" %}</h1>{% endblock %}
+{% block membersactive %} class="is-active"{% endblock %}
 {% block content %}
-<h1>{% blocktrans with cname=community.name gname=gamer.display_name %}Kick {{ gname }} from {{ cname }}?{% endblocktrans %}</h1>
+<p>{% blocktrans with cname=community.name gname=gamer.display_name %}Kick {{ gname }} from {{ cname }}?{% endblocktrans %}</p>
 <div class="callout warning">
   <h2>{% trans "Are you sure?" %}</h2>
   <p>{% blocktrans with cname=community.name gname=gamer.display_name %}This will immediately remove {{ gname }} from {{ cname }}. If you also add an end date, they will be unable to reapply or rejoin until that date.{% endblocktrans %}</p>

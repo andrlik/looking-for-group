@@ -1,13 +1,9 @@
 {% extends "games/base.html" %}
 {% load avatar_tags i18n humanize %}
-{% block subtitle %}{% trans "My Games" %} - {% endblock %}
+{% block subtitle %}{% trans "Your Games" %} - {% endblock %}
+{% block sectiontitle %}<h1>{% trans "Your Games" %}</h1>{% endblock %}
+{% block yourgamesactive %} class="is-active"{% endblock %}
 {% block content %}
-<h1>{% trans "My Games" %}</h1>
-<div class="clearfix">
-  <div class="float-right">
-    <a href="{% url 'games:game_list' %}" class="button">{% trans  "All Games" %}</a> <a href="{% url 'games:game_create' %}" class="button">{% trans "Create a new game" %}</a>
-  </div>
-</div>
 {% if not active_game_list %}
 <p>{% trans "No active games found." %}</p>
 {% endif %}
@@ -35,12 +31,12 @@
   <tbody>
     {% for game in active_game_list %}
     <tr>
-      <td>{{ game.title }}</td>
+      <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
       <td>{{ game.get_game_type_display }}</td>
       <td>{{ game.get_status_display }}</td>
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
-      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar 20 game.gm.user %} {{ game.gm.username }}</a></td>
+      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 20 %} {{ game.gm }}</a></td>
       <td>{{ game.game_get_display_game_frequency }} </td>
       <td class="text-right">{{ game.session_length }}</td>
       <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>

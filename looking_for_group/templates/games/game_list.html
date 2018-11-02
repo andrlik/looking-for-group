@@ -1,13 +1,9 @@
 {% extends "games/base.html" %}
 {% load avatar_tags i18n humanize %}
 {% block subtitle %}{% trans "Game Listings" %} - {% endblock %}
+{% block allgamesactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}<h1>{% trans "Game listings" %}</h1>{% endblock %}
 {% block content %}
-<h1>{% trans "Game Listings" %}</h1>
-<div class="clearfix">
-  <div class="float-right">
-    <a href="{% url 'games:my_game_list' %}" class="button">{% trans "Your games" %}</a> <a href="{% url 'games:game_create' %}" class="button">{% trans "Create a new game" %}</a>
-  </div>
-</div>
 {% if not game_list %}
 <p>{% trans "No games found." %}</p>
 {% endif %}

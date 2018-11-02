@@ -1,8 +1,9 @@
 {% extends "games/base.html" %}
 {% load i18n avatar_tags humanize social_tags %}
-{% block subtitle %}{% trans "My Game Applications" %} - {% endblock %}
+{% block subtitle %}{% trans "Your Game Applications" %} - {% endblock %}
+{% block sectiontitle %}<h1>{% trans "Your game applications" %}</h1>{% endblock %}
+{% block appactive %} class="is-active"{% endblock %}
 {% block content %}
-<h1>{% trans "My Game Applications" %}</h1>
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">
   <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ application_list|length }})</a></li>

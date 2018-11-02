@@ -1,8 +1,9 @@
-{% extends "games/base.html" %}
+{% extends "games/game_base.html" %}
 {% load i18n %}
 {% block subtitle %}{% trans "Delete game" %} - {% endblock %}
+{% block deleteactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}<h1>{% trans "Delete game" %}</h1>{% endblock %}
 {% block content %}
-<h2>{% trans "Delete game" %}</h2>
 <div class="alert callout">
   <h5>{% trans "Are you sure?" %}</h5>
   <p>{% blocktrans with gametitle=game.title %}If you delete {{ gametitle }} you will also delete all the following pieces of information: {% endblocktrans %}</p>
@@ -13,6 +14,7 @@
 </div>
 <form action="" method="post">
   {% csrf_token %}
-  <p><a href="{{ game.get_absolute_url }}" class="button secondary">{% trans "Go back" %}</a> <input type="submit" class="button alert" value="{% trans 'Delete game' %}" /></p>
+  <div class="clearfix">
+  <a href="{{ game.get_absolute_url }}" class="button float-left secondary">{% trans "Go back" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Delete game' %}" />
 </form>
 {% endblock %}

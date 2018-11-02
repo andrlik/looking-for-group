@@ -1,9 +1,9 @@
 {% extends "gamer_profiles/base.html" %}
 {% load i18n humanize social_tags %}
 {% block subtitle %}{% trans "My Communities" %} - {% endblock %}
+{% block sectiontitle %}<h1>{% trans "My Communities" %}</h1>{% endblock %}
+{% block yourcomactive %} class="is-active"{% endblock %}
 {% block content %}
-<h1>{% trans "My Communities" %}</h1>
-
 <ul>
   {% for membership in object_list %}
   <li>

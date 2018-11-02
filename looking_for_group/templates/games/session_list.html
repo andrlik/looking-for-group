@@ -1,8 +1,10 @@
-{% extends "games/base.html" %}
+{% extends "games/game_base.html" %}
 {% load i18n avatar_tags %}
 {% block subtitle %}{% blocktrans with gametitle=game.title %}Sessions for {{ gametitle }}{% endblocktrans %} - {% endblock %}
+{% block sessionactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}<h1>{{ game.title }} {% trans "sessions" %}</h1>{% endblock %}
 {% block content %}
-<h1>{% blocktrans with gametitle=game.title %}Sessions for {{ gametitle }}{% endblocktrans %}</h1>
+<p>{% blocktrans count counter=game.gamesession_set.count %}This game has {{ counter }} session associated with it.{% plural %}This game has {{ counter }} sessions associated with it.{% endblocktrans %}</p>
 {% if not session_list %}
 <p>{% trans "No sessions yet." %}</p>
 {% endif %}

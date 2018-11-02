@@ -1,79 +1,111 @@
-{% extends "gamer_profiles/base.html" %}
+{% extends "gamer_profiles/community_base.html" %}
 {% load avatar_tags i18n humanize foundation_formtags %}
+{% block membersactive %} class='is-active'{% endblock %}
 {% block subtitle %}{% trans "Kicked gamers for " %} {{ community.name }} - {% endblock %}
+{% block sectiontitle %}<h1>{% blocktrans with cname=community.name %}Kicked gamers for {{ cname }}{% endblocktrans %}</h1>{% endblock %}
 {% block content %}
-<h1>{% blocktrans %}Kicked gamers for {{ community.name }}?{% endblocktrans %}</h1>
-<span class="meta">{% blocktrans count counter=kick_list.count %}One active suspension{% plural %}{{ counter }} active suspensions{% endblocktrans %} {% blocktrans count counter=expired_kicks.count %}and {{ counter }} expired suspension.{% plural %}and {{ counter }} expired suspensions.{% endblocktrans %}</span>
-<uL class="tabs" data-tabs id="kick-tabs">
-  <li class="tabs-title is-active"><a href="#panel_active" aria-selected="true">Active suspensions</a> </li>
-  <li class="tabs-title"><a data-tabs-target='panel_expired' href="#panel_expired">Expired suspensions/kicks</a></li>
-</uL>
+<ul class="tabs" data-tabs id="member-tabs">
+  <li class="tabs-title"><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "Members" %} ({{ community.get_member_count }})</a></li>
+  <li class="tabs-title is-active"><a href="#kicked_user_panel" aria-selected="true">{% trans "Kicked users" %} ({{ community.kickeduser_set.count }})</a></li>
+  <li class="tabs-title"><a href="{% url 'gamer_profiles:community-ban-list' community=community.slug %}">{% trans "Banned users" %} ({{ community.banneduser_set.count }})</a></li>
+</ul>
+<div class="tabs-content" data-tabs-content="member-tabs">
+  <div class="tabs-panel is-active" id="kicked_user_panel">
 
-<div class="tabs-content" data-tabs-content="kick-tabs">
-  <div class="tabs-panel is-active" id="panel_active">
-    {% if kick_list %}
-    <table class="stack hover">
-      <thead>
-        <tr>
-          <th>{% trans "Gamer" %}</th>
-          <th>{% trans "Kicked at" %}</th>
-          <th>{% trans "Kicked by" %}</th>
-          <th>{% trans "Reason" %}</th>
-          <th>{% trans "End Date" %}</th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for kick in kick_list %}
-        <tr>
-          <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.display_name }} ({{ kick.kicked_user.username }})</td>
-          <td>{{ kick.created }}</td>
-          <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.display_name }} ({{ kick.kicker.username }})</a></td>
-          <td>{{ kick.reason }}</td>
-          <td>{{ kick.end_date }}</td>
-          <td><a href="{% url 'gamer_profiles:community-kick-edit' community=community.slug kick=kick.pk %}"><button class="button primary">{% trans "Edit" %}</button></a></td>
-          <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.slug kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p>{% trans "There are no active suspensions from this community." %}</p>
-    {% endif %}
-  </div>
-  <div class="tabs-panel" id="panel_expired">
-    {% if expired_kicks %}
-    <table class="stack hover">
-      <thead>
-        <tr>
-          <th>{% trans "Gamer" %}</th>
-          <th>{% trans "Kicked at" %}</th>
-          <th>{% trans "Kicked by" %}</th>
-          <th>{% trans "Reason" %}</th>
-          <th>{% trans "End Date" %}</th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for kick in expired_kicks %}
-        <tr>
-          <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.display_name }} ({{ kick.kicked_user.username }})</td>
-          <td>{{ kick.created }}</td>
-          <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.display_name }} ({{ kick.kicker.username }})</a></td>
-          <td>{{ kick.reason }}</td>
-          <td>{{ kick.end_date }}</td>
-          <td><a href="#" class="button disabled" aria-disabled>{% trans "Edit" %}</a></td>
-          <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.slug kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p>{% trans "There are no expired suspensions yet." %}</p>
-    {% endif %}
+    <uL class="tabs" data-tabs id="kick-tabs">
+      <li class="tabs-title is-active"><a href="#panel_active" aria-selected="true">Active suspensions</a> </li>
+      <li class="tabs-title"><a data-tabs-target='panel_expired' href="#panel_expired">Expired suspensions/kicks</a></li>
+    </uL>
+
+    <div class="tabs-content" data-tabs-content="kick-tabs">
+      <div class="tabs-panel is-active" id="panel_active">
+        {% if kick_list %}
+        <table class="stack hover">
+          <thead>
+            <tr>
+              <th>{% trans "Gamer" %}</th>
+              <th>{% trans "Kicked at" %}</th>
+              <th>{% trans "Kicked by" %}</th>
+              <th>{% trans "Reason" %}</th>
+              <th>{% trans "End Date" %}</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for kick in kick_list %}
+            <tr>
+              <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.display_name }} ({{ kick.kicked_user.username }})</td>
+              <td>{{ kick.created }}</td>
+              <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.display_name }} ({{ kick.kicker.username }})</a></td>
+              <td>{{ kick.reason }}</td>
+              <td>{{ kick.end_date }}</td>
+              <td><a href="{% url 'gamer_profiles:community-kick-edit' community=community.slug kick=kick.pk %}"><button class="button primary">{% trans "Edit" %}</button></a></td>
+              <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.slug kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p>{% trans "There are no active suspensions from this community." %}</p>
+        {% endif %}
+      </div>
+      <div class="tabs-panel" id="panel_expired">
+        {% if expired_kicks %}
+        <table class="stack hover">
+          <thead>
+            <tr>
+              <th>{% trans "Gamer" %}</th>
+              <th>{% trans "Kicked at" %}</th>
+              <th>{% trans "Kicked by" %}</th>
+              <th>{% trans "Reason" %}</th>
+              <th>{% trans "End Date" %}</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for kick in expired_kicks %}
+            <tr>
+              <td>{% avatar kick.kicked_user.user 20 %} {{ kick.kicked_user.display_name }} ({{ kick.kicked_user.username }})</td>
+              <td>{{ kick.created }}</td>
+              <td><a href="{{ kick.kicker.get_absolute_url }}">{% avatar kick.kicker.user 20 %} {{ kick.kicker.display_name }} ({{ kick.kicker.username }})</a></td>
+              <td>{{ kick.reason }}</td>
+              <td>{{ kick.end_date }}</td>
+              <td><a href="#" class="button disabled" aria-disabled>{% trans "Edit" %}</a></td>
+              <td><a href="{% url 'gamer_profiles:community-kick-delete' community=community.slug kick=kick.pk %}"><button class="alert button">{% trans "Delete" %}</button></a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p>{% trans "There are no expired suspensions yet." %}</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
-
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'gamer_profiles:community-kick-list' community=community.slug page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'gamer_profiles:community-kick-list' community=community.slug page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'gamer_profiles:community-kick-list' community=community.slug page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}

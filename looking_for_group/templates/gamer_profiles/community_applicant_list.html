@@ -1,15 +1,107 @@
-{% extends "gamer_profiles/base.html" %}
-{% load i18n humanize foundation_formtags %}
+{% extends "gamer_profiles/community_base.html" %}
+{% load i18n humanize foundation_formtags avatar_tags %}
 {% block subtitle %}{% trans "Applicants for " %} {{ community.name }} - {% endblock %}
+{% block sectiontitle %}<h1>{% blocktrans with cname=community.name %}Applicants for {{ cname }}{% endblocktrans %}</h1>{% endblock %}
+{% block appactive %} class="is-active"{% endblock %}
 {% block content %}
-<h1>{% blocktrans %}Applicants for {{ community.name }}?{% endblocktrans %}</h1>
 <span class="meta">{% blocktrans count counter=applicants.count %}One Application{% plural %}{{ counter }} Applications{% endblocktrans %} {% trans "Pending" %}</span>
-<ul>
-  {% for application in applications %}
-  <li><a href="{% url 'gamer_profiles:community-applicant-detail' community=community.slug application=application.pk %}">{{ application.gamer.display_name }}</a> ({% trans "Last modified:" %} {{ application.modified }})</li>
-  {% empty %}
-  <li>{% trans "No pending applications." %}</li>
-  {% endfor %}
+<ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="community-application-tabs">
+  <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ applicants|length }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% trans "Approved" %} ({{ approved_applicants|length }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="rejected_panel" href="#rejected_panel">{% trans "Rejected" %} ({{ rejected_applicants|length }})</a></li>
 </ul>
+<div class="tabs-content" data-tabs-content="community-application-tabs">
+  <div class="tabs-panel is-active" id="pending_panel">
+    {% if applicants %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Applicant" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in applicants %}
+        <tr>
+          <td>{% avatar application.gamer.user 30 class="profile_circle_small" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
+          <td>{{ application.message }}</td>
+          <td>{{ application.get_status_display }}</td>
+          <td>{{ application.created }}</td>
+          <td>{{ application.modified }}</td>
+          <td><form action="{% url 'gamer_profiles:community-applicant-approve' community=community.slug application=application.id %}" method="post">{% csrf_token %}<input type="submit" class="button success" value="{% trans 'Approve' %}" /></form></td>
+          <td><form action="{% url 'gamer_profiles:community-applicant-reject' community=community.slug application=application.id %}" method="post">{% csrf_token %}<input type="submit" class="button alert" value="{% trans 'Reject' %}" /></form></td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No pending applications." %}</p>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="approved_panel">
+    {% if approved_applicants %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Applicant" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in approved_applicants %}
+        <tr>
+          <td>{% avatar application.gamer.user 30 class="profile_circle_small" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
+          <td>{{ application.message }}</td>
+          <td>{{ application.get_status_display }}</td>
+          <td>{{ application.created }}</td>
+          <td>{{ application.modified }}</td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "No approved applications." %}</p>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="rejected_panel">
+    {% if rejected_applicants %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Applicant" %}</th>
+          <th>{% trans "Message" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Created" %}</th>
+          <th>{% trans "Modified" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in rejected_applicants %}
+        <tr>
+          <td>{% avatar application.gamer.user 30 class="profile_circle_small" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
+          <td>{{ application.message }}</td>
+          <td>{{ application.get_status_display }}</td>
+          <td>{{ application.created }}</td>
+          <td>{{ application.modified }}</td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>{% trans "There are no rejected applications." %}</p>
+    {% endif %}
+  </div>
+</div>
 
 {% endblock %}

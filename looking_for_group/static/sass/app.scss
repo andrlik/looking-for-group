@@ -52,12 +52,13 @@
 
 /********* Project Scss **************/
 
-.top-bar
+.title-bar
 {
   li.menu-text{color: $white;}
   a {color: $white;}
   a:hover {color: $white;}
   li a:hover{background-color: get-color(secondary);}
+  .menu li.is-active a { border:1px; border-style:solid; border-color:$white;}
 }
 
 /******** Colouring for messages from Django messages framework **********/

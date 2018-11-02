@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.forms import modelform_factory
-from django.http import HttpResponseNotAllowed, HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -19,12 +19,7 @@ from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
 from .. import models
-from ..forms import (
-    BlankDistructiveForm,
-    GamerProfileForm,
-    OwnershipTransferForm,
-    KickUserForm,
-)
+from ..forms import BlankDistructiveForm, GamerProfileForm, KickUserForm, OwnershipTransferForm
 
 logger = logging.getLogger("gamer_profiles")
 
@@ -175,6 +170,7 @@ class TransferCommunityOwnership(
 
     model = models.GamerCommunity
     slug_url_kwarg = "community"
+    context_object_name = "community"
     slug_field = "slug"
     permission_required = "community.transfer_owner"
     form_class = OwnershipTransferForm
@@ -387,6 +383,7 @@ class CommunityDeleteView(
     model = models.GamerCommunity
     slug_url_kwarg = "community"
     slug_field = "slug"
+    context_object_name = "community"
     permission_required = "community.transfer_ownership"
     template_name = "gamer_profiles/community_delete.html"
     prefetch_related = [
@@ -448,7 +445,6 @@ class CommunityApplicantList(
     select_related = ["gamer"]
     template_name = "gamer_profiles/community_applicant_list.html"
     permission_required = "community.review_applications"
-    paginate_by = 25
     ordering = ["modified", "created", "status"]
     context_object_name = "applicants"
 
@@ -473,8 +469,8 @@ class CommunityApplicantList(
         )
         context = super().get_context_data(**kwargs)
         context["community"] = self.community
-        context["approved_apps"] = all_apps.filter(status="approve")
-        context["rejected_apps"] = all_apps.filter(status="reject")
+        context["approved_applicants"] = all_apps.filter(status="approve").order_by('-modified')
+        context["rejected_applicants"] = all_apps.filter(status="reject").order_by('-modified')
         return context
 
 

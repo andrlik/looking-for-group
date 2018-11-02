@@ -1,9 +1,9 @@
 {% extends "gamer_profiles/base.html" %}
 {% load i18n humanize social_tags %}
 {% block subtitle %}{% trans "My Community Applications" %} - {% endblock %}
+{% block appactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}<h1>{% trans "My Community Applications" %}</h1>{% endblock %}
 {% block content %}
-<h1>{% trans "My Community Applications" %}</h1>
-
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">
   <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ applications|length }})</a></li>
   <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% trans "Approved" %} ({{ approved_applications|length }})</a></li>
@@ -30,7 +30,7 @@
         <tr>
           <td><a href="{{ application.community.get_absolute_url }}">{{ application.community.name }}</a></td>
           <td>{{ application.message|truncatewords:25 }}</td>
-          <td>{{ application.get_display_status }}</td>
+          <td>{{ application.get_status_display }}</td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
           <td><a href="{% url 'gamer_profiles:update-application' application=application.pk %}" class="button primary">{% trans "Edit" %}</a></td>
@@ -62,7 +62,7 @@
         <tr>
           <td><a href="{{ app.community.get_absolute_url }}">{{ app.community.name }}</a></td>
           <td>{{ app.message|truncatewords:25 }}</td>
-          <td>{{ app.get_display_status }}</td>
+          <td>{{ app.get_status_display }}</td>
           <td>{{ app.created }}</td>
           <td>{{ app.modified }}</td>
           <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>
@@ -93,7 +93,7 @@
         {% for app in rejected_applications %}
         <tr>
         <td>{{ app.message|truncatewords:25 }}</td>
-        <td>{{ app.get_display_status }}</td>
+        <td>{{ app.get_status_display }}</td>
         <td>{{ app.created }}</td>
         <td>{{ app.modified }}</td>
         <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>

@@ -1,8 +1,9 @@
-{% extends "games/base.html" %}
+{% extends "games/game_base.html" %}
 {% load i18n avatar_tags %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
+{% block gameactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}<h1>{{ game.title }}</h1>{% endblock %}
 {% block content %}
-<h1>{{ game.title }}</h1>
 <dl>
   <dt>{% trans "GM" %}</dt>
   <dd>{% avatar game.gm.user 30 class='profile_circle_small' %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
