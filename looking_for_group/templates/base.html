@@ -122,6 +122,7 @@
     <div class="app-dashboard-body-content off-canvas-content" data-off-canvas-content id="content">
       {% block innernav %}
       {% endblock %}
+      <div class ="clearfix"
       <div class="medium-6 medium-offset-3 columns">
           {# cookielaw_banner #}
         {% if messages %}
@@ -134,6 +135,7 @@
             {{ message }}</div>
           {% endfor %}
         {% endif %}
+      </div>
       </div>
 
 {% block content %}
