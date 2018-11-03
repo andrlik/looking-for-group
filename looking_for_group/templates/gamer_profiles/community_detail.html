@@ -1,7 +1,8 @@
 {% extends "gamer_profiles/community_base.html" %}
 {% load avatar_tags i18n rules humanize %}
 {% block subtitle %}{{ community.name }} - {% endblock %}
-{% block sectiontitle %}<h1>{{ community.name }}</h1>{% endblock %}
+{% block sectiontitle %}{{ community.name }}{% endblock %}
+{% block mobileheader %}{{ community.name }}{% endblock %}
 {% has_perm 'community.edit_community' request.user community as is_admin %}
 {% has_perm 'community.transfer_owner' request.user community as is_owner %}
 {% block commdetailactive %} class="is-active"{% endblock %}

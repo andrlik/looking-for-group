@@ -1,12 +1,14 @@
-{% extends "gamer_profiles/base.html" %}
+{% extends "gamer_profiles/profile_base.html" %}
 {% load avatar_tags i18n humanize %}
 {% block subtitle %}{% trans "Friend Requests" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Friend Requests" %}{% endblock %}
+{% block mobileheader %}{% trans "Friend Requests" %}{% endblock %}
+{% block friendactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
-<h1>{% trans "My Friend Requests" %}</h1>
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="friend-request-tabs">
-  <li class="tabs-title is-active"><a href="#received_panel" aria-selected="true">{% blocktrans %}Received ({{ pending_requests.count }}){% endblocktrans %}</a></li>
-  <li class="tabs-title"><a data-tabs-target="sent_panel" href="#sent_panel">{% blocktrans %}Sent ({{ sent_requests.count }}){% endblocktrans %}</a></li>
+  <li class="tabs-title is-active"><a href="#received_panel" aria-selected="true">{% trans "Received" %} ({{ pending_requests.count }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="sent_panel" href="#sent_panel">{% trans "Sent" %} ({{ sent_requests.count }})</a></li>
 </ul>
 
 <div class="tabs-content" data-tabs-content="friend-request-tabs">

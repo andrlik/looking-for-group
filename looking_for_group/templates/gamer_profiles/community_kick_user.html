@@ -1,7 +1,8 @@
 {% extends "gamer_profiles/community_base_form.html" %}
 {% load i18n humanize foundation_formtags %}
 {% block subtitle %}{% blocktrans with cname=community.name gname=gamer.display_name %}Kick {{ gname }} from {{ cname }}{% endblocktrans %} - {% endblock %}
-{% block sectiontitle %}<h1>{% trans "Kick/suspend user" %}</h1>{% endblock %}
+{% block sectiontitle %}{% trans "Kick/suspend user" %}{% endblock %}
+{% block mobileheader %}{% trans "Kick/suspend user" %}{% endblock %}
 {% block membersactive %} class="is-active"{% endblock %}
 {% block content %}
 <p>{% blocktrans with cname=community.name gname=gamer.display_name %}Kick {{ gname }} from {{ cname }}?{% endblocktrans %}</p>

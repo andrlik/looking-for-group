@@ -656,6 +656,11 @@ class GameSessionDetail(
     def get_queryset(self):
         return models.GameSession.objects.all()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['session'].game
+        return context
+
 
 class GameSessionUpdate(
     LoginRequiredMixin,
@@ -681,6 +686,7 @@ class GameSessionUpdate(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["players"] = models.Player.objects.filter(game=context["session"].game)
+        context['game'] = context['session'].game
         return context
 
     def get_form_kwargs(self):
@@ -710,6 +716,11 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
 
     def get_success_url(self):
         return self.object.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['session'].game
+        return context
 
     def get_permission_object(self):
         return self.get_object().game
@@ -757,6 +768,11 @@ class GameSessionCancel(
 
     def get_success_url(self):
         return self.get_object().get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['session'].game
+        return context
 
     def get_permission_object(self):
         return self.get_object().game
@@ -823,6 +839,11 @@ class GameSessionUncancel(
     def get_permission_object(self):
         return self.get_object().game
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['session'].game
+        return context
+
     def form_invalid(self, form):
         messages.error(self.request, _("You have submitted invalid data."))
         return HttpResponseRedirect(self.get_object().get_absolute_url())
@@ -867,6 +888,7 @@ class AdventureLogCreate(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["session"] = self.session
+        context['game'] = self.session.game
         return context
 
     def form_valid(self, form):
@@ -901,6 +923,11 @@ class AdventureLogUpdate(
     def get_permission_object(self):
         return self.get_object().session.game
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['log'].session.game
+        return context
+
     def get_queryset(self):
         return models.AdventureLog.objects.all()
 
@@ -934,6 +961,11 @@ class AdventureLogDelete(
 
     def get_permission_object(self):
         return self.get_object().session.game
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['log'].session.game
+        return context
 
     def get_success_url(self):
         return self.object.session.get_absolute_url()
@@ -1150,6 +1182,12 @@ class CharacterCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
     def get_permission_object(self):
         return self.player
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = self.game
+        context['player'] = self.player
+        return context
+
     def form_valid(self, form):
         self.character = form.save(commit=False)
         self.character.game = self.game
@@ -1298,6 +1336,7 @@ class CharacterListForPlayer(CharacterListForGame):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["player"] = self.player
+        context["game"] = self.game
         return context
 
     def get_queryset(self):
@@ -1336,6 +1375,11 @@ class CharacterDetail(
     slug_url_kwarg = "character"
     slug_field = "slug"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['character'].game
+        return context
+
     def get_permission_object(self):
         return self.get_object().game
 
@@ -1353,6 +1397,11 @@ class CharacterUpdate(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
     slug_url_kwarg = "character"
     permission_required = "game.edit_character"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['character'].game
+        return context
+
 
 class CharacterDelete(
     LoginRequiredMixin,
@@ -1369,7 +1418,13 @@ class CharacterDelete(
     slug_field = "slug"
     slug_url_kwarg = "character"
     permission_required = "game.delete_character"
+    context_object_name = 'character'
     select_related = ["game", "player"]
 
     def get_success_url(self):
         return self.object.game.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = context['character'].game
+        return context

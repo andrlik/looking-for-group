@@ -1,7 +1,8 @@
 {% extends "games/base.html" %}
 {% load avatar_tags i18n humanize %}
 {% block subtitle %}{% trans "Your Games" %} - {% endblock %}
-{% block sectiontitle %}<h1>{% trans "Your Games" %}</h1>{% endblock %}
+{% block sectiontitle %}{% trans "Your Games" %}{% endblock %}
+{% block mobileheader %}{% trans "Your Games" %}{% endblock %}
 {% block yourgamesactive %} class="is-active"{% endblock %}
 {% block content %}
 {% if not active_game_list %}

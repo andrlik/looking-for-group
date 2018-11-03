@@ -1,9 +1,14 @@
-{% extends "gamer_profiles/base.html" %}
+{% extends "gamer_profiles/profile_base.html" %}
 {% load avatar_tags i18n humanize foundation_formtags %}
 {% block subtitle %}{% trans "Edit your profile" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Edit your profile" %}{% endblock %}
+{% block mobileheader %}{% trans "Edit your profile" %}{% endblock %}
+{% block editactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
-<h1>{% trans "Edit your profile" %}</h1>
-
+<p></p>
+{% avatar gamer.user %}
+<p><span class="small-control-text"><a href="{% if request.user|has_avatar %}{% url 'avatar_change' %}{% else %}{% url 'avatar_change' %}{% endif %}?next={{ gamer.get_absolute_url }}" class="button"> {% trans "Change profile picture" %}</a></span></p>
+<p>{% trans "You can update your profile details below." %}
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}

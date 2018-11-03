@@ -1,7 +1,9 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize %}
 {% block subtitle %}{% trans "Publishers" %} - {% endblock %}
-{% block sectiontitle %}<h2>{% trans "Publishers" %}</h2>{% endblock %}
+{% block sectiontitle %}{% trans "Publishers" %}{% endblock %}
+{% block mobileheader %}{% trans "Publishers" %}{% endblock %}
+{% block pubactive %} class="is-active"{% endblock %}
 {% block content %}
 {% if not object_list.exists %}
 <p>{% trans "No publishers found" %}</p>

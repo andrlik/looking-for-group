@@ -1,8 +1,10 @@
-{% extends "gamer_profiles/base.html" %}
+{% extends "gamer_profiles/community_base.html" %}
 {% load i18n humanize foundation_formtags %}
 {% block subtitle %}{% trans "Apply to join" %} {{ community.name }} - {% endblock %}
+{% block commdetailactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}{% blocktrans with cname=community.name %}Apply to join {{ cname }}?{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with cname=community.name %}Apply to join {{ cname }}?{% endblocktrans %}{% endblock %}
 {% block content %}
-<h1>{% blocktrans %}Apply to join {{ community.name }}?{% endblocktrans %}</h1>
 <span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.display_name }}</a></span>
 <p>{{ community.description_rendered|safe }}</p>
 <h2>{% trans "Are you sure?" %}</h2>

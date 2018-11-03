@@ -1,8 +1,10 @@
-{% extends "gamer_profiles/base.html" %}
+{% extends "gamer_profiles/profile_base.html" %}
 {% load i18n avatar_tags%}
 {% block subtitle %}{% trans "Blocked Users" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Blocked Users" %}{% endblock %}
+{% block mobileheader %}{% trans "Blocked Users" %}{% endblock %}
+{% block blockactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
-<h2>{% trans "Blocked Users" %}</h2>
 {% if not block_list.exists %}
 <p>{% trans "No blocked users found." %}</p>
 {% endif %}

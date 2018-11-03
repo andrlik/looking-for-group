@@ -1,7 +1,9 @@
 {% extends "catalog/base.html" %}
 {% load i18n humanize cache %}
 {% block subtitle %}{% trans "Games" %} - {% endblock %}
-{% block sectiontitle %}<h2>{% trans "Published Games" %}</h2>{% endblock %}
+{% block sectiontitle %}{% trans "Published Games" %}{% endblock %}
+{% block mobileheader %}{% trans "Published Games" %}{% endblock %}
+{% block gameactive %} class="is-active"{% endblock %}
 {% block content %}
 
 {% if not object_list %}

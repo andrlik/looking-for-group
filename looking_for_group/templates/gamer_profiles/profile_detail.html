@@ -1,12 +1,11 @@
-{% extends "gamer_profiles/base.html" %}
+{% extends "gamer_profiles/profile_base.html" %}
 {% load avatar_tags i18n humanize ratings %}
-{% block subtitle %}{{ gamer.display_name }} - {% endblock %}
+{% block subtitle %}{{ gamer }} - {% endblock %}
+{% block sectiontitle %}{% avatar gamer.user %}{{ gamer }}{% endblock %}
+{% block mobileheader %}{% avatar gamer.user %}{{ gamer }}{% endblock %}
+{% block detailactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
-<h1>{{ gamer.display_name }} ({{ gamer.username }})</h1>
-{% avatar gamer.user %}
-{% if request.user.is_authenticated and request.user.gamerprofile == gamer %}
-<p><span class="small-control-text"><a href="{% if request.user|has_avatar %}{% url 'avatar_change' %}{% else %}{% url 'avatar_change' %}{% endif %}?next={{ gamer.get_absolute_url }}" class="button"> {% trans "Change profile picture" %}</a></span></p>
-{% endif %}
+
 <dl>
   <dt>{% trans "Display Name" %}</dt>
   <dd>{{ gamer.display_name }}</dd>
@@ -64,6 +63,7 @@
     <dd>{{ gamer.avg_gamer_rating }}</dd>
     <dt>{% trans "Rate gamer" %}</dt>
     <dd>{% ratings gamer %}</dd>
+    {% if request.user != gamer.user %}
     <dt>{% trans "Your notes on this gamer" %}</dt>
     <dd>
       <ol>
@@ -86,6 +86,7 @@
         <a href="{% url 'gamer_profiles:add-gamer-note' gamer=gamer.pk %}"><button class="button primary">{% trans "Add a note" %}</button></a>
       </ol>
     </dd>
+    {% endif %}
 </div>
 {% endif %}
 

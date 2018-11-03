@@ -2,7 +2,8 @@
 {% load i18n humanize foundation_formtags %}
 {% block subtitle %}{% trans "Edit suspension/kick from" %} {{ community.name }} {% trans "for" %} {{ kick.kicked_user.display_name }} - {% endblock %}
 {% block membersactive %} class="is-active"{% endblock %}
-{% block sectiontitle %}<h1>{% trans "Edit kick record" %}</h1>{% endblock %}
+{% block sectiontitle %}{% trans "Edit kick record" %}{% endblock %}
+{% block mobileheader %}{% trans "Edit kick record" %}{% endblock %}
 {% block content %}
 <p>{% blocktrans with cname=community.name gname=kick.kicked_user.display_name %}Edit suspension/kick from {{ cname }} for {{ gname }}?{% endblocktrans %}</p>
 

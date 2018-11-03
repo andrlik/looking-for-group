@@ -2,7 +2,8 @@
 {% load avatar_tags i18n humanize %}
 {% block subtitle %}{% trans "Game Listings" %} - {% endblock %}
 {% block allgamesactive %} class="is-active"{% endblock %}
-{% block sectiontitle %}<h1>{% trans "Game listings" %}</h1>{% endblock %}
+{% block sectiontitle %}{% trans "Game listings" %}{% endblock %}
+{% block mobileheader %}{% trans "Game listings" %}{% endblock %}
 {% block content %}
 {% if not game_list %}
 <p>{% trans "No games found." %}</p>

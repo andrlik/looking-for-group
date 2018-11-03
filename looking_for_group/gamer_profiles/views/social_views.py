@@ -488,6 +488,11 @@ class CommunityApplicantDetail(
     pk_url_kwarg = "application"
     context_object_name = "application"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = context['application'].community
+        return context
+
 
 class UpdateApplication(
     LoginRequiredMixin, PermissionRequiredMixin, generic.UpdateView
@@ -1380,6 +1385,7 @@ class GamerFriendRequestListView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['gamer'] = self.request.user.gamerprofile
         context["sent_requests"] = models.GamerFriendRequest.objects.filter(
             requestor=self.request.user.gamerprofile, status="new"
         )
@@ -1653,6 +1659,11 @@ class BlockList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
         return models.BlockedUser.objects.filter(
             blocker=self.request.user.gamerprofile
         ).order_by("-created")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['gamer'] = self.request.user.gamerprofile
+        return context
 
 
 class MuteGamer(LoginRequiredMixin, generic.CreateView):

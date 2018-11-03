@@ -1,8 +1,10 @@
 {% extends "games/base.html" %}
 {% load i18n foundation_formtags %}
 {% block subtitle %}{trans "Update character" %} {{ character.name }} - {% endblock %}
+{% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% blocktrans with gametitle=character.game.title cname=character.name %}Update character {{ cname }} for {{ gametitle }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with gametitle=character.game.title cname=character.name %}Update character {{ cname }} for {{ gametitle }}{% endblocktrans %}{% endblock %}
 {% block content %}
-<h1>{% blocktrans with gametitle=character.game.title cname=character.name %}Update character {{ cname }} for {{ gametitle }}{% endblocktrans %}</h1>
 <p>{% trans "Edit the character information below. You may also optionally upload a new character sheet." %}</p>
 <form enctype="multipart/form-data" method="post" action ="">
   {% csrf_token %}

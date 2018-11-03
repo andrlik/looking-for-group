@@ -1,7 +1,8 @@
 {% extends "games/base_form.html" %}
 {% load i18n foundation_formtags %}
 {% block subtitle %}{% trans "Create game" %} - {% endblock %}
-{% block sectiontitle %}<h1>{% trans "Create game" %}</h1>{% endblock %}
+{% block sectiontitle %}{% trans "Create game" %}{% endblock %}
+{% block mobileheader %}{% trans "Create game" %}{% endblock %}
 {% block createactive %} class="is-active"{% endblock %}
 {% block content %}
 <p>{% trans "Add in your game details below." %}</p>

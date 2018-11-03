@@ -1,8 +1,10 @@
 {% extends "games/base.html" %}
 {% load i18n avatar_tags rules %}
 {% block subtitle %}{% blocktrans with cname=character.name gametitle=character.game.title %}Details for {{ cname }}{% endblocktrans %} - {% endblock %}
+{% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% blocktrans with cname=character.name %}Details for character {{ cname }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with cname=character.name %}Details for character {{ cname }}{% endblocktrans %}{% endblock %}
 {% block content %}
-<h1>{% blocktrans with cname=character.name %}Details for character {{ cname }}{% endblocktrans %}</h1>
 <dl>
   <dt>{% trans "Name" %}</dt>
   <dd>{{ character.name }}</dd>

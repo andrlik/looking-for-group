@@ -1,8 +1,9 @@
 {% extends "games/base.html" %}
 {% load i18n avatar_tags humanize social_tags %}
 {% block subtitle %}{% trans "Your Game Applications" %} - {% endblock %}
-{% block sectiontitle %}<h1>{% trans "Your game applications" %}</h1>{% endblock %}
-{% block appactive %} class="is-active"{% endblock %}
+{% block sectiontitle %}{% trans "Your game applications" %}{% endblock %}
+{% block mobileheader %}{% trans "Your game applications" %}{% endblock %}
+{% block appactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">
@@ -31,7 +32,7 @@
         {% for application in application_list %}
         <tr>
           <td><a href="{{ application.game.get_absolute_url }}">{{ application.game.title }}</a></td>
-          <td>{% avatar 20 application.game.gm.user %} <a href="{{ application.game.gm.get_absolute_url }}">{{ application.game.gm.username }}</a></td>
+          <td>{% avatar application.game.gm.user 20 %} <a href="{{ application.game.gm.get_absolute_url }}">{{ application.game.gm }}</a></td>
           <td>{{ application.message|truncatewords:25 }}</td>
           <td>{{ application.get_display_status }}</td>
           <td>{{ application.created }}</td>
@@ -65,7 +66,7 @@
         {% for app in approved_application_list %}
         <tr>
           <td><a href="{{ app.game.get_absolute_url }}">{{ app.game.title }}</a></td>
-          <td>{% avatar 20 app.game.gm.user %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm.username }}</a></td>
+          <td>{% avatar app.game.gm.user 20 %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm }}</a></td>
           <td>{{ app.message|truncatewords:25 }}</td>
           <td>{{ app.get_display_status }}</td>
           <td>{{ app.created }}</td>
@@ -99,7 +100,7 @@
         {% for app in rejected_application_list %}
         <tr>
           <td>{{ app.game.title }}</td>
-          <td>{% avatar 20 app.game.gm.user %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm.username }}</a></td>
+          <td>{% avatar app.game.gm.user 20 %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm }}</a></td>
         <td>{{ app.message|truncatewords:25 }}</td>
         <td>{{ app.get_display_status }}</td>
         <td>{{ app.created }}</td>

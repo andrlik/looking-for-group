@@ -2,9 +2,10 @@
 {% load i18n humanize %}
 {% load ratings %}
 {% block subtitle %}{{ module.title }} - {% endblock %}
-{% block sectiontitle %}<h2>{% trans "Published Module" %}</h2>{% endblock %}
+{% block sectiontitle %}{{ module.title }}{% endblock %}
+{% block mobileheader %}{{ module.title }}{% endblock %}
+{% block moduleactive %} class="is-active"{% endblock %}
 {% block content %}
-<h2>{{ module.title }}</h2>
 
 {% if module.image %}<img class="thumbnail" src="{{ module.image.url }}" />{% endif %}
 
