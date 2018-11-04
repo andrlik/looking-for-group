@@ -31,19 +31,19 @@ class EditionAdmin(admin.ModelAdmin):
 
 
 class SourceBookAdmin(admin.ModelAdmin):
-    list_display = ('title', 'edition', 'edition', 'corebook', 'release_date')
+    list_display = ('title', 'edition', 'corebook', 'release_date')
     date_hierarchy = 'release_date'
     list_filter = ('edition', 'corebook')
     search_fields = ['title']
 
 
 class PublishedModuleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'parent_game', 'publisher')
+    list_display = ('title', 'parent_game_edition', 'publisher')
     date_hierarchy = 'publication_date'
     ordering = ['title', '-publication_date']
     search_fields = ['title']
-    list_filter = ('parent_game', )
-    list_select_related = ('publisher', 'parent_game')
+    list_filter = ('parent_game_edition', )
+    list_select_related = ('publisher', 'parent_game_edition')
 
 
 admin.site.register(GamePublisher, GamePublisherAdmin)

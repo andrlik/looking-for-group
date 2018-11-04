@@ -154,8 +154,8 @@ class GameEdition(
     def __str__(self):
         return "{} ({})".format(self.game.title, self.name)
 
-    # def get_absolute_url(self):
-    #     return reverse("game-catalog:edition-detail", kwargs={'edition': self.slug})
+    def get_absolute_url(self):
+        return reverse("game_catalog:edition_detail", kwargs={"edition": self.slug})
 
     def get_image_object(self):
         if not self.image:
@@ -203,6 +203,9 @@ class SourceBook(
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        return reverse("game_catalog:sourcebook_detail", kwargs={"book": self.slug})
+
     class Meta:
         order_with_respect_to = "edition"
 
@@ -232,11 +235,6 @@ class PublishedModule(
     )
     publication_date = models.DateField(
         null=True, blank=True, help_text=_("Release/publication date for this module.")
-    )
-    parent_game = models.ForeignKey(
-        PublishedGame,
-        help_text=_("Module is written for this game."),
-        on_delete=models.CASCADE,
     )
     parent_game_edition = models.ForeignKey(
         GameEdition,

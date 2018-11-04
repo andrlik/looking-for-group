@@ -2,17 +2,46 @@
 {% load i18n humanize %}
 {% load ratings %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
-{% block sectiontitle %}<h1>{{ game.title }}</h1>{% endblock %}
+{% block sectiontitle %}{{ game.title }}{% endblock %}
 {% block mobileheader %}{{ game.title }}{% endblock %}
 {% block content %}
 {% if game.image %}<img class="thumbnail" src="{{ game.image.url }}" />{% endif %}
-{% if game.url %}<h2><a href="{{ game.url }}">{% trans "Offical site" %}</a></h2>{% endif %}
-<span class="meta">{% trans "Published by" %} <a href="{{ game.publisher.get_absolute_url}}">{{ game.publisher.name }}</a>. {% trans "System: " %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>. {% trans "It has" %}{% blocktrans count counter=game.publishedmodule_set|length %} one additional Game Module{% plural %}{{ counter|humanize }} additional Game Modules.{% endblocktrans %}</span>
+{% if game.url %}<h5><a href="{{ game.url }}">{% trans "Offical site" %}</a></h5>{% endif %}
+<dl>
+  <dt>{% trans "Released" %}</dt>
+  <dd>{{ game.publication_date|date:"m Y" }}</dd>
+  <dt>{% trans "Tagged with" %}</dt>
+  <dd>{{ game.inherited_tag_names|join:", " }}</dd>
+</dl>
 <p>{{ game.description }}</p>
 
 {% ratings game %}
 
-<p>{% blocktrans with tagnames=game.inherited_tag_names|join:", " %}Tagged with {{ tagnames }}.{% endblocktrans %}</p>
-<span class='disclaimer'>{% blocktrans with pubname=game.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span>
+<h2>{% trans "Editions" %}</h2>
+{% if not game.editions.count %}
+<p>{% blocktrans %}There is no edition details in our database for this game yet.{% endblocktrans %}</p>
+{% else %}
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "Edition" %}</th>
+      <th>{% trans "Publisher" %}</th>
+      <th class="text-right">{% trans "Release Date" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for edition in game.editions.all %}
+    <tr>
+      <td><a href="{ edition.get_absolute_url }">{{ edition.name }}</a></td>
+      <td><a href="{{ edition.publisher.get_absolute_url }}">{{ edition.publisher.name }}</a></td>
+      <td class="text-right">{{ edition.release_date|date:"Y" }}</td>
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endif %}
+<span class='disclaimer'>{% blocktrans %}Looking for Group is not affiliated with or endorsed by game publishers. Images are copyright their original creators, and logos are trademarked by the publisher. This information only appears here in an editorial capacity.{% endblocktrans %}</span>
 
 {% endblock %}

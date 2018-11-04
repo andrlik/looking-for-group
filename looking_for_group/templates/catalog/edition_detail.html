@@ -1,0 +1,92 @@
+{% extends "catalog/base.html" %}
+{% load i18n %}
+{% load ratings %}
+{% block subtitle %}{{ edition }} - {% endblock %}
+{% block sectiontitle %}{{ edition }}{% endblock %}
+{% block mobileheader %}{{ edition }}{% endblock %}
+{% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+{% if edition.image %}<img class="thumbnail" src="{{ edition.image.url }}" />{% endif %}
+{% if edition.url %}<h5><a href="{{ edition.url }}">{% trans "Official site" %}</a></h5>{% endif %}
+<dl>
+  <dt>{% trans "Game" %}</dt>
+  <dd><a href="{{ edition.game.get_absolute_url }}">{{ edition.game.title }}</a></dd>
+  <dt>{% trans "Edition" %}</dt>
+  <dd>{{ edition.name }}</dd>
+  <dt>{% trans "Publisher" %}</dt>
+  <dd><a href="{{ edition.publisher.get_absolute_url }}">{{ edition.publisher.name }}</a></dd>
+  <dt>{% trans "Game System" %}</dt>
+  <dd><a href="{{ edition.game_system.get_absolute_url }}">{{ edition.game_system.name }}</a></dd>
+  <dt>{% trans "Tagged with" %}</dt>
+  <dd>{{ edition.inherited_tag_names|join:', ' }}</dd>
+</dl>
+<p>{{ edition.description }}</p>
+
+{% ratings edition %}
+
+<h2>{% trans "Sourcebooks and Modules" %}</h2>
+
+<ul class="data-tabs" data-tabs data-deep-links="true" data-deep-links-smudge="true" id="book-tabs">
+  <li class="is-active tabs-title"><a href="#sourcebook_panel" data-tabs-target="sourcebook_panel" aria-selected="true">{% trans "Sourcebooks" %}</a></li>
+  <li class="tabs-title"><a href="#module_panel" data-tabs-target="module_panel">{% trans "Modules/Adventures" %}</a></li>
+</ul>
+
+<div class="tabs-content" data-tabs-content="book-tabs">
+  <div class="tabs-panel is-active" id="sourcebook_panel">
+    {% if edition.sourcebooks.count == 0 %}
+    <p>{% blocktrans %}We don't have any sourcebook information on file yet for this edition.{% endblocktrans %}</p>
+    {% else %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Title" %}</th>
+          <th>{% trans "Is corebook?" %}</th>
+          <th>{% trans "Released" %}</th>
+          <th class="text-right">ISBN</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for book in edition.sourcebooks.all %}
+        <tr>
+          <td><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></td>
+          <td>{{ book.corebook|yesno:"Yes,No" }}</td>
+          <td class="text-right">{{ book.release_date|date:"m Y" }}</td>
+          <td class="text-right">{{ book.isbn|default_if_none:"N/A" }}</td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="module_panel">
+    {% if edition.publishedmodule_set.count == 0 %}
+    <p>{% blocktrans %}We don't have any modules on file yet for this edition.{% endblocktrans %}</p>
+    {% else %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Title" %}</th>
+          <th>{% trans "Publisher" %}</th>
+          <th class="text-right">{% trans "Release Date" %}</th>
+          <th class="text-right">ISBN</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for module in edition.publishedmodule_set.all %}
+        <tr>
+          <td><a href="{{ module.get_absolute_url }}">{{ module.title }}</a></td>
+          <td><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></td>
+          <td class="text-right">{{ module.publication_date|date:"m Y" }}</td>
+          <td class="text-right">{{ module.isbn|default_if_none:"N/A" }}</td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<span class="disclaimer">{% blocktrans with pname=edition.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pname }}. Images are copyright {{ pname }}, and logos are trademarked by {{ pname }}. This information only appears here in an editorial capacity.{% endblocktrans %}</span>
+{% endblock %}
