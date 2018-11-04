@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
-from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule
+from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule, GameEdition
 from ..game_catalog.utils import AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from .utils import check_table_exists
@@ -333,7 +333,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         help_text=_("What game system will you be using?"),
     )
     published_game = models.ForeignKey(
-        PublishedGame,
+        GameEdition,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

@@ -16,13 +16,26 @@ def populate_editions_and_sourcebooks(apps, schema_editor):
     Game = apps.get_model("game_catalog", "PublishedGame")
     Edition = apps.get_model("game_catalog", "GameEdition")
     SourceBook = apps.get_model("game_catalog", "SourceBook")
+    Module = apps.get_model("game_catalog", "PublishedModule")
     created_editions = 0
     created_sourcebooks = 0
-    games = Game.objects.all()
+    games = Game.objects.all().order_by("title", "edition")
+    current_game = None
+    game_link = None
     for game in games:
+        if not current_game:
+            current_game = game
+        if current_game.title == game.title:
+            if current_game.edition != game.edition:
+                game_link = current_game
+            else:
+                game_link = game
+        else:
+            current_game = game
+            game_link = game
         edition = Edition(
             name=game.edition,
-            game=game,
+            game=game_link,
             publisher=game.publisher,
             game_system=game.game_system,
             release_date=game.publication_date,
@@ -53,6 +66,14 @@ def populate_editions_and_sourcebooks(apps, schema_editor):
             created_editions, created_sourcebooks
         )
     )
+    print("Matching modules to editions...")
+    for module in Module.objects.all():
+        orig_game = module.parent_game
+        edition = Edition.objects.get(
+            name=orig_game.edition, game__title=orig_game.title
+        )
+        module.parent_game_edition = edition
+        module.save()
 
 
 def remove_editions_and_sourcebooks(apps, schema_editor):
@@ -261,6 +282,17 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
+        ),
+        migrations.AddField(
+            model_name="publishedmodule",
+            name="parent_game_edition",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Edition that this module uses for play.",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="game_catalog.GameEdition",
+            ),
         ),
         migrations.AlterOrderWithRespectTo(
             name="sourcebook", order_with_respect_to="edition"

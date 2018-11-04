@@ -90,33 +90,12 @@ class PublishedGame(
     title = models.CharField(
         max_length=150, db_index=True, help_text=_("Title of the game")
     )
-    edition = models.CharField(
-        max_length=25,
-        default="1",
-        help_text=_("Common edition name for this version of the game."),
-    )
-    publisher = models.ForeignKey(
-        GamePublisher, help_text=_("Publisher of the game."), on_delete=models.CASCADE
-    )
-    game_system = models.ForeignKey(
-        GameSystem,
-        null=True,
-        blank=True,
-        help_text=_("Rules system the game is based upon."),
-        on_delete=models.CASCADE,
-    )
     image = models.ImageField(null=True, blank=True)
     description = models.TextField(
         null=True, blank=True, help_text=_("Description of the game.")
     )
     url = models.URLField(
         null=True, blank=True, help_text=_("More info can be found here.")
-    )
-    isbn = ISBNField(
-        null=True,
-        blank=True,
-        db_index=True,
-        help_text=_("ISBN of published game if applicable."),
     )
     publication_date = models.DateField(
         null=True, blank=True, help_text=_("Release/publication date of game.")
@@ -144,6 +123,7 @@ class GameEdition(
         PublishedGame,
         on_delete=models.CASCADE,
         help_text=_("Which game is this an edition of?"),
+        related_name="editions",
     )
     game_system = models.ForeignKey(
         GameSystem,
@@ -151,6 +131,7 @@ class GameEdition(
         blank=True,
         on_delete=models.SET_NULL,
         help_text=_("Which game system does this edition use?"),
+        related_name="game_editions",
     )
     publisher = models.ForeignKey(
         GamePublisher,
@@ -200,7 +181,10 @@ class SourceBook(
 
     title = models.CharField(max_length=255, help_text=_("Title of sourcebook."))
     edition = models.ForeignKey(
-        GameEdition, on_delete=models.CASCADE, help_text=_("Edition this relates to.")
+        GameEdition,
+        on_delete=models.CASCADE,
+        help_text=_("Edition this relates to."),
+        related_name="sourcebooks",
     )
     image = models.ImageField(
         null=True, blank=True, help_text=_("Image of book cover, if available.")
@@ -253,6 +237,13 @@ class PublishedModule(
         PublishedGame,
         help_text=_("Module is written for this game."),
         on_delete=models.CASCADE,
+    )
+    parent_game_edition = models.ForeignKey(
+        GameEdition,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text=_("Edition that this module uses for play."),
     )
     image = models.ImageField(null=True, blank=True)
     url = models.URLField(
