@@ -32,7 +32,7 @@
   <tbody>
     {% for edition in game.editions.all %}
     <tr>
-      <td><a href="{ edition.get_absolute_url }">{{ edition.name }}</a></td>
+      <td><a href="{{ edition.get_absolute_url }}">{{ edition.name }}</a></td>
       <td><a href="{{ edition.publisher.get_absolute_url }}">{{ edition.publisher.name }}</a></td>
       <td class="text-right">{{ edition.release_date|date:"Y" }}</td>
     </tr>
