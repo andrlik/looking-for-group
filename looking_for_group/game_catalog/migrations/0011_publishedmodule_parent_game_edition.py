@@ -11,9 +11,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='publishedmodule',
-            name='parent_game_edition',
-            field=models.ForeignKey(blank=True, help_text='Edition that this module uses for play.', null=True, on_delete=django.db.models.deletion.CASCADE, to='game_catalog.GameEdition'),
+        migrations.RemoveField(
+            model_name='publishedgame',
+            name='edition',
+        ),
+        migrations.RemoveField(
+            model_name='publishedgame',
+            name='game_system',
+        ),
+        migrations.RemoveField(
+            model_name='publishedgame',
+            name='isbn',
+        ),
+        migrations.RemoveField(
+            model_name='publishedgame',
+            name='publisher',
         ),
     ]

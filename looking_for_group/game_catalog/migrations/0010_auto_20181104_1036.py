@@ -5,7 +5,7 @@ from django.db import migrations
 
 def remove_redundant_games(apps, schema_editor):
     Game = apps.get_model('game_catalog', 'PublishedGame')
-    Edition = apps.get_edition('game_catalog', 'GameEdition')
+    Edition = apps.get_model('game_catalog', 'GameEdition')
     editions = Edition.objects.all()
     redundant_games = Game.objects.exclude(id__in=[e.game.id for e in editions])
     print("Found {} duplicate games to remove".format(redundant_games.count()))
@@ -22,20 +22,4 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RemoveField(model_name='publishedmodule', name='parent_game'),
         migrations.RunPython(remove_redundant_games, reverse_code=migrations.RunPython.noop),
-        migrations.RemoveField(
-            model_name='publishedgame',
-            name='edition',
-        ),
-        migrations.RemoveField(
-            model_name='publishedgame',
-            name='game_system',
-        ),
-        migrations.RemoveField(
-            model_name='publishedgame',
-            name='isbn',
-        ),
-        migrations.RemoveField(
-            model_name='publishedgame',
-            name='publisher',
-        ),
     ]

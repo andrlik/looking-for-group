@@ -102,13 +102,13 @@ class PublishedGame(
     )
 
     def __str__(self):
-        return "{0} ({1})".format(self.title, self.edition)  # pragma: no cover
+        return self.title  # pragma: no cover
 
     def get_absolute_url(self):
         return reverse("game_catalog:game-detail", kwargs={"game": self.id})
 
     class Meta:
-        ordering = ["-publication_date__year", "title", "-publication_date"]
+        ordering = ["title", "-publication_date"]
 
 
 class GameEdition(
