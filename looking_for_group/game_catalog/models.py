@@ -253,7 +253,7 @@ class PublishedModule(
 
     def __str__(self):
         return "{0} ({1})".format(
-            self.title, self.parent_game.title
+            self.title, self.parent_game_edition
         )  # pragma: no cover
 
     def get_absolute_url(self):
