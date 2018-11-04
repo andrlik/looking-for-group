@@ -12,7 +12,7 @@ class GamePublisherViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = serializers.GamerPublisherSerializer
     queryset = models.GamePublisher.objects.all().prefetch_related(
-        "gamesystem_set", "publishedgame_set", "publishedmodule_set"
+        "gamesystem_set", "gameedition_set", "publishedmodule_set"
     )
 
 
@@ -26,7 +26,7 @@ class GameSystemViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
         models.GameSystem.objects.all()
         .select_related("original_publisher")
-        .prefetch_related("publishedgame_set")
+        .prefetch_related("game_editions")
     )
 
 
@@ -38,9 +38,7 @@ class PublishedGameViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.PublishedGamerSerializer
 
     queryset = (
-        models.PublishedGame.objects.all()
-        .select_related("publisher", "game_system")
-        .prefetch_related("publishedmodule_set")
+        models.PublishedGame.objects.all().prefetch_related("editions")
     )
 
 
@@ -52,5 +50,5 @@ class PublishedModuleViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.PublishedModuleSerializer
 
     queryset = models.PublishedModule.objects.all().select_related(
-        "publisher", "parent_game", "parent_game__game_system"
+        "publisher", "parent_game_edition", "parent_game_edition__game", "parent_game_edition__game_system"
     )

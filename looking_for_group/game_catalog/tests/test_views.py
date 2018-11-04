@@ -21,32 +21,36 @@ class AbstractViewTest(TestCase):
         self.fivesrd.save()
         self.cypher.tags.add("player focused", "streamlined")
         self.fivesrd.tags.add("crunchy", "traditional")
-        self.ddfive = models.PublishedGame(
-            title="Dungeons & Dragons 5E", publisher=self.wotc, game_system=self.fivesrd
+        self.dd = models.PublishedGame.objects.create(title="Dungeons & Dragons")
+        self.dd.tags.add("fantasy")
+        self.ddfive = models.GameEdition(
+            name="5E", game=self.dd, publisher=self.wotc, game_system=self.fivesrd
         )
         self.ddfive.save()
-        self.ddfive.tags.add("fantasy")
-        self.numen = models.PublishedGame(
-            title="Numenera", publisher=self.mcg, game_system=self.cypher
+        self.numensource = models.PublishedGame(
+            title="Numenera"
         )
-        self.numen.save()
+        self.numensource.save()
+        self.numen = models.GameEdition.objects.create(name='1', game=self.numensource, publisher=self.mcg, game_system=self.cypher)
         self.numen.tags.add("weird", "future", "science fantasy")
+        self.numenbook = models.SourceBook.objects.create(edition=self.numen, title='Numenera', corebook=True)
         self.cos = models.PublishedModule(
-            title="Curse of Strahd", publisher=self.wotc, parent_game=self.ddfive
+            title="Curse of Strahd", publisher=self.wotc, parent_game_edition=self.ddfive
         )
         self.cos.save()
         self.cos.tags.add("horror")
         self.tiamat = models.PublishedModule(
-            title="Rise of Tiamat", publisher=self.wotc, parent_game=self.ddfive
+            title="Rise of Tiamat", publisher=self.wotc, parent_game_edition=self.ddfive
         )
         self.tiamat.save()
         self.tiamat.tags.add("dragons")
         self.vv = models.PublishedModule(
-            title="Into the Violet Vale", publisher=self.mcg, parent_game=self.numen
+            title="Into the Violet Vale", publisher=self.mcg, parent_game_edition=self.numen
         )
         self.vv.save()
-        self.strange = models.PublishedGame(
-            title="The Strange", publisher=self.mcg, game_system=self.cypher
+        self.strange_source = models.PublishedGame.objects.create(title="The Strange")
+        self.strange = models.GameEdition(
+            name="1", publisher=self.mcg, game=self.strange_source, game_system=self.cypher
         )
         self.strange.save()
 
@@ -70,12 +74,22 @@ class GameSystemViews(AbstractViewTest):
         self.assertGoodView("game_catalog:system-detail", system=self.fivesrd.pk)
 
 
+class GameEditionDEtailViewTest(AbstractViewTest):
+    def test_detail_retrieval(self):
+        self.assertGoodView("game_catalog:edition_detail", edition=self.numen.slug)
+
+
+class SourcebookDetailView(AbstractViewTest):
+    def test_detail_retrieval(self):
+        self.assertGoodView("game_catalog:sourcebook_detail", book=self.numenbook.slug)
+
+
 class PublishedGameViews(AbstractViewTest):
     def test_list_retrieval(self):
         self.assertGoodView("game_catalog:game-list")
 
     def test_detail_retrieval(self):
-        for g in [self.numen, self.strange, self.ddfive]:
+        for g in [self.numensource, self.strange_source, self.dd]:
             self.assertGoodView("game_catalog:game-detail", game=g.pk)
 
 

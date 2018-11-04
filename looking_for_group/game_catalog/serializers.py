@@ -41,8 +41,6 @@ class GameSystemSerializer(TaggitSerializer, serializers.ModelSerializer):
 
 
 class PublishedGamerSerializer(TaggitSerializer, serializers.ModelSerializer):
-    game_system = GameSystemSerializer(read_only=True)
-    publisher = GamerPublisherSerializer(read_only=True)
     tags = TagListSerializerField()
     inherited_tags = TagListSerializerField(read_only=True)
 
@@ -51,21 +49,39 @@ class PublishedGamerSerializer(TaggitSerializer, serializers.ModelSerializer):
         fields = (
             "id",
             "title",
-            "edition",
-            "publisher",
-            "game_system",
             "image",
             "description",
             "url",
-            "isbn",
             "publication_date",
             "tags",
             "inherited_tags",
         )
 
 
+class GameEditionSerializer(TaggitSerializer, serializers.ModelSerializer):
+    game = PublishedGamerSerializer(read_only=True)
+    publisher = GamerPublisherSerializer(read_only=True)
+    game_system = GameSystemSerializer(read_only=True)
+    tags = TagListSerializerField()
+    inherited_tags = TagListSerializerField(read_only=True)
+
+    class Meta:
+        model = models.GameEdition
+        fields = (
+            "id",
+            "game",
+            "name",
+            "publisher",
+            "game_system",
+            "url",
+            "release_date",
+            "tags",
+            "inherited_tags",
+        )
+
+
 class PublishedModuleSerializer(TaggitSerializer, serializers.ModelSerializer):
-    parent_game = PublishedGamerSerializer(read_only=True)
+    parent_game_edition = GameEditionSerializer(read_only=True)
     publisher = GamerPublisherSerializer(read_only=True)
     tags = TagListSerializerField()
     inherited_tags = TagListSerializerField(read_only=True)
@@ -78,7 +94,7 @@ class PublishedModuleSerializer(TaggitSerializer, serializers.ModelSerializer):
             "publisher",
             "isbn",
             "publication_date",
-            "parent_game",
+            "parent_game_edition",
             "image",
             "url",
             "tags",

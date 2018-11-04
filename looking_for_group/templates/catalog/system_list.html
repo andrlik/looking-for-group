@@ -26,7 +26,7 @@
       <td><a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a></td>
       <td>{{ system.original_publisher.description|truncatewords:25 }}</td>
       <td class="text-right">{{ system.publication_date|date:"Y" }}</td>
-      <td class="text-right">{{ system.publishedgame_set.count }}</td>
+      <td class="text-right">{{ system.game_editions.count }}</td>
     </tr>
     {% empty %}
     <!-- No results -->

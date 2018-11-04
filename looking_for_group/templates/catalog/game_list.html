@@ -14,13 +14,10 @@
   <thead>
     <tr>
       <th>{% trans "Title" %}</th>
-      <th class="text-right">{% trans "Edition" %}</th>
-      <th>{% trans "Publisher" %}</th>
+      <th class="text-right">{% trans "Num Editions" %}</th>
       <th>{% trans "System" %}</th>
       <th>{% trans "Description" %}</th>
       <th class="text-right">{% trans "Published" %}</th>
-      <th class="text-right">{% trans "ISBN" %}</th>
-      <th class="text-right">{% trans "Additional Modules" %}</th>
       <th>{% trans "Tags" %}</th>
     </tr>
   </thead>
@@ -29,13 +26,9 @@
     {% for game in object_list %}
     <tr>
       <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
-      <td class="text-right">{{ game.edition }}</td>
-      <td><a href="{{ game.publisher.get_absolute_url }}">{{ game.publisher.name }}</a></td>
-      <td><a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a></td>
+      <td class="text-right">{{ game.editions.count }}</td>
       <td>{{ game.description|truncatewords:25 }}</td>
       <td class="text-right">{{ game.publication_date|date:"Y" }}</td>
-      <td class="text-right">{{ game.isbn|default_if_none:"" }}</td>
-      <td class="text-right">{{ game.publishedmodule_set.count }}</td>
       <td>{{ game.inherited_tag_names|join:", " }}</td>
     </tr>
     {% empty %}

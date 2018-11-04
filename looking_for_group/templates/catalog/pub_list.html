@@ -13,7 +13,7 @@
     <tr>
       <th>{% trans "Name" %}</th>
       <th>{% trans "Description" %}</th>
-      <th class="text-right">{% trans "Games" %}</th>
+      <th class="text-right">{% trans "Game Editions" %}</th>
       <th class="text-right">{% trans "Systems" %}</th>
       <th class="text-right">{% trans "Modules" %}</th>
     </tr>
@@ -23,7 +23,7 @@
     <tr>
       <td><a href="{{ publisher.get_absolute_url }}">{{ publisher.name }}</a></td>
       <td>{{ publisher.description|truncatewords:25 }}</td>
-      <td class="text-right">{{ publisher.publishedgame_set.count }}</td>
+      <td class="text-right">{{ publisher.gameedition_set.count }}</td>
       <td class="text-right">{{ publisher.gamesystem_set.count }}</td>
       <td class="text-right">{{ publisher.publishedmodule_set.count }}</td>
     </tr>

@@ -1,0 +1,27 @@
+{% extends "catalog/base.html" %}
+{% load i18n %}
+{% load ratings %}
+{% block subtitle %}{{ book.title }} - {{ book.edition }} - {% endblock %}
+{% block sectiontitle %}{{ book.title }}{% endblock %}
+{% block mobileheader %}{{ book.title }}{% endblock %}
+{% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+{% if book.image %}<img class="thumbnail" src="{{ book.image.url }}" />{% endif %}
+{% if book.url %}<h5><a href="{{ book.url }}">{% trans "More info can be found here." %}</a></h5>{% endif %}
+<dl>
+  <dt>{% trans "For game edition" %}</dt>
+  <dd><a href="{{ book.edition.get_absolute_url }}">{{ book.edition }}</a></dd>
+  <dt>{% trans "Released" %}</dt>
+  <dd>{{ book.release_data|date:"m Y" }}</dd>
+  <dt>ISBN</dt>
+  <dd>{{ book.isbn|default_if_none:"N/A" }}</dd>
+  <dt>{% trans "Tagged with" %}</dt>
+  <dd>{{ book.inherited_tag_names|join:", " }}
+</dl>
+
+{% ratings book %}
+
+<span class="disclaimer">{% blocktrans with pname=book.edition.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pname }}. Images are copyright {{ pname }}, and logos are trademarked by {{ pname }}. This information only appears here in an editorial capacity.{% endblocktrans %}</span>
+
+
+{% endblock %}

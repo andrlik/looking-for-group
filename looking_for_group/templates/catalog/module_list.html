@@ -24,7 +24,7 @@
     <tr>
       <td><a href="{{ module.get_absolute_url }}">{{ module.title }}</a></td>
       <td><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></td>
-      <td><a href="{{ module.parent_game.get_absolute_url }}">{{ module.parent_game.title }}</a></td>
+      <td><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition }}</a></td>
       <td class="text-right">{{ module.publication_date|date:"Y" }}</td>
     </tr>
     {% empty %}

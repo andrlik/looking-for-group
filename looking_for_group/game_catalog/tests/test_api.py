@@ -1,7 +1,7 @@
 from django.urls import reverse
 from test_plus import APITestCase
 
-from ..models import GamePublisher, GameSystem, PublishedGame, PublishedModule
+from ..models import GamePublisher, GameSystem, PublishedGame, GameEdition, PublishedModule
 from ..serializers import (
     GamerPublisherSerializer,
     GameSystemSerializer,
@@ -27,36 +27,37 @@ class GameCatalogAbstractTestCase(APITestCase):
         self.fivesrd.save()
         self.cypher.tags.add("player focused", "streamlined")
         self.fivesrd.tags.add("crunchy", "traditional")
-        self.ddfive = PublishedGame(
-            title="Dungeons & Dragons 5E", publisher=self.wotc, game_system=self.fivesrd
-        )
+        self.dd = PublishedGame.objects.create(
+            title="Dungeons & Dragons")
+        self.ddfive = GameEdition(name="5E", game=self.dd, publisher=self.wotc)
         self.ddfive.save()
         self.ddfive.tags.add("fantasy")
-        self.numen = PublishedGame(
-            title="Numenera", publisher=self.mcg, game_system=self.cypher
+        self.numensource = PublishedGame.objects.create(
+            title="Numenera"
         )
+        self.numen = GameEdition(name='1', game=self.numensource, publisher=self.mcg)
         self.numen.save()
         self.numen.tags.add("weird", "future", "science fantasy")
         self.cos = PublishedModule(
-            title="Curse of Strahd", publisher=self.wotc, parent_game=self.ddfive
+            title="Curse of Strahd", publisher=self.wotc, parent_game_edition=self.ddfive
         )
         self.cos.save()
         self.cos.tags.add("horror")
         self.tiamat = PublishedModule(
-            title="Rise of Tiamat", publisher=self.wotc, parent_game=self.ddfive
+            title="Rise of Tiamat", publisher=self.wotc, parent_game_edition=self.ddfive
         )
         self.tiamat.save()
         self.tiamat.tags.add("dragons")
         self.vv = PublishedModule(
-            title="Into the Violet Vale", publisher=self.mcg, parent_game=self.numen
+            title="Into the Violet Vale", publisher=self.mcg, parent_game_edition=self.numen
         )
         self.vv.save()
-        self.strange = PublishedGame(
-            title="The Strange", publisher=self.mcg, game_system=self.cypher
+        self.strangesource = PublishedGame.objects.create(
+            title="The Strange"
         )
+        self.strange = GameEdition(name='1', game=self.strangesource, publisher=self.mcg)
         self.strange.save()
         self.user1 = self.make_user("u1")
-        self.pub1 = GamePublisher.objects.create(name="Monte Cook Games")
 
 
 class PublisherViews(GameCatalogAbstractTestCase):
@@ -103,7 +104,7 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
             self.get("api-publishedgame-list", **url_kwargs)
 
     def test_detail_view(self):
-        url_kwargs = {"pk": self.numen.pk, "extra": self.extra}
+        url_kwargs = {"pk": self.numensource.pk, "extra": self.extra}
         self.get("api-publishedgame-detail", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
@@ -114,7 +115,7 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
                 )
             )
             self.get("api-publishedgame-detail", **url_kwargs)
-            serialized_object = PublishedGamerSerializer(self.numen)
+            serialized_object = PublishedGamerSerializer(self.numensource)
             assert serialized_object.data == self.last_response.data
 
 

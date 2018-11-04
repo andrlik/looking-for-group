@@ -40,6 +40,8 @@ urlpatterns = [
         view=views.PublishedGameDetailView.as_view(),
         name="game-detail",
     ),
+    path("editions/<slug:edition>/", view=views.EditionDetailView.as_view(), name='edition_detail'),
+    path("sourcebook/<slug:book>/", view=views.SourceBookDetailView.as_view(), name='sourcebook_detail'),
     path(
         "publishedmodules/",
         view=views.PublishedModuleListView.as_view(),

@@ -10,7 +10,17 @@
 {% if module.image %}<img class="thumbnail" src="{{ module.image.url }}" />{% endif %}
 
 {% if module.url %}<p><a href="{{ module.url }}">{% trans "Official site" %}</a></p>{% endif %}
-<span class="meta">{% trans "An adventure for "%}<a href="{{ module.parent_game.get_absolute_url }}">{{ module.parent_game.title}}</a>. {% trans "Published by " %}<a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></span>
+<dl>
+  <dt>{% trans "For game edition" %}</dt>
+  <dd><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition }}</a></dd>
+  <dt>{% trans "Published by" %}</dt>
+  <dd><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></dd>
+  <dt>{% trans "Release Date" %}</dt>
+  <dd>{{ module.publication_date|date:"m Y" }}</dd>
+  <dt>{% trans "Tagged with" %}</dt>
+  <dd>{{ module.inherited_tag_names|join:", " }}</dd>
+</dl>
+
 <p>{{ module.description }}</p>
 
 {% ratings module %}
