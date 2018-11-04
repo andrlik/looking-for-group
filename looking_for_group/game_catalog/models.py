@@ -6,7 +6,11 @@ from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
 
-from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel
+from .utils import (
+    AbstractTaggedLinkedModel,
+    AbstractUUIDModel,
+    AbstractUUIDWithSlugModel,
+)
 
 # Create your models here.
 logger = logging.getLogger("catalog")
@@ -28,7 +32,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
         return reverse("game_catalog:pub-detail", kwargs={"publisher": self.id})
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
 
 class GameSystem(
@@ -73,7 +77,7 @@ class GameSystem(
         return reverse("game_catalog:system-detail", kwargs={"system": self.id})
 
     class Meta:
-        ordering = ['name', '-publication_date']
+        ordering = ["name", "-publication_date"]
 
 
 class PublishedGame(
@@ -125,7 +129,98 @@ class PublishedGame(
         return reverse("game_catalog:game-detail", kwargs={"game": self.id})
 
     class Meta:
-        ordering = ['-publication_date__year', 'title', '-publication_date']
+        ordering = ["-publication_date__year", "title", "-publication_date"]
+
+
+class GameEdition(
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+):
+    """
+    Record of editons as a child object of PublishedGame.
+    """
+
+    name = models.CharField(max_length=100, help_text=_('Edition label, e.g. "5E"'))
+    game = models.ForeignKey(
+        PublishedGame,
+        on_delete=models.CASCADE,
+        help_text=_("Which game is this an edition of?"),
+    )
+    game_system = models.ForeignKey(
+        GameSystem,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text=_("Which game system does this edition use?"),
+    )
+    publisher = models.ForeignKey(
+        GamePublisher,
+        on_delete=models.CASCADE,
+        help_text=_("Who published this edition?"),
+    )
+    image = models.ImageField(null=True, blank=True)
+    description = models.TextField(
+        null=True, blank=True, help_text=_("Description of the edition if applicable.")
+    )
+    url = models.URLField(
+        null=True,
+        blank=True,
+        help_text=_("More info can be found at this external site."),
+    )
+    release_date = models.DateField(
+        null=True, blank=True, help_text=_("When was this released?")
+    )
+
+    def __str__(self):
+        return "{} ({})".format(self.game.title, self.name)
+
+    # def get_absolute_url(self):
+    #     return reverse("game-catalog:edition-detail", kwargs={'edition': self.slug})
+
+    def get_image_object(self):
+        if not self.image:
+            sbooks = SourceBook.objects.filter(edition=self, corebook=True).order_by(
+                "release_date", "created"
+            )
+            if sbooks.count() > 0 and sbooks[0].image:
+                return sbooks[0].image
+            else:
+                return None
+        return self.image
+
+    class Meta:
+        order_with_respect_to = "game"
+
+
+class SourceBook(
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+):
+    """
+    Source book (as opposed to a module/adventure) published for a given edition.
+    """
+
+    title = models.CharField(max_length=255, help_text=_("Title of sourcebook."))
+    edition = models.ForeignKey(
+        GameEdition, on_delete=models.CASCADE, help_text=_("Edition this relates to.")
+    )
+    image = models.ImageField(
+        null=True, blank=True, help_text=_("Image of book cover, if available.")
+    )
+    corebook = models.BooleanField(
+        default=False,
+        help_text=_("Is this volume considered a corebook for the edition?"),
+    )
+    release_date = models.DateField(
+        null=True, blank=True, help_text=_("When was this book published?")
+    )
+    isbn = ISBNField(
+        null=True, blank=True, help_text=_("ISBN for this book, if available.")
+    )
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        order_with_respect_to = "edition"
 
 
 class PublishedModule(
@@ -173,4 +268,4 @@ class PublishedModule(
         return reverse("game_catalog:module-detail", kwargs={"module": self.id})
 
     class Meta:
-        ordering = ['title', '-publication_date']
+        ordering = ["title", "-publication_date"]
