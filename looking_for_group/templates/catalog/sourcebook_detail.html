@@ -12,7 +12,7 @@
   <dt>{% trans "For game edition" %}</dt>
   <dd><a href="{{ book.edition.get_absolute_url }}">{{ book.edition }}</a></dd>
   <dt>{% trans "Released" %}</dt>
-  <dd>{{ book.release_data|date:"m Y" }}</dd>
+  <dd>{{ book.release_data|date:"F Y" }}</dd>
   <dt>ISBN</dt>
   <dd>{{ book.isbn|default_if_none:"N/A" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>

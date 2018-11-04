@@ -14,7 +14,7 @@
   <dt>{% trans "Games editions associated" %}</dt>
   <dd>{{ system.game_editions.count }}</dd>
   <dt>{% trans "Release Date" %}</dt>
-  <dd>{{ system.release_date|date:"m Y"|default_if_none:"?" }}</dd>
+  <dd>{{ system.release_date|date:"F Y"|default_if_none:"?" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ system.inherited_tag_names|join:", " }}</dd>
 </dl>
@@ -42,7 +42,7 @@
       <td><a href="{{ edition.game.get_absolute_url }}">{{ edition.game.title }}</a></td>
       <td><a href="{{ edition.get_absolute_url }}">{{ edition.name }}</a></td>
       <td><a href="{{ edition.publisher.get_absolute_url }}">{{ edition.publisher.name }}</a></td>
-      <td class="text-right">{{ edition.release_date|date:"m Y" }}</td>
+      <td class="text-right">{{ edition.release_date|date:"F Y" }}</td>
     </tr>
     {% empty %}
     {% endfor %}

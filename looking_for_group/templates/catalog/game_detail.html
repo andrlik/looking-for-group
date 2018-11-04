@@ -9,7 +9,7 @@
 {% if game.url %}<h5><a href="{{ game.url }}">{% trans "Offical site" %}</a></h5>{% endif %}
 <dl>
   <dt>{% trans "Released" %}</dt>
-  <dd>{{ game.publication_date|date:"m Y" }}</dd>
+  <dd>{{ game.publication_date|date:"F Y" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ game.inherited_tag_names|join:", " }}</dd>
 </dl>
