@@ -1,10 +1,16 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize %}
+{% load i18n humanize rules %}
 {% block subtitle %}{% trans "Publishers" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Publishers" %}{% endblock %}
 {% block mobileheader %}{% trans "Publishers" %}{% endblock %}
 {% block pubactive %} class="is-active"{% endblock %}
 {% block content %}
+{% has_perm 'catalog.can_edit' user object_list as is_editor %}
+{% if is_editor %}
+<div class="clearfix">
+  <a href="{% url 'game_catalog:pub-create' %}" class="button float-right">{% trans "Create new publisher" %}</a>
+</div>
+{% endif %}
 {% if not object_list.exists %}
 <p>{% trans "No publishers found" %}</p>
 {% endif %}

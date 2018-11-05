@@ -54,7 +54,7 @@ class AbstractTaggedLinkedModel(models.Model):
     Helper functions for collecting tags from linked objects.
     """
 
-    tags = TaggableManager(through=UUIDTaggedItem)
+    tags = TaggableManager(through=UUIDTaggedItem, blank=True)
 
     @classmethod
     def get_all_parent_objects(cls):

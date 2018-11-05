@@ -1,12 +1,12 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize %}
+{% load i18n humanize rules %}
 {% load ratings %}
 {% block subtitle %}{{ module.title }} - {% endblock %}
 {% block sectiontitle %}{{ module.title }}{% endblock %}
 {% block mobileheader %}{{ module.title }}{% endblock %}
 {% block moduleactive %} class="is-active"{% endblock %}
 {% block content %}
-
+{% has_perm 'catalog.can_edit' user module as is_editor %}
 {% if module.image %}<img class="thumbnail" src="{{ module.image.url }}" />{% endif %}
 
 {% if module.url %}<p><a href="{{ module.url }}">{% trans "Official site" %}</a></p>{% endif %}
@@ -22,6 +22,10 @@
 </dl>
 
 <p>{{ module.description }}</p>
+
+{% if is_editor %}
+<a href="{% url 'game_catalog:module-edit' module=module.pk %}" class="button">{% trans "Edit details" %}</a>
+{% endif %}
 
 {% ratings module %}
 

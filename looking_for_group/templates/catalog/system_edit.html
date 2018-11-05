@@ -1,0 +1,17 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Edit system" %} {{ system.name }}- {% endblock %}
+{% block systemactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Edit" %} {{ system.name }}{% endblock %}
+{% block mobileheader %}{% trans "Edit" %} {{ system.name }}{% endblock %}
+{% block content %}
+<p>{% blocktrans %}You may enter your changes below.{% endblocktrans %}</p>
+<form data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ system.get_absolute_url }}" class="button float-left secondary">{% trans "Discard changes and return to system details" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save changes' %}" />
+  </div>
+</form>
+
+{% endblock %}

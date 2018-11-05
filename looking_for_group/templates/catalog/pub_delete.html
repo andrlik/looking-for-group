@@ -1,0 +1,29 @@
+{% extends "catalog/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Delete publisher" %} {{ publisher.name }} - {% endblock %}
+{% block pubactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Delete" %} {{ publisher.name }}{% endblock %}
+{% block mobileheader %}{% trans "Delete" %} {{ publisher.name }}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "If you delete this publisher, it will also delete the records listed below." %}</p>
+  <ul>
+    <li>{% blocktrans count counter=publisher.gamesystem_set.count %}{{ counter }} game system.{% plural %}{{ counter }} game systems.{% endblocktrans %}</li>
+    <li>{% blocktrans count counter=publisher.gameedition_set.count %}{{ counter}} game edition and any associated sourcebooks.{% plural %}{{ counter }} game editions and any associated sourcebooks.{% endblocktrans %}</li>
+    <li>{% blocktrans count counter=publisher.publishedmodule_set.count %}{{ counter }} published module/adventure.{% plural %}{{ counter }} published modules/adventures.{% endblocktrans %}</li>
+  </ul>
+  <p>{% trans "It would also effect the following other items which would have any relationship set to null." %}</p>
+  <ul>
+    <li>{% blocktrans %}Any gamer profiles where a game edition or game system is listed as a preferred playstyle.{% endblocktrans %}</li>
+    <li>{% blocktrans %}Any game where a game edition, game system, or published module/adventure above is listed as in-use.{% endblocktrans %}</li>
+  </ul>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ publisher.get_absolute_url }}" class="button secondary float-left">{% trans "Back to publisher details" %}</a> <input type="submit" class="float-right button alert" value="{% trans 'Delete publisher' %}" />
+  </div>
+</form>
+
+{% endblock %}
