@@ -1,0 +1,27 @@
+{% extends "catalog/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Delete system" %} {{ system.name }}- {% endblock %}
+{% block systemactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Delete" %} {{ system.name }}{% endblock %}
+{% block mobileheader %}{% trans "Delete" %} {{ system.name }}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "If you delete this system, you will also delete the following additional records." %}</p>
+  <ul>
+    <li>{% blocktrans count counter=system.game_editions.count %}{{ counter }} game edition.{% plural %}{{ counter }} game editions and their associated sourcebooks and published modules/adventures.{% endblocktrans %}</li>
+  </ul>
+  <p>{% trans "You will also nullify selections related to this in:" %}</p>
+  <ul>
+    <li>{% blocktrans count counter=system.gamerprofile_set.count %}{{ counter }} gamer profile{% plural %}{{ counter }} gamer profiles{% endblocktrans %} {% blocktrans %} who have listed this as one of their preferred systems.{% endblocktrans %}</li>
+    <li>{% blocktrans count counter=system.gameposting_set.count %}{{ counter }} game being played by other users.{% plural %}{{ counter }} games being played by other users.{% endblocktrans %}</li>
+  </ul>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ system.get_absolute_url }}" class="button float-left secondary">{% trans "Return to system details" %}</a> <input type="submit" class="float-right button alert" value="{% trans 'Delete system' %}" />
+  </div>
+</form>
+
+{% endblock %}

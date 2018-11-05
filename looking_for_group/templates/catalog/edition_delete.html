@@ -1,0 +1,27 @@
+{% extends "catalog/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Delete edition" %} {{ edition }}- {% endblock %}
+{% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Delete" %} {{ edition }}{% endblock %}
+{% block mobileheader %}{% trans "Delete" %} {{ edition }}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "If you delete this game edition, you will also delete the following additional records." %}</p>
+  <ul>
+    <li>{% blocktrans count coutner=edition.sourcebooks.count %}{{ counter }} sourcebook.{% plural %}{{ counter }} sourcebooks.{% endblocktrans %}</li>
+    <li>{% blocktrans count counter=edition.publishedmodule_set.count %}{{ counter }} published module/adventure.{% plural %}{{ counter }} published modules/adventures.{% endblocktrans %}</li>
+  </ul>
+  <p>{% trans "You will also nullify selections related to this in:" %}</p>
+  <ul>
+    <li>{% blocktrans count counter=edition.gameposting_set.count %}{{ counter }} game being played by other users.{% plural %}{{ counter }} games being played by other users.{% endblocktrans %}</li>
+  </ul>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ edition.get_absolute_url }}" class="button float-left secondary">{% trans "Return to edition details" %}</a> <input type="submit" class="float-right button alert" value="{% trans 'Delete game edition' %}" />
+  </div>
+</form>
+
+{% endblock %}

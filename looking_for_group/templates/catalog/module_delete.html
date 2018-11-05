@@ -1,0 +1,22 @@
+{% extends "catalog/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Delete module" %} {{ module.title }}- {% endblock %}
+{% block moduleactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Delete" %} {{ module.title }}{% endblock %}
+{% block mobileheader %}{% trans "Delete" %} {{ module.title }}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "If you delete this module, you will nullify selections related to this in:" %}</p>
+  <ul>
+    <li>{% blocktrans count counter=module.gameposting_set.count %}{{ counter }} game being played by other users.{% plural %}{{ counter }} games being played by other users.{% endblocktrans %}</li>
+  </ul>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ module.get_absolute_url }}" class="button float-left secondary">{% trans "Return to module details" %}</a> <input type="submit" class="float-right button alert" value="{% trans 'Delete module' %}" />
+  </div>
+</form>
+
+{% endblock %}

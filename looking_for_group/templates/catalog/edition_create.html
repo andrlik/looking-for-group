@@ -1,0 +1,17 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Create game edition" %} - {% endblock %}
+{% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Create game edition for" %} {{ game.title }}{% endblock %}
+{% block mobileheader %}{% trans "Create game edition for" %} {{ game.title }}{% endblock %}
+{% block content %}
+<p>{% blocktrans %}Enter the game edition details below.{% endblocktrans %}</p>
+<form data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ game.get_absolute_url }}" class="button float-left secondary">{% trans "Discard changes and return to game detail" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save new edition' %}" />
+  </div>
+</form>
+
+{% endblock %}

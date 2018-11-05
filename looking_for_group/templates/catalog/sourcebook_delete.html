@@ -1,0 +1,19 @@
+{% extends "catalog/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Delete book" %} {{ book.title }} - {% endblock %}
+{% block bookactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Delete" %} {{ book.title }}{% endblock %}
+{% block mobileheader %}{% trans "Delete" %} {{ book.title }}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "This cannot be undone." %}</p>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ book.get_absolute_url }}" class="button float-left secondary">{% trans "Return to book details" %}</a> <input type="submit" class="float-right button alert" value="{% trans 'Delete book' %}" />
+  </div>
+</form>
+
+{% endblock %}

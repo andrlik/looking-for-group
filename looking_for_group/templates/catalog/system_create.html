@@ -1,0 +1,17 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Create system" %} - {% endblock %}
+{% block systemactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Create system" %}{% endblock %}
+{% block mobileheader %}{% trans "Create system" %}{% endblock %}
+{% block content %}
+<p>{% blocktrans %}Enter the game system details below.{% endblocktrans %}</p>
+<form data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{% url 'game_catalog:system-list' %}" class="button float-left secondary">{% trans "Discard changes and return to game system list" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save new system' %}" />
+  </div>
+</form>
+
+{% endblock %}
