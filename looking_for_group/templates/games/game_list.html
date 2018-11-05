@@ -5,12 +5,7 @@
 {% block sectiontitle %}{% trans "Game listings" %}{% endblock %}
 {% block mobileheader %}{% trans "Game listings" %}{% endblock %}
 {% block content %}
-{% has_perm 'catalog.can_edit' user object_list as is_editor %}
-{% if is_editor %}
-<div class="clearfix">
-  <a href="{% url 'game_catalog:game-create' %}" class="button float-right">{% trans "Create new game" %}</a>
-</div>
-{% endif %}
+
 {% if not game_list %}
 <p>{% trans "No games found." %}</p>
 {% endif %}
