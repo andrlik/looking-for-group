@@ -1,0 +1,17 @@
+{% extends "user_preferences/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Settings" %}{% endblock %}
+{% block sectiontitle %}{% trans "Settings" %}{% endblock %}
+{% block mobileheader %}{% trans "Settigns" %}{% endblock %}
+{% block content %}
+<p>{% trans "You can view your current settings below." %}</p>
+<dl>
+  <dt>{% trans "Receive news via email:" %}</dt>
+  <dd>{{ preferences.news_emails|yesno:"Yes,No" }}</dd>
+  <dt>{% trans "Notification Digests (receive unread notifications via email in digest format)" %}</dt>
+  <dd>{{ preferences.notification_digests|yesno:"Yes,No" }}</dd>
+  <dt>{% trans "Volunteer to provide feedback?" %}</dt>
+  <dd>{{ preferences.feedback_volunteer|yesno:"Yes,No" }}</dd>
+</dl>
+
+{% endblock %}
