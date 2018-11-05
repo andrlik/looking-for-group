@@ -1,14 +1,17 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize %}
+{% load i18n humanize rules %}
 {% block subtitle %}{{ publisher.name }} - {% endblock %}
 {% block sectiontitle %}{{ publisher.name }}{% endblock %}
 {% block mobileheader %}{{ publisher.name }}{% endblock %}
 {% block pubactive %} class="is-active"{% endblock %}
 {% block content %}
+{% has_perm 'catalog.can_edit' user publisher as is_editor %}
 {% if publisher.logo %}<img class="thumbnail" alt="Logo for {{ publisher.name }}" src="{{ publisher.logo.url }}" />{% endif %}
 {% if publisher.url %}<p><a href="{{ publisher.url }}">{% trans "Publisher Website" %}</a></p>{% endif %}
 <span class="meta">{% blocktrans with humcount=publisher.gameedition_set.count|intcomma|apnumber count counter=publisher.gameedition_set.count %}One Game{% plural %} {{ counter }} Games{% endblocktrans %}, {% blocktrans with humcount=publisher.gamesystem_set.count|intcomma|apnumber count counter=publisher.gamesystem_set.count %}one Game System{% plural %}{{ counter }} Game Systems{% endblocktrans %}, {% blocktrans with humcount=publisher.publishedmodule_set.count|intcomma|apnumber count counter=publisher.publishedmodule_set.count %}and one Game Module{% plural %}and {{ counter }} Game Modules.{% endblocktrans %}</span>
 <p>{{ publisher.description }}</p>
+
+{% if is_editor %}<a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button">{% trans "Edit publisher" %}</a>{% endif %}
 
 <h2>{% trans "Publications" %}</h2>
 

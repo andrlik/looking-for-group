@@ -5,14 +5,15 @@ from django.core.exceptions import ObjectDoesNotExist
 
 @rules.predicate
 def is_rpgeditor(user, obj):
-    if user.is_superuser:
-        return True
-    try:
-        group = Group.objects.get(name="rpgeditors")
-        if group in user.groups.all():
+    if user.is_authenticated:
+        if user.is_superuser:
             return True
-    except ObjectDoesNotExist:
-        pass  # We'll just return False at the end.
+        try:
+            group = Group.objects.get(name="rpgeditors")
+            if group in user.groups.all():
+                return True
+        except ObjectDoesNotExist:
+            pass  # We'll just return False at the end.
     return False
 
 

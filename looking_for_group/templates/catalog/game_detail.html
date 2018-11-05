@@ -1,10 +1,11 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize %}
+{% load i18n humanize rules %}
 {% load ratings %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
 {% block mobileheader %}{{ game.title }}{% endblock %}
 {% block content %}
+{% has_perm 'catalog.can_edit' user game as is_editor %}
 {% if game.image %}<img class="thumbnail" src="{{ game.image.url }}" />{% endif %}
 {% if game.url %}<h5><a href="{{ game.url }}">{% trans "Offical site" %}</a></h5>{% endif %}
 <dl>
@@ -15,9 +16,12 @@
 </dl>
 <p>{{ game.description }}</p>
 
+{% if request.user.is_authenticated and is_editor %}<a href="{% url 'game_catalog:game-edit' game=game.pk %}" class="button">{% trans "Edit game record" %}</a>{% endif %}
+
 {% ratings game %}
 
 <h2>{% trans "Editions" %}</h2>
+{% if request.user.is_authenticated and is_editor %}<a href="{% url 'game_catalog:edition_create' game=game.pk %}" class="button">{% trans "Add new edition" %}</a><br />{% endif %}
 {% if not game.editions.count %}
 <p>{% blocktrans %}There is no edition details in our database for this game yet.{% endblocktrans %}</p>
 {% else %}

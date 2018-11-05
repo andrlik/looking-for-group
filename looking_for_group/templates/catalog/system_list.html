@@ -1,11 +1,16 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize %}
+{% load i18n humanize rules %}
 {% block subtitle %}{% trans "Game Systems" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Game Systems" %}{% endblock %}
 {% block mobileheader %}{% trans "Game Systems" %}{% endblock %}
 {% block systemactive %} class="is-active"{% endblock %}
 {% block content %}
-
+{% has_perm 'catalog.can_edit' user object_list as is_editor %}
+{% if is_editor %}
+<div class="clearfix">
+  <a href="{% url 'game_catalog:system-create' %}" class="button float-right">{% trans "Create new game system" %}</a>
+</div>
+{% endif %}
 {% if not object_list.exists %}
 <p>{% trans "No publishers found" %}</p>
 {% endif %}

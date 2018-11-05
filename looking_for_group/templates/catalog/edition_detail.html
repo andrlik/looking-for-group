@@ -1,11 +1,12 @@
 {% extends "catalog/base.html" %}
-{% load i18n %}
+{% load i18n rules %}
 {% load ratings %}
 {% block subtitle %}{{ edition }} - {% endblock %}
 {% block sectiontitle %}{{ edition }}{% endblock %}
 {% block mobileheader %}{{ edition }}{% endblock %}
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
+{% has_perm 'catalog.can_edit' user edition as is_editor %}
 {% if edition.image %}<img class="thumbnail" src="{{ edition.image.url }}" />{% endif %}
 {% if edition.url %}<h5><a href="{{ edition.url }}">{% trans "Official site" %}</a></h5>{% endif %}
 <dl>
@@ -24,6 +25,10 @@
 </dl>
 <p>{{ edition.description }}</p>
 
+{% if is_editor %}
+<a href="{% url 'game_catalog:edition_edit' edition=edition.slug %}" class="button">{% trans "Edit details" %}</a>
+{% endif %}
+
 {% ratings edition %}
 
 <h2>{% trans "Sourcebooks and Modules" %}</h2>
@@ -35,6 +40,11 @@
 
 <div class="tabs-content" data-tabs-content="book-tabs">
   <div class="tabs-panel is-active" id="sourcebook_panel">
+    {% if is_editor %}
+    <div class="clearfix">
+      <a href="{% url 'game_catalog:sourcebook_create' edition=edition.slug %}" class="button float-right">{% trans "Create new sourcebook for edition" %}</a>
+    </div>
+    {% endif %}
     {% if edition.sourcebooks.count == 0 %}
     <p>{% blocktrans %}We don't have any sourcebook information on file yet for this edition.{% endblocktrans %}</p>
     {% else %}
@@ -62,6 +72,11 @@
     {% endif %}
   </div>
   <div class="tabs-panel" id="module_panel">
+    {% if is_editor %}
+    <div class="clearfix">
+      <a href="{% url 'game_catalog:module-create' edition=edition.slug %}" class="button">{% trans "Create new module for this edition." %}</a>
+    </div>
+    {% endif %}
     {% if edition.publishedmodule_set.count == 0 %}
     <p>{% blocktrans %}We don't have any modules on file yet for this edition.{% endblocktrans %}</p>
     {% else %}
