@@ -23,7 +23,9 @@
 <p>{{ system.description }}</p>
 
 {% if is_editor %}
-<a href="{% url 'game_catalog:system-edit' system=system.pk %}" class="button">{% trans "Edit details" %}</a>
+<div class="clearfix">
+  <a href="{% url 'game_catalog:system-edit' system=system.pk %}" class="button float-left">{% trans "Edit details" %}</a> <a href="{% url 'game_catalog:system-delete' system=system.pk %}" class="button float-right alert">{% trans "Delete system" %}</a>
+</div>
 {% endif %}
 
 {% ratings system %}

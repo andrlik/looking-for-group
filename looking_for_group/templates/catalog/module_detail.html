@@ -24,7 +24,9 @@
 <p>{{ module.description }}</p>
 
 {% if is_editor %}
-<a href="{% url 'game_catalog:module-edit' module=module.pk %}" class="button">{% trans "Edit details" %}</a>
+<div class="clearfix">
+  <a href="{% url 'game_catalog:module-edit' module=module.pk %}" class="button float-left">{% trans "Edit details" %}</a> <a href="{% url 'game_catalog:module-delete' module=module.pk %}" class="float-right button alert">{% trans "Delete module" %}</a>
+</div>
 {% endif %}
 
 {% ratings module %}

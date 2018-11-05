@@ -11,7 +11,11 @@
 <span class="meta">{% blocktrans with humcount=publisher.gameedition_set.count|intcomma|apnumber count counter=publisher.gameedition_set.count %}One Game{% plural %} {{ counter }} Games{% endblocktrans %}, {% blocktrans with humcount=publisher.gamesystem_set.count|intcomma|apnumber count counter=publisher.gamesystem_set.count %}one Game System{% plural %}{{ counter }} Game Systems{% endblocktrans %}, {% blocktrans with humcount=publisher.publishedmodule_set.count|intcomma|apnumber count counter=publisher.publishedmodule_set.count %}and one Game Module{% plural %}and {{ counter }} Game Modules.{% endblocktrans %}</span>
 <p>{{ publisher.description }}</p>
 
-{% if is_editor %}<a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button">{% trans "Edit publisher" %}</a>{% endif %}
+{% if is_editor %}
+<div class="clearfix">
+  <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left">{% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right">{% trans "Delete publisher" %}</a>
+</div>
+{% endif %}
 
 <h2>{% trans "Publications" %}</h2>
 

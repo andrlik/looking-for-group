@@ -1,0 +1,17 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block subtitle %}{% trans "Edit game" %} {{ game.title }} - {% endblock %}
+{% block sectiontitle %}{% trans "Edit" %} {{ game.title }}{% endblock %}
+{% block mobileheader %}{% trans "Edit" %} {{ game.title }}{% endblock %}
+{% block content %}
+<p>{% trans "Enter your changes below:" %}</p>
+<form data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ game.get_absolute_url }}" class="button secondary float-left">{% trans "Go back to game details" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}" />
+  </div>
+</form>
+
+{% endblock %}

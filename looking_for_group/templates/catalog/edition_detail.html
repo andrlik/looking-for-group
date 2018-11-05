@@ -26,7 +26,9 @@
 <p>{{ edition.description }}</p>
 
 {% if is_editor %}
-<a href="{% url 'game_catalog:edition_edit' edition=edition.slug %}" class="button">{% trans "Edit details" %}</a>
+<div class="clearfix">
+  <a href="{% url 'game_catalog:edition_edit' edition=edition.slug %}" class="float-left button">{% trans "Edit details" %}</a> <a href="{% url 'game_catalog:edition_delete' edition=edition.slug %}" class="float-right button alert">{% trans "Delete edition" %}</a>
+</div>
 {% endif %}
 
 {% ratings edition %}
@@ -74,7 +76,7 @@
   <div class="tabs-panel" id="module_panel">
     {% if is_editor %}
     <div class="clearfix">
-      <a href="{% url 'game_catalog:module-create' edition=edition.slug %}" class="button">{% trans "Create new module for this edition." %}</a>
+      <a href="{% url 'game_catalog:module-create' edition=edition.slug %}" class="button float-right">{% trans "Create new module for this edition." %}</a>
     </div>
     {% endif %}
     {% if edition.publishedmodule_set.count == 0 %}

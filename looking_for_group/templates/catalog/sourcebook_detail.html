@@ -1,11 +1,12 @@
 {% extends "catalog/base.html" %}
-{% load i18n %}
+{% load i18n rules %}
 {% load ratings %}
 {% block subtitle %}{{ book.title }} - {{ book.edition }} - {% endblock %}
 {% block sectiontitle %}{{ book.title }}{% endblock %}
 {% block mobileheader %}{{ book.title }}{% endblock %}
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
+{% has_perm 'catalog.can_edit' user book as is_editor %}
 {% if book.image %}<img class="thumbnail" src="{{ book.image.url }}" />{% endif %}
 {% if book.url %}<h5><a href="{{ book.url }}">{% trans "More info can be found here." %}</a></h5>{% endif %}
 <dl>
@@ -18,6 +19,12 @@
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ book.inherited_tag_names|join:", " }}
 </dl>
+
+{% if is_editor %}
+<div class="clearfix">
+  <a href="{% url 'game_catalog:sourcebook_edit' book=book.slug %}" class="button float-left">{% trans "Edit details" %}</a> <a href="{% url 'game_catalog:sourcebook_delete' book=book.slug %}" class="float-right button alert">{% trans "Delete sourcebook" %}</a>
+</div>
+{% endif %}
 
 {% ratings book %}
 

@@ -9,7 +9,7 @@
   <h5>{% trans "Are you sure?" %}</h5>
   <p>{% trans "If you delete this game edition, you will also delete the following additional records." %}</p>
   <ul>
-    <li>{% blocktrans count coutner=edition.sourcebooks.count %}{{ counter }} sourcebook.{% plural %}{{ counter }} sourcebooks.{% endblocktrans %}</li>
+    <li>{% blocktrans count counter=edition.sourcebooks.count %}{{ counter }} sourcebook.{% plural %}{{ counter }} sourcebooks.{% endblocktrans %}</li>
     <li>{% blocktrans count counter=edition.publishedmodule_set.count %}{{ counter }} published module/adventure.{% plural %}{{ counter }} published modules/adventures.{% endblocktrans %}</li>
   </ul>
   <p>{% trans "You will also nullify selections related to this in:" %}</p>

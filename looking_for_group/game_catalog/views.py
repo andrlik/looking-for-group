@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
+from . import forms
 from .models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
 
 # Create your views here.
@@ -66,9 +67,6 @@ class GamePublisherCreateView(
     def get_permission_object(self):
         return self.model
 
-    def get_success_url(self):
-        self.object.get_absolute_url()
-
 
 class GamePublisherDeleteView(
     LoginRequiredMixin,
@@ -101,16 +99,7 @@ class GameSystemCreateView(
     model = GameSystem
     permission_required = "catalog.can_edit"
     template_name = "catalog/system_create.html"
-    fields = [
-        "name",
-        "image",
-        "system_url",
-        "description",
-        "original_publisher",
-        "ogl_license",
-        "publication_date",
-        "tags",
-    ]
+    form_class = forms.SystemForm
 
     def get_permission_object(self):
         return self.model
@@ -151,16 +140,7 @@ class GameSystemUpdateView(
     context_object_name = "system"
     pk_url_kwarg = "system"
     permission_required = "catalog.can_edit"
-    fields = [
-        "name",
-        "image",
-        "system_url",
-        "description",
-        "original_publisher",
-        "ogl_license",
-        "publication_date",
-        "tags",
-    ]
+    form_class = forms.SystemForm
     template_name = "catalog/system_edit.html"
 
     def get_success_url(self):
@@ -198,7 +178,7 @@ class PublishedGameCreateView(
     model = PublishedGame
     permission_required = "catalog.can_edit"
     template_name = "catalog/game_create.html"
-    fields = ["title", "image", "url", "description", "tags"]
+    form_class = forms.GameForm
 
     def get_success_url(self):
         return self.object.get_absolute_url()
@@ -225,7 +205,7 @@ class PublishedGameUpdateView(
 
     model = PublishedGame
     permission_required = "catalog.can_edit"
-    fields = ["title", "image", "url", "description", "publication_date", "tags"]
+    form_class = forms.GameForm
     pk_url_kwarg = "game"
     context_object_name = "game"
     template_name = "catalog/game_edit.html"
@@ -270,17 +250,7 @@ class EditionCreateView(
 
     model = GameEdition
     permission_required = "catalog.can_edit"
-    fields = [
-        "name",
-        "game_system",
-        "image",
-        "url",
-        "publisher",
-        "release_date",
-        "description",
-        "url",
-        "tags",
-    ]
+    form_class = forms.EditionForm
     template_name = "catalog/edition_create.html"
 
     def get_permission_object(self):
@@ -312,17 +282,7 @@ class EditionUpdateView(
 
     model = GameEdition
     permission_required = "catalog.can_edit"
-    fields = [
-        "name",
-        "game_system",
-        "image",
-        "url",
-        "publisher",
-        "release_date",
-        "description",
-        "url",
-        "tags",
-    ]
+    form_class = forms.EditionForm
     context_object_name = "edition"
     slug_url_kwarg = "edition"
     template_name = "catalog/edition_edit.html"
@@ -374,7 +334,7 @@ class SourceBookCreateView(
     """
 
     model = SourceBook
-    fields = ["title", "image", "corebook", "release_date", "isbn", "tags"]
+    form_class = forms.SourceBookForm
     permission_required = "catalog.can_edit"
     template_name = "catalog/sourcebook_create.html"
 
@@ -415,7 +375,7 @@ class SourceBookUpdateView(
     """
 
     model = SourceBook
-    fields = ["title", "image", "corebook", "release_date", "isbn", "tags"]
+    form_class = forms.SourceBookForm
     permission_required = "catalog.can_edit"
     context_object_name = "book"
     slug_url_kwarg = "book"
@@ -462,7 +422,7 @@ class PublishedModuleCreateView(
     model = PublishedModule
     permission_required = "catalog.can_edit"
     template_name = "catalog/module_create.html"
-    fields = ["title", "image", "url", "publisher", "publication_date", "isbn", "tags"]
+    form_class = forms.ModuleForm
 
     def get_permission_object(self):
         return self.model
@@ -511,7 +471,7 @@ class PublishedModuleUpdateView(
     model = PublishedModule
     context_object_name = "module"
     pk_url_kwarg = "module"
-    fields = ["title", "image", "url", "publisher", "publication_date", "isbn", "tags"]
+    form_class = forms.ModuleForm
     permission_required = "catalog.can_edit"
     template_name = "catalog/module_edit.html"
 

@@ -16,7 +16,11 @@
 </dl>
 <p>{{ game.description }}</p>
 
-{% if request.user.is_authenticated and is_editor %}<a href="{% url 'game_catalog:game-edit' game=game.pk %}" class="button">{% trans "Edit game record" %}</a>{% endif %}
+{% if is_editor %}
+<div class="clearfix">
+  <a href="{% url 'game_catalog:game-edit' game=game.pk %}" class="button float-left">{% trans "Edit game record" %}</a> <a href="{% url 'game_catalog:game-delete' game=game.pk %}" class="button float-right alert">{% trans "Delete game" %}</a>
+</div>
+{% endif %}
 
 {% ratings game %}
 

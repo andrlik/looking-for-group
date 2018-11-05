@@ -1,11 +1,17 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize cache %}
+{% load i18n humanize cache rules %}
 {% block subtitle %}{% trans "Games" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Published Games" %}{% endblock %}
 {% block mobileheader %}{% trans "Published Games" %}{% endblock %}
 {% block gameactive %} class="is-active"{% endblock %}
 {% block content %}
-
+{% has_perm 'catalog.can_edit' user game_list as is_editor %}
+{% if is_editor %}
+<br />
+<div class="clearfix">
+  <a href="{% url 'game_catalog:game-create' %}" class="button float-right">{% trans "Create new game" %}</a>
+</div>
+{% endif %}
 {% if not object_list %}
 <p>{% trans "No published games found." %}</p>
 {% endif %}
@@ -15,7 +21,6 @@
     <tr>
       <th>{% trans "Title" %}</th>
       <th class="text-right">{% trans "Num Editions" %}</th>
-      <th>{% trans "System" %}</th>
       <th>{% trans "Description" %}</th>
       <th class="text-right">{% trans "Published" %}</th>
       <th>{% trans "Tags" %}</th>

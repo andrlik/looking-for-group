@@ -1,0 +1,16 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block subtitle %}{% trans "Create game" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Create game" %}{% endblock %}
+{% block mobileheader %}{% trans "Create game" %}{% endblock %}
+{% block content %}
+<p>{% blocktrans %}Enter published game details below:{% endblocktrans %}</p>
+<form data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{% url 'game_catalog:game-list' %}" class="button float-left secondary">{% trans "Return to published game list" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save new game' %}" />
+  </div>
+</form>
+{% endblock %}

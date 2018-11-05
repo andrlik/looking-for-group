@@ -1,0 +1,31 @@
+{% extends "catalog/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Delete game" %} {{ game.title }} - {% endblock %}
+{% block sectiontitle %}{% trans "Delete" %} {{ game.title }}{% endblock %}
+{% block mobileheader %}{% trans "Delete" %} {{ game.title }}{% endblock %}
+{% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans %}If you delete this game, you will also delete the following associated records:{% endblocktrans %}</p>
+  <ul>
+    <li>{% blocktrans count counter=game.editions.count %}{{ counter }} game edition and all of its associated sourcebooks and modules.{% plural %}{{ counter }} game editions and all of their associated sourcebooks and modules.{% endblocktrans %}
+      <ul>
+        {% for edition in game.editions.all %}
+        <li>{{ edition }}: {% blocktrans count counter=edition.sourcebooks.count %}{{ counter }} sourcebook and {% plural %}{{ counter }} sourcebooks and {% endblocktrans %}{% blocktrans count counter=edition.publishedmodule_set.count %}{{ counter }} module.{% plural %}{{ counter }} modules.{% endblocktrans %}</li>
+        {% empty %}
+        {% endfor %}
+      </ul></li>
+  </ul>
+  <p>{% trans "It will also affect the following records:" %}</p>
+  <ul>
+    <li>{% blocktrans count counter=game.gamerprofile_set.count %}{{ counter }} gamer profile{% plural %}{{ counter }} gamer profiles{% endblocktrans %} {% blocktrans %}that list this as a preferred game will have this removed from their profile.{% endblocktrans %}</li>
+  </ul>
+</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ game.get_absolute_url }}" class="button secondary float-left">{% trans "Go back to game details" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Delete game' %}" />
+  </div>
+</form>
+{% endblock %}
