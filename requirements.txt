@@ -3,8 +3,8 @@ arrow==0.12.1
 bleach-whitelist==0.0.8
 bleach==3.0.2
 blessed==1.15.0
-boto3==1.9.34
-botocore==1.12.34
+boto3==1.9.38
+botocore==1.12.38
 certifi==2018.10.15
 cffi==1.11.5
 chardet==3.0.4
@@ -40,7 +40,7 @@ django-storages==1.7.1
 django-taggit-serializer==0.1.7
 django-taggit==0.23.0
 django-treebeard==4.3
-django==2.1.2
+django==2.1.3
 djangorestframework==3.9.0
 docutils==0.14
 icalendar==4.0.3
@@ -51,14 +51,14 @@ jmespath==0.9.3
 jsonfield==2.0.2
 libsass==0.15.1
 markdown==3.0.1
-markupsafe==1.0
+markupsafe==1.1.0;
 newrelic==4.4.1.104
 oauthlib==2.1.0
 pillow==5.3.0
 psycopg2==2.7.5
 pwned-passwords-django==1.3.1
-pycparser==2.19
-pytest-runner==4.2
+pycparser==2.19;
+pytest-runner==4.2;
 python-dateutil==2.7.5;
 python-stdnum==1.10
 python3-openid==3.1.0
@@ -66,7 +66,7 @@ pytz==2018.7
 raven==6.9.0
 rcssmin==1.0.6
 redis==2.10.6
-requests-oauthlib==1.0.0
+requests-oauthlib==1.0.0;
 requests==2.20.0
 rjsmin==1.0.12
 rules==2.0
@@ -75,7 +75,7 @@ six==1.11.0
 swapper==1.1.0
 text-unidecode==1.2
 uritemplate==3.0.0
-urllib3==1.24;
+urllib3==1.23;
 waitress==1.1.0
 wcwidth==0.1.7
 webencodings==0.5.1
