@@ -1,0 +1,88 @@
+{% extends "notifications/base.html" %}
+{% load notifications_tags i18n %}
+{% with all=notifications.count unread=notifications.unread.count %}
+{% block subtitle %}{% trans "Notifications" %}{% endblock %}
+{% block sectiontitle %}{% trans "Notifications" %}{% endblock %}
+{% block mobileheader %}{% trans "Notifications" %}{% endblock %}
+{% block unreadactive %}{% if unread == all %}{% include "is_active_definition.html" %}{% endif %}{% endblock %}
+{% block allactive %}{% if unread < all %}{% include "is_active_definition.html" %}{% endif %}{% endblock %}
+{% block content %}
+<p>{% trans "Your notifications can be found below." %}</p>
+{% if not notifications %}
+<p>{% trans "You don't currently have any notifications" %}</p>
+{% endif %}
+<br />
+<div class="clearfix">
+
+
+  {% if notifications %}
+
+  <a href="{% url 'notifications:mark_all_as_read' %}" class="button {% if unread == all %}float-right{% else %}float-left{% endif %} primary">{% trans "Mark all as read" %}</a> {% if unread < all %}<a href="{% url 'notifications:mark_all_as_unread' %}" class="button primary float-right">{% trans "Mark all as unread" %}</a>{% endif %}
+  {% else %}
+  <button class="button primary {% if unread_view %}float-right{% else %}float-left{% endif %} disabled">{% trans "Mark all as read" %}</button> {% if unread < all %}<button class="button primary disabled">{% trans "Mark all as unread" %}</button>{% endif %}
+  {% endif %}
+</div>
+<table class="stack hover">
+  <thead>
+    <tr>
+      <th>{% trans "When" %}</th>
+      <th>{% trans "What" %}</th>
+      <th>{% trans "Status" %}</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for notification in notifications %}
+    <tr{% if notification.unread %} class="unread"{% endif %}>
+      <td>{{ notification.timesince }}</td>
+      <td>
+        {% if "community" in notification.verb %}
+        {% if "reject" not in notification.verb %}
+        {% blocktrans with aname=notification.actor verb=notification.verb objname=notification.action_object cname=notification.target %}{{ aname }} {{ verb }} for {{ cname }}{% endblocktrans %}
+
+        {% else %}
+        {% blocktrans with verb=notification.verb cname=notification.target %}{{ verb }} for {{ cname }}{% endblocktrans %}
+        {% endif %}
+        {% else %}
+        {% if "friend" in notification.verb %}
+        {{ notification.actor }} {{ notification.verb }}
+        {% else %}
+        {% blocktrans with aname=notification.actor verb=notification.verb objname=notification.action_object tname=notification.target %}{{ aname }} {{ verb }} for {{ target }}{% endblocktrans %}
+        {% endif %}
+        {% endif %}
+      </td>
+      <td>{{ notification.unread|yesno:"Unread,Read" }}</td>
+      <td>{% if notification.unread %}<a href="{% url 'notifications:mark_as_read' slug=notification.slug %}" class="button primary">{% trans "Mark read" %}</a>{% else %}<a href="{% url 'notifications:mark_as_unread' slug=notification.slug %}" class="button primary">{% trans "Mark as unread" %}</a>{% endif %}</td>
+      <td><a href="{% url 'notifications:delete' slug=notification.slug %}" class="button alert">{% trans "Delete forever" %}</a></td>
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% if unread == all %}{% url 'notifications:unread' page=page_obj.previous_page_number %}{% else %}{% url 'notfications:all' page=page_obj.previous_page_number %}{% endif %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% if unread == all %}{% url 'notifications:unread' page=page_num %}{% else %}{% url 'notifications:all' page=page_num %}{% endif %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% if unread == all %}{% url 'notifications:unread' page=page_obj.next_page_number %}{% else %}{% url 'notifications:all' page=page_obj.next_page_number %}{% endif %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}
+{% endwith %}
