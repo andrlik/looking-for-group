@@ -92,6 +92,7 @@ LOCAL_APPS = [
     "looking_for_group.gamer_profiles.apps.GamerProfilesConfig",
     "looking_for_group.discord",
     "looking_for_group.games.apps.GamesConfig",
+    "looking_for_group.user_preferences.apps.UserPreferencesConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

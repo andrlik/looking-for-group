@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from test_plus import TestCase
 
@@ -15,6 +16,7 @@ class AbstractViewTest(TestCase):
     """
 
     def setUp(self):
+        ContentType.objects.clear_cache()
         self.mcg = models.GamePublisher(name="Monte Cook Games")
         self.mcg.save()
         self.wotc = models.GamePublisher(name="Wizards of the Coast")

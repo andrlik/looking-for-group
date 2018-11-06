@@ -2,6 +2,7 @@ import urllib
 from datetime import timedelta
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_delete, post_save
 from django.test import TransactionTestCase
@@ -18,6 +19,7 @@ from ..utils import mkfirstOfmonth, mkLastOfMonth
 
 class AbstractViewTestCase(object):
     def setUp(self):
+        ContentType.objects.clear_cache()
         self.gamer1 = GamerProfileFactory()
         self.gamer2 = GamerProfileFactory()
         self.gamer3 = GamerProfileFactory()
@@ -83,6 +85,10 @@ class AbstractViewTestCase(object):
             session_length=2.5,
             game_description="We are fond of rolling dice.",
         )
+
+    def tearDown(self):
+        ContentType.objects.clear_cache()
+        super().tearDown()
 
 
 class AbstractViewTestCaseNoSignals(AbstractViewTestCase, TestCase):

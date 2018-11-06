@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
-from ..game_catalog.models import GameSystem, PublishedGame, PublishedModule, GameEdition
+from ..game_catalog.models import GameEdition, GameSystem, PublishedGame, PublishedModule
 from ..game_catalog.utils import AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from .utils import check_table_exists
@@ -375,13 +375,13 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
             "What date does this end? (Only used for adventures/campaigns.) You can set this later if you prefer."
         ),
     )
-    game_description = models.TextField(help_text=_("Description of the game."))
+    game_description = models.TextField(help_text=_("Description of the game. You can used Markdown for formatting/link."))
     game_description_rendered = models.TextField(
         blank=True,
         null=True,
         help_text=_("Automated rendering of markdown text as HTML."),
     )
-    communities = models.ManyToManyField(GamerCommunity, help_text=_('Which communities would you like to post this in? (Optional)'))
+    communities = models.ManyToManyField(GamerCommunity, blank=True, help_text=_('Which communities would you like to post this in? (Optional)'))
     sessions = models.PositiveIntegerField(default=0)
     players = models.ManyToManyField(GamerProfile, through="Player")
     event = models.ForeignKey(

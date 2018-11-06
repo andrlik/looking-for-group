@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.urls import resolve, reverse
 from test_plus.test import TestCase
 
@@ -6,6 +7,7 @@ class TestUserURLs(TestCase):
     """Test URL patterns for users app."""
 
     def setUp(self):
+        ContentType.objects.clear_cache()
         self.user = self.make_user()
 
     def test_list_reverse(self):

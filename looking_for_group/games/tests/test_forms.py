@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.test import TransactionTestCase as TestCase
 from django.utils import timezone
 
@@ -15,6 +16,7 @@ class AbstractFormTest(TestCase):
     """
 
     def setUp(self):
+        ContentType.objects.clear_cache()
         self.gamer1 = GamerProfileFactory()
         self.gamer2 = GamerProfileFactory()
         self.gamer3 = GamerProfileFactory()

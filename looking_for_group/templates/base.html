@@ -1,4 +1,4 @@
-{% load static i18n compress avatar_tags %}
+{% load static i18n compress avatar_tags notifications_tags %}
 {# cookielaw_tags #}
 <!DOCTYPE html>
 <html lang="en">
@@ -88,6 +88,10 @@
           <li><a>
             <i class="large fa fa-tachometer-alt"></i><span class="app-dashboard-sidebar-text">Dashboard</span>
           </a></li>
+          <li><a href="{% url 'notifications:unread' %}">
+              <i id="dash-badge" data-badge="0" class="live_notify_badge large fa fas fa-bell"></i>
+            <span class="app-dashboard-sidebar-text">Notifications</span>
+          </a>
           <li><a href="{% url 'games:calendar_detail' gamer=request.user.username %}">
             <i class="large fa fa-calendar-alt"></i><span class="app-dashboard-sidebar-text">Calendar</span>
           </a></li>
@@ -111,7 +115,7 @@
           <li><a href="{% url 'gamer_profiles:profile-edit' %}">
             <i class="large fa fa-user-circle"></i><span class="app-dashboard-sidebar-text">Edit Profile</span>
           </a> </li>
-          <li><a>
+          <li><a href="{% url 'user_preferences:setting-view' %}">
             <i class="large fa fa-cog"></i><span class="app-dashboard-sidebar-text">Settings</span>
           </a></li>
           {% endif %}
@@ -169,6 +173,22 @@
       <script src="{% static 'libs/what-input/what-input.min.js' %}"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/js/foundation.min.js"></script>
 
+      {% if request.user.is_authenticated %}
+      <script src="{% static 'notifications/notify.js' %}" type="text/javascript"></script>
+      <script type="text/javascript">
+        function fill_unread_notification_count(unread_result){
+          var badge = $('#dash-badge');
+          if (unread_result['unread_count'] >= 10) { unread_items = "9+"; } else { unread_items = unread_result['unread_count']; }
+          if (unread_items == 0){
+            badge.attr('data-badge', unread_items).removeClass('live_notify_badge_unread').addClass('live_notify_badge');
+          }
+         else {
+              badge.attr('data-badge', unread_items).removeClass('live_notify_badge').addClass('live_notify_badge_unread');
+        }
+          }
+      </script>
+      {% register_notify_callbacks badge_class="badge" api_name="count" callbacks='fill_unread_notification_count' %}
+      {% endif %}
       <!-- place project specific Javascript in this file -->
       {% compress js %}
       <script src="{% static 'js/project.js' %}"></script>

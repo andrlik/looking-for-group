@@ -80,6 +80,61 @@
 $app-dashboard-top-nav-color: #2c3840;
 $app-dashboard-top-nav-height: 55px;
 
+.notify-container {
+  vertical-align: top;
+  align-content:right;
+}
+
+.live_notify_badge{
+  //vertical-align: top;
+  //display:block;
+  //margin-top: -10px;
+  //color: get-color(alert);
+  //font-size: 75%;
+  //height: 65%;
+  //width:65%;
+  position:relative;
+}
+
+.live_notify_badge_unread {
+  position:relative;
+}
+
+.live_notify_badge[data-badge]:after {
+    content:attr(data-badge);
+    position:absolute;
+    top: -7px;
+    right: 7px;
+    font-size: 0.5em;
+    background: get-color(secondary);
+    color: $white;
+    width: 15px;height: 15px;
+    text-align: center;
+    line-height: 15px;
+    border-radius:50%;
+    box-shadow: 0 0 1px #333;
+  }
+
+.live_notify_badge_unread[data-badge]:after {
+  content:attr(data-badge);
+  position:absolute;
+  top: -7px;
+  right: 7px;
+  font-size: 0.5em;
+  background: get-color(alert);
+  color: $white;
+  width: 18px;height: 18px;
+  text-align: center;
+  line-height: 18px;
+  border-radius:50%;
+  box-shadow: 0 0 1px #333;
+}
+
+
+.app-dashboard .badge {
+  vertical-align: middle;
+}
+
 .app-dashboard {
   height: 100vh;
   display: flex;
