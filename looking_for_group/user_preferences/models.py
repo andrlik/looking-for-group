@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
@@ -19,3 +20,6 @@ class Preferences(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     def __str__(self):
         return "Settings for {}".format(self.gamer)
+
+    def get_absolute_url(self):
+        return reverse_lazy('user_preferences:setting-view')

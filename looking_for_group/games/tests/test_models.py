@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_save
 from django.test import TransactionTestCase
@@ -18,6 +19,12 @@ class UtilTest(TransactionTestCase):
     Basic test for tables.
     """
 
+    def setUp(self):
+        ContentType.objects.clear_cache()
+
+    def tearDown(self):
+        ContentType.objects.clear_cache()
+
     def test_table_review(self):
         assert check_table_exists("games_gameposting")
         assert not check_table_exists("jkdfjlsdjdsfj")
@@ -29,6 +36,7 @@ class AbstractGamesModelTest(TransactionTestCase):
     """
 
     def setUp(self):
+        ContentType.objects.clear_cache()
         self.gamer1 = factories.GamerProfileFactory()
         self.gamer2 = factories.GamerProfileFactory()
         self.gamer3 = factories.GamerProfileFactory()
@@ -60,6 +68,10 @@ class AbstractGamesModelTest(TransactionTestCase):
         self.player2 = models.Player.objects.create(
             gamer=self.gamer3, game=self.game_posting
         )
+
+    def tearDown(self):
+        ContentType.objects.clear_cache()
+        super().tearDown()
 
 
 class GameEventProxyMethods(AbstractGamesModelTest):

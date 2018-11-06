@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.utils.http import is_safe_url
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
+from notifications.signals import notify
 from rules.contrib.views import PermissionRequiredMixin
 
 from .. import models
@@ -517,12 +518,15 @@ class UpdateApplication(
         return context
 
     def form_valid(self, form):
+        application = form.save(commit=False)
         if "submit_app" in self.request.POST.keys():
             try:
-                if self.submit_application():
+                if application.submit_application():
                     messages.success(
                         self.request, _("Application successfully submitted.")
                     )
+                    for admin in application.community.get_admins():
+                        notify.send(application.gamer, recipient=admin.gamer.user, verb=_('submitted application'), action_object=application, target=application.community)
                     return HttpResponseRedirect(self.get_success_url())
             except models.AlreadyInCommunity:
                 messages.error(
@@ -579,6 +583,8 @@ class CreateApplication(
         if "submit_app" in self.request.POST.keys():
             try:
                 self.object.submit_application()
+                for admin in self.object.community.get_admins():
+                        notify.send(self.object.gamer, recipient=admin.gamer.user, verb=_('submitted application'), action_object=self.object, target=self.object.community)
                 messages.success(self.request, _("Application successfully submitted."))
                 return HttpResponseRedirect(self.object.community.get_absolute_url())
             except models.AlreadyInCommunity:
@@ -649,9 +655,9 @@ class WithdrawApplication(
     select_related = ["community"]
     success_url = reverse_lazy("gamer_profiles:my-application-list")
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         messages.success(self.request, _("Application successfully deleted."))
-        return super().form_valid(form)
+        return super().delete(request, *args, **kwargs)
 
 
 class ApproveApplication(
@@ -692,7 +698,7 @@ class ApproveApplication(
                 self.request,
                 _(
                     "{0} is already a member of {1}".format(
-                        application.gamer.display_name, self.community.name
+                        application.gamer, self.community.name
                     )
                 ),
             )
@@ -701,10 +707,11 @@ class ApproveApplication(
                 self.request,
                 _(
                     "{0} is currently suspended and cannot rejoin.".format(
-                        application.gamer.display_name
+                        application.gamer
                     )
                 ),
             )
+        notify.send(self.request.user.gamerprofile, recipient=application.gamer.user, verb="approved your application", action_object=application, target=application.community)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -717,6 +724,7 @@ class RejectApplication(ApproveApplication):
         application = self.get_object()
         application.reject_application()
         messages.success(self.request, _("Application rejected."))
+        notify.send(sender=models.CommunityApplication, recipient=application.gamer.user, verb=_('community application was rejected'), action_object=application, target=application.community)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -830,9 +838,9 @@ class CommunityDeleteBan(
     def get_permission_object(self):
         return self.get_object().community
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         messages.success(self.request, _("Successfully deleted ban."))
-        return super().form_valid(form)
+        return super().delete(request, *args, **kwargs)
 
 
 class CommunityUpdateBan(
@@ -1117,9 +1125,9 @@ class DeleteKickRecord(
     def get_permission_object(self):
         return self.get_object().community
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         messages.success(self.request, _("Suspension deleted."))
-        return super().form_valid(form)
+        return super().delete(request, *args, **kwargs)
 
 
 class GamerProfileDetailView(

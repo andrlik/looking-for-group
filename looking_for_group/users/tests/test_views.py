@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.test import RequestFactory
 from test_plus.test import TestCase
 
@@ -6,6 +7,7 @@ from ..views import UserRedirectView, UserUpdateView
 
 class BaseUserTestCase(TestCase):
     def setUp(self):
+        ContentType.objects.clear_cache()
         self.user = self.make_user()
         self.factory = RequestFactory()
 
