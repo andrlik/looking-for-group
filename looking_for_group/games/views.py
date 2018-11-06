@@ -17,6 +17,7 @@ from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar
 from schedule.periods import Month
 from schedule.views import _api_occurrences
+from notifications.signals import notify
 
 from . import forms, models
 from .mixins import JSONResponseMixin
@@ -266,6 +267,8 @@ class GamePostingApplyView(
         application.gamer = self.request.user.gamerprofile
         application.game = self.game
         application.save()
+        if application.status == "pending":
+            notify.send(self.request.user.gamerprofile, recipient=self.game.gm.user, verb="submitted application", action_object=application, target=self.game)
         return HttpResponseRedirect(application.get_absolute_url())
 
 
@@ -355,7 +358,9 @@ class GamePostingWithdrawApplication(
     slug_url_kwarg = "application"
 
     def get_success_url(self):
-        return self.get_object().game.get_absolute_url()
+        if self.object.status == "pending":
+            notify.send(self.request.user.gamerprofile, recipient=self.object.game.gm.user, verb="withdrew their application to", action_object=self.object.game)
+        return self.object.game.get_absolute_url()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -417,6 +422,7 @@ class GamePostingApplicantList(LoginRequiredMixin, SelectRelatedMixin, Permissio
         context['game'] = self.game
         return context
 
+
 class GamePostingUpdateView(
     LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView
 ):
@@ -464,11 +470,17 @@ class GamePostingUpdateView(
                     "Game is newly completed. Adding to count for game and players"
                 )
                 value_to_add = 1
+                if obj_to_save.players.count() > 0:
+                    for player in obj_to_save.players.all():
+                        notify.send(obj_to_save.gm, recipient=player.user, verb="marked complete game", action_object=obj_to_save)
             else:
                 logger.debug(
                     "Game taken out of completed state. Decreasing count for game and players."
                 )
                 value_to_add = -1
+                if obj_to_save.players.count() > 0:
+                    for player in obj_to_save.players.all():
+                        notify.send(obj_to_save.gm, recipient=player.user, verb='marked incomplete game', action_object=obj_to_save)
             with transaction.atomic():
                 obj_to_save.save()
                 obj_to_save.gm.games_finished = F("games_finished") + value_to_add
@@ -503,11 +515,15 @@ class GamePostingDeleteView(
     def get_success_url(self):
         return reverse_lazy("games:game_list")
 
-    def form_valid(self, form):
+    def delete(self, request, *args, **kwargs):
         messages.success(
             self.request, _("You have deleted game {}".format(self.get_object().title))
         )
-        return super().form_valid(form)
+        obj = self.get_object()
+        if obj.players.count() > 0:
+            for player in obj.players:
+                notify.send(obj.gm, recipient=player.user, verb="deleted game", action_object=obj)
+        return super().delete(request, *args, **kwargs)
 
 
 class GameSessionList(
@@ -715,6 +731,8 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
     form_class = forms.GameSessionRescheduleForm  # Fill in later
 
     def get_success_url(self):
+        for player in self.object.players_expected.all():
+            notify.send(self.object.game.gm, recipient=player.gamer.user, verb="rescheduled session", action_object=self.object, target=self.object.scheduled_time)
         return self.object.get_absolute_url()
 
     def get_context_data(self, **kwargs):
@@ -767,6 +785,9 @@ class GameSessionCancel(
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
+        obj = self.get_object()
+        for player in obj.players_expected.all():
+            notify.send(self.object.game.gm, recipient=player.gamer.user, verb="cancelled session", action_object=self.object)
         return self.get_object().get_absolute_url()
 
     def get_context_data(self, **kwargs):
@@ -862,6 +883,8 @@ class GameSessionUncancel(
             messages.success(
                 self.request, _("You have successfully uncanceled this session.")
             )
+            for player in session.players_expected.all():
+                notify.send(session.game.gm, recipient=player.gamer.user, verb="uncancelled session", action_object=session)
         return HttpResponseRedirect(session.get_absolute_url())
 
 
@@ -1240,7 +1263,6 @@ class CharacterApproveView(
         character.status = form.cleaned_data["status"]
         character.save()
         messages.success(self.request, self.get_success_message_text(character))
-
         return HttpResponseRedirect(character.get_absolute_url())
 
 
@@ -1251,6 +1273,12 @@ class CharacterRejectView(CharacterApproveView):
 
     def get_valid_status(self):
         return "rejected"
+
+    def get_success_message_text(self, character):
+        notify.send(character.game.gm, recipient=character.player.gamer.user, verb="rejected character", action_object=character)
+        return _(
+            "Character {} has been {}.".format(character.name, self.get_valid_status())
+        )
 
 
 class CharacterMakeInactiveView(CharacterApproveView):
