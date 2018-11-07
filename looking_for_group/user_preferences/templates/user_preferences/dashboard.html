@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load i18n dash_tags %}
+{% block subtitle %}{% trans "Dashboard" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Dashboard" %}{% endblock %}
+{% block mobileheader %}{% trans "Dashboard" %}{% endblock %}
+{% block content %}
+<p>{% blocktrans %}Feel the pulse of your gaming communities.{% endblocktrans %}</p>
+{% if motd %}
+<div class="callout">
+  <h5>{% blocktrans with dname=request.user.display_name %}Hi, {{ dname }}!{% endblocktrans %}</h5>
+  <p>{{ motd }}</p>
+</div>
+{% endif %}
+<h2>{% trans "Your stats" %}</h2>
+<div class="grid-x grid-margin-x">
+  <div class="cell large-auto">
+    <a class="dashboard-nav-card" title="Friend requests">
+      <i class="dashboard-nav-card-icon fas fa-handshake"></i>
+      <h3 class="dashboard-nav-card-stat">{{ friend_requests.count }}</h3>
+      <h5 class="dashboard-nav-card-title">{% trans "Friend requests" %}</h5>
+    </a>
+  </div>
+  <div class="cell large-auto">
+<a class="dashboard-nav-card" title="Communities" href="#">
+  <i class="dashboard-nav-card-icon fa fa-users" aria-hidden="true"></i>
+  <h3 class="dashboard-nav-card-stat">{{ gamer_communities.count }}</h3>
+  <h5 class="dashboard-nav-card-title">{% trans "Communities" %}</h5>
+</a></div>
+  <div class="cell large-auto">
+<a class="dashboard-nav-card" title="Pending community applications" href="#">
+  <i class="dashboard-nav-card-icon fas fa-file-signature"></i>
+  <h3 class="dashboard-nav-card-stat">{{ pending_community_applications.count }}</h3>
+  <h5 class="dashboard-nav-card-title">{% trans "Applications" %}</h5>
+</a></div>
+
+  <div class="cell large-auto">
+<a class="dashboard-nav-card" title="Active games" href="#">
+  <i class="dashboard-nav-card-icon fas fa-dice-d20"></i>
+      <h3 class="dashboard-nav-card-stat">{{ gamer_active_games.count }}</h3>
+    <h5 class="dashboard-nav-card-title">{% trans "Games" %}</h5>
+</a></div>
+  <div class="cell large-auto">
+<a class="dashboard-nav-card" title="Pending game applications" href="#">
+  <i class="dashboard-nav-card-icon fas fa-dungeon"></i>
+  <h3 class="dashboard-nav-card-stat">{{ pending_game_applications.count }}</h3>
+  <h5 class="dashboard-nav-card-title">{% trans "Game applications" %}</h5>
+</a></div>
+</div>
+
+<h2>{% trans "What's next?" %}</h2>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+  <div class="card ">
+    <div class="card-divider">
+      <h5>{% trans "Upcoming game sessions" %}</h5>
+    </div>
+    <div class="card-section">
+      {% if not next_session %}
+      <p>{% trans "None scheduled" %}</p>
+      {% endif %}
+      <table class="hover stack">
+        <thead>
+          <tr>
+            <th>{% trans "Game" %}</th>
+            <th>{% trans "Date and Time" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in next_sessions %}
+          <tr>
+            <td>{{ session.title }}</td>
+            <td>{{ session.start|date:"Y-m-d H:M" }}</td>
+          </tr>
+          <a href="{% url 'games:calendar_detail' gamer=request.user.username %}">{% trans "See all" %}</a>
+          {% empty %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div></div>
+    <div class="cell medium-auto">
+  <div class="card">
+    <div class="card-divider">
+      <h5>{% trans "Game applicants" %}</h5>
+    </div>
+    <div class="card-section">
+      {% if not game_applicants %}
+      <p>{% trans "No pending applicants for your games." %}</p>
+      {% endif %}
+      <table class="stack hover">
+        <thead>
+          <tr>
+            <th>{% trans "Game" %}</th>
+            <th class="text-right">{% trans "Applicants" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for game in game_applicants %}
+          <tr>
+            <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
+            <td class="text-right"><a href="{% url 'games:game_applicant_list' gameid=game.slug %}">{{ game.get_pending_applicant_count }}</a></td>
+          </tr>
+          {% empty %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+
+  <div class="cell medium-auto">
+  <div class="card">
+    <div class="card-divider">
+      <h5>{% trans "Commmunity Applicants" %}</h5>
+    </div>
+    <div class="card-section">
+      {% if not community_applicant_counts %}
+      <p>{% trans "No pending community applications." %}</p>
+      {% endif %}
+      <table class="stack hover">
+        <thead>
+          <tr>
+            <th>{% trans "Community" %}</th>
+            <th class="text-right">{% trans "Applicants" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comm in community_applicant_counts %}
+          <tr>
+            <td><a href="{{ comm.get_absolute_url }}">{{ comm.name }}</a></td>
+            <td class="text-right"><a href="{% url 'gamer_profiles:community-applicant-list' community=comm.slug %}">{{ comm.get_pending_applicant_count }}</a></td>
+          </tr>
+          {% empty %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div></div>
+<h2>{% trans "Site wide statistics" %}</h2>
+<ul class="stats-list">
+  <li{% stat_class_data site_total_gamers %}>
+    {{ site_total_gamers }} <span class="stats-list-label">{% trans "Gamers" %}</span>
+  </li>
+  <li{% stat_class_data site_total_communities %}>
+    {{ site_total_communities }} <span class="stats-list-label">{% trans "Communities" %}</span>
+  </li>
+  <li{% stat_class_data site_total_discord_communities %}>
+    {{ site_total_discord_communities }} <span class="stats-list-label">{% trans "Linked Discord Communities" %}</span>
+  </li>
+  <li{% stat_class_data site_total_games %}>
+    {{ site_total_games }} <span class="stats-list-label">{% trans "All Games" %}</span>
+  </li>
+  <li{% stat_class_data site_total_active_games %}>
+    {{ site_total_active_games }} <span class="stats-list-label">{% trans "Active Games" %}</span>
+  </li>
+</ul>
+<h2>{% trans "RPG database stats" %}</h2>
+<ul class="stats-list">
+  <li>
+    {{ site_total_systems }} <span class="stats-list-label">{% trans "Game systems" %}</span>
+  </li>
+  <li>
+    {{ site_total_tracked_editions }} <span class="stats-list-label">{% trans "Game editions" %}</span>
+  </li>
+  <li>
+    {{ site_total_publishers }} <span class='stats-list-label'>{% trans "Publishers" %}</span>
+  </li>
+  <li>
+    {{ site_total_modules }} <span class="stats-list-label">{% trans "Modules/Adventures" %}</span>
+  </li>
+  <li>
+    {{ site_total_sourcebooks }} <span class="stats-list-label">{% trans "Sourcebooks" %}</span>
+  </li>
+</ul>
+{% endblock %}

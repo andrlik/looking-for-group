@@ -7,7 +7,6 @@ from django.db import IntegrityError, models, transaction
 from django.db.models import F
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
@@ -201,6 +200,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             raise AlreadyInCommunity
         return membership
 
+    def get_pending_applicant_count(self):
+        return CommunityApplication.objects.filter(status__in=['review', 'hold'], community=self).count()
+
     def remove_member(self, gamer):
         """
         Removes a gamer from the community, but not
@@ -327,13 +329,14 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         null=True,
         blank=True,
         help_text=_("A few words about your RPG experience. (Visible to GM.)"),
+        verbose_name=_("RPG Experience")
     )
     ttgame_experience = models.TextField(
         null=True,
         blank=True,
         help_text=_(
             "A few words about your non-RPG tabletop experience. (Visible to GM)"
-        ),
+        ), verbose_name=_('Tabletop game experience')
     )
     playstyle = models.TextField(
         max_length=500,
