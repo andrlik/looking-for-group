@@ -411,6 +411,9 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
             player_calendars.append(calendar)
         return player_calendars
 
+    def get_pending_applicant_count(self):
+        return GamePostingApplication.objects.filter(game=self, status='pending').count()
+
     def generate_player_events_from_master_event(self):
         events_generated = 0
         if self.event:

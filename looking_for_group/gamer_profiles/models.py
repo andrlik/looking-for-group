@@ -201,6 +201,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             raise AlreadyInCommunity
         return membership
 
+    def get_pending_applicant_count(self):
+        return CommunityApplication.objects.filter(status__in=['review', 'hold'], community=self).count()
+
     def remove_member(self, gamer):
         """
         Removes a gamer from the community, but not
