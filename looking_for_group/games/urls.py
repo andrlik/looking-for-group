@@ -102,6 +102,7 @@ urlpatterns = [
         name="game_apply",
     ),
     path("game/<slug:gameid>/applications/", view=views.GamePostingApplicantList.as_view(), name='game_applicant_list'),
+    path("applications/<slug:application>/approval/", view=views.GamePostingApplicationApproveReject.as_view(), name='game_application_approve_reject'),
     path(
         "applications/<slug:application>/",
         views.GamePostingApplicationDetailView.as_view(),

@@ -13,11 +13,11 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
+from notifications.signals import notify
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar
 from schedule.periods import Month
 from schedule.views import _api_occurrences
-from notifications.signals import notify
 
 from . import forms, models
 from .mixins import JSONResponseMixin
@@ -257,7 +257,7 @@ class GamePostingApplyView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = self.game
+        context["game"] = self.game
         return context
 
     def form_valid(self, form):
@@ -268,7 +268,13 @@ class GamePostingApplyView(
         application.game = self.game
         application.save()
         if application.status == "pending":
-            notify.send(self.request.user.gamerprofile, recipient=self.game.gm.user, verb="submitted application", action_object=application, target=self.game)
+            notify.send(
+                self.request.user.gamerprofile,
+                recipient=self.game.gm.user,
+                verb="submitted application",
+                action_object=application,
+                target=self.game,
+            )
         return HttpResponseRedirect(application.get_absolute_url())
 
 
@@ -289,7 +295,7 @@ class GamePostingApplicationDetailView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['application'].game
+        context["game"] = context["application"].game
         return context
 
 
@@ -336,7 +342,7 @@ class GamePostingApplicationUpdateView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['application'].game
+        context["game"] = context["application"].game
         return context
 
 
@@ -359,12 +365,17 @@ class GamePostingWithdrawApplication(
 
     def get_success_url(self):
         if self.object.status == "pending":
-            notify.send(self.request.user.gamerprofile, recipient=self.object.game.gm.user, verb="withdrew their application to", action_object=self.object.game)
+            notify.send(
+                self.request.user.gamerprofile,
+                recipient=self.object.game.gm.user,
+                verb="withdrew their application to",
+                action_object=self.object.game,
+            )
         return self.object.game.get_absolute_url()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['application'].game
+        context["game"] = context["application"].game
         return context
 
 
@@ -394,13 +405,16 @@ class GamePostingAppliedList(LoginRequiredMixin, SelectRelatedMixin, generic.Lis
         return context
 
 
-class GamePostingApplicantList(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.ListView):
+class GamePostingApplicantList(
+    LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.ListView
+):
     """
     GM view of gamers that have applied to game.
     """
+
     model = models.GamePostingApplication
-    select_related = ['gamer', 'game']
-    context_object_name = 'applicants'
+    select_related = ["gamer", "game"]
+    context_object_name = "applicants"
     permission_required = "game.can_edit_listing"
     template_name = "games/game_applicant_list.html"
 
@@ -413,14 +427,72 @@ class GamePostingApplicantList(LoginRequiredMixin, SelectRelatedMixin, Permissio
         return self.game
 
     def get_queryset(self):
-        return self.model.objects.filter(game=self.game, status='pending')
+        return self.model.objects.filter(game=self.game, status="pending")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['approved_applicants'] = self.model.objects.filter(game=self.game, status='approve').select_related('gamer').order_by('-modified')
-        context['rejected_applicants'] = self.model.objects.filter(game=self.game, status='deny').select_related('gamer').order_by('-modified')
-        context['game'] = self.game
+        context["approved_applicants"] = (
+            self.model.objects.filter(game=self.game, status="approve")
+            .select_related("gamer")
+            .order_by("-modified")
+        )
+        context["rejected_applicants"] = (
+            self.model.objects.filter(game=self.game, status="deny")
+            .select_related("gamer")
+            .order_by("-modified")
+        )
+        context["game"] = self.game
         return context
+
+
+class GamePostingApplicationApproveReject(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView
+):
+    """
+    Approve a game applicant.
+    """
+
+    model = models.GamePostingApplication
+    permission_required = "game.can_edit_listing"
+    fields = ["status"]
+    slug_url_kwarg = "application"
+
+    def get_permission_object(self):
+        return self.get_object().game
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() != "post":
+            return HttpResponseNotAllowed(["POST"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        if obj.status not in ["approve", "deny"]:
+            raise PermissionDenied  # Someone is manually editing form date to create shenanigans
+        if obj.status == "approve":
+            with transaction.atomic():
+                obj.save()
+                models.Player.objects.create(gamer=obj.gamer, game=obj.game)
+                messages.success(
+                    self.request,
+                    _(
+                        "You have approved the player application for {}".format(
+                            obj.gamer
+                        )
+                    ),
+                )
+        else:
+            obj.save()
+            notify.send(
+                obj,
+                recipient=obj.gamer.user,
+                verb="Your player application was not accepted",
+                action_object=obj,
+                target=obj.game,
+            )
+        return HttpResponseRedirect(
+            reverse_lazy("games:game_applicant_list", kwargs={"gameid": obj.game.slug})
+        )
 
 
 class GamePostingUpdateView(
@@ -472,7 +544,12 @@ class GamePostingUpdateView(
                 value_to_add = 1
                 if obj_to_save.players.count() > 0:
                     for player in obj_to_save.players.all():
-                        notify.send(obj_to_save.gm, recipient=player.user, verb="marked complete game", action_object=obj_to_save)
+                        notify.send(
+                            obj_to_save.gm,
+                            recipient=player.user,
+                            verb="marked complete game",
+                            action_object=obj_to_save,
+                        )
             else:
                 logger.debug(
                     "Game taken out of completed state. Decreasing count for game and players."
@@ -480,7 +557,12 @@ class GamePostingUpdateView(
                 value_to_add = -1
                 if obj_to_save.players.count() > 0:
                     for player in obj_to_save.players.all():
-                        notify.send(obj_to_save.gm, recipient=player.user, verb='marked incomplete game', action_object=obj_to_save)
+                        notify.send(
+                            obj_to_save.gm,
+                            recipient=player.user,
+                            verb="marked incomplete game",
+                            action_object=obj_to_save,
+                        )
             with transaction.atomic():
                 obj_to_save.save()
                 obj_to_save.gm.games_finished = F("games_finished") + value_to_add
@@ -522,7 +604,12 @@ class GamePostingDeleteView(
         obj = self.get_object()
         if obj.players.count() > 0:
             for player in obj.players:
-                notify.send(obj.gm, recipient=player.user, verb="deleted game", action_object=obj)
+                notify.send(
+                    obj.gm,
+                    recipient=player.user,
+                    verb="deleted game",
+                    action_object=obj,
+                )
         return super().delete(request, *args, **kwargs)
 
 
@@ -674,7 +761,7 @@ class GameSessionDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['session'].game
+        context["game"] = context["session"].game
         return context
 
 
@@ -702,7 +789,7 @@ class GameSessionUpdate(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["players"] = models.Player.objects.filter(game=context["session"].game)
-        context['game'] = context['session'].game
+        context["game"] = context["session"].game
         return context
 
     def get_form_kwargs(self):
@@ -732,12 +819,18 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
 
     def get_success_url(self):
         for player in self.object.players_expected.all():
-            notify.send(self.object.game.gm, recipient=player.gamer.user, verb="rescheduled session", action_object=self.object, target=self.object.scheduled_time)
+            notify.send(
+                self.object.game.gm,
+                recipient=player.gamer.user,
+                verb="rescheduled session",
+                action_object=self.object,
+                target=self.object.scheduled_time,
+            )
         return self.object.get_absolute_url()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['session'].game
+        context["game"] = context["session"].game
         return context
 
     def get_permission_object(self):
@@ -787,12 +880,17 @@ class GameSessionCancel(
     def get_success_url(self):
         obj = self.get_object()
         for player in obj.players_expected.all():
-            notify.send(self.object.game.gm, recipient=player.gamer.user, verb="cancelled session", action_object=self.object)
+            notify.send(
+                self.object.game.gm,
+                recipient=player.gamer.user,
+                verb="cancelled session",
+                action_object=self.object,
+            )
         return self.get_object().get_absolute_url()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['session'].game
+        context["game"] = context["session"].game
         return context
 
     def get_permission_object(self):
@@ -862,7 +960,7 @@ class GameSessionUncancel(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['session'].game
+        context["game"] = context["session"].game
         return context
 
     def form_invalid(self, form):
@@ -884,7 +982,12 @@ class GameSessionUncancel(
                 self.request, _("You have successfully uncanceled this session.")
             )
             for player in session.players_expected.all():
-                notify.send(session.game.gm, recipient=player.gamer.user, verb="uncancelled session", action_object=session)
+                notify.send(
+                    session.game.gm,
+                    recipient=player.gamer.user,
+                    verb="uncancelled session",
+                    action_object=session,
+                )
         return HttpResponseRedirect(session.get_absolute_url())
 
 
@@ -911,7 +1014,7 @@ class AdventureLogCreate(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["session"] = self.session
-        context['game'] = self.session.game
+        context["game"] = self.session.game
         return context
 
     def form_valid(self, form):
@@ -948,7 +1051,7 @@ class AdventureLogUpdate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['log'].session.game
+        context["game"] = context["log"].session.game
         return context
 
     def get_queryset(self):
@@ -987,7 +1090,7 @@ class AdventureLogDelete(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['log'].session.game
+        context["game"] = context["log"].session.game
         return context
 
     def get_success_url(self):
@@ -1207,8 +1310,8 @@ class CharacterCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = self.game
-        context['player'] = self.player
+        context["game"] = self.game
+        context["player"] = self.player
         return context
 
     def form_valid(self, form):
@@ -1275,7 +1378,12 @@ class CharacterRejectView(CharacterApproveView):
         return "rejected"
 
     def get_success_message_text(self, character):
-        notify.send(character.game.gm, recipient=character.player.gamer.user, verb="rejected character", action_object=character)
+        notify.send(
+            character.game.gm,
+            recipient=character.player.gamer.user,
+            verb="rejected character",
+            action_object=character,
+        )
         return _(
             "Character {} has been {}.".format(character.name, self.get_valid_status())
         )
@@ -1405,7 +1513,7 @@ class CharacterDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['character'].game
+        context["game"] = context["character"].game
         return context
 
     def get_permission_object(self):
@@ -1427,7 +1535,7 @@ class CharacterUpdate(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['character'].game
+        context["game"] = context["character"].game
         return context
 
 
@@ -1446,7 +1554,7 @@ class CharacterDelete(
     slug_field = "slug"
     slug_url_kwarg = "character"
     permission_required = "game.delete_character"
-    context_object_name = 'character'
+    context_object_name = "character"
     select_related = ["game", "player"]
 
     def get_success_url(self):
@@ -1454,5 +1562,5 @@ class CharacterDelete(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = context['character'].game
+        context["game"] = context["character"].game
         return context

@@ -474,6 +474,44 @@ class GamePostingAppliedListTest(AbstractViewTestCaseNoSignals):
             self.assertGoodView(self.view_name)
 
 
+class GamePostingApplicationApproveTest(AbstractViewTestCaseNoSignals):
+    """
+    Test approval reject view for player applications.
+    """
+    def setUp(self):
+        super().setUp()
+        self.application = models.GamePostingApplication.objects.create(game=self.gp2, gamer=self.gamer3, message="You up?", status="pending")
+        self.view_name = "games:game_application_approve_reject"
+        self.url_kwargs = {'application': self.application.slug}
+
+    def test_post_required(self):
+        self.get(self.view_name, **self.url_kwargs)
+        self.response_405()
+
+    def test_login_required(self):
+        self.post(self.view_name, data={'status': 'approve'}, **self.url_kwargs)
+        self.response_302()
+        assert 'accounts/login' in self.last_response['location']
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.post(self.view_name, data={'status': 'approve'}, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_approval(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data={'status': 'approve'}, **self.url_kwargs)
+            self.response_302()
+            assert models.GamePostingApplication.objects.get(id=self.application.id).status == "approve"
+            assert models.Player.objects.get(game=self.gp2, gamer=self.gamer3)
+
+    def test_authorized_reject(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data={'status': 'deny'}, **self.url_kwargs)
+            self.response_302()
+            assert models.GamePostingApplication.objects.get(id=self.application.id).status == "deny"
+
+
 class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
     def setUp(self):
         super().setUp()
