@@ -14,33 +14,33 @@
 <h2>{% trans "Your stats" %}</h2>
 <div class="grid-x grid-margin-x">
   <div class="cell large-auto">
-    <a class="dashboard-nav-card" title="Friend requests">
+    <a class="dashboard-nav-card" href="{% url 'gamer_profiles:my-gamer-friend-requests' %}" title="Friend requests">
       <i class="dashboard-nav-card-icon fas fa-handshake"></i>
       <h3 class="dashboard-nav-card-stat">{{ friend_requests.count }}</h3>
       <h5 class="dashboard-nav-card-title">{% trans "Friend requests" %}</h5>
     </a>
   </div>
   <div class="cell large-auto">
-<a class="dashboard-nav-card" title="Communities" href="#">
+<a class="dashboard-nav-card" title="Communities" href="{% url 'gamer_profiles:my-community-list %}">
   <i class="dashboard-nav-card-icon fa fa-users" aria-hidden="true"></i>
   <h3 class="dashboard-nav-card-stat">{{ gamer_communities.count }}</h3>
   <h5 class="dashboard-nav-card-title">{% trans "Communities" %}</h5>
 </a></div>
   <div class="cell large-auto">
-<a class="dashboard-nav-card" title="Pending community applications" href="#">
+<a class="dashboard-nav-card" title="Pending community applications" href="{% url 'gamer_profiles:my-application-list' %}">
   <i class="dashboard-nav-card-icon fas fa-file-signature"></i>
   <h3 class="dashboard-nav-card-stat">{{ pending_community_applications.count }}</h3>
   <h5 class="dashboard-nav-card-title">{% trans "Applications" %}</h5>
 </a></div>
 
   <div class="cell large-auto">
-<a class="dashboard-nav-card" title="Active games" href="#">
+<a class="dashboard-nav-card" title="Active games" href="{% url 'games:my_game_list' %}">
   <i class="dashboard-nav-card-icon fas fa-dice-d20"></i>
       <h3 class="dashboard-nav-card-stat">{{ gamer_active_games.count }}</h3>
     <h5 class="dashboard-nav-card-title">{% trans "Games" %}</h5>
 </a></div>
   <div class="cell large-auto">
-<a class="dashboard-nav-card" title="Pending game applications" href="#">
+<a class="dashboard-nav-card" title="Pending game applications" href="{% url 'games:my-game-applications' %}">
   <i class="dashboard-nav-card-icon fas fa-dungeon"></i>
   <h3 class="dashboard-nav-card-stat">{{ pending_game_applications.count }}</h3>
   <h5 class="dashboard-nav-card-title">{% trans "Game applications" %}</h5>
