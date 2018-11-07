@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
     <link rel="apple-touch-icon" href="{% static 'images/Icon@120.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/Icon@180.png' %}">
     <link rel="apple-touch-icon" sizes="152x152" href="{% static 'images/Icon@152.png' %}">
@@ -38,33 +38,33 @@
 
   <body>
 <div class="app-dashboard shrink-medium">
-  <div class="row expanded app-dashboard-top-nav-bar">
-    <div class="columns medium-2">
+  <div class="grid-x grid-margin-x app-dashboard-top-nav-bar">
+    <div class="cell logo-container medium-2">
       <button data-toggle="app-dashboard-sidebar" class="menu-icon hide-for-medium"></button>
       <a class="app-dashboard-logo" href="/">LFG Directory</a>
     </div>
-    <div class="columns show-for-medium">
+    <div class="cell medium-4 show-for-medium">
       <div class="app-dashboard-search-bar-container">
-        <input class="app-dashboard-search" type="search" placeholder="Search">
+        <input class="app-dashboard-search " type="search" placeholder="Search">
         <i class="app-dashboard-search-icon fa fa-search"></i>
       </div>
     </div>
-    <div class="columns shrink app-dashboard-top-bar-actions" data-equalizer data-equilize-on="medium" id="top-bar-actions">
-      <ul class="menu">
+        <div class="cell medium-auto large-offset-1 app-dashboard-top-bar-actions" data-equalizer data-equalize-on="medium" id="top-bar-actions">
+            <ul class="menu ">
       {% if request.user.is_authenticated %}
-        <li><a class="button hollow" href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}" data-equalizer-watch>{% trans "My Profile" %} {% avatar request.user 20 class="profile_circle_small" %}</a></li>
+        <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}">{% trans "My Profile" %} {% avatar request.user 20 class="profile_circle_small" %}</a></li>
         {% if request.user.is_superuser %}
-            <li><a class="button hollow" data-equalizer-watch href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
+            <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
         {% endif %}
-        <li><a href="{% url 'account_logout' %}" data-equalizer-watch class="button hollow">{% trans "Logout" %}</a></li>
+        <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'account_logout' %}" >{% trans "Logout" %}</a></li>
       {% else %}
-        <li><a class="button hollow" data-equalizer-watch href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
-        <li><a class="button hollow" data-equalizer-watch href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a></li>
-      {% endif %}
-        <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li>
+        <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+
+        {% endif %}
+        <!--   <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li> -->
       </ul>
-    </div>
-  </div>
+          </div>
+      </div>
 
   <div class="app-dashboard-body off-canvas-wrapper">
     <div id="app-dashboard-sidebar" class="app-dashboard-sidebar position-left off-canvas off-canvas-absolute reveal-for-medium" data-off-canvas>
@@ -85,7 +85,7 @@
       <div class="app-dashboard-sidebar-inner">
         <ul class="menu vertical">
           {% if request.user.is_authenticated %}
-          <li><a>
+          <li><a href="{% url 'dashboard' %}">
             <i class="large fa fa-tachometer-alt"></i><span class="app-dashboard-sidebar-text">Dashboard</span>
           </a></li>
           <li><a href="{% url 'notifications:unread' %}">

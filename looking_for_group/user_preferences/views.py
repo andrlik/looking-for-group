@@ -79,7 +79,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         gamer = self.request.user.gamerprofile
         context = super().get_context_data(**kwargs)
         context["friend_requests"] = social_models.GamerFriendRequest.objects.filter(
-            status="new"
+            status="new", recipient=gamer
         ).select_related("requestor")
         player_q = Q(
             id__in=[

@@ -78,7 +78,7 @@
   background-color: #d6e9c6;;
 }
 $app-dashboard-top-nav-color: #2c3840;
-$app-dashboard-top-nav-height: 55px;
+$app-dashboard-top-nav-height: 85px;
 
 .notify-container {
   vertical-align: top;
@@ -159,10 +159,15 @@ $app-dashboard-top-nav-height: 55px;
   }
 }
 
+.logo-container{
+  margin-left:15px;
+}
+
 .app-dashboard-logo {
   color: $white;
   text-transform: uppercase;
   font-weight: bold;
+  margin-left:15px;
 }
 
 .app-dashboard-search-bar-container {
@@ -192,8 +197,13 @@ $app-dashboard-top-nav-height: 55px;
 .app-dashboard-top-bar-actions {
   align-items: center;
   display: flex;
+  vertical-align: middle;
 
-  ul.menu li {
+  ul.menu{
+    display:inline-block;
+
+   li {
+    display:inline-block;
     a.button {
     margin-bottom: 0;
     margin-right: 2rem;
@@ -211,7 +221,7 @@ $app-dashboard-top-nav-height: 55px;
         padding: 0;
         margin: 0;
       }
-    }
+    }}
     }
   }
 
@@ -412,6 +422,7 @@ $app-dashboard-top-nav-height: 55px;
   padding: 2rem;
   position: relative;
   width: 100%;
+  margin:1rem;
 
   &:hover {
     .dashboard-nav-card-title,
@@ -424,6 +435,16 @@ $app-dashboard-top-nav-height: 55px;
       transition: all 0.2s ease;
     }
   }
+}
+
+.dashboard-nav-card-stat{
+  vertical-align: middle;
+  font-size:2rem;
+  color:$white;
+  font-weight:bold;
+  text-align:center;
+  width: 100%;
+  margin:auto;
 }
 
 .dashboard-nav-card-icon {
@@ -511,4 +532,9 @@ $app-dashboard-top-nav-height: 55px;
   margin-right: 1rem;
   margin-top: 0.6rem;
   max-width: none;
+}
+
+.card-divider {
+  background: get-color('primary');
+  color: $white;
 }
