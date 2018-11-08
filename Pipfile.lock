@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fa662c3c7dc50613249bcdb9fe7bffa2980eb8756ff30586f05d08d7f96a271e"
+            "sha256": "8b270c87491b543ca94884906edac0bcd3fa4b89b2ea8f23f463d5c36c3c2fbc"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -261,13 +261,6 @@
             "index": "pypi",
             "version": "==0.1.0"
         },
-        "django-haystack": {
-            "hashes": [
-                "sha256:8b54bcc926596765d0a3383d693bcdd76109c7abb6b2323b3984a39e3576028c"
-            ],
-            "index": "pypi",
-            "version": "==2.8.1"
-        },
         "django-ical": {
             "hashes": [
                 "sha256:80071168c7113d8ddf5907bd02bc32af017cf2bfb401d3e988d657819bce4756",
@@ -404,6 +397,26 @@
                 "sha256:7a4bd47eaf6596e1295ecb11361139febe29b084a87bf005bf899f9a42edc3c6"
             ],
             "version": "==0.14"
+        },
+        "elasticsearch": {
+            "hashes": [
+                "sha256:658380fd60bdaf746fef12958f0abc49063218ce93ee1ae4ca1fe6291c896433",
+                "sha256:ae91b089f2f2b5b3daa04297949e5f805ab12d187218cb587273f472656fd250"
+            ],
+            "index": "pypi",
+            "version": "==5.5.3"
+        },
+        "gdal": {
+            "hashes": [
+                "sha256:cffd44249335159402a3d3d39c74c3035b5da091d9097ee93cd99c7a03681b78"
+            ],
+            "index": "pypi",
+            "version": "==2.3.2"
+        },
+        "haystack": {
+            "editable": true,
+            "git": "https://github.com/django-haystack/django-haystack.git",
+            "ref": "4136ad76d9ca8b986107766f32a57c3b9136cff3"
         },
         "icalendar": {
             "hashes": [
@@ -1092,10 +1105,11 @@
         },
         "pytest-sugar": {
             "hashes": [
-                "sha256:ab8cc42faf121344a4e9b13f39a51257f26f410e416c52ea11078cdd00d98a2c"
+                "sha256:26cf8289fe10880cbbc130bd77398c4e6a8b936d8393b116a5c16121d95ab283",
+                "sha256:fcd87a74b2bce5386d244b49ad60549bfbc4602527797fac167da147983f58ab"
             ],
             "index": "pypi",
-            "version": "==0.9.1"
+            "version": "==0.9.2"
         },
         "pytest-xdist": {
             "hashes": [

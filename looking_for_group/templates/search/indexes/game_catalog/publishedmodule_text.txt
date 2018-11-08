@@ -1,0 +1,5 @@
+{{ object.title }}
+Publisher: {{ object.publisher.name }}
+Edition: {{ object.parent_game_edition.game.title }} ({{ object.parent_game_edition.name }})
+{{ object.publication_date|date:"F Y" }}
+Tagged with: {{ object.inherited_tag_names|join:", " }}

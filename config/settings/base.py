@@ -85,6 +85,7 @@ THIRD_PARTY_APPS = [
     "django_q",
     "schedule",
     'notifications',
+    "haystack",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",

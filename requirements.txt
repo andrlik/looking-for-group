@@ -24,7 +24,6 @@ django-environ==0.4.5
 django-extensions==2.1.3
 django-filter==2.0.0
 django-foundation-formtags==0.1.0
-django-haystack==2.8.1
 django-ical==1.5
 django-isbn-field==0.5.2
 django-libsass==0.7
@@ -44,6 +43,8 @@ django-treebeard==4.3
 django==2.1.3
 djangorestframework==3.9.0
 docutils==0.14
+elasticsearch==5.5.3
+gdal==2.3.2
 icalendar==4.0.3
 idna==2.7
 itypes==1.1.0
@@ -81,3 +82,4 @@ waitress==1.1.0
 wcwidth==0.1.7
 webencodings==0.5.1
 whitenoise==4.1
+-e git+https://github.com/django-haystack/django-haystack.git@4136ad76d9ca8b986107766f32a57c3b9136cff3#egg=haystack

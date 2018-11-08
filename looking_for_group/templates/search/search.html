@@ -1,0 +1,55 @@
+{% extends "search/base.html" %}
+{% load i18n foundation_formtags highlight %}
+{% block subtitle %}{% trans "Search" %} - {% endblock %}
+{% block mobileheader %}{% trans "Search" %}{% endblock %}
+{% block sectiontitle %}{% trans "Search" %}{% endblock %}
+{% block content %}
+<p>{% trans "Enter your search terms below" %}</p>
+<form method="get" action="">
+  {{ form|as_foundation }}
+  <input type="submit" class="button primary" value="{% trans 'Search' %}" />
+</form>
+{% if query %}
+<h2>{% trans "Results" %}</h2>
+{% for result in page.object_list %}
+<p>
+  <dl>
+    <dt>{% trans "Name" %}</dt>
+    <dd><a href="{{ result.object.get_absolute_url }}">{{ result.title }}</a></dd>
+    <dt>{% trans "Result type" %}</dt>
+    <dd>{{ result.result_type }}</dd>
+    <dt>{% trans "Matching result" %}</dt>
+    <dd>{% highlight result.text with request.query max_length 50 %}</dd>
+    <dt>
+  </dl>
+</p>
+{% empty %}
+<p>{% trans "No results found." %}</p>
+{% endfor %}
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'haystack_search' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'haystack_search' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'haystack_search' page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endif %}
+
+
+{% endblock %}
