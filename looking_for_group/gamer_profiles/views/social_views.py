@@ -1419,7 +1419,7 @@ class GamerProfileUpdateView(
     select_related = ["gamerprofile"]
     permission_required = "profile.edit_profile"
     template_name = "gamer_profiles/profile_update.html"
-    fields = ["display_name", "bio", "homepage_url"]
+    fields = ["display_name", "bio", "homepage_url", "timezone"]
 
     def get_success_url(self):
         return self.get_object().gamerprofile.get_absolute_url()

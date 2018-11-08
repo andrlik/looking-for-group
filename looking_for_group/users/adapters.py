@@ -10,8 +10,11 @@ class AccountAdapter(DefaultAccountAdapter):
 
     def save_user(self, request, user, form, commit=True):
         display_name = form.cleaned_data.get('display_name')
+        tz = form.cleaned_data.get('timezone')
         if display_name:
             user_field(user, "display_name", display_name)
+        if tz:
+            user_field(user, "timezone", tz)
         return super().save_user(request, user, form, commit)
 
 

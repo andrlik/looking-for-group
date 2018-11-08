@@ -1,3 +1,4 @@
+from pytz import common_timezones
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
@@ -5,6 +6,9 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from looking_for_group.game_catalog.utils import AbstractUUIDModel
+
+
+TIMEZONE_CHOICES = [(tz, tz) for tz in common_timezones]
 
 
 class User(TimeStampedModel, AbstractUUIDModel, AbstractUser):
@@ -28,6 +32,7 @@ class User(TimeStampedModel, AbstractUUIDModel, AbstractUser):
     homepage_url = models.URLField(
         _("Homepage"), blank=True, null=True, help_text=_("Your home on the web.")
     )
+    timezone = models.CharField(max_length=100, null=True, blank=True, choices=TIMEZONE_CHOICES, default='America/New_York', help_text=_("What time zone do you live in? (used to auto convert dates and times)"), verbose_name=_('Time zone'))
 
     @property
     def avatar_email(self):
