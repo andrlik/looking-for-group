@@ -2,6 +2,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 
 from . import models
+from ..game_catalog import models as cat_models
 
 
 class GamePostingForm(forms.ModelForm):
@@ -40,11 +41,27 @@ class GamePostingForm(forms.ModelForm):
             "end_date",
             "game_description",
             "communities",
+            "tags",
         ]
         widgets = {
-            'start_time': forms.widgets.DateTimeInput(attrs={'class': 'dtp' }),
+            'start_time': forms.widgets.DateTimeInput(attrs={'class': 'dtp'}),
             'end_date': forms.widgets.DateTimeInput(attrs={'class': 'dp'}),
         }
+
+
+class GameFilterForm(forms.Form):
+    """
+    A form for filtering game listings.
+    """
+    filter_present = forms.HiddenInput()
+    game_status = forms.ChoiceField(choices=[('', '')] + models.GAME_STATUS_CHOICES, initial='', required=False)
+    edition = forms.ChoiceField(choices=[('', '')] + [(e.slug, "{} ({})".format(e.game.title, e.name)) for e in cat_models.GameEdition.objects.all().select_related('game').order_by('game__title', 'name')], required=False)
+    system = forms.ChoiceField(choices=[('', '')] + [(s.pk, s.name) for s in cat_models.GameSystem.objects.all().order_by('name')], required=False)
+    module = forms.ChoiceField(choices=[('', '')] + [(m.pk, m.title) for m in cat_models.PublishedModule.objects.all().order_by('title')], required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['filter_present'] = 1
 
 
 class GameSessionForm(forms.ModelForm):

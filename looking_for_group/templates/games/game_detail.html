@@ -75,6 +75,10 @@
         <td>{% trans "Sessions Completed" %}</td>
         <td class="text-right">{{ game.sessions }}</td>
       </tr>
+      <tr>
+        <td>{% trans "Tagged with:" %}</td>
+        <td>{{ game.inherited_tag_names|join:", " }}</td>
+      </tr>
       {% endif %}
     </tbody>
   </table>

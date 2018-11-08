@@ -538,3 +538,15 @@ $app-dashboard-top-nav-height: 60px;
   background: get-color('primary');
   color: $white;
 }
+
+.inline_form {
+  display:inline-block;
+  vertical-align: bottom;
+
+  .grid-x .cell input[type="submit"]{
+    display:inline-block;
+    vertical-align:bottom;
+    postion:absolute;
+    bottom: 0px;
+  }
+}
