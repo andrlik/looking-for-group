@@ -1,5 +1,5 @@
 {% load static i18n compress avatar_tags notifications_tags %}
-{# cookielaw_tags #}
+{% load cookielaw_tags %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -131,7 +131,7 @@
       {% endblock %}
       <div class ="clearfix">
       <div class="medium-6 medium-offset-3 columns">
-          {# cookielaw_banner #}
+          {% cookielaw_banner %}
         {% if messages %}
           {% for message in messages %}
 

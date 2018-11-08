@@ -47,6 +47,8 @@
         {% else %}
         {% if "friend" in notification.verb %}
         {{ notification.actor }} {{ notification.verb }}
+        {% elif "settings" in notification.verb %}
+        {% blocktrans with aname=notification.actor verb=notification.verb %}{{ aname }} {{ verb }}: {% endblocktrans %}<a href="{% url 'user_preferences:setting-view' %}">{% trans "Settings" %}</a>. {% trans "You may also want to check out your profile info here:" %} <a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Profile" %}</a>
         {% else %}
         {% blocktrans with aname=notification.actor verb=notification.verb objname=notification.action_object tname=notification.target %}{{ aname }} {{ verb }} for {{ target }}{% endblocktrans %}
         {% endif %}

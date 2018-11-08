@@ -137,40 +137,57 @@
     </div>
   </div>
   </div></div>
-<h2>{% trans "Site wide statistics" %}</h2>
-<ul class="stats-list">
-  <li{% stat_class_data site_total_gamers %}>
-    {{ site_total_gamers }} <span class="stats-list-label">{% trans "Gamers" %}</span>
-  </li>
-  <li{% stat_class_data site_total_communities %}>
-    {{ site_total_communities }} <span class="stats-list-label">{% trans "Communities" %}</span>
-  </li>
-  <li{% stat_class_data site_total_discord_communities %}>
-    {{ site_total_discord_communities }} <span class="stats-list-label">{% trans "Linked Discord Communities" %}</span>
-  </li>
-  <li{% stat_class_data site_total_games %}>
-    {{ site_total_games }} <span class="stats-list-label">{% trans "All Games" %}</span>
-  </li>
-  <li{% stat_class_data site_total_active_games %}>
-    {{ site_total_active_games }} <span class="stats-list-label">{% trans "Active Games" %}</span>
-  </li>
-</ul>
-<h2>{% trans "RPG database stats" %}</h2>
-<ul class="stats-list">
-  <li>
-    {{ site_total_systems }} <span class="stats-list-label">{% trans "Game systems" %}</span>
-  </li>
-  <li>
-    {{ site_total_tracked_editions }} <span class="stats-list-label">{% trans "Game editions" %}</span>
-  </li>
-  <li>
-    {{ site_total_publishers }} <span class='stats-list-label'>{% trans "Publishers" %}</span>
-  </li>
-  <li>
-    {{ site_total_modules }} <span class="stats-list-label">{% trans "Modules/Adventures" %}</span>
-  </li>
-  <li>
-    {{ site_total_sourcebooks }} <span class="stats-list-label">{% trans "Sourcebooks" %}</span>
-  </li>
-</ul>
+  <h2>{% trans "Site stats" %}</h2>
+  <div class="grid-x grid-margin-x">
+    <div class="cell medium-auto">
+      <div class="card">
+        <div class="card-divider"><h5>{% trans "User stats" %}</h5></div>
+        <div class="card-section">
+
+          <ul class="stats-list">
+            <li{% stat_class_data site_total_gamers %}>
+              {{ site_total_gamers }} <span class="stats-list-label">{% trans "Gamers" %}</span>
+            </li>
+            <li{% stat_class_data site_total_communities %}>
+              {{ site_total_communities }} <span class="stats-list-label">{% trans "Communities" %}</span>
+            </li>
+            <li{% stat_class_data site_total_discord_communities %}>
+              {{ site_total_discord_communities }} <span class="stats-list-label">{% trans "Linked Discord Communities" %}</span>
+            </li>
+            <li{% stat_class_data site_total_games %}>
+              {{ site_total_games }} <span class="stats-list-label">{% trans "All Games" %}</span>
+            </li>
+            <li{% stat_class_data site_total_active_games %}>
+              {{ site_total_active_games }} <span class="stats-list-label">{% trans "Active Games" %}</span>
+            </li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell medium-auto">
+      <div class="card">
+        <div class="card-divider"><h5>{% trans "RPG DB Stats" %}</h5></div>
+        <div class="card-section">
+          <ul class="stats-list">
+            <li>
+              {{ site_total_systems }} <span class="stats-list-label">{% trans "Game systems" %}</span>
+            </li>
+            <li>
+              {{ site_total_tracked_editions }} <span class="stats-list-label">{% trans "Game editions" %}</span>
+            </li>
+            <li>
+              {{ site_total_publishers }} <span class='stats-list-label'>{% trans "Publishers" %}</span>
+            </li>
+            <li>
+              {{ site_total_modules }} <span class="stats-list-label">{% trans "Modules/Adventures" %}</span>
+            </li>
+            <li>
+              {{ site_total_sourcebooks }} <span class="stats-list-label">{% trans "Sourcebooks" %}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
