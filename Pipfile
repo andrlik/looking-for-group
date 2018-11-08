@@ -50,6 +50,7 @@ django-scheduler = "*"
 django-ical = "*"
 "psycopg2" = "*"
 django-notifications-hq = "*"
+django-haystack = "*"
 
 [dev-packages]
 sphinx = "*"
