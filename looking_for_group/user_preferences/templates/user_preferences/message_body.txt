@@ -1,0 +1,28 @@
+Hi {{ user }},
+
+You have requested to receive email digests of unread notifications on [LFG Directory](https://app.lfg.directory). Remember, you can always change this mode by changing your preferences [here](https://app.lfg.directory{% url 'user_preferences:setting-view' %}).
+
+Your notifications are below:
+
+{% for notification in notification %}
+{% if "community" in notification.verb %}
+{% if "reject" not in notification.verb %}
+{% include "user_preferences/community_notification.txt" %}
+{% else %}
+{% include "user_preferences/anon_community_notification.txt" %}
+{% endif %}
+{% else %}
+{% if "friend" in notification.verb %}
+{% include "user_preferences/friend_request_notification.txt" %}
+{% elif "settings" in notification.verb %}
+- {{ notification.actor }} {{ notification.verb }} [Settings](https://app.lfg.directory{% url 'user_preferences:setting-view' %}). You may also want to check out your profile info here: [Profile](https://app.lfg.direcotry{{ notification.actor.gamerprofile.get_absolute_url }}).
+{% else %}
+{% include "user_preferences/generic_notification.txt" %}
+{% endif %}
+{% endif %}
+{% empty %}
+{% endfor %}
+
+Thanks again for using our site. We love you!
+
+Your friends at LFG

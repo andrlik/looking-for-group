@@ -1,0 +1,1 @@
+- {{ notification.verb }} for {{ notification.target.name }}
