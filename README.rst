@@ -7,6 +7,8 @@ A Django powered tool for gamers to find other gaming groups.
      :target: https://github.com/pydanny/cookiecutter-django/
      :alt: Built with Cookiecutter Django
 
+  Indeed!
+
 
 :License: BSD
 
