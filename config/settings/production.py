@@ -1,4 +1,5 @@
 import logging
+import os
 from urllib.parse import urlparse
 
 from .base import *  # noqa
@@ -229,7 +230,7 @@ Q_CLUSTER['django_redis'] = 'default'  # noqa:F405
 
 # Haystack
 
-es = urlparse(env('SEARCHBOX_SSL_URL', 'http://127.0.0.1:9200/'))
+es = urlparse(os.environ.get('SEARCHBOX_SSL_URL', 'http://127.0.0.1:9200/'))
 
 es_port = es.port or 80
 
