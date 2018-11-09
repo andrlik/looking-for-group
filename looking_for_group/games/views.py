@@ -1,9 +1,11 @@
 import logging
+import urllib
 
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.db.models.query_utils import Q
@@ -20,6 +22,7 @@ from schedule.periods import Month
 from schedule.views import _api_occurrences
 
 from . import forms, models
+from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from .mixins import JSONResponseMixin
 from .utils import mkfirstOfmonth, mkLastOfMonth
 
@@ -42,6 +45,23 @@ class GamePostingListView(
     context_object_name = "game_list"
     paginate_by = 15
     paginate_orphans = 3
+    is_filtered = False
+    filter_game_status = None
+    filter_edition = None
+    filter_system = None
+    filter_module = None
+    filter_querystring = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_filterd'] = self.is_filtered
+        context['querystring'] = self.filter_querystring
+        if self.is_filtered:
+            filter_form = forms.GameFilterForm(initial={'game_status': self.filter_game_status, 'edition': self.filter_edition, 'system': self.filter_system, 'module': self.filter_module})
+        else:
+            filter_form = forms.GameFilterForm()
+        context['filter_form'] = filter_form
+        return context
 
     def get_queryset(self):
         gamer = self.request.user.gamerprofile
@@ -56,9 +76,51 @@ class GamePostingListView(
         q_isplayer = Q(id__in=game_player_ids)
         q_community = Q(communities__id__in=communities) & Q(privacy_level="community")
         q_public = Q(privacy_level="public")
-        return models.GamePosting.objects.exclude(
+        get_dict = self.request.GET.copy()
+        query_string_data = {}
+        queryset = models.GamePosting.objects.exclude(
             status__in=["cancel", "closed"]
         ).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
+        if get_dict.pop('filter_present', None):
+            self.filter_game_status = get_dict.pop('game_status', None)
+            edition = get_dict.pop('edition', None)
+            system = get_dict.pop('system', None)
+            print(system)
+            module = get_dict.pop('module', None)
+            if self.filter_game_status and self.filter_game_status[0] != '':
+                self.is_filtered = True
+                queryset = queryset.filter(status=self.filter_game_status[0])
+                query_string_data['game_status'] = self.filter_game_status[0]
+            if edition and edition[0] != "":
+                query_string_data['edition'] = edition[0]
+                self.is_filtered = True
+                try:
+                    ed = GameEdition.objects.get(slug=edition[0])
+                    queryset = queryset.filter(published_game=ed)
+                    self.filter_edition = ed.slug
+                except ObjectDoesNotExist:
+                    pass
+            if system and system[0] != "":
+                query_string_data['system'] = system[0]
+                self.is_filtered = True
+                try:
+                    sys_obj = GameSystem.objects.get(pk=system[0])
+                    queryset = queryset.filter(game_system=sys_obj)
+                    self.filter_system = sys_obj.pk
+                except ObjectDoesNotExist:
+                    pass
+            if module and module[0] != "":
+                query_string_data['module'] = module[0]
+                self.is_filtered = True
+                try:
+                    mod_obj = PublishedModule.objects.get(pk=module[0])
+                    queryset = queryset.filter(published_module=mod_obj)
+                    self.filter_module = mod_obj.pk
+                except ObjectDoesNotExist:
+                    pass
+            if query_string_data:
+                self.filter_querystring = urllib.parse.urlencode(query_string_data)
+        return queryset
 
 
 class MyGameList(

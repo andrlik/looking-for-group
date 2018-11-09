@@ -1,0 +1,5 @@
+{{ object.name }}
+Publisher: {{ object.publisher.name }}
+{{ object.description }}
+{{ object.release_date|date:"F Y" }}
+Tagged with: {{ object.inherited_tag_names|join:", " }}

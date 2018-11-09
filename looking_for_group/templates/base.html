@@ -46,8 +46,10 @@
     </div>
     <div class="cell medium-4 show-for-medium">
       <div class="app-dashboard-search-bar-container">
-        <input class="app-dashboard-search " type="search" placeholder="Search">
-        <i class="app-dashboard-search-icon fa fa-search"></i>
+        <form action="{% url 'haystack_search' %}" method="get">
+          <input name="q" id="id_q" class="app-dashboard-search " type="search" placeholder="Search">
+          <i class="app-dashboard-search-icon fa fa-search"></i>
+        </form>
       </div>
     </div>
     <div class="cell medium-auto large-offset-1 app-dashboard-top-bar-actions" data-equalizer data-equalize-on="medium" id="top-bar-actions">
@@ -195,7 +197,7 @@
       <!-- place project specific Javascript in this file -->
       {% compress js %}
       <script src="{% static 'js/project.js' %}"></script>
-      <!-- <script src="{# static 'cookielaw/js/cookielaw.js' #}"></script> -->
+      <script src="{% static 'cookielaw/js/cookielaw.js' %}"></script>
       {% endcompress %}
 
       <!-- Your stuff: Third-party javascript libraries go here -->

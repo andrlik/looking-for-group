@@ -10,7 +10,7 @@ from model_utils.models import TimeStampedModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
 from ..game_catalog.models import GameEdition, GameSystem, PublishedGame, PublishedModule
-from ..game_catalog.utils import AbstractUUIDWithSlugModel
+from ..game_catalog.utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from .utils import check_table_exists
 
@@ -236,13 +236,13 @@ GAME_FREQUENCY_CHOICES = (
 )
 
 
-GAME_STATUS_CHOICES = (
+GAME_STATUS_CHOICES = [
     ("open", _("Open")),
     ("started", _("In Progress")),
     ("replace", _("Seeking replacement player")),
     ("cancel", _("Cancelled")),
     ("closed", _("Completed")),
-)
+]
 
 GAME_PRIVACY_CHOICES = (
     ("private", _("Private Link (unlisted)")),
@@ -272,7 +272,7 @@ GAME_APPLICATION_STATUS_CHOICES = (
 
 
 # Create your models here.
-class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLinkedModel, models.Model):
     """
     A user-created game.
     """

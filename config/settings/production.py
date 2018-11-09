@@ -1,8 +1,8 @@
 import logging
+from urllib.parse import urlparse
 
 from .base import *  # noqa
 from .base import env
-
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -226,3 +226,20 @@ RAVEN_CONFIG = {
 # Your stuff...
 # ------------------------------------------------------------------------------
 Q_CLUSTER['django_redis'] = 'default'  # noqa:F405
+
+# Haystack
+
+es = urlparse(env('SEARCHBOX_SSL_URL', 'http://127.0.0.1:9200/'))
+
+es_port = es.port or 80
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticSearchEngine',
+        "URL": es.scheme + "://" + es.hostname + ":" + str(es_port),
+        'INDEX_NAME': 'documents',
+    },
+}
+
+if es.username:
+    HAYSTACK_CONNECTIONS['default']['KWARGS'] = {'http_auth': es.username + ":" + es.password}

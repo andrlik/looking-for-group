@@ -64,3 +64,15 @@ INTERNAL_IPS = ['127.0.0.1', '10.0.2.2']
 # Django Q
 # ------------------------------------------------------------------------------
 Q_CLUSTER['orm'] = 'default'  # noqa: F405
+
+# ------------------------------------------------------------------------------
+# Haystack
+# ------------------------------------------------------------------------------
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        "URL": "http://127.0.0.1:9200/",
+        'INDEX_NAME': 'haystack',
+    },
+}
