@@ -29,6 +29,14 @@
         <td>{{ game.get_game_type_display }}</td>
       </tr>
       <tr>
+        <td>{% trans "Adult Themes?" %}</td>
+        <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Content warning" %}</td>
+        <td>{{ game.content_warning }}</td>
+      </tr>
+      <tr>
         <td>{% trans "Starts" %}</td>
         <td>{{ game.start_time }}</td>
       </tr>

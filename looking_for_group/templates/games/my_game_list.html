@@ -1,13 +1,25 @@
 {% extends "games/base.html" %}
-{% load avatar_tags i18n humanize %}
+{% load avatar_tags foundation_formtags i18n humanize %}
 {% block subtitle %}{% trans "Your Games" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Your Games" %}{% endblock %}
 {% block mobileheader %}{% trans "Your Games" %}{% endblock %}
 {% block yourgamesactive %} class="is-active"{% endblock %}
 {% block content %}
-{% if not active_game_list %}
-<p>{% trans "No active games found." %}</p>
+
+{% if filter_form %}
+<form class="inline-form" action="" method="get">
+  <div class="grid-x grid-margin-x"><input type="hidden" id="id_filter_present" name="filter_present" value="1" /> <div class="cell medium-auto"> {% render_field filter_form.game_status %}</div><div class="cell medium-auto"> {% render_field filter_form.edition %}</div><div class="cell medium-auto"> {% render_field filter_form.system %}</div><div class="cell medium-auto"> {% render_field filter_form.module %}</div><div class="cell medium-auto"> <label for="id_submit_filter">&nbsp;</label> <input id="id_submit_filter" type="submit" class="button secondary" value="{% trans 'Filter results' %}" /></div></div></form>
 {% endif %}
+<ul class="tabs" data-tabs data-tabs-deep-link="true" data-tabs-deep-link-smudge="true" id="game-tabs">
+  <li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Active games" %} ({{ active_game_list.count }})</a></li>
+  <li class="tabs-title"><a href="#closed_panel" data-tabs-target="closed_panel">{% trans "Completed games" %} ({{ completed_game_list.count }})</a></li>
+</ul>
+
+<div class="tabs-content" data-tabs-content="game-tabs">
+  <div class="tabs-panel is-active" id="active_panel">
+    {% if not active_game_list %}
+    <p>{% trans "No active games found." %}</p>
+    {% endif %}
 <table class="stack hover">
   <thead>
     <tr>
@@ -54,6 +66,58 @@
     {% endfor %}
   </tbody>
 </table>
+  </div>
+  <div class="tabs-panel" id="closed_panel">
+    {% if not completed_games_list %}
+    <p>{% trans "No completed games were found." %}</p>
+    {% endif %}
+    <table class="stack hover">
+      <thead>
+        <tr>
+          <th>{% trans "Title" %}</th>
+          <th>{% trans "Type" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Start" %}</th>
+          <th>{% trans "End" %}</th>
+          <th>{% trans "GM" %}</th>
+          <th>{% trans "Frequency (if applicable)" %}</th>
+          <th class="text-right">{% trans "Session Length (hours)" %}</th>
+          <th>{% trans "Adult Themes?" %}</th>
+          <th>{% trans "Content Warning" %}</th>
+          <th>{% trans "Privacy Setting" %}</th>
+          <th>{% trans "Players (current/min/max)" %}</th>
+          <th>{% trans "Game Type" %}</th>
+          <th>{% trans "Game System" %}</th>
+          <th>{% trans "Module" %}</th>
+          <th>{% trans "Description" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for game in completed_games_list %}
+        <tr>
+          <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
+          <td>{{ game.get_game_type_display }}</td>
+          <td>{{ game.get_status_display }}</td>
+          <td>{{ game.start_time|default_if_none:"Pending" }}</td>
+          <td>{{ game.end_date|default_if_none:"N/A" }}</td>
+          <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 20 %} {{ game.gm }}</a></td>
+          <td>{{ game.game_get_display_game_frequency }} </td>
+          <td class="text-right">{{ game.session_length }}</td>
+          <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
+          <td>{{ game.content_warning }}</td>
+          <td>{{ game.get_privacy_level_display }}</td>
+          <td><strong>{{ game.players.count }}</strong>/{{ game.min_players }}/{{ game.max_players }}</td>
+          <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.title }}</a>{% else %}N/A{% endif %}</td>
+          <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}N/A{% endif %}</td>
+          <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
+          <td>{{ game_description_rendered|truncatewords_html:20 }}</td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% if is_paginated %}
 <nav aria-label="Pagination">
   <ul class="pagination">

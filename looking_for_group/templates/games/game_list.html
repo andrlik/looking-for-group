@@ -5,7 +5,9 @@
 {% block sectiontitle %}{% trans "Game listings" %}{% endblock %}
 {% block mobileheader %}{% trans "Game listings" %}{% endblock %}
 {% block content %}
-
+{% if not request.user.is_authenticated %}
+<p>{% trans "Showing only public games. You will need to" %} <a href="{% url 'accounts_login' %}">{% trans "login" %}</a> {% trans "to see any more." %}</p>
+{% endif %}
 {% if not game_list %}
 <p>{% trans "No games found." %}</p>
 {% endif %}
@@ -44,7 +46,7 @@
       <td>{{ game.get_status_display }}</td>
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
-      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 20  class="profile_circle_small" %} {{ game.gm.username }}</a></td>
+      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="profile_circle_small" %} {{ game.gm }}</a></td>
       <td>{{ game.game_get_display_game_frequency }} </td>
       <td class="text-right">{{ game.session_length }}</td>
       <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>

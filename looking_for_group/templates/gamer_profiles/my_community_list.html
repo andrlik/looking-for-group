@@ -1,19 +1,62 @@
 {% extends "gamer_profiles/base.html" %}
-{% load i18n humanize social_tags %}
+{% load avatar_tags i18n humanize social_tags %}
 {% block subtitle %}{% trans "My Communities" %} - {% endblock %}
 {% block sectiontitle %}{% trans "My Communities" %}{% endblock %}
 {% block mobileheader %}{% trans "My Communities" %}{% endblock %}
 {% block yourcomactive %} class="is-active"{% endblock %}
 {% block content %}
-<ul>
+<br />
+{% if not object_list %}
+<p>{% trans "No communities found." %}</p>
+{% endif %}
+<table class="stack hover">
+  <thead>
+    <th>{% trans "Name" %}</th>
+    <th class="text-right">{% trans "Members" %}</th>
+    <th>{% trans "Owner" %}</th>
+    <th>{% trans "Public/Private" %}</th>
+    <th>{% trans "Description" %}</th>
+    <th class="text-right">{% trans "Games" %}</th>
+    <th>{% trans "Your status" %}</th>
+    <th></th>
+  </thead>
+  <tbody>
   {% for membership in object_list %}
-  <li>
-<h2><a href="{{ membership.community.get_absolute_url }}">{{ membership.community.name }}</a>{% community_role_flag membership.community %}</h2>
-<span class="meta">{% if membership.community.private %}<span class="privacy-flag">{% trans "Private" %}</span>{% endif %} {% blocktrans count counter=membership.community.member_count %}1 Member{% plural %} {{ counter|humanize }} Members{% endblocktrans %}</span>
-<p>{{ membership.community.description_rendered|truncatewords_html:100|safe }}</p>
-  </li>
-{% empty %}
-<p>{% trans "You do not belong to any communities yet." %}</p>
-{% endfor %}
-</ul>
+    <tr>
+      <td><a href="{{ membership.community.get_absolute_url }}">{{ membership.community.name }}</a></td>
+      <td class="text-right">{{ membership.community.member_count }}</td>
+      <td>{% avatar membership.community.owner.user 30 %} <a href="{{ membership.community.owner.get_absolute_url }}">{{ membership.community.owner }}</a></td>
+      <td>{% if membership.community.private %}{% trans "Private" %}{% else %}{% trans "Public" %}{% endif %}</td>
+      <td>{{ membership.community.description_rendered|truncatewords_html:100|safe }}</td>
+      <td class="text-right">{{ membercommunity.gameposting_set.count }}</td>
+      <td>{% community_role_flag membership.community %}</td>
+      <td><a href="{% url 'gamer_profiles:community-leave' community=membership.community.slug %}" class="button alert">{% trans "Leave" %}</a></td>
+    </tr>
+  {% empty %}
+  {% endfor %}
+  </tbody>
+</table>
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'gamer_profiles:my-community-list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'gamer_profiles:my-community-list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'gamer_profiles:my-community-list' page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}

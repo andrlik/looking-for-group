@@ -550,3 +550,25 @@ $app-dashboard-top-nav-height: 60px;
     bottom: 0px;
   }
 }
+
+
+h1 span.membership {
+  vertical-align: middle;
+}
+
+ul.search-result-list {
+  list-style-type: none;
+  border-radius:$card-border-radius;
+  li {
+    padding:5px;
+    margin-left:35px;
+  }
+}
+
+.li-alternate {
+  background-color:#e7f8fd;
+}
+
+.title-bar{
+  border-radius: 5px;
+}

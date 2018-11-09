@@ -12,8 +12,9 @@
 </form>
 {% if query %}
 <h2>{% trans "Results" %}</h2>
+<ul class="search-result-list" >
 {% for result in page.object_list %}
-<ul class="search-result-list">
+  <li class="{% cycle '' 'li-alternate' %}">
   <dl>
     <dt>{% trans "Name" %}</dt>
     <dd><a href="{{ result.object.get_absolute_url }}">{{ result.title }}</a></dd>
@@ -21,12 +22,12 @@
     <dd>{{ result.verbose_name }}</dd>
     <dt>{% trans "Summary" %}</dt>
     <dd>{{ result.text|markdown_filter|safe|truncatewords_html:50 }}</dd>
-    <dt>
   </dl>
-</ul>
+  </li>
 {% empty %}
 <p>{% trans "No results found." %}</p>
 {% endfor %}
+    </ul>
 {% if page.has_previous or page.has_next %}
 <nav aria-label="Pagination">
   <ul class="pagination">

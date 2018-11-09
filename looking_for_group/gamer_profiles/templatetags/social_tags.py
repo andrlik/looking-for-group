@@ -23,7 +23,10 @@ def community_role_flag(context, community):
     except models.NotInCommunity:
         role = None
     if role:
-        return format_html("<span class='membership'>{}</span>", role)
+        extra_class = "secondary"
+        if role == "Admin":
+            extra_class = "primary"
+        return format_html("<span class='membership label {}'>{}</span>", extra_class, role)
     else:
         if community.private:
             return format_html(

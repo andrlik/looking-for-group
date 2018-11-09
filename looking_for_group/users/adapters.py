@@ -2,6 +2,7 @@ from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.utils import user_field
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
+from django.urls import reverse_lazy
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -16,6 +17,9 @@ class AccountAdapter(DefaultAccountAdapter):
         if tz:
             user_field(user, "timezone", tz)
         return super().save_user(request, user, form, commit)
+
+    def get_login_redirect_url(self, request):
+        return reverse_lazy('dashboard')
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):

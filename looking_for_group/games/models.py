@@ -298,13 +298,13 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
         GamerProfile, null=True, on_delete=models.CASCADE, related_name="gmed_games"
     )
     min_players = models.PositiveIntegerField(
-        default=3,
+        default=1,
         help_text=_(
             "Minimum number of players needed to schedule this game, excluding the GM."
         ),
     )
     max_players = models.PositiveIntegerField(
-        default=1,
+        default=3,
         help_text=_("Max number of players that will be in the game, excluding GM."),
     )
     adult_themes = models.BooleanField(
@@ -518,6 +518,8 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
 
     class Meta:
         ordering = ["status", "start_time", "-end_date", "-created"]
+        verbose_name = "Game"
+        verbose_name_plural = "Games"
 
 
 class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
