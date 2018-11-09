@@ -133,7 +133,9 @@
       {% endblock %}
       <div class ="clearfix">
       <div class="medium-6 medium-offset-3 columns">
+{% block cookielaw %}
           {% cookielaw_banner %}
+{% endblock %}
         {% if messages %}
           {% for message in messages %}
 
