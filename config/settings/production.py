@@ -236,7 +236,7 @@ es_port = es.port or 80
 
 HAYSTACK_CONNECTIONS = {
     'default': {
-        "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticSearchEngine',
+        "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
         "URL": es.scheme + "://" + es.hostname + ":" + str(es_port),
         'INDEX_NAME': 'documents',
     },
