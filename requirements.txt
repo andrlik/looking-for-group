@@ -27,6 +27,7 @@ django-foundation-formtags==0.1.0
 django-ical==1.5
 django-isbn-field==0.5.2
 django-libsass==0.7
+django-markdown-filter==0.0.1
 django-model-utils==3.1.2
 django-notifications-hq==1.5.0
 django-picklefield==1.1.0
@@ -51,6 +52,7 @@ jinja2==2.10
 jmespath==0.9.3
 jsonfield==2.0.2
 libsass==0.15.1
+markdown2==2.3.6
 markdown==3.0.1
 markupsafe==1.1.0
 newrelic==4.4.1.104
@@ -81,4 +83,4 @@ waitress==1.1.0
 wcwidth==0.1.7
 webencodings==0.5.1
 whitenoise==4.1
--e git+https://github.com/django-haystack/django-haystack.git@4136ad76d9ca8b986107766f32a57c3b9136cff3#egg=haystack
+-e git+https://github.com/andrlik/django-haystack.git@f9a8e88c873d7a0494c356528183ccdf13a8d7cf#egg=haystack

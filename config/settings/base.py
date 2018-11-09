@@ -86,6 +86,7 @@ THIRD_PARTY_APPS = [
     "schedule",
     'notifications',
     "haystack",
+    "markdown_filter",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -316,3 +317,10 @@ Q_CLUSTER = {"name": "looking_for_group"}
 # ------------------------------------------------------------------------------
 
 DJANGO_NOTIFICATIONS_CONFIG = {'USE_JSONFIELD': True}
+
+MARKDOWN_FILTER_WHITELIST_TAGS = [
+'a',
+'p',
+'code',
+'h1',
+]

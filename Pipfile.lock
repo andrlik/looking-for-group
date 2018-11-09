@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4a1b214e60f30751b5188c37d89c1f340953a9fe04499f3abfe1630fb2d92cf8"
+            "sha256": "a3b5654e5e5e3e2637449791b6a903efd55ce80738ab31776bc5115761b32f26"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -283,6 +283,13 @@
             "index": "pypi",
             "version": "==0.7"
         },
+        "django-markdown-filter": {
+            "hashes": [
+                "sha256:5428cc0de796a2999ec61433d5538aa799dba1a016730aeb1c82bf6d8b98f099"
+            ],
+            "index": "pypi",
+            "version": "==0.0.1"
+        },
         "django-model-utils": {
             "hashes": [
                 "sha256:2c057f3bf0859aba27f04389f0cedd2d48f8c9b3848acb86fd9970794e58f477",
@@ -408,8 +415,8 @@
         },
         "haystack": {
             "editable": true,
-            "git": "https://github.com/django-haystack/django-haystack.git",
-            "ref": "4136ad76d9ca8b986107766f32a57c3b9136cff3"
+            "git": "https://github.com/andrlik/django-haystack.git",
+            "ref": "f9a8e88c873d7a0494c356528183ccdf13a8d7cf"
         },
         "icalendar": {
             "hashes": [
@@ -477,6 +484,12 @@
             ],
             "index": "pypi",
             "version": "==3.0.1"
+        },
+        "markdown2": {
+            "hashes": [
+                "sha256:08a124043aa0ad36ba2136239547d5011a2b770278abb11a5609611e0040ea05"
+            ],
+            "version": "==2.3.6"
         },
         "markupsafe": {
             "hashes": [
