@@ -230,17 +230,17 @@ Q_CLUSTER['django_redis'] = 'default'  # noqa:F405
 
 # Haystack
 
-es = urlparse(os.environ.get('SEARCHBOX_SSL_URL', 'http://127.0.0.1:9200/'))
+# es = urlparse(os.environ.get('SEARCHBOX_SSL_URL', 'http://127.0.0.1:9200/'))
 
-es_port = es.port or 80
+# es_port = es.port or 80
 
 HAYSTACK_CONNECTIONS = {
     'default': {
         "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-        "URL": es.scheme + "://" + es.hostname + ":" + str(es_port),
+        "URL": os.environ.get('SEARCHBOX_SSL_URL'),
         'INDEX_NAME': 'documents',
     },
 }
 
-if es.username:
-    HAYSTACK_CONNECTIONS['default']['KWARGS'] = {'http_auth': es.username + ":" + es.password}
+# if es.username:
+#     HAYSTACK_CONNECTIONS['default']['KWARGS'] = {'http_auth': es.username + ":" + es.password}
