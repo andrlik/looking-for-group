@@ -27,7 +27,7 @@
 {% empty %}
 <p>{% trans "No results found." %}</p>
 {% endfor %}
-{% if is_paginated %}
+{% if page.has_previous or page.has_next %}
 <nav aria-label="Pagination">
   <ul class="pagination">
     {% if not page_obj.has_previous %}
