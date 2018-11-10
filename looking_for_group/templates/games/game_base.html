@@ -7,6 +7,7 @@
 <li{% block gameactive %}{% endblock %}>{% block gamedetaillink %}<a href="{{ game.get_absolute_url }}">{% trans "Game details" %}</a>{% endblock %}</li>
 {% if is_member %}
 <li{% block sessionactive %}{% endblock %}><a href="{% url 'games:session_list' gameid=game.slug %}">{% trans "View sessions" %}</a></li>
+<li{% block charactive %}{% endblock %}><a href="{% url 'games:character_game_list' gameid=game.slug %}">{% trans "View characters" %}</a></li>
 {% endif %}
 {% if is_gm %}
 <li{% block editactive %}{% endblock %}><a href="{% url 'games:game_edit' gameid=game.slug %}">{% trans "Edit game" %}</a></li>

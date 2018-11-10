@@ -1,42 +1,42 @@
 {% extends "games/game_base.html" %}
 {% load i18n avatar_tags %}
-{% block subtitle %}{% blocktrans with gametitle=game.title %}Sessions for {{ gametitle }}{% endblocktrans %} - {% endblock %}
+{% block subtitle %}{% blocktrans with gametitle=game.title %}Characters for {{ gametitle }}{% endblocktrans %} - {% endblock %}
 {% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{{ game.title }} {% trans "characters" %}{% endblock %}
 {% block mobileheader %}{{ game.title }} {% trans "characters" %}{% endblock %}
 {% block content %}
-<p><\p>
+<p></p>
 {% if not character_list %}
-<p>{% trans "No characters found." %}<\p>
+<p>{% trans "No characters found." %}</p>
 {% endif %}
 <table class="scroll hover">
-<thead>
-<tr>
-<th>{% trans "Player" %}<\th>
-<th>{% trans "Character" %}<\th>
-<th>{% trans "Description" %}<\th>
-<th>{% trans "Status" %}<\th>
-{% if request.user == character.game.gm.user %}
-<th><\th>
-<th><\th>
-{% endif %}
-<\tr>
-<\thead>
-<tbody>
-{% for character in character_list %}
-<tr>
-<td>{% avatar character.player.gamer.user 30 %}<a href="{{ character.player.gamer.get_absolute_url }}">{{ character.player.gamer }}<\a><\td>
-<td><a href="{{ character.get_absolute_url }}">{{ character.name }}<\a><\td>
-<td>{{ character.description }}<\td>
-<td>{{ character.get_status_display }}<\td>
-{% if request.user == character.game.gm.user %}
-<td><\td>
-<td><\td>
-{% endif %}
-<\tr>
-{% empty %}
-{% endfor %}
-<\tbody>
-
-<\table>
+  <thead>
+    <tr>
+      <th>{% trans "Player" %}</th>
+      <th>{% trans "Character" %}</th>
+      <th>{% trans "Description" %}</th>
+      <th>{% trans "Status" %}</th>
+      {% if request.user == game.gm.user %}
+      <th></th>
+      <th></th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for character in character_list %}
+    <tr>
+      <td>{% avatar character.player.gamer.user 30 %}<a href="{{ character.player.gamer.get_absolute_url }}">{{ character.player.gamer }}</a></td>
+      <td><a href="{{ character.get_absolute_url }}">{{ character.name }}</a></td>
+      <td>{{ character.description }}</td>
+      <td>{{ character.get_status_display }}</td>
+      {% if request.user == character.game.gm.user %}
+      <td><form action="{% url 'games:character_approve' character=character.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="approved" /><input type="submit" class="button success" value="{% trans 'Approve' %}" /></form></td>
+      <td><form action="{% url 'games:character_reject' chracter=chracter.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="rejected" /><input type="submit" class="button alert" value="{% trans 'Reject' %}" /></form></td>
+      <td></td>
+      {% endif %}
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
