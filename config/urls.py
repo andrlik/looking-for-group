@@ -6,7 +6,7 @@ from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
 
-from looking_for_group.user_preferences.views import Dashboard
+from looking_for_group.user_preferences.views import Dashboard, PrivacyView, TermsView
 
 # from star_ratings import urls as rating_urls
 from . import rating_url_override
@@ -15,6 +15,8 @@ from .api_routers import router
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path("dashboard/", view=Dashboard.as_view(), name="dashboard"),
+    path("privacy/", view=PrivacyView.as_view(), name="privacy"),
+    path("terms/", view=TermsView.as_view(), name='terms'),
     path(
         "about/", TemplateView.as_view(template_name="pages/about.html"), name="about"
     ),

@@ -1,0 +1,7 @@
+{{ object.description }}
+
+Community owner: {{ object.owner }}
+
+Members: {{ object.member_count }}
+
+{{ object.name }}

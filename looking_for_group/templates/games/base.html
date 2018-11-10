@@ -15,6 +15,7 @@
         {% block innernavmenu %}
         <li{% block allgamesactive %}{% endblock %}><a href="{% url 'games:game_list' %}">{% trans "All visible games" %}</a></li>
         <li{% block yourgamesactive %}{% endblock %}><a href="{% url 'games:my_game_list' %}">{% trans "Your games" %}</a></li>
+        <li{% block charactive %}{% endblock %}><a href="{% url 'games:character_gamer_list' %}">{% trans "Your characters" %}</a></li>
         <li{% block appactive %}{% endblock %}><a href="{% url 'games:my-game-applications' %}">{% trans "Your game applications" %}</a></li>
         <li{% block createactive %}{% endblock %}><a href="{% url 'games:game_create' %}">{% trans "Create new game" %}</a></li>
         {% endblock %}

@@ -1,7 +1,13 @@
 {% extends "games/calendar_base.html" %}
 {% load i18n %}
 {% block subtitle %}{% trans "Calendar Details" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Your calendar" %}{% endblock %}
+{% block mobileheader %}{% trans "Your calendar" %}{% endblock %}
+{% block innernavmenu %}
+<li{% include "is_active_definition.html" %}><a href="{% url 'games:calendar_detail' gamer=request.user.username %}">{% trans "Your calendar" %}</a></li>
+<li><a href="{% url 'games:calendar_ical' gamer=request.user.gamerprofile.pk %}">{% trans "iCal feed" %}</a></li>
+{% endblock %}
 {% block content %}
-<h1>{% trans "Your calendar" %}</h1>
+<p>{% trans "Your scheduled game events appear below." %}</p>
 <div id="calendar"></div>
 {% endblock %}

@@ -6,7 +6,7 @@
 {% block mobileheader %}{% trans "Edit" %} {{ system.name }}{% endblock %}
 {% block content %}
 <p>{% blocktrans %}You may enter your changes below.{% endblocktrans %}</p>
-<form data-abide novalidate action="" method="post">
+<form enctype="multipart/form-data" data-abide novalidate action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
   <div class="clearfix">

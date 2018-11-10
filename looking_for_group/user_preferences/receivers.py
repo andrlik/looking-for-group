@@ -1,7 +1,10 @@
 from django.contrib.auth.models import Group
+from django.db import models as django_models
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
+from django_q.tasks import async_task
+from haystack import signals
 from notifications.signals import notify
 
 from ..discord import models as discord_models
@@ -86,3 +89,22 @@ def notify_admins_on_discord_server_change(sender, instance, action, reverse, mo
             for admin in admins:
                 for server in servers:
                     notify.send(instance.community, recipient=admin.gamer.user, verb=verb, action_object=server, target=instance.community)
+
+
+class QueuedSignalProcessor(signals.BaseSignalProcessor):
+    """
+    Reindexing handles in a queue.
+    """
+    def setup(self):
+        django_models.signals.post_save.connect(self.enqueue_save)
+        django_models.signals.post_delete.connect(self.enqueue_delete)
+
+    def teardown(self):
+        django_models.signals.post_save.disconnect(self.enqueue_save)
+        django_models.signals.post_delete.disconnect(self.enqueue_delete)
+
+    def enqueue_save(self, sender, instance, **kwargs):
+        async_task(self.handle_save)
+
+    def enqueue_delete(self, sender, instance, **kwargs):
+        async_task(self.handle_delete)

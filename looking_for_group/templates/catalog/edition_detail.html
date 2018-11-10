@@ -50,7 +50,7 @@
     {% if edition.sourcebooks.count == 0 %}
     <p>{% blocktrans %}We don't have any sourcebook information on file yet for this edition.{% endblocktrans %}</p>
     {% else %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Title" %}</th>
@@ -82,7 +82,7 @@
     {% if edition.publishedmodule_set.count == 0 %}
     <p>{% blocktrans %}We don't have any modules on file yet for this edition.{% endblocktrans %}</p>
     {% else %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Title" %}</th>

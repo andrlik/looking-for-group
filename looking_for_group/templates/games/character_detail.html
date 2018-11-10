@@ -28,7 +28,7 @@
   {% endif %}
   {% if can_delete_character %}
   {% if status != 'inactive' %}
-  <form action="{% url 'games:character_inactivate' character=character.slug %}" method="post">
+  <form enctype="multipart/form-data" action="{% url 'games:character_inactivate' character=character.slug %}" method="post">
     {% csrf_token %}
     <input type="hidden" name="status" id="id_status" value="inactive" />
     <input type="submit" class="button secondary float-center" value="{% trans 'Make inactive' %}" />

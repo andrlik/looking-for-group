@@ -1,5 +1,9 @@
-{{ object.game.title }} ({{ object.name }})
-Publisher: {{ object.publisher.name }}
-{{ object.release_date|date:"F Y" }}
 {{ object.description }}
+
+Publisher: {{ object.publisher.name }}
+
+{{ object.release_date|date:"F Y" }}
+
 Tagged with: {{ object.inherited_tag_names|join:", " }}
+
+{{ object.game.title }} ({{ object.name }})

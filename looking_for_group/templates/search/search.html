@@ -1,5 +1,6 @@
 {% extends "search/base.html" %}
-{% load i18n foundation_formtags highlight %}
+{% load i18n foundation_formtags %}
+{% load markdown_filter %}
 {% block subtitle %}{% trans "Search" %} - {% endblock %}
 {% block mobileheader %}{% trans "Search" %}{% endblock %}
 {% block sectiontitle %}{% trans "Search" %}{% endblock %}
@@ -11,22 +12,23 @@
 </form>
 {% if query %}
 <h2>{% trans "Results" %}</h2>
+<ul class="search-result-list" >
 {% for result in page.object_list %}
-<p>
+  <li class="{% cycle '' 'li-alternate' %}">
   <dl>
     <dt>{% trans "Name" %}</dt>
     <dd><a href="{{ result.object.get_absolute_url }}">{{ result.title }}</a></dd>
-    <dt>{% trans "Result type" %}</dt>
-    <dd>{{ result.result_type }}</dd>
-    <dt>{% trans "Matching result" %}</dt>
-    <dd>{% highlight result.text with request.query max_length 50 %}</dd>
-    <dt>
+    <dt>{% trans "Type" %}</dt>
+    <dd>{{ result.verbose_name }}</dd>
+    <dt>{% trans "Summary" %}</dt>
+    <dd>{{ result.text|markdown_filter|safe|truncatewords_html:50 }}</dd>
   </dl>
-</p>
+  </li>
 {% empty %}
 <p>{% trans "No results found." %}</p>
 {% endfor %}
-{% if is_paginated %}
+    </ul>
+{% if page.has_previous or page.has_next %}
 <nav aria-label="Pagination">
   <ul class="pagination">
     {% if not page_obj.has_previous %}

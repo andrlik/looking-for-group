@@ -86,6 +86,7 @@ THIRD_PARTY_APPS = [
     "schedule",
     'notifications',
     "haystack",
+    "markdown_filter",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -127,7 +128,7 @@ SOCIALACCOUNT_ADAPTER = "looking_for_group.users.adapters.SocialAccountAdapter"
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "users:redirect"
+LOGIN_REDIRECT_URL = "/dashboard/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "account_login"
 
@@ -316,3 +317,10 @@ Q_CLUSTER = {"name": "looking_for_group"}
 # ------------------------------------------------------------------------------
 
 DJANGO_NOTIFICATIONS_CONFIG = {'USE_JSONFIELD': True}
+
+MARKDOWN_FILTER_WHITELIST_TAGS = [
+'a',
+'p',
+'code',
+'h1',
+]

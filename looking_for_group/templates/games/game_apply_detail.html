@@ -10,7 +10,7 @@
   <dt>{% trans "Updated" %}</dt>
   <dd>{{ application.modified }}</dd>
   <dt>{% trans "Status" %}</dt>
-  <dd>{{ application.get_status_display }}</dd>
+  <dd><span class="label {% if appliciation.status == 'new' %}secondary{% elif application.status == 'approve' %}success{% elif application.status == 'deny' %}alert{% endif %}">{{ application.get_status_display }}</span></dd>
   {% if application.game.gm.user == request.user %}
   {# Add in some gamer reputation stats here #}
   {% endif %}

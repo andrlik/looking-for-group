@@ -14,7 +14,7 @@
 <div class="tabs-content" data-tabs-content="community-application-tabs">
   <div class="tabs-panel is-active" id="pending_panel">
     {% if applicants %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Applicant" %}</th>
@@ -31,7 +31,7 @@
         <tr>
           <td>{% avatar application.gamer.user 30 class="profile_circle_small" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
           <td>{{ application.message }}</td>
-          <td>{{ application.get_status_display }}</td>
+          <td><span class="label primary">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
           <td><form action="{% url 'gamer_profiles:community-applicant-approve' community=community.slug application=application.id %}" method="post">{% csrf_token %}<input type="submit" class="button success" value="{% trans 'Approve' %}" /></form></td>
@@ -47,7 +47,7 @@
   </div>
   <div class="tabs-panel" id="approved_panel">
     {% if approved_applicants %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Applicant" %}</th>
@@ -62,7 +62,7 @@
         <tr>
           <td>{% avatar application.gamer.user 30 class="profile_circle_small" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
           <td>{{ application.message }}</td>
-          <td>{{ application.get_status_display }}</td>
+          <td><span class="label success">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
         </tr>
@@ -76,7 +76,7 @@
   </div>
   <div class="tabs-panel" id="rejected_panel">
     {% if rejected_applicants %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Applicant" %}</th>
@@ -91,7 +91,7 @@
         <tr>
           <td>{% avatar application.gamer.user 30 class="profile_circle_small" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
           <td>{{ application.message }}</td>
-          <td>{{ application.get_status_display }}</td>
+          <td><span class="label alert">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
         </tr>

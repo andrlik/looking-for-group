@@ -1,4 +1,5 @@
 import logging
+import os
 from urllib.parse import urlparse
 
 from .base import *  # noqa
@@ -229,14 +230,17 @@ Q_CLUSTER['django_redis'] = 'default'  # noqa:F405
 
 # Haystack
 
-es = urlparse(env('SEARCHBOX_SSL_URL', 'http://127.0.0.1:9200/'))
+GEOS_LIBRARY_PATH = os.environ.get("GEOS_LIBRARY_PATH")
+GDAL_LIBRARY_PATH = os.environ.get("GDAL_LIBRARY_PATH")
+
+es = urlparse(os.environ.get('SEARCHBOX_SSL_URL', 'http://127.0.0.1:9200/'))
 
 es_port = es.port or 80
 
 HAYSTACK_CONNECTIONS = {
     'default': {
-        "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticSearchEngine',
-        "URL": es.scheme + "://" + es.hostname + ":" + str(es_port),
+        "ENGINE": 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
+        "URL": os.environ.get('SEARCHBOX_SSL_URL'),
         'INDEX_NAME': 'documents',
     },
 }

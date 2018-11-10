@@ -12,11 +12,11 @@
   <dd>{{ game.description_rendered|safe }}</dd>
   <dt>{% trans "Details" %}</dt>
   <dd>
-  <table class="hover stack">
+  <table class="hover scroll">
     <tbody>
       <tr>
         <td>{% trans "Status" %}</td>
-        <td>{{ game.get_status_display }}</td>
+        <td><span class="label {% if game.status == 'started' %}green{% elif game.status == 'cancel' %}alert{% elif game.status == 'closed' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
       </tr>
       {% if game.next_session_time %}
       <tr>
@@ -27,6 +27,14 @@
       <tr>
         <td>{% trans "Game Type" %}</td>
         <td>{{ game.get_game_type_display }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Adult Themes?" %}</td>
+        <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
+      </tr>
+      <tr>
+        <td>{% trans "Content warning" %}</td>
+        <td>{{ game.content_warning }}</td>
       </tr>
       <tr>
         <td>{% trans "Starts" %}</td>
@@ -98,7 +106,7 @@
 {% if not player_list %}
 <p>{% trans "No players yet" %}</p>
 {% else %}
-<table class="stack hover">
+<table class="scroll hover">
   <thead>
     <tr>
       <th>{% trans "Player" %}</th>
@@ -153,7 +161,7 @@
 {% endif %}
 {% if recent_sessions %}
 <h2>{% trans "Recent and Upcoming Sessions" %}</h2>
-<table class="stack hover">
+<table class="scroll hover">
   <thead>
     <tr>
       <th>{% trans "Date" %}</th>

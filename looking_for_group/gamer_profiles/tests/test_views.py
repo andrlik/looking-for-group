@@ -129,10 +129,10 @@ class TestCommunityList(AbstractViewTest):
     def test_logged_in_user(self):
         with self.login(username=self.gamer2.username):
             self.assertGoodView("gamer_profiles:community-list")
-            self.assertResponseContains("<span class='membership'>Member</span>")
+            self.assertResponseContains("<span class='membership label secondary'>Member</span>")
         with self.login(username=self.gamer1.username):
             self.assertGoodView("gamer_profiles:community-list")
-            self.assertResponseContains("<span class='membership'>Admin</span>")
+            self.assertResponseContains("<span class='membership label primary'>Admin</span>")
         with self.login(username=self.gamer3.username):
             self.assertGoodView("gamer_profiles:community-list")
             self.assertResponseNotContains("<span class='membership'>")

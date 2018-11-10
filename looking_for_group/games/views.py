@@ -54,13 +54,20 @@ class GamePostingListView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['is_filterd'] = self.is_filtered
-        context['querystring'] = self.filter_querystring
+        context["is_filterd"] = self.is_filtered
+        context["querystring"] = self.filter_querystring
         if self.is_filtered:
-            filter_form = forms.GameFilterForm(initial={'game_status': self.filter_game_status, 'edition': self.filter_edition, 'system': self.filter_system, 'module': self.filter_module})
+            filter_form = forms.GameFilterForm(
+                initial={
+                    "game_status": self.filter_game_status,
+                    "edition": self.filter_edition,
+                    "system": self.filter_system,
+                    "module": self.filter_module,
+                }
+            )
         else:
             filter_form = forms.GameFilterForm()
-        context['filter_form'] = filter_form
+        context["filter_form"] = filter_form
         return context
 
     def get_queryset(self):
@@ -81,18 +88,18 @@ class GamePostingListView(
         queryset = models.GamePosting.objects.exclude(
             status__in=["cancel", "closed"]
         ).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
-        if get_dict.pop('filter_present', None):
-            self.filter_game_status = get_dict.pop('game_status', None)
-            edition = get_dict.pop('edition', None)
-            system = get_dict.pop('system', None)
+        if get_dict.pop("filter_present", None):
+            self.filter_game_status = get_dict.pop("game_status", None)
+            edition = get_dict.pop("edition", None)
+            system = get_dict.pop("system", None)
             print(system)
-            module = get_dict.pop('module', None)
-            if self.filter_game_status and self.filter_game_status[0] != '':
+            module = get_dict.pop("module", None)
+            if self.filter_game_status and self.filter_game_status[0] != "":
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
-                query_string_data['game_status'] = self.filter_game_status[0]
+                query_string_data["game_status"] = self.filter_game_status[0]
             if edition and edition[0] != "":
-                query_string_data['edition'] = edition[0]
+                query_string_data["edition"] = edition[0]
                 self.is_filtered = True
                 try:
                     ed = GameEdition.objects.get(slug=edition[0])
@@ -101,7 +108,7 @@ class GamePostingListView(
                 except ObjectDoesNotExist:
                     pass
             if system and system[0] != "":
-                query_string_data['system'] = system[0]
+                query_string_data["system"] = system[0]
                 self.is_filtered = True
                 try:
                     sys_obj = GameSystem.objects.get(pk=system[0])
@@ -110,7 +117,7 @@ class GamePostingListView(
                 except ObjectDoesNotExist:
                     pass
             if module and module[0] != "":
-                query_string_data['module'] = module[0]
+                query_string_data["module"] = module[0]
                 self.is_filtered = True
                 try:
                     mod_obj = PublishedModule.objects.get(pk=module[0])
@@ -138,6 +145,12 @@ class MyGameList(
     paginate_by = 15
     paginate_orphans = 3
     stub_queryset = None
+    is_filtered = False
+    filter_game_status = None
+    filter_edition = None
+    filter_system = None
+    filter_module = None
+    filter_querystring = None
 
     def get_stub_queryset(self):
         if not self.stub_queryset:
@@ -153,8 +166,52 @@ class MyGameList(
             self.stub_queryset = models.GamePosting.objects.filter(q_gm | q_is_player)
         return self.stub_queryset
 
+    def handle_form_filters(self, queryset):
+        get_dict = self.request.GET.copy()
+        query_string_data = {}
+        if get_dict.pop("filter_present", None):
+            self.filter_game_status = get_dict.pop("game_status", None)
+            edition = get_dict.pop("edition", None)
+            system = get_dict.pop("system", None)
+            print(system)
+            module = get_dict.pop("module", None)
+            if self.filter_game_status and self.filter_game_status[0] != "":
+                self.is_filtered = True
+                queryset = queryset.filter(status=self.filter_game_status[0])
+                query_string_data["game_status"] = self.filter_game_status[0]
+            if edition and edition[0] != "":
+                query_string_data["edition"] = edition[0]
+                self.is_filtered = True
+                try:
+                    ed = GameEdition.objects.get(slug=edition[0])
+                    queryset = queryset.filter(published_game=ed)
+                    self.filter_edition = ed.slug
+                except ObjectDoesNotExist:
+                    pass
+            if system and system[0] != "":
+                query_string_data["system"] = system[0]
+                self.is_filtered = True
+                try:
+                    sys_obj = GameSystem.objects.get(pk=system[0])
+                    queryset = queryset.filter(game_system=sys_obj)
+                    self.filter_system = sys_obj.pk
+                except ObjectDoesNotExist:
+                    pass
+            if module and module[0] != "":
+                query_string_data["module"] = module[0]
+                self.is_filtered = True
+                try:
+                    mod_obj = PublishedModule.objects.get(pk=module[0])
+                    queryset = queryset.filter(published_module=mod_obj)
+                    self.filter_module = mod_obj.pk
+                except ObjectDoesNotExist:
+                    pass
+            if query_string_data:
+                self.filter_querystring = urllib.parse.urlencode(query_string_data)
+        return queryset
+
     def get_queryset(self):
-        return (
+        return self.handle_form_filters(
             self.get_stub_queryset()
             .exclude(status__in=["cancel", "closed"])
             .order_by("-modified")
@@ -162,7 +219,7 @@ class MyGameList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["completed_game_list"] = (
+        context["completed_game_list"] = self.handle_form_filters(
             self.get_stub_queryset()
             .filter(status__in=["cancel", "closed"])
             .order_by("-modified")
@@ -172,6 +229,20 @@ class MyGameList(
         ] = models.GamePostingApplication.objects.filter(
             gamer=self.request.user.gamerprofile, status="pending"
         )
+        context["is_filterd"] = self.is_filtered
+        context["querystring"] = self.filter_querystring
+        if self.is_filtered:
+            filter_form = forms.GameFilterForm(
+                initial={
+                    "game_status": self.filter_game_status,
+                    "edition": self.filter_edition,
+                    "system": self.filter_system,
+                    "module": self.filter_module,
+                }
+            )
+        else:
+            filter_form = forms.GameFilterForm()
+        context["filter_form"] = filter_form
         return context
 
 

@@ -22,7 +22,7 @@
   <button class="button primary {% if unread_view %}float-right{% else %}float-left{% endif %} disabled">{% trans "Mark all as read" %}</button> {% if unread < all %}<button class="button primary disabled">{% trans "Mark all as unread" %}</button>{% endif %}
   {% endif %}
 </div>
-<table class="stack hover">
+<table class="scroll hover">
   <thead>
     <tr>
       <th>{% trans "When" %}</th>

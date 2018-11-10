@@ -33,6 +33,7 @@
     {% endcompress %}
     <link rel="stylesheet" type="text/css" href="{% static 'star-ratings/css/star-ratings.css' %}">
     {% endblock %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/motion-ui@1.2.3/dist/motion-ui.min.css" />
 
   </head>
 
@@ -46,10 +47,10 @@
     </div>
     <div class="cell medium-4 show-for-medium">
       <div class="app-dashboard-search-bar-container">
-        <form action="{% url 'haystack_search' %}" method="get">
+       <form action="{% url 'haystack_search' %}"  method="get">
           <input name="q" id="id_q" class="app-dashboard-search " type="search" placeholder="Search">
           <i class="app-dashboard-search-icon fa fa-search"></i>
-        </form>
+       </form>
       </div>
     </div>
     <div class="cell medium-auto large-offset-1 app-dashboard-top-bar-actions" data-equalizer data-equalize-on="medium" id="top-bar-actions">
@@ -133,7 +134,9 @@
       {% endblock %}
       <div class ="clearfix">
       <div class="medium-6 medium-offset-3 columns">
+{% block cookielaw %}
           {% cookielaw_banner %}
+{% endblock %}
         {% if messages %}
           {% for message in messages %}
 
@@ -145,23 +148,79 @@
           {% endfor %}
         {% endif %}
       </div>
+      {% block content %}
+      <h1>{% trans "Welcome to LFG Directory!" %}</h1>
+      <p>{% blocktrans %}LFG Directory provides a service where GMs can post games for players to find, and even manage the schedule for those games through the site. Game times automatically are displayed in the player's calendar in their timezone. Games can either be publically visible for any player to apply to join, limited to friends and community members, or even unlisted with a private invitation link. By default, all games, communities, and user profiles on LFG are {% endblocktrans %}<strong>{% trans "private by default" %}</strong>.</p>
+
+      <div class="orbit" role="region" aria-lable="Site screenshots" data-orbit>
+        <div class="orbit-wrapper">
+          <div class="orbit-controls">
+            <button class="orbit-previous"><span class="show-for-sr">{% trans "Previous slide" %}</span>&#9664;&#xFE0E;</button>
+            <button class="orbit-next"><span class="show-for-sr">{% trans "Next slide" %}</span>&#9654;&#xFE0E;</button>
+          </div>
+          <ul class="orbit-container">
+            <li class="is-active orbit-slide">
+              <figure class="orbit-figure">
+                <img class="orbit-image" src="{% static 'images/dashboard.png' %}" alt="Dashboard" />
+                <figcaption class="orbit-caption">{% trans "Dashboard" %}</figcaption>
+              </figure>
+            </li>
+            <li class="orbit-slide">
+              <figure class="orbit-figure">
+                <img class="orbit-image" src="{% static 'images/calendar.png' %}" alt="Calendar">
+                <figcaption class="orbit-caption">{% trans "Keep track of your games by subscribing to your calendar." %}</figcaption>
+              </figure>
+            </li>
+            <li class="orbit-slide">
+              <figure class="orbit-figure">
+                <img class="orbit-image" src="{% static 'images/profile_top.png' %}" alt="Gamer profiles">
+                <figcaption class="orbit-caption">{% trans "Gamer profiles" %}</figcaption>
+              </figure>
+            </li>
+            <li class="orbit-slide">
+              <figure class="orbit-figure">
+                <img class="orbit-image" src="{% static 'images/profile_bottom.png' %}" alt="Gaming preferences">
+                <figcaption class="orbit-caption">{% trans "Game preferences" %}</figcaption>
+              </figure>
+            </li>
+          </ul>
+        </div>
+        <nav class="orbit-bullets">
+          <button class="is-active" data-slide="0"><span class="show-for-sr">{% trans "Dashboard view" %}</span><span class="show-for-sr">{% trans "Current Slide" %}</span></button>
+          <button data-slide="1"><span class="show-for-sr">{% trans "Calendar view" %}</span></button>
+          <button data-slide="2"><span class="show-for-sr">{% trans "Profile view" %}</span></button>
+          <button data-slide="3"><span class="show-for-sr">{% trans "Game preferences" %}</span></button>
+        </nav>
       </div>
-      <div id="mobile-header-container" class="show-for-small-only" data-hide-for="medium">
-        <h1>{% block mobileheader %}{% endblock %}</h1>
-      </div>
-{% block content %}
-      <h2 class="text-center">Lorem Ipsum</h2>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus blandit ligula eget est feugiat viverra. Duis a arcu laoreet, rhoncus libero imperdiet, placerat velit. Vestibulum euismod mi et ornare sodales. Donec efficitur mattis blandit. Proin in massa elit. Praesent malesuada iaculis nisl, a venenatis dui. Nullam venenatis tincidunt placerat. Suspendisse egestas urna a aliquet pretium.</p>
 
-      <p>Curabitur ullamcorper mollis lobortis. Integer a scelerisque turpis, sed dictum lorem. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nam quis placerat sem. Suspendisse vulputate, leo ac sollicitudin lobortis, dui dui blandit justo, ut molestie justo sem in ipsum. Vestibulum convallis ex ac est tristique tincidunt. Vivamus dui dui, viverra et urna vitae, aliquam facilisis erat. Nam lorem nibh, elementum semper commodo at, fermentum quis justo. Donec finibus sapien eget scelerisque rhoncus. Nullam at nisi sed mi congue vestibulum. Vivamus nec scelerisque orci, vel fringilla nisi. Sed dictum, leo in consectetur porttitor, quam nibh aliquet nisi, in pulvinar sapien ante id dui. Aliquam massa nisl, auctor eget nisl in, faucibus gravida lectus. Nullam mattis orci at turpis finibus egestas. Nam vitae lorem accumsan, tempus lectus vitae, rutrum diam. Integer pulvinar placerat magna aliquam scelerisque.</p>
+      <h2>{% trans "Powered by communities" %}</h2>
 
-      <p>Duis consectetur magna velit, nec porttitor velit fermentum pulvinar. Duis varius justo eu varius pellentesque. Curabitur aliquet velit mauris, quis aliquam leo pharetra in. Integer rhoncus ut dui in rhoncus. Maecenas nec libero neque. Duis ac lacus at justo ullamcorper efficitur. Praesent ornare urna ante. Aliquam dapibus posuere nisl sit amet vestibulum. Quisque dapibus iaculis justo non egestas. Curabitur interdum semper justo, eget condimentum orci bibendum nec.</p>
+      <p>{% blocktrans %}Finding and scheduling games with a compatible group of players is still one of the most difficult parts of the RPG hobby. Visit any gaming community online, and you'll find a forum post, chat channel, or similar being used to post games looking for players. Quite sensibly, very few people want to join a game of complete strangers, and feel much more comfortable looking for new games within a single community where they know at least some of the other members have similar interests. One of easiest ways to achieve the same result on LFG is to post your games only to specific communities for which you are a member, allowing you to reach a larger group of players without opening your game to Rando Calrissian.{% endblocktrans %}</p>
 
-      <p>Vivamus pharetra massa non risus sollicitudin iaculis. Donec semper finibus hendrerit. Nam ut volutpat mauris, sit amet molestie nisi. Curabitur ac nisi urna. Nulla id turpis nec dui ornare tempor in ac justo. Cras quis cursus nisi. Donec vel pellentesque ante. Maecenas non nisi risus. Praesent posuere scelerisque varius. Cras vitae mollis quam. Etiam ut dui massa. Etiam mattis aliquam enim, eget facilisis erat elementum eu. Proin et lorem volutpat, pretium massa a, venenatis mi. Suspendisse quam orci, feugiat eget suscipit ac, vehicula a ante. Nam ut mauris at tortor cursus interdum.</p>
+      <h2><i class="fab fa-discord"></i> {% trans "Sync with Discord" %}</h2>
 
-      <p>Nullam hendrerit tincidunt risus. Sed nec nibh vel nibh euismod lobortis sed a sem. Nulla nec libero dolor. Pellentesque non sodales orci. Phasellus odio ligula, varius non orci ac, fermentum pulvinar nibh. Aliquam erat volutpat. Curabitur vehicula varius porttitor. Integer purus sapien, placerat sodales eros et, interdum vestibulum sem. Duis faucibus felis vitae augue ultricies, aliquet tempor orci vestibulum. Duis eu justo mi. Praesent feugiat, ante interdum fringilla auctor, ex nibh aliquet neque, sed feugiat tellus tortor non dui. Suspendisse potenti. Aliquam fringilla sapien felis, at faucibus justo interdum congue.</p>
+      <p>{% blocktrans %}The hardest part of using a separate service is finding ways to connect it to your existing community. Given the large number of RPG focuses Discord servers, particularly ones based around actual-play podcasts, we decided early on that connecting to Discord was a necessary feature. If you choose to either{% endblocktrans %} <a href="{% url 'account_signup' %}">{% trans "sign up" %}</a> {% trans "or" %} <a href="{% url 'account_login' %}">{% trans "log in" %}</a> {% blocktrans %}using your Discord account, LFG will allow you to link your community to any Discord server for which you are an administrator. Other members of that server will be automatically added to your community on LFG the next time they sign into our site using their Discord account.{% endblocktrans %}</p>
+
+      <p><strong>{% trans "NOTE:" %}</strong> {% blocktrans %}We keep a record of your Discord email address to help you access account features that depend upon it, which servers you belong to, and which of those you are an administrator. We don't store any other information about your Discord account or additional information about those servers. Other users are matched to your communities only when they explictly login to this site and grant access to the list of servers to which they belong.{% endblocktrans %}
+
+        <h2>{% trans "We love you" %}</h2>
+        <p>{% blocktrans %}LFG is a labor of love and we have no plans to build a business upon it. It's possible that at some point we may start a donation/crowdfunding program to help with server costs, but we don't intend to charge to use any features of the site.{% endblocktrans %}</p>
 {% endblock %}
 
+    </div>
+    <div class="cell shrink footer">
+      <hr />
+      <div class="grid-x grid-margin-x">
+        <div class="cell medium-3">
+          <p>{% trans "Made with love by" %} <a href="https://www.andrlik.org" target="_blank">Daniel</a>.</p>
+        </div>
+        <div class="cell auto">
+          <ul class="footer-list">
+            <li><a href="{% url 'privacy' %}">{% trans "Privacy policy" %}</a></li>
+            <li><a href="{% url 'terms' %}">{% trans "Terms and Conditions" %}</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </div>
