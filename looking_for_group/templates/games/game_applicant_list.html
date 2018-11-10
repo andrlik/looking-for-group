@@ -35,8 +35,8 @@
           <td><span class="label primary">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
-          <td><form action="{% 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="approve" /> <input type="submit" class="button success" value="{% trans 'Approve' %}"/> </form></td>
-          <td><form action="{% 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="deny" /> <input type="submit" class="button success" value="{% trans 'Reject' %}"/> </form></td>
+          <td><form action="{% url 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="approve" /> <input type="submit" class="button success" value="{% trans 'Approve' %}"/> </form></td>
+          <td><form action="{% url 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="deny" /> <input type="submit" class="button success" value="{% trans 'Reject' %}"/> </form></td>
         </tr>
         {% endfor %}
       </tbody>
