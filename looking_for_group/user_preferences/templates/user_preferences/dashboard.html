@@ -58,10 +58,10 @@
       {% if not next_session %}
       <p>{% trans "None scheduled" %}</p>
       {% endif %}
-      <table class="hover stack">
+      <table class="hover scroll">
         <thead>
           <tr>
-            <th>{% trans "Game" %}</th>
+            <th width="200">{% trans "Game" %}</th>
             <th>{% trans "Date and Time" %}</th>
           </tr>
         </thead>
@@ -87,10 +87,10 @@
       {% if not game_applicants %}
       <p>{% trans "No pending applicants for your games." %}</p>
       {% endif %}
-      <table class="stack hover">
+      <table class="scroll hover">
         <thead>
           <tr>
-            <th>{% trans "Game" %}</th>
+            <th width="200">{% trans "Game" %}</th>
             <th class="text-right">{% trans "Applicants" %}</th>
           </tr>
         </thead>
@@ -117,10 +117,10 @@
       {% if not community_applicant_counts %}
       <p>{% trans "No pending community applications." %}</p>
       {% endif %}
-      <table class="stack hover">
+      <table class="scroll hover">
         <thead>
           <tr>
-            <th>{% trans "Community" %}</th>
+            <th width="200">{% trans "Community" %}</th>
             <th class="text-right">{% trans "Applicants" %}</th>
           </tr>
         </thead>
