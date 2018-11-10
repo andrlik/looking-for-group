@@ -26,9 +26,9 @@
       <td><a href="{{ character.game.get_absolute_url }}">{{ character.game.title }}</a></td>
       <td><a href="{{ character.get_absolute_url }}">{{ character.name }}</a></td>
       <td>{{ character.description }}</td>
-      <td>{{ character.get_status_display }}</td>
-      <td><form action="{% if character.status == 'inactive' %}{% url 'games:character_reactivate' character=character.slug %}{% else %}{% url 'games:character_deactivate' character=character.slug %}{% endif %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="inactive" value="{% if character.status == 'inactive' %}pending{% else %}inactive{% endif %}" /><input type="submit" class="button success" value="{% if character.status == 'inactive' %}{% trans 'Reactivate' %}{% else %}{% trans 'Deactivate' %}{% endif %}" /></form></td>
-      <td><a href="{% url 'games:character_delete' chracter=chracter.slug %}" class="button alert">{% trans "Delete" %}</a></td>
+      <td><span class="label {% if character.status == 'inactive' %}secondary{% elif character.status == 'approved' %}success{% elif character.status == 'rejected' %}alert{% else %}primary{% endif %}">{{ character.get_status_display }}</span></td>
+      <td><form action="{% if character.status == 'inactive' %}{% url 'games:character_reactivate' character=character.slug %}{% else %}{% url 'games:character_inactivate' character=character.slug %}{% endif %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="inactive" value="{% if character.status == 'inactive' %}pending{% else %}inactive{% endif %}" /><input type="submit" class="button {% if character.status == 'inactive' %}success{% else %}secondary{% endif %}" value="{% if character.status == 'inactive' %}{% trans 'Reactivate' %}{% else %}{% trans 'Deactivate' %}{% endif %}" /></form></td>
+      <td><a href="{% url 'games:character_delete' character=character.slug %}" class="button alert">{% trans "Delete" %}</a></td>
     </tr>
     {% empty %}
     {% endfor %}

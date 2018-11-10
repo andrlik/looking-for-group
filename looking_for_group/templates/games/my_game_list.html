@@ -46,7 +46,7 @@
     <tr>
       <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
       <td>{{ game.get_game_type_display }}</td>
-      <td>{{ game.get_status_display }}</td>
+      <td><span class="label {% if game.status == 'started' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
       <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 20 %} {{ game.gm }}</a></td>
@@ -97,7 +97,7 @@
         <tr>
           <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
           <td>{{ game.get_game_type_display }}</td>
-          <td>{{ game.get_status_display }}</td>
+          <td><span class="label {% if game.status == 'cancel' %}alert{% else %}success{% endif %}" {{ game.get_status_display }}</span></td>
           <td>{{ game.start_time|default_if_none:"Pending" }}</td>
           <td>{{ game.end_date|default_if_none:"N/A" }}</td>
           <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 20 %} {{ game.gm }}</a></td>

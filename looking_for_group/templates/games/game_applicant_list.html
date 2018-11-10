@@ -32,7 +32,7 @@
         <tr>
           <td>{% avatar 20 application.gamer.user %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
           <td>{{ application.message }}</td>
-          <td>{{ application.get_status_display }}</td>
+          <td><span class="label primary">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
           <td><form action="{% 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="approve" /> <input type="submit" class="button success" value="{% trans 'Approve' %}"/> </form></td>
@@ -62,7 +62,7 @@
         <tr>
           <td>{% avatar app.gamer.user 20 %} <a href="{{ app.gamer.get_absolute_url }}">{{ app.gamer }}</a></td>
           <td>{{ app.message }}</td>
-          <td>{{ app.get_status_display }}</td>
+          <td><span class="label success">{{ app.get_status_display }}</span></td>
           <td>{{ app.created }}</td>
           <td>{{ app.modified }}</td>
         </tr>
@@ -92,7 +92,7 @@
         <tr>
           <td>{% avatar app.gamer.user 20 %} <a href="{{ app.gamer.get_absolute_url }}">{{ app.gamer }}</a></td>
         <td>{{ app.message }}</td>
-        <td>{{ app.get_status_display }}</td>
+        <td><span class="label alert">{{ app.get_status_display }}</span></td>
         <td>{{ app.created }}</td>
         <td>{{ app.modified }}</td>
         </tr>

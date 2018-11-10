@@ -26,10 +26,10 @@
     <tr>
       <td><a href="{{ character.get_absolute_url }}">{{ character.name }}</a></td>
       <td>{{ character.description }}</td>
-      <td>{{ character.get_status_display }}</td>
+      <td><span class="label {% if character.status == 'inactive' %}secondary{% elif character.status == 'approved' %}success{% elif character.status == 'rejected' %}alert{% else %}primary{% endif %}">{{ character.get_status_display }}</span></td>
       {% if request.user == character.game.gm.user %}
       <td><form action="{% url 'games:character_approve' character=character.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="approved" /><input type="submit" class="button success" value="{% trans 'Approve' %}" /></form></td>
-      <td><form action="{% url 'games:character_reject' chracter=chracter.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="rejected" /><input type="submit" class="button alert" value="{% trans 'Reject' %}" /></form></td>
+      <td><form action="{% url 'games:character_reject' character=character.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="rejected" /><input type="submit" class="button alert" value="{% trans 'Reject' %}" /></form></td>
       <td></td>
       {% endif %}
     </tr>

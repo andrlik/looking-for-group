@@ -16,7 +16,7 @@
     <tbody>
       <tr>
         <td>{% trans "Status" %}</td>
-        <td>{{ game.get_status_display }}</td>
+        <td><span class="label {% if game.status == 'started' %}green{% elif game.status == 'cancel' %}alert{% elif game.status == 'closed' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
       </tr>
       {% if game.next_session_time %}
       <tr>

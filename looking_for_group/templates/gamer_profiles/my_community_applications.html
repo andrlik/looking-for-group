@@ -31,7 +31,7 @@
         <tr>
           <td><a href="{{ application.community.get_absolute_url }}">{{ application.community.name }}</a></td>
           <td>{{ application.message|truncatewords:25 }}</td>
-          <td>{{ application.get_status_display }}</td>
+          <td><span class="label {% if application.status == 'new' %}secondary{% else %}primary{% endif %}">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
           <td><a href="{% url 'gamer_profiles:update-application' application=application.pk %}" class="button primary">{% trans "Edit" %}</a></td>
@@ -63,7 +63,7 @@
         <tr>
           <td><a href="{{ app.community.get_absolute_url }}">{{ app.community.name }}</a></td>
           <td>{{ app.message|truncatewords:25 }}</td>
-          <td>{{ app.get_status_display }}</td>
+          <td><span class="label success">{{ app.get_status_display }}</span></td>
           <td>{{ app.created }}</td>
           <td>{{ app.modified }}</td>
           <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>
@@ -94,7 +94,7 @@
         {% for app in rejected_applications %}
         <tr>
         <td>{{ app.message|truncatewords:25 }}</td>
-        <td>{{ app.get_status_display }}</td>
+        <td><span class="label alert">{{ app.get_status_display }}</span></td>
         <td>{{ app.created }}</td>
         <td>{{ app.modified }}</td>
         <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>

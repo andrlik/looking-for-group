@@ -29,7 +29,7 @@
     {% for session in session_list %}
     <tr>
       <td><a href="{{ session.get_absolute_url }}">{{ session.scheduled_time }}</a></td>
-      <td>{{ session.get_status_display }}</td>
+      <td><span class="label {% if session.status == 'complete' %}success{% elif session.status == 'cancel' %}alert{% else %}primary{% endif %}">{{ session.get_status_display }}</span></td>
       <td class="text-right">{{ session.players_expected.count }}</td>
       <td class="text-right">{{ session.players_missing.count }}</td>
       {% if request.user.gamerprofile == game.gm %}
