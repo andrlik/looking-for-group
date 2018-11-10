@@ -579,3 +579,19 @@ table.scroll {
 .fa-discord {
   color: #6577be;
 }
+
+.footer {
+  color:get-color(secondary);
+}
+
+ul.footer-list {
+  display:inline-block;
+  list-style-type: none;
+  margin-left:auto;
+  margin-right:auto;
+
+  li {
+    display:inline-block;
+    padding-left:2em;
+  }
+}
