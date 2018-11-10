@@ -51,7 +51,7 @@ django-ical = "*"
 "psycopg2" = "*"
 django-notifications-hq = "*"
 elasticsearch = "<6"
-haystack = {editable = true, ref = "f9a8e88c873d7a0494c356528183ccdf13a8d7cf", git = "https://github.com/andrlik/django-haystack.git"}
+haystack = {editable = true, ref = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8", git = "https://github.com/andrlik/django-haystack.git"}
 django-markdown-filter = "*"
 
 [dev-packages]
