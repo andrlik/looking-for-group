@@ -264,7 +264,7 @@ SOCIALACCOUNT_ADAPTER = "looking_for_group.users.adapters.SocialAccountAdapter"
 #         'SCOPE': ['email', 'identify', 'guilds'],
 #     },
 # }
-
+SOCIALACCOUNT_EMAIL_VERIFICATION = False
 # Custom user app defaults
 # Select the correct user model
 AUTH_USER_MODEL = "users.User"
