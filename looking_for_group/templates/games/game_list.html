@@ -43,7 +43,7 @@
     <tr>
       <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
       <td>{{ game.get_game_type_display }}</td>
-      <td><span class="label {% if game.status == 'started' %}secondary{% else %}primary{% endif %}">"{{ game.get_status_display }}</span></td>
+      <td><span class="label {% if game.status == 'started' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
       <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="profile_circle_small" %} {{ game.gm }}</a></td>
@@ -53,7 +53,7 @@
       <td>{{ game.content_warning }}</td>
       <td>{{ game.get_privacy_level_display }}</td>
       <td><strong>{{ game.players.count }}</strong>/{{ game.min_players }}/{{ game.max_players }}</td>
-      <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.name }}</a>{% else %}N/A{% endif %}</td>
+      <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.game.title }} ({{ game.published_game.name }})</a>{% else %}N/A{% endif %}</td>
       <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}N/A{% endif %}</td>
       <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
       <td>{{ game_description_rendered|truncatewords_html:20 }}</td>
