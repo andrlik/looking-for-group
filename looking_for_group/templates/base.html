@@ -17,6 +17,14 @@
     <link rel="icon" type="image/png" href="{% static 'images/Icon@16.png' %}" sizes="16x16">
     <link rel="icon" type="image/png" href="{% static 'images/Icon@32.png' %}" sizes="32x32">
     <link rel="icon" type="image/png" href="{% static 'images/Icon@96.png' %}" sizes="96x96">
+    <meta name="twitter:title" content="LFG Directory">
+    <meta name="twitter:description" content="Find gaming communities and RPG gaming groups">
+    <meta name="twitter:card" content="summary_large_image" >
+    <meta name="twitter:image" content="{% static 'images/dashboard.png' %}">
+    <meta property="og:image" content="{% static 'images/dashboard.png' %}">
+    <meta property="og:site_name" content="LFG Directory">
+    <meta property="og_description" content="Find gaming communities and RPG gaming groups">
+
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -150,7 +158,7 @@
       </div>
       {% block content %}
       <h1>{% trans "Welcome to LFG Directory!" %}</h1>
-      <p>{% blocktrans %}LFG Directory provides a service where GMs can post games for players to find, and even manage the schedule for those games through the site. Game times automatically are displayed in the player's calendar in their timezone. Games can either be publically visible for any player to apply to join, limited to friends and community members, or even unlisted with a private invitation link. By default, all games, communities, and user profiles on LFG are {% endblocktrans %}<strong>{% trans "private by default" %}</strong>.</p>
+      <p>{% blocktrans %}LFG Directory provides a service where GMs can post games for players to find, and even manage the schedule for those games through the site. Game times automatically are displayed in the player's calendar in their timezone. Games can either be publically visible for any player to apply to join, limited to friends and community members, or even unlisted with a private invitation link. All games, communities, and user profiles on LFG are {% endblocktrans %}<strong>{% trans "private by default" %}</strong>.</p>
 
       <div class="orbit" role="region" aria-lable="Site screenshots" data-orbit>
         <div class="orbit-wrapper">
@@ -198,12 +206,12 @@
 
       <h2><i class="fab fa-discord"></i> {% trans "Sync with Discord" %}</h2>
 
-      <p>{% blocktrans %}The hardest part of using a separate service is finding ways to connect it to your existing community. Given the large number of RPG focuses Discord servers, particularly ones based around actual-play podcasts, we decided early on that connecting to Discord was a necessary feature. If you choose to either{% endblocktrans %} <a href="{% url 'account_signup' %}">{% trans "sign up" %}</a> {% trans "or" %} <a href="{% url 'account_login' %}">{% trans "log in" %}</a> {% blocktrans %}using your Discord account, LFG will allow you to link your community to any Discord server for which you are an administrator. Other members of that server will be automatically added to your community on LFG the next time they sign into our site using their Discord account.{% endblocktrans %}</p>
+      <p>{% blocktrans %}The hardest part of using a separate service is finding ways to connect it to your existing community. Given the large number of RPG focused Discord servers, particularly ones based around actual-play podcasts, connecting with Discord was a natural choice. If you choose to either{% endblocktrans %} <a href="{% url 'account_signup' %}">{% trans "sign up" %}</a> {% trans "or" %} <a href="{% url 'account_login' %}">{% trans "log in" %}</a> {% blocktrans %}using your Discord account, LFG will allow you to link your community to any Discord server for which you are an administrator. Other members of that server will be automatically added to your community on LFG the next time they sign into our site using their Discord account.{% endblocktrans %}</p>
 
-      <p><strong>{% trans "NOTE:" %}</strong> {% blocktrans %}We keep a record of your Discord email address to help you access account features that depend upon it, which servers you belong to, and which of those you are an administrator. We don't store any other information about your Discord account or additional information about those servers. Other users are matched to your communities only when they explictly login to this site and grant access to the list of servers to which they belong.{% endblocktrans %}
+      <p><strong>{% trans "NOTE:" %}</strong> {% blocktrans %}LFG keeps a record of your Discord email address to help you access account features that depend upon it, which servers you belong to, and which of those you are an administrator. It does not store any other information about your Discord account or additional information about those servers. Other users are matched to your communities only when they explictly login to this site and grant access to the list of servers to which they belong.{% endblocktrans %}
 
         <h2>{% trans "We love you" %}</h2>
-        <p>{% blocktrans %}LFG is a labor of love and we have no plans to build a business upon it. It's possible that at some point we may start a donation/crowdfunding program to help with server costs, but we don't intend to charge to use any features of the site.{% endblocktrans %}</p>
+        <p>{% blocktrans %}LFG is a labor of love and I have no plans to build a business upon it. It's possible that at some point I may start a donation/crowdfunding program to help with server costs, but I don't intend to charge to use any of the current features of the site.{% endblocktrans %}</p>
 {% endblock %}
 
     </div>
@@ -211,7 +219,7 @@
       <hr />
       <div class="grid-x grid-margin-x">
         <div class="cell medium-3">
-          <p>{% trans "Made with love by" %} <a href="https://www.andrlik.org" target="_blank">Daniel</a>.</p>
+          <p>{% trans "Made with 💙 by" %} <a href="https://www.andrlik.org" target="_blank">Daniel</a>.</p>
         </div>
         <div class="cell auto">
           <ul class="footer-list">
@@ -220,6 +228,7 @@
           </ul>
         </div>
       </div>
+      <br />
     </footer>
   </div>
 </div>
