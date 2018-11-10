@@ -1,21 +1,42 @@
 {% extends "gamer_profiles/base.html" %}
-{% load i18n humanize social_tags %}
+{% load avatar_tags i18n humanize social_tags %}
 {% block subtitle %}{% trans "Communities" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Communities" %}{% endblock %}
 {% block mobileheader %}{% trans "Communities" %}{% endblock %}
 {% block allcomactive %} class='is-active'{% endblock %}
 {% block content %}
-<ul>
+<br />
+{% if not request.user.is_authenticated %}
+<p>{% trans "Showing only public communities. To see others, you must first" %} <a href="{% url 'account_login' %}">{% trans "login." %}</a></p>
+{% endif %}
+{% if not object_list %}
+<p>{% trans "No communities found." %}</p>
+{% endif %}
+<table class="scroll hover">
+  <thead>
+    <th>{% trans "Name" %}</th>
+    <th class="text-right">{% trans "Members" %}</th>
+    <th>{% trans "Owner" %}</th>
+    <th>{% trans "Public/Private" %}</th>
+    <th>{% trans "Description" %}</th>
+    <th class="text-right">{% trans "Games" %}</th>
+    <th>{% trans "Your status" %}</th>
+  </thead>
+  <tbody>
   {% for community in object_list %}
-  <li>
-<h2><a href="{{ community.get_absolute_url }}">{{ community.name }}</a>{% community_role_flag community %}</h2>
-<span class="meta">{% if community.private %}<span class="privacy-flag">{% trans "Private" %}</span>{% endif %} {% blocktrans count counter=community.member_count %}1 Member{% plural %} {{ counter|humanize }} Members{% endblocktrans %}</span>
-<p>{{ community.description_rendered|truncatewords_html:100|safe }}</p>
-  </li>
+    <tr>
+      <td><a href="{{ community.get_absolute_url }}">{{ community.name }}</a></td>
+      <td class="text-right">{{ community.member_count }}</td>
+      <td>{% avatar community.owner.user 30 %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a></td>
+      <td>{% if community.private %}{% trans "Private" %}{% else %}{% trans "Public" %}{% endif %}</td>
+      <td>{{ community.description_rendered|truncatewords_html:100|safe }}</td>
+      <td class="text-right">{% if community.private %}{% trans "Hidden" %}{% else %}{{ community.gameposting_set.count }}{% endif %}</td>
+      <td>{% community_role_flag community %}</td>
+    </tr>
   {% empty %}
-  <p>{% trans "No communities found." %}</p>
   {% endfor %}
-</ul>
+  </tbody>
+</table>
 {% if is_paginated %}
 <nav aria-label="Pagination">
   <ul class="pagination">

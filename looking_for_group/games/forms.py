@@ -4,6 +4,20 @@ from django.utils.translation import ugettext_lazy as _
 from . import models
 from ..game_catalog import models as cat_models
 
+DUMMY_CHOICES = [("", "")]
+
+
+def get_edition_choices():
+    return [("", "")] + [(e.slug, "{} ({})".format(e.game.title, e.name)) for e in cat_models.GameEdition.objects.all().select_related("game").order_by("game__title", "name")]
+
+
+def get_system_choices():
+    return [("", "")] + [(s.pk, s.name) for s in cat_models.GameSystem.objects.all().order_by('name')]
+
+
+def get_module_choices():
+    return [("", "")] + [(m.pk, m.title) for m in cat_models.PublishedModule.objects.all().order_by('title')]
+
 
 class GamePostingForm(forms.ModelForm):
     """
@@ -18,7 +32,7 @@ class GamePostingForm(forms.ModelForm):
         allowed_communities = gamer.communities.all()
         super().__init__(*args, **kwargs)
         if allowed_communities.count() == 0:
-            self.fields.pop('communities')
+            self.fields.pop("communities")
         if "communities" in self.fields.keys():
             self.fields["communities"].queryset = allowed_communities
 
@@ -44,8 +58,8 @@ class GamePostingForm(forms.ModelForm):
             "tags",
         ]
         widgets = {
-            'start_time': forms.widgets.DateTimeInput(attrs={'class': 'dtp'}),
-            'end_date': forms.widgets.DateTimeInput(attrs={'class': 'dp'}),
+            "start_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"}),
+            "end_date": forms.widgets.DateTimeInput(attrs={"class": "dp"}),
         }
 
 
@@ -53,15 +67,21 @@ class GameFilterForm(forms.Form):
     """
     A form for filtering game listings.
     """
+
     filter_present = forms.HiddenInput()
-    game_status = forms.ChoiceField(choices=[('', '')] + models.GAME_STATUS_CHOICES, initial='', required=False)
-    edition = forms.ChoiceField(choices=[('', '')] + [(e.slug, "{} ({})".format(e.game.title, e.name)) for e in cat_models.GameEdition.objects.all().select_related('game').order_by('game__title', 'name')], required=False)
-    system = forms.ChoiceField(choices=[('', '')] + [(s.pk, s.name) for s in cat_models.GameSystem.objects.all().order_by('name')], required=False)
-    module = forms.ChoiceField(choices=[('', '')] + [(m.pk, m.title) for m in cat_models.PublishedModule.objects.all().order_by('title')], required=False)
+    game_status = forms.ChoiceField(
+        choices=[("", "")] + models.GAME_STATUS_CHOICES, initial="", required=False
+    )
+    edition = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
+    system = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
+    module = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['filter_present'] = 1
+        self.fields["filter_present"] = 1
+        self.fields['edition'].choices = get_edition_choices()
+        self.fields['system'].choices = get_system_choices()
+        self.fields['module'].choices = get_module_choices()
 
 
 class GameSessionForm(forms.ModelForm):
@@ -77,7 +97,7 @@ class GameSessionForm(forms.ModelForm):
         game_players = models.Player.objects.filter(game=game)
         self.fields["players_expected"].queryset = game_players
         self.fields["players_missing"].queryset = game_players
-        self.fields['players_missing'].required = False
+        self.fields["players_missing"].required = False
 
     def clean(self):
         cleaned_data = super().clean()
@@ -98,10 +118,9 @@ class GameSessionForm(forms.ModelForm):
 
 
 class GameSessionRescheduleForm(forms.ModelForm):
-
     class Meta:
         model = models.GameSession
-        fields = ['scheduled_time']
+        fields = ["scheduled_time"]
         widgets = {
-            'scheduled_time': forms.widgets.DateTimeInput(attrs={'class': 'dtp'})
+            "scheduled_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"})
         }

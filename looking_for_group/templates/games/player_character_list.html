@@ -1,0 +1,40 @@
+{% extends "games/game_base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% blocktrans with pname=player.gamer %}Characters for {{ pname }}{% endblocktrans %} - {% endblock %}
+{% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{{ player.gamer }}'s characters{% endblock %}
+{% block mobileheader %}{{ player.gamer }}'s characters{% endblock %}
+{% block content %}
+<p></p>
+{% if not character_list %}
+<p>{% trans "No characters found." %}</p>
+{% endif %}
+<table class="scroll hover">
+  <thead>
+    <tr>
+      <th>{% trans "Character" %}</th>
+      <th>{% trans "Description" %}</th>
+      <th>{% trans "Status" %}</th>
+      {% if request.user == game.gm.user %}
+      <th></th>
+      <th></th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for character in character_list %}
+    <tr>
+      <td><a href="{{ character.get_absolute_url }}">{{ character.name }}</a></td>
+      <td>{{ character.description }}</td>
+      <td><span class="label {% if character.status == 'inactive' %}secondary{% elif character.status == 'approved' %}success{% elif character.status == 'rejected' %}alert{% else %}primary{% endif %}">{{ character.get_status_display }}</span></td>
+      {% if request.user == character.game.gm.user %}
+      <td><form action="{% url 'games:character_approve' character=character.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="approved" /><input type="submit" class="button success" value="{% trans 'Approve' %}" /></form></td>
+      <td><form action="{% url 'games:character_reject' character=character.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="rejected" /><input type="submit" class="button alert" value="{% trans 'Reject' %}" /></form></td>
+      <td></td>
+      {% endif %}
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

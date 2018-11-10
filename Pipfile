@@ -50,8 +50,9 @@ django-scheduler = "*"
 django-ical = "*"
 "psycopg2" = "*"
 django-notifications-hq = "*"
-django-haystack = "*"
 elasticsearch = "<6"
+haystack = {editable = true, ref = "f9a8e88c873d7a0494c356528183ccdf13a8d7cf", git = "https://github.com/andrlik/django-haystack.git"}
+django-markdown-filter = "*"
 
 [dev-packages]
 sphinx = "*"

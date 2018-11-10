@@ -265,6 +265,8 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     class Meta:
         ordering = ["name"]
+        verbose_name_plural = "Communities"
+        verbose_name = "Community"
 
 
 class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):

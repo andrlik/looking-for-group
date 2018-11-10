@@ -196,3 +196,11 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
             cache.set("site_total_discord_communities", discord_comm_links)
         context["site_total_discord_communities"] = discord_comm_links
         return context
+
+
+class PrivacyView(generic.TemplateView):
+    template_name = 'privacy.html'
+
+
+class TermsView(generic.TemplateView):
+    template_name = 'tos.html'

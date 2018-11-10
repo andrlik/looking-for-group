@@ -15,7 +15,7 @@
 <div class="tabs-content" data-tabs-content="my-applications-tabs">
   <div class="tabs-panel is-active" id="pending_panel">
     {% if applications %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Game" %}</th>
@@ -34,7 +34,7 @@
           <td><a href="{{ application.game.get_absolute_url }}">{{ application.game.title }}</a></td>
           <td>{% avatar application.game.gm.user 20 %} <a href="{{ application.game.gm.get_absolute_url }}">{{ application.game.gm }}</a></td>
           <td>{{ application.message|truncatewords:25 }}</td>
-          <td>{{ application.get_display_status }}</td>
+          <td><span class="label {% if application.status == 'new' %}secondary{% else %}primary{% endif %}">{{ application.get_display_status }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
           <td><a href="{% url 'games:game_apply_update' application=application.slug %}" class="button primary">{% trans "Edit" %}</a></td>
@@ -49,7 +49,7 @@
   </div>
   <div class="tabs-panel" id="approved_panel">
     {% if approved_application_list %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Game" %}</th>
@@ -68,7 +68,7 @@
           <td><a href="{{ app.game.get_absolute_url }}">{{ app.game.title }}</a></td>
           <td>{% avatar app.game.gm.user 20 %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm }}</a></td>
           <td>{{ app.message|truncatewords:25 }}</td>
-          <td>{{ app.get_display_status }}</td>
+          <td><span class="label success">{{ app.get_display_status }}</span></td>
           <td>{{ app.created }}</td>
           <td>{{ app.modified }}</td>
           <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>
@@ -83,7 +83,7 @@
   </div>
   <div class="tabs-panel" id="rejected_panel">
     {% if rejected_applications %}
-    <table class="hover stack">
+    <table class="hover scroll">
       <thead>
         <tr>
           <th>{% trans "Game" %}</th>
@@ -102,7 +102,7 @@
           <td>{{ app.game.title }}</td>
           <td>{% avatar app.game.gm.user 20 %} <a href="{{ app.game.gm.get_absolute_url }}">{{ app.game.gm }}</a></td>
         <td>{{ app.message|truncatewords:25 }}</td>
-        <td>{{ app.get_display_status }}</td>
+        <td><span class="label alert">{{ app.get_display_status }}</span></td>
         <td>{{ app.created }}</td>
         <td>{{ app.modified }}</td>
         <td><a class="button disabled" href="#">{% trans "Edit" %}</a></td>

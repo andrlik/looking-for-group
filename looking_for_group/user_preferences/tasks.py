@@ -1,6 +1,6 @@
 import logging
 
-from django.core.mail import EmailMultiAlternatives, send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.template import Context
 from django.template.loader import render_to_string

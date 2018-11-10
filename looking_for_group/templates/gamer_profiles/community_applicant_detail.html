@@ -10,6 +10,8 @@
 <dl>
   <dt>{% trans "Applicant" %}</dt>
   <dd>{{ application.gamer.display_name }}</dd>
+  <dt>{% trans "Status" %}</dt>
+  <dd><span class="label {% if application.status == 'approve' %}success{% elif application.status == 'reject' %}alert{% else %}primary{% endif %}">{{ application.get_status_display }}</span></dd>
   <dt>{% trans "Community" %}</dt>
   <dd><a href="{{ application.community.get_absolute_url }}">{{ application.community.name }}</a></dd>
   <dt>{% trans "Applicant Message" %}</dt>

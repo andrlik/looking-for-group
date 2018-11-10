@@ -26,7 +26,7 @@ class UpcomingGamesFeed(UpcomingEventsFeed):
 class GamesICalFeed(ICalendarFeed):
 
     def items(self):
-        gamer_id = self.args[1]
+        gamer_id = self.kwargs['gamer']
         gamer = get_object_or_404(GamerProfile, pk=gamer_id)
         cal, created = Calendar.objects.get_or_create(slug=gamer.username, defaults={'name': "{}'s Calendar".format(gamer.username)})
         return cal.events.all()

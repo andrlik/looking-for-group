@@ -34,7 +34,7 @@
 {% if system.game_editions.count == 0 %}
 <p>{% blocktrans with sname=system.name %}We don't have any game information for {{ sname }} yet.{% endblocktrans %}</p>
 {% else %}
-<table class="hover stack">
+<table class="hover scroll">
   <thead>
     <tr>
       <th>{% trans "Game" %}</th>

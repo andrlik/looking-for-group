@@ -239,7 +239,7 @@ es_port = es.port or 80
 
 HAYSTACK_CONNECTIONS = {
     'default': {
-        "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        "ENGINE": 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
         "URL": os.environ.get('SEARCHBOX_SSL_URL'),
         'INDEX_NAME': 'documents',
     },
