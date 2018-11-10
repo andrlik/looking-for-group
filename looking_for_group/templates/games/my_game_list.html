@@ -20,7 +20,7 @@
     {% if not active_game_list %}
     <p>{% trans "No active games found." %}</p>
     {% endif %}
-<table class="stack hover">
+<table class="scroll hover">
   <thead>
     <tr>
       <th>{% trans "Title" %}</th>
@@ -71,7 +71,7 @@
     {% if not completed_games_list %}
     <p>{% trans "No completed games were found." %}</p>
     {% endif %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Title" %}</th>

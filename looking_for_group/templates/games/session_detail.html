@@ -16,7 +16,7 @@
 {% if session.status != "complete" and session.status == "cancel" %}
 <p>This session has not been completed yet or was cancelled, so no attendence records are available. However, the players that were expected to attend are below.</p>
 {% endif %}
-<table class="stack hover">
+<table class="scroll hover">
   <thead>
     <tr>
       <th>{% trans "Player" %}</th>

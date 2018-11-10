@@ -14,7 +14,7 @@
 <div class="tabs-content" data-tabs-content="my-applications-tabs">
   <div class="tabs-panel is-active" id="pending_panel">
     {% if applications %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Community" %}</th>
@@ -46,7 +46,7 @@
   </div>
   <div class="tabs-panel" id="approved_panel">
     {% if approved_applications %}
-    <table class="stack hover">
+    <table class="scroll hover">
       <thead>
         <tr>
           <th>{% trans "Community" %}</th>
@@ -78,7 +78,7 @@
   </div>
   <div class="tabs-panel" id="rejected_panel">
     {% if rejected_applications %}
-    <table class="hover stack">
+    <table class="hover scroll">
       <thead>
         <tr>
           <th>{% trans "Community" %}</th>
