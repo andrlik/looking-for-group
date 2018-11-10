@@ -6,7 +6,7 @@
 {% block mobileheader %}{% trans "Create system" %}{% endblock %}
 {% block content %}
 <p>{% blocktrans %}Enter the game system details below.{% endblocktrans %}</p>
-<form data-abide novalidate action="" method="post">
+<form enctype="multipart/form-data" data-abide novalidate action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
   <div class="clearfix">
