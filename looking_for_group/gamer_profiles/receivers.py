@@ -120,3 +120,10 @@ def remove_blocked_user_from_friends(sender, instance, created, *args, **kwargs)
     """
     if created:
         instance.blocker.friends.remove(instance.blockee)
+        
+
+@receiver(post_save, sender=models.CommunityMembership)
+@receiver(post_delete, sender=models.CommunityMembership)
+def update_member_count(sender, instance, *args, **kwargs):
+    instance.community.member_count = instance.community.members.count()
+    instance.community.save()

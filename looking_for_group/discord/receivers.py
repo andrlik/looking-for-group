@@ -39,3 +39,10 @@ def remove_discord_links(sender, instance, *args, **kwargs):
     if instance.provider == "discord_with_guilds":  # pragma: no cover
         logger.debug('Sending async task to prune servers.')
         async_task(prune_servers)
+
+
+@receiver(post_save, sender=SocialAccount)
+def create_initial_link(sender, instance, created, *args, **kwargs):
+    if created and "discord" in instance.provider:
+        link = GamerDiscordLink.get_or_create(gamer=instance.user.gamerprofile, socialaccount=instance)
+        async_task(sync_discord_servers_from_discord_account, instance.user.gamerprofile, instance)
