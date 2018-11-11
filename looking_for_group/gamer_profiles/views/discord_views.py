@@ -80,7 +80,7 @@ class CommunityDiscordLinkView(
         return form_kwargs
 
     def form_valid(self, form):
-        with transaction.atomic:
+        with transaction.atomic():
             immutable_servers = list(
                 self.community_discord_link.servers.exclude(
                     id__in=[s.server.id for s in self.linkable_servers.all()]
