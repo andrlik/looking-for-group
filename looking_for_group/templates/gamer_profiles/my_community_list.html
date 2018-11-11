@@ -24,7 +24,7 @@
   {% for membership in object_list %}
     <tr>
       <td><a href="{{ membership.community.get_absolute_url }}">{{ membership.community.name }}</a></td>
-      <td class="text-right">{{ membership.community.member_count }}</td>
+      <td class="text-right">{{ membership.community.members.count }}</td>
       <td>{% avatar membership.community.owner.user 30 %} <a href="{{ membership.community.owner.get_absolute_url }}">{{ membership.community.owner }}</a></td>
       <td>{% if membership.community.private %}{% trans "Private" %}{% else %}{% trans "Public" %}{% endif %}</td>
       <td>{{ membership.community.description_rendered|truncatewords_html:100|safe }}</td>
