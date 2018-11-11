@@ -9,6 +9,7 @@ from django_q.tasks import async_task
 from .models import GamerDiscordLink
 from .signals import updated_discord_social_account
 from .tasks import prune_servers, sync_discord_servers_from_discord_account
+from ..gamer_profiles.models import GamerProfile
 
 logger = logging.getLogger('discord')
 
@@ -39,10 +40,12 @@ def remove_discord_links(sender, instance, *args, **kwargs):
     if instance.provider == "discord_with_guilds":  # pragma: no cover
         logger.debug('Sending async task to prune servers.')
         async_task(prune_servers)
-
-
-@receiver(post_save, sender=SocialAccount)
-def create_initial_link(sender, instance, created, *args, **kwargs):
-    if created and "discord" in instance.provider:
-        link = GamerDiscordLink.objects.get_or_create(gamer=instance.user.gamerprofile, socialaccount=instance)
-        async_task(sync_discord_servers_from_discord_account, instance.user.gamerprofile, instance)
+        
+        
+@receiver(post_save, sender=GamerProfile)
+def initiate_first_sync(sender, instance, created, *args, **kwargs):
+   if created:
+       sa_list = SocialAccount.objects.filter(user=instance.user, provider__icontains="discord")
+       if sa_list.count() > 0:
+           for sa in sa_list:
+               async_task(sync_discord_servers_from_discord_account, instance, sa)

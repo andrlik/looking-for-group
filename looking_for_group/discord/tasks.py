@@ -3,6 +3,7 @@ import logging
 import requests
 from allauth.socialaccount.models import SocialToken
 from django_q.tasks import async_task
+from django.utils import timezone
 
 from ..gamer_profiles.models import CommunityMembership
 from .models import DiscordServer, DiscordServerMembership, GamerDiscordLink
@@ -168,6 +169,7 @@ def sync_discord_servers_from_discord_account(
         )
     )
     gamer_discord.sync_status = "synced"
+    gamer_discord.last_successful_sync = timezone.now()
     gamer_discord.save()
     if unlinks:
         # Since we've unlinked, let's practice good housekeeping and prune any
