@@ -7,7 +7,7 @@
 {% has_perm 'community.transfer_owner' request.user community as is_owner %}
 {% block commdetailactive %} class="is-active"{% endblock %}
 {% block content %}
-<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} {% avatar community.owner.user 20 %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a>. {% blocktrans count counter=community.gameposting_set.count|length %}There is {{ counter }} game posted in this community.{% plural %}There are {{ counter }} games posted in this community. {% endblocktrans %}</span>
+<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} {% avatar community.owner.user 20 %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a>. {% blocktrans count counter=community.gameposting_set|length %}There is {{ counter }} game posted in this community.{% plural %}There are {{ counter }} games posted in this community. {% endblocktrans %}</span>
 <p>{{ community.description_rendered|safe }}</p>
 {% if community.linked_with_discord %}
 <h2>{% trans "Discord Servers" %}</h2>
@@ -29,7 +29,7 @@
   </ul>
 </div>
 <h2>{% trans "Current Games" %}</h2>
-{% if not current_games %}
+{% if not active_games %}
 <p>{% trans "There are no active games here at the moment." %}</p>
 {% endif %}
 <table class="scroll hover">
