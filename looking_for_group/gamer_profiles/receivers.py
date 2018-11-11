@@ -2,7 +2,7 @@ import logging
 
 import bleach
 from bleach_whitelist.bleach_whitelist import markdown_attrs, markdown_tags
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from markdown import markdown
 
