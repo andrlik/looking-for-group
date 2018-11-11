@@ -87,7 +87,7 @@ class GamePostingListView(
         query_string_data = {}
         queryset = models.GamePosting.objects.exclude(
             status__in=["cancel", "closed"]
-        ).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
+        ).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community).distinct()
         if get_dict.pop("filter_present", None):
             self.filter_game_status = get_dict.pop("game_status", None)
             edition = get_dict.pop("edition", None)
