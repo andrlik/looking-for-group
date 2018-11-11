@@ -125,5 +125,5 @@ def remove_blocked_user_from_friends(sender, instance, created, *args, **kwargs)
 @receiver(post_save, sender=models.CommunityMembership)
 @receiver(post_delete, sender=models.CommunityMembership)
 def update_member_count(sender, instance, *args, **kwargs):
-    instance.community.member_count = instance.get_member_count()
+    instance.community.member_count = instance.community.get_member_count()
     instance.community.save()
