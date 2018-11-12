@@ -6,10 +6,10 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django_q.tasks import async_task
 
+from ..gamer_profiles.models import GamerProfile
 from .models import GamerDiscordLink
 from .signals import updated_discord_social_account
 from .tasks import prune_servers, sync_discord_servers_from_discord_account
-from ..gamer_profiles.models import GamerProfile
 
 logger = logging.getLogger('discord')
 
@@ -18,7 +18,7 @@ logger = logging.getLogger('discord')
 @receiver(social_account_updated, sender=SocialLogin)
 def check_signal_from_allauth(sender, request, sociallogin, *args, **kwargs):
     logger.debug('Evaluating social account provider')
-    if sociallogin.account.provider == "discord_with_guilds" and request.user.is_authenticated:  # pragma: no cover
+    if "discord" in sociallogin.account.provider and request.user.is_authenticated:  # pragma: no cover
         logger.debug("Discord account! Sending signal.")
         updated_discord_social_account.send(sender=SocialAccount, gamer=request.user.gamerprofile, socialaccount=sociallogin.account)
 
@@ -40,8 +40,8 @@ def remove_discord_links(sender, instance, *args, **kwargs):
     if instance.provider == "discord_with_guilds":  # pragma: no cover
         logger.debug('Sending async task to prune servers.')
         async_task(prune_servers)
-        
-        
+
+
 @receiver(post_save, sender=GamerProfile)
 def initiate_first_sync(sender, instance, created, *args, **kwargs):
    if created:

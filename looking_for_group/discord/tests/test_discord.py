@@ -1,6 +1,7 @@
 import factory.django
 from allauth.socialaccount import providers
-from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialLogin, SocialToken
+from allauth.socialaccount.signals import social_account_added, social_account_updated
 from allauth.socialaccount.tests import OAuth2TestsMixin
 from allauth.tests import MockedResponse
 from allauth.tests import TestCase as AllAuthTestCase
@@ -275,6 +276,7 @@ class TestSignals(AbstractDiscordTest):
         )
         self.comm_link2.servers.add(self.discord_server4)
         self.community2.add_member(self.gamer1, role="member")
+        self.factory = RequestFactory()
 
     def get_mocked_response(self):
         return MockedResponse(
@@ -297,3 +299,34 @@ class TestSignals(AbstractDiscordTest):
             print("Signal sent")
         self.gamerlink.refresh_from_db()
         assert self.gamerlink.servers.count() == 4
+
+    # def test_social_account_added(self):
+    #     self.client.force_login(self.gamer2.user)
+    #     request = self.factory.get('/')
+    #     request.user = self.gamer2.user
+    #     resp_mock = self.get_mocked_response()
+    #     with mocked_response(resp_mock):
+    #         with factory.django.mute_signals(social_account_added, social_account_updated):
+    #             sociallogin = SocialLogin(user=self.gamer2.user, account=SocialAccount.objects.create(user=self.gamer2.user, provider='discord_with_guilds', uid='jkdjsldkjdskljdslkj', extra_data={"username": "reaper"}))
+    #             self.stoken = SocialToken.objects.create(
+    #                 app=self.app,
+    #                 account=sociallogin.account,
+    #                 token="jlkdjlsjldsjdfsjslkdj",
+    #                 token_secret="jkdjlsdjldfkj",
+    #                 expires_at=None,
+    #             )
+    #         social_account_added.send(sender=SocialLogin, request=request, sociallogin=sociallogin)
+    #     assert models.GamerDiscordLink.objects.count() == 2
+    #     link_to_test = models.GamerDiscordLink.objects.get(gamer=self.gamer2)
+    #     assert link_to_test.servers.count() == 4
+
+    # def test_social_account_updated(self):
+    #     self.client.force_login(self.gamer1.user)
+    #     request = self.factory.get('/')
+    #     request.user = self.gamer1.user
+    #     sa = self.gamerlink.socialaccount
+    #     resp_mock = self.get_mocked_response()
+    #     with mocked_response(resp_mock):
+    #         social_account_updated.send(sender=SocialLogin, request=request, sociallogin=SocialLogin(user=self.gamer1.user, account=sa))
+    #     self.gamerlink.refresh_from_db()
+    #     assert self.gamerlink.servers.count() ==
