@@ -1,0 +1,20 @@
+{% extends "games/base.html" %}
+{% load i18n foundation_formtags %}
+{% block sectiontitle %}{% trans "Create session" %}{% endblock %}
+
+{% block subtitle %}{% trans "Create session" %} - {% endblock %}
+
+{% block mobileheader %}{% trans "Create session" %}{% endblock %}
+
+{% block content %}
+<p>You may adjust your session details below before creating.</p>
+<form data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a class="button secondary float-left" href="{{ game.get_absolute_url }}">Back to game details</a> <input type="submit" class="button success float-right" value="Create" />
+  </div>
+</form>
+
+
+{% endblock %}
