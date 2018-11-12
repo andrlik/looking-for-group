@@ -18,7 +18,7 @@ class CommLinkAdmin(admin.ModelAdmin):
 
 
 class ServerMembership(admin.ModelAdmin):
-    list_display = ['server', 'gamer_link.gamer', 'server_role']
+    list_display = ['server', 'gamer_link', 'server_role']
     ordering = ['server__name', 'created']
 
 

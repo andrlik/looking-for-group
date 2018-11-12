@@ -61,16 +61,16 @@
        </form>
       </div>
     </div>
-    <div class="cell medium-auto large-offset-1 app-dashboard-top-bar-actions" data-equalizer data-equalize-on="medium" id="top-bar-actions">
+    <div class="cell medium-auto large-offset-1 app-dashboard-top-bar-actions" data-equalizer="menu" data-equalize-on="medium" id="top-bar-actions">
       <ul class="menu ">
       {% if request.user.is_authenticated %}
         <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}">{% trans "My Profile" %} {% avatar request.user 20 class="profile_circle_small" %}</a></li>
         {% if request.user.is_superuser %}
-            <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
+            <li class=""><a data-equalizer-watch="menu" class="button hollow" href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
         {% endif %}
-        <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'account_logout' %}" >{% trans "Logout" %}</a></li>
+        <li class=""><a data-equalizer-watch="menu" class="button hollow" href="{% url 'account_logout' %}" >{% trans "Logout" %}</a></li>
       {% else %}
-        <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+        <li class=""><a data-equalizer-watch="menu" class="button hollow" href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
 
         {% endif %}
         <!--   <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li> -->
