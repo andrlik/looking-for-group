@@ -9,7 +9,7 @@
   <dt>{% trans "GM" %}</dt>
   <dd>{% avatar game.gm.user 30 class='profile_circle_small' %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
   <dt>{% trans "Description" %}</dt>
-  <dd>{{ game.description_rendered|safe }}</dd>
+  <dd>{{ game.game_description_rendered|safe }}</dd>
   <dt>{% trans "Details" %}</dt>
   <dd>
   <table class="hover scroll">
@@ -54,7 +54,7 @@
       {% endif %}
       <tr>
         <td>{% trans "Playing" %}</td>
-        <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.title }}</a>{% else %}{% trans "Homebrew" %}{% endif %}</td>
+        <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game }}</a>{% else %}{% trans "Homebrew" %}{% endif %}</td>
       </tr>
       <tr>
         <td>{% trans "System" %}</td>

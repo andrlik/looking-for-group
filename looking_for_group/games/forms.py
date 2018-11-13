@@ -41,6 +41,7 @@ class GamePostingForm(forms.ModelForm):
         fields = [
             "game_type",
             "title",
+            "status",
             "min_players",
             "max_players",
             "adult_themes",
