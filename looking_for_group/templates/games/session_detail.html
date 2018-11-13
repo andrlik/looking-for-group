@@ -47,8 +47,33 @@
 </table>
 {% if request.user.gamerprofile == session.game.gm %}
 <h2>{% trans "GM Notes" %}</h2>
-{{ session.gm_notes_rendered|safe }}
-<a href="{% url 'games:session_edit' session=session.slug %}" class="button">{% trans "Edit Session Details" %}</a>
+{{ session.gm_notes_rendered|safe }}<br /><br />
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <a href="{% url 'games:session_edit' session=session.slug %}" class="button">{% trans "Edit session details" %}</a>
+  </div>
+  <div class="cell medium-auto">
+    <a href="{% url 'games:session_move' session=session.slug %}" class="button">{% trans "Reschedule session" %}</a>
+  </div>
+  <div class="cell medium-auto">
+    {% if session.status == "complete" %}
+    <form action="fill in" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="'pending" /><input type="submit" class="button primary" value="{% trans 'Undo completion' %}" /></form>
+    {% elif session.status == "cancel" %}
+    <button class="button disabled">{% trans "Mark complete" %}</button>
+    {% else %}
+    <form action="fill in" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="complete" /><input type="submit" class="button primary" value="{% trans 'Mark complete' %}" /></form>
+    {% endif %}
+  </div>
+  <div class="cell medium-auto">
+    {% if session.status == "cancel" %}
+    <form action="{% url 'games:session_uncancel' session=session.slug %}" method="post">{% csrf_token %}<input type="submit" class="button" value="{% trans 'Undo cancellation' %}" /></form>
+    {% elif session.status == "complete" %}
+    <button class="button alert disabled">{% trans "Cancel session" %}</button>
+    {% else %}
+    <form action="{% url 'games:session_cancel' session=session.slug %}" method="post">{% csrf_token %}<input type="submit" class="button alert" value="{% trans 'Cancel session' %}" /></form>
+    {% endif %}
+  </div>
+</div>
 {% endif %}
 <h2>{% trans "Adventure Log" %}</h2>
 {% if session.adventurelog %}

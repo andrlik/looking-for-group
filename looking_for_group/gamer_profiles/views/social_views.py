@@ -946,7 +946,7 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
                 self.request,
                 _(
                     "{0} is not a current member of the {1} and cannot be banned.".format(
-                        self.gamer.display_name, self.community.name
+                        self.gamer, self.community.name
                     )
                 ),
             )
@@ -955,7 +955,7 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
             self.request,
             _(
                 "{0} successfully banned from {1}".format(
-                    self.gamer.display_name, self.community.name
+                    self.gamer, self.community.name
                 )
             ),
         )
@@ -1025,7 +1025,7 @@ class CommunityKickUser(
                 self.request,
                 _(
                     "{0} is not a current member of the {1} and cannot be kicked.".format(
-                        self.gamer.display_name, self.community.name
+                        self.gamer, self.community.name
                     )
                 ),
             )
@@ -1034,7 +1034,7 @@ class CommunityKickUser(
             self.request,
             _(
                 "{0} successfully kicked from {1}.".format(
-                    self.gamer.display_name, self.community.name
+                    self.gamer, self.community.name
                 )
             ),
         )
@@ -1165,7 +1165,7 @@ class GamerProfileDetailView(
                     self.request,
                     _(
                         "{} has blocked you from viewing their profiles, posts, and games.".format(
-                            self.object.display_name
+                            self.object
                         )
                     ),
                 )
@@ -1205,7 +1205,7 @@ class GamerFriendRequestView(
                     request,
                     _(
                         "You are already friends with {}".format(
-                            self.target_gamer.display_name
+                            self.target_gamer
                         )
                     ),
                 )
@@ -1249,7 +1249,7 @@ class GamerFriendRequestView(
                     self.request,
                     _(
                         "You already had a pending friend request from {}, which has now been accepted.".format(
-                            self.target_gamer.display_name
+                            self.target_gamer
                         )
                     ),
                 )
@@ -1353,10 +1353,11 @@ class GamerFriendRequestApprove(
                 self.request,
                 _(
                     "You are now friends with {}".format(
-                        friend_request.requestor.display_name
+                        friend_request.requestor
                     )
                 ),
             )
+            notify.send(request.user.gamerprofile, recipient=friend_request.requestor.user, verb=_("accepted your friend request."))
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1375,7 +1376,7 @@ class GamerFriendRequestReject(GamerFriendRequestApprove):
                 self.request,
                 _(
                     "You have ignored the friend request from {}".format(
-                        friend_request.requestor.display_name
+                        friend_request.requestor
                     )
                 ),
             )
@@ -1599,7 +1600,7 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
         if next_url and url_is_safe:
             return next_url
         return reverse_lazy(
-            "gamer_profiles:profile-detail", kwargs={"profile": self.gamer.username}
+            "gamer_profiles:profile-detail", kwargs={"gamer": self.gamer.username}
         )
 
     def form_valid(self, form):
@@ -1609,12 +1610,12 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
         if created:
             messages.success(
                 self.request,
-                _("You have successfully blocked {}".format(self.gamer.display_name)),
+                _("You have successfully blocked {}".format(self.gamer)),
             )
         else:
             messages.error(
                 self.request,
-                _("You have already blocked {}".format(self.gamer.display_name)),
+                _("You have already blocked {}".format(self.gamer)),
             )
         return HttpResponseRedirect(self.get_success_url())
 
@@ -1644,7 +1645,7 @@ class RemoveBlock(
         url_is_safe = is_safe_url(redirect_url, settings.ALLOWED_HOSTS)
         if redirect_url and url_is_safe:
             return redirect_url
-        return reverse_lazy("my-block-list")
+        return reverse_lazy("gamer_profiles:my-block-list")
 
     def form_valid(self, form):
         messages.success(
@@ -1661,6 +1662,7 @@ class BlockList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
 
     model = models.BlockedUser
     template_name = "gamer_profiles/block_list.html"
+    context_object_name = 'block_list'
     select_related = ["blockee"]
 
     def get_queryset(self):
@@ -1706,12 +1708,12 @@ class MuteGamer(LoginRequiredMixin, generic.CreateView):
         if created:
             messages.success(
                 self.request,
-                _("You have successfully muted {}.".format(self.gamer.display_name)),
+                _("You have successfully muted {}.".format(self.gamer)),
             )
         else:
             messages.error(
                 self.request,
-                _("You have already muted {}.".format(self.gamer.display_name)),
+                _("You have already muted {}.".format(self.gamer)),
             )
         return HttpResponseRedirect(self.get_success_url())
 

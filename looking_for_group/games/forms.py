@@ -118,6 +118,13 @@ class GameSessionForm(forms.ModelForm):
         fields = ["players_expected", "players_missing", "gm_notes"]
 
 
+class GameSessionCompleteUncompleteForm(forms.ModelForm):
+
+    class Meta:
+        model = models.GameSession
+        fields = ['status']
+
+
 class GameSessionRescheduleForm(forms.ModelForm):
     class Meta:
         model = models.GameSession

@@ -152,7 +152,7 @@
 </table>
 {% endif %}
 {% if game.gm.user == request.user and game.next_session %}
-<form action="{% url 'games:create_session' game=game.slug %}" method="post">
+<form action="{% url 'games:session_create' gameid=game.slug %}" method="post">
   {% csrf_token %}
   <input id="id_game" name="game" type="hidden" value="{{ game.slug }}" />
   <p>{% blocktrans with session_time=game.next_session.scheduled_time %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}

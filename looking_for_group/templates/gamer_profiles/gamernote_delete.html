@@ -3,12 +3,16 @@
 {% block subtitle %}{% trans "Delete note" %} - {% endblock %}
 {% block content %}
 <h1>{% blocktrans with gname=gamernote.gamer.display_name %}Delete note regarding {{ gname }}?{% endblocktrans %}</h1>
-<h2>{% trans "Are you sure?" %}</h2>
+<div class="callout alert">
+<h5>{% trans "Are you sure?" %}</h5>
 <p>{% blocktrans %}Proceeding will delete this note permanently.{% endblocktrans %}</p>
+</div>
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
-  <a href="{% url 'gamer_profiles:profile-detail' gamer=gamernote.gamer.pk %}"><button>Go Back</button></a> <button type="submit">{% trans "Delete Note" %}</button>
+  <div class="clearfix">
+    <a href="{% url 'gamer_profiles:profile-detail' gamer=gamernote.gamer.username %}" class="button float-left secondary">Go Back</a> <input type="submit" class="button float-right alert" value="{% trans 'Delete note' %}">
+  </div>
 </form>
 
 {% endblock %}

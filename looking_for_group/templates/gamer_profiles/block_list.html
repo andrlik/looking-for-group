@@ -1,11 +1,11 @@
 {% extends "gamer_profiles/profile_base.html" %}
-{% load i18n avatar_tags%}
+{% load i18n avatar_tags %}
 {% block subtitle %}{% trans "Blocked Users" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Blocked Users" %}{% endblock %}
 {% block mobileheader %}{% trans "Blocked Users" %}{% endblock %}
 {% block blockactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
-{% if not block_list.exists %}
+{% if not block_list %}
 <p>{% trans "No blocked users found." %}</p>
 {% endif %}
 <table class="hover scroll">
@@ -19,9 +19,9 @@
   <tbody>
     {% for block in block_list %}
     <tr>
-      <td>{% avatar 20 block.blocked_user.user %} {{ block.blocked_user.display_name }} ({{ block.blocked_user.username }})</td>
+      <td>{% avatar block.blockee.user 30 %} <a href="{{ block.blockee.get_absolute_url }}">{{ block.blockee }}</a></td>
       <td class="text-right">{{ block.created }}</td>
-      <td><form action="{% url 'gamer_profiles:unblock-gamer' block=block.pk %}" method="post"><button class="button alert" type="submit">{% trans "Remove block" %}</button></form></td>
+      <td><form action="{% url 'gamer_profiles:unblock-gamer' block=block.pk %}" method="post">{% csrf_token %}<button class="button alert" type="submit">{% trans "Remove block" %}</button></form></td>
     </tr>
     {% empty %}
     <!-- No results -->
