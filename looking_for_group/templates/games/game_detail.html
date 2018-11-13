@@ -114,7 +114,7 @@
   {% block details_and_controls %}
 {# Add actual details here. Application templates should extend this and override this block. #}
   {% if game.gm.user == request.user and pending_applicant_list %}
-  <div class="cell auto">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "Applicants" %}</h5></div>
       <div class="card-section">
@@ -124,7 +124,7 @@
     </div>
   </div>
   {% endif %}
-  <div class="cell auto">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "Current Players" %}</h5></div>
       <div class="card-section">
@@ -179,7 +179,7 @@
       </div>
     </div>
     {% if recent_sessions or game.next_session_time %}
-    <div class="cell auto">
+    <div class="cell medium-auto">
       <div class="card">
         <div class="card-divider"><h5>{% trans "Recent and upcoming sessions" %}</h5></div>
         <div class="card-section">
