@@ -1357,7 +1357,7 @@ class GamerFriendRequestApprove(
                     )
                 ),
             )
-            notify.send(request.user.gamerprofile, recipient=friend_request.requestor.user, verb=_("accepted your friend request."))
+            notify.send(self.request.user.gamerprofile, recipient=friend_request.requestor.user, verb=_("accepted your friend request."))
         return HttpResponseRedirect(self.get_success_url())
 
 

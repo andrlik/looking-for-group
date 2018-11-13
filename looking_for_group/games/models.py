@@ -368,7 +368,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
         blank=True,
         help_text=_("Your estimate for how long a session will take in hours."),
     )
-    end_date = models.DateTimeField(
+    end_date = models.DateField(
         null=True,
         blank=True,
         help_text=_(

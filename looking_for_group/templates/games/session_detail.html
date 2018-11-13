@@ -57,20 +57,20 @@
   </div>
   <div class="cell medium-auto">
     {% if session.status == "complete" %}
-    <form action="fill in" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="'pending" /><input type="submit" class="button primary" value="{% trans 'Undo completion' %}" /></form>
+    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="'pending" /><input type="submit" class="button primary" value="{% trans 'Undo completion' %}" /></form>
     {% elif session.status == "cancel" %}
     <button class="button disabled">{% trans "Mark complete" %}</button>
     {% else %}
-    <form action="fill in" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="complete" /><input type="submit" class="button primary" value="{% trans 'Mark complete' %}" /></form>
+    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="complete" /><input type="submit" class="button primary" value="{% trans 'Mark complete' %}" /></form>
     {% endif %}
   </div>
   <div class="cell medium-auto">
     {% if session.status == "cancel" %}
-    <form action="{% url 'games:session_uncancel' session=session.slug %}" method="post">{% csrf_token %}<input type="submit" class="button" value="{% trans 'Undo cancellation' %}" /></form>
+    <form action="{% url 'games:session_uncancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="pending" /> <input type="submit" class="button" value="{% trans 'Undo cancellation' %}" /></form>
     {% elif session.status == "complete" %}
     <button class="button alert disabled">{% trans "Cancel session" %}</button>
     {% else %}
-    <form action="{% url 'games:session_cancel' session=session.slug %}" method="post">{% csrf_token %}<input type="submit" class="button alert" value="{% trans 'Cancel session' %}" /></form>
+    <form action="{% url 'games:session_cancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="cancel" /> <input type="submit" class="button alert" value="{% trans 'Cancel session' %}" /></form>
     {% endif %}
   </div>
 </div>
