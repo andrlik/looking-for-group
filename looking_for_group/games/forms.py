@@ -41,6 +41,7 @@ class GamePostingForm(forms.ModelForm):
         fields = [
             "game_type",
             "title",
+            "status",
             "min_players",
             "max_players",
             "adult_themes",
@@ -58,8 +59,8 @@ class GamePostingForm(forms.ModelForm):
             "tags",
         ]
         widgets = {
-            "start_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"}),
-            "end_date": forms.widgets.DateTimeInput(attrs={"class": "dp"}),
+            "start_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"}, format="%Y-%m-%d %H:%M"),
+            "end_date": forms.widgets.DateTimeInput(attrs={"class": "dp"}, format="%Y-%m-%d"),
         }
 
 
@@ -117,10 +118,17 @@ class GameSessionForm(forms.ModelForm):
         fields = ["players_expected", "players_missing", "gm_notes"]
 
 
+class GameSessionCompleteUncompleteForm(forms.ModelForm):
+
+    class Meta:
+        model = models.GameSession
+        fields = ['status']
+
+
 class GameSessionRescheduleForm(forms.ModelForm):
     class Meta:
         model = models.GameSession
         fields = ["scheduled_time"]
         widgets = {
-            "scheduled_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"})
+            "scheduled_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"}, format="%Y-%m-%d %H:%M")
         }

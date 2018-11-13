@@ -976,6 +976,41 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
         return HttpResponseRedirect(session.get_absolute_url())
 
 
+class GameSessionCompleteUnComplete(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.edit.UpdateView):
+    """
+    Mark a session either complete or incomplete.
+    """
+
+    model = models.GameSession
+    slug_url_kwarg = "session"
+    context_object_name = "session"
+    form_class = forms.GameSessionCompleteUncompleteForm
+    select_related = ['game']
+    permission_required = "game.can_edit_listing"
+
+    def get_success_url(self):
+        self.get_object().get_absolute_url()
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() not in ["post"]:
+            return HttpResponseNotAllowed(['POST'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_permission_object(self):
+        return self.get_object().game
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("You have submitted invalid data. Were you tampering with the request?"))
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_valid(self, form):
+        new_version = form.save(commit=False)
+        if new_version.status not in ["complete", "pending"]:
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+
+
 class GameSessionCancel(
     LoginRequiredMixin,
     SelectRelatedMixin,
@@ -1288,17 +1323,20 @@ class CalendarJSONView(
 
     def dispatch(self, request, *args, **kwargs):
         self.start = request.GET.copy().get("start")
+        print(self.start)
         self.end = request.GET.copy().get("end")
         self.timezone = request.GET.copy().pop("timezone", None)
         self.calendar_slug = request.GET.copy().pop("calendar_slug", None)
         if not self.start:
+            print("Create first of month")
             self.start = mkfirstOfmonth(timezone.now()).strftime("%Y-%m-%d")
         else:
-            self.start = self.start[0]
+            self.start = self.start
         if not self.end:
+            print("Create last of month")
             self.end = mkLastOfMonth(timezone.now()).strftime("%Y-%m-%d")
         else:
-            self.end = self.end[0]
+            self.end = self.end
         if not self.timezone:
             self.timezone = timezone.now().strftime("%z")
         else:
@@ -1327,6 +1365,7 @@ class CalendarJSONView(
         return Calendar.objects.all()
 
     def get_data(self, context):
+        print("Trying request with start {}, end {}, slug {}, and timezone {}".format(self.start, self.end, self.calendar_slug, self.timezone))
         return _api_occurrences(self.start, self.end, self.calendar_slug, self.timezone)
 
 
