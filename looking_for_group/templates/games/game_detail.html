@@ -9,7 +9,7 @@
   <dt>{% trans "GM" %}</dt>
   <dd>{% avatar game.gm.user 30 class='profile_circle_small' %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
   <dt>{% trans "Description" %}</dt>
-  <dd>{{ game.description_rendered|safe }}</dd>
+  <dd>{{ game.game_description_rendered|safe }}</dd>
   <dt>{% trans "Details" %}</dt>
   <dd>
   <table class="hover scroll">
