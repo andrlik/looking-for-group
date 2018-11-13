@@ -8,7 +8,7 @@
 {% block commdetailactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
-  <div class="cell auto">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "Description" %}</h5></div>
       <div class="card-section">
@@ -16,11 +16,11 @@
       </div>
     </div>
   </div>
-  <div class="cell auto">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "Details" %}</h5></div>
       <div class="card-section">
-        <table>
+        <table class="hover scroll">
           <tbody>
             <tr>
               <td>{% trans "Owner" %}</td>
@@ -46,7 +46,7 @@
 </div>
 <div class="grid-x grid-margin-x">
   {% if community.linked_with_discord %}
-  <div class="cell auto">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "Discord Servers" %}</h5></div>
       <div class="card-section">
@@ -61,7 +61,7 @@
     </div>
   </div>
   {% endif %}
-  <div class="cell auto">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "Members" %}</h5></div>
       <div class="card-section">
