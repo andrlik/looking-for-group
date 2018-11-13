@@ -66,26 +66,43 @@
     <dt>{% trans "Rate gamer" %}</dt>
     <dd>{% ratings gamer %}</dd>
     {% if request.user != gamer.user %}
+    <hr />
     <dt>{% trans "Your notes on this gamer" %}</dt>
     <dd>
       <ol>
         {% for note in gamer_notes %}
         <li class="gamer-note">
+          <div class="grid-x grid-margin-x">
+            <div class="cell medium-4">
           <dl>
-          <dt>{% trans "Created" %}</dt>
-          <dd>{{ note.created }}</dd>
-          <dt>{% trans "Modified" %}</dt>
-          <dd>{{ note.modified }}</dd>
-          <dt>{% trans "Title" %}</dt>
-          <dd>{{ note.title }}</dd>
-          <dt>{% trans "Note" %}</dt>
-          <dd>{{ note.body_rendered|safe }}</dd>
+            <dt>{% trans "Title" %}</dt>
+            <dd>{{ note.title }}</dd>
+            <dt>{% trans "Note" %}</dt>
+            <dd>{{ note.body_rendered|safe }}</dd>
           </dl>
+            </div>
+            <div class="cell medium-2">
+              <dl>
+            <dt>{% trans "Created" %}</dt>
+            <dd>{{ note.created }}</dd>
+            <dt>{% trans "Modified" %}</dt>
+            <dd>{{ note.modified }}</dd>
+              </dl>
+            </div>
+            <div class="cell medium-2">
+            </div>
+            <dl>
+            <dt></dt>
+            <dd><a href="{% url 'gamer_profiles:edit-gamernote' gamernote=note.pk %}" class="button primary">{% trans "Edit note" %}</a></dd>
+            <dt></dt>
+            <dd><a href="{% url 'gamer_profiles:delete-gamernote' gamernote=note.pk %}" class="button alert">{% trans "Delete note" %}</a> </dd>
+            </dl>
+          </div>
         </li>
         {% empty %}
         <p>{% trans "You have not made any notes for this gamer yet." %}</p>
         {% endfor %}
-        <a href="{% url 'gamer_profiles:add-gamer-note' gamer=gamer.pk %}"><button class="button primary">{% trans "Add a note" %}</button></a>
+        <a href="{% url 'gamer_profiles:add-gamer-note' gamer=gamer.username %}"><button class="button primary">{% trans "Add a note" %}</button></a>
       </ol>
     </dd>
     {% endif %}
