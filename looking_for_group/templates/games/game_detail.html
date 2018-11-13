@@ -5,104 +5,129 @@
 {% block sectiontitle %}{{ game.title }}{% endblock %}
 {% block mobileheader %}{{ game.title }}{% endblock %}
 {% block content %}
-<dl>
-  <dt>{% trans "GM" %}</dt>
-  <dd>{% avatar game.gm.user 30 class='profile_circle_small' %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm.username }}</a></dd>
-  <dt>{% trans "Description" %}</dt>
-  <dd>{{ game.game_description_rendered|safe }}</dd>
-  <dt>{% trans "Details" %}</dt>
-  <dd>
-  <table class="hover scroll">
-    <tbody>
-      <tr>
-        <td>{% trans "Status" %}</td>
-        <td><span class="label {% if game.status == 'started' %}green{% elif game.status == 'cancel' %}alert{% elif game.status == 'closed' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
-      </tr>
-      {% if game.next_session_time %}
-      <tr>
-        <td>{% trans "Next session" %}</td>
-        <td>{% if game.next_session %}<a href="{{ game.next_session.get_absolute_url }}">{{ game.next_session_time }}</a>{% else %}{{ game.next_session_time }}{% endif %}</td>
-      </tr>
-      {% endif %}
-      <tr>
-        <td>{% trans "Game Type" %}</td>
-        <td>{{ game.get_game_type_display }}</td>
-      </tr>
-      <tr>
-        <td>{% trans "Adult Themes?" %}</td>
-        <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
-      </tr>
-      <tr>
-        <td>{% trans "Content warning" %}</td>
-        <td>{{ game.content_warning }}</td>
-      </tr>
-      <tr>
-        <td>{% trans "Starts" %}</td>
-        <td>{{ game.start_time }}</td>
-      </tr>
-      {% if game.game_type != "oneshot" %}
-      <tr>
-        <td>{% trans "Game Frequency" %}</td>
-        <td>{{ game.get_game_frequency_display }}</td>
-      </tr>
-      {% if game.end_date %}
-      <tr>
-        <td>{% trans "End Date" %}</td>
-        <td>{{ game.end_date }}</td>
-      </tr>
-      {% endif %}
-      {% endif %}
-      <tr>
-        <td>{% trans "Playing" %}</td>
-        <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game }}</a>{% else %}{% trans "Homebrew" %}{% endif %}</td>
-      </tr>
-      <tr>
-        <td>{% trans "System" %}</td>
-        <td>
-          {% if game.published_game %}{% if game.published_game.game_system %}<a href="{{ game.published_game.game_system.get_absolute_url }}">{{ game.published_game.game_system.name }}</a>{% else %}{% trans "N/A" %}{% endif %}{% elif game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}{% trans "Homebrew" %}{% endif %}
-        </td>
-      </tr>
-      <tr>
-        <td>{% trans "Published module?" %}</td>
-        <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}{% trans "N/A" %}{% endif %}</td>
-      </tr>
-      <tr>
-        <td>{% trans "Current Players" %}</td>
-        <td class="text-right"><strong>{{ game.players.count }}</strong></td>
-      </tr>
-      <tr>
-        <td>{% trans "Min Players" %}</td>
-        <td class="text-right">{{ game.min_players }}</td>
-      </tr>
-      <tr>
-        <td>{% trans "Max Players" %}</td>
-        <td class="text-right">{{ game.max_players }}</td>
-      </tr>
-      {% if game.sessions %}
-      <tr>
-        <td>{% trans "Sessions Completed" %}</td>
-        <td class="text-right">{{ game.sessions }}</td>
-      </tr>
-      <tr>
-        <td>{% trans "Tagged with:" %}</td>
-        <td>{{ game.inherited_tag_names|join:", " }}</td>
-      </tr>
-      {% endif %}
-    </tbody>
-  </table>
-  </dd>
-</dl>
-{% if request.user == game.gm.user %}
-<a href="{% url 'games:game_edit' gameid=game.slug %}" class="button">{% trans "Edit Game Details" %}</a>
-{% endif %}
-{% block details_and_controls %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Description" %}</h5></div>
+      <div class="card-section">
+        <section class="description-text">{{ game.game_description_rendered|safe }}</section>
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider">
+        <h5>{% trans "Details" %}</h5>
+      </div>
+      <div class="card-section">
+        <table class="hover scroll">
+          <tbody>
+            <tr>
+              <td>{% trans "Game Master" %}</td>
+              <td>{% avatar game.gm.user 30 class="profile_circle_small" %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm }}</a></td>
+            </tr>
+            <tr>
+              <td>{% trans "GM Stats" %}</td>
+              <td>
+                <ul class="stats-list">
+                  <li>{{ game.gm.gmed_games.count|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+                  <li>{{ game.gm.games_finished|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
+                </ul>
+              </td>
+            </tr>
+            <tr>
+              <td>{% trans "Status" %}</td>
+              <td><span class="label {% if game.status == 'started' %}green{% elif game.status == 'cancel' %}alert{% elif game.status == 'closed' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
+            </tr>
+            {% if game.next_session_time %}
+            <tr>
+              <td>{% trans "Next session" %}</td>
+              <td>{% if game.next_session %}<a href="{{ game.next_session.get_absolute_url }}">{{ game.next_session_time }}</a>{% else %}{{ game.next_session_time }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td>{% trans "Game Type" %}</td>
+              <td>{{ game.get_game_type_display }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Adult Themes?" %}</td>
+              <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Content warning" %}</td>
+              <td>{{ game.content_warning }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Starts" %}</td>
+              <td>{{ game.start_time }}</td>
+            </tr>
+            {% if game.game_type != "oneshot" %}
+            <tr>
+              <td>{% trans "Game Frequency" %}</td>
+              <td>{{ game.get_game_frequency_display }}</td>
+            </tr>
+            {% if game.end_date %}
+            <tr>
+              <td>{% trans "End Date" %}</td>
+              <td>{{ game.end_date }}</td>
+            </tr>
+            {% endif %}
+            {% endif %}
+            <tr>
+              <td>{% trans "Playing" %}</td>
+              <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.game.title }} ({{ game.published_game.name }})</a>{% else %}{% if game.published_module %}<a href="{{ game.published_module.parent_game_edition.get_absolute_url }}">{{ game.published_module.parent_game_edition }}</a>{% else %}{% trans "Homebrew" %}{% endif %}{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% trans "System" %}</td>
+              <td>
+                {% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}{% if not game.published_game and not game.published_module %}{% trans 'Homebrew' %}{% else %}{% if game.published_game.game_system %}<a href="{{ game.published_game.game_system.get_absolute_url }}">{{ game.published_game.game_system.name }}</a>{% elif game.published_module and game.published_module.parent_game_edition.game_system %}<a href="{{ game.published_module.parent_game_edition.game_system.get_absolute_url }}">{{ game.published_module.parent_game_edition.game_system.name }}</a>{% endif %}{% endif %}{% endif %}
+              </td>
+            </tr>
+            <tr>
+              <td>{% trans "Module" %}</td>
+              <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Current players" %}</td>
+              <td class="text-right">{{ game.players.count }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Minimum players" %}</td>
+              <td class="text-right">{{ game.min_players }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Maximum players" %}</td>
+              <td class="text-right">{{ game.max_players }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if request.user == game.gm.user %}
+    <a href="{% url 'games:game_edit' gameid=game.slug %}" class="button">{% trans "Edit Game Details" %}</a>
+    {% endif %}
+  </div>
+</div>
+
+
+<div class="grid-x grid-margin-x">
+  {% block details_and_controls %}
 {# Add actual details here. Application templates should extend this and override this block. #}
-{% if game.gm.user == request.user and pending_applicant_list %}
-<h2>{% trans "Applicants" %}</h2>
+  {% if game.gm.user == request.user and pending_applicant_list %}
+  <div class="cell auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Applicants" %}</h5></div>
+      <div class="card-section">
 <p>{% blocktrans count counter=pending_applicant_list|length %}You have {{ counter }} pending application.{% plural %}You have {{ counter }} pending applications.{% endblocktrans %}</p>
 <p><a href="{% url 'games:game_applicant_list' gameid=game.slug %}" class="button">{% trans "View applicants" %}</a></p>
-{% endif %}
-<h2>{% trans "Current Players" %}</h2>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  <div class="cell auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Current Players" %}</h5></div>
+      <div class="card-section">
 {% if not player_list %}
 <p>{% trans "No players yet" %}</p>
 {% else %}
@@ -151,20 +176,34 @@
   </tbody>
 </table>
 {% endif %}
-{% if game.gm.user == request.user and game.next_session %}
+      </div>
+    </div>
+    {% if recent_sessions or game.next_session_time %}
+    <div class="cell auto">
+      <div class="card">
+        <div class="card-divider"><h5>{% trans "Recent and upcoming sessions" %}</h5></div>
+        <div class="card-section">
+          {% if game.gm.user == request.user and game.next_session_time %}
+
+          {% if game.get_next_session and game.get_next_session.scheduled_time == game.next_session_time %}
+          <p>{% blocktrans %}You have a session pending completion.{% endblocktrans %}</p>
+          {% else %}
 <form action="{% url 'games:session_create' gameid=game.slug %}" method="post">
   {% csrf_token %}
   <input id="id_game" name="game" type="hidden" value="{{ game.slug }}" />
-  <p>{% blocktrans with session_time=game.next_session.scheduled_time %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}
+  <p>{% blocktrans with session_time=game.next_session_time %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}</p>
   <input type="submit" class="button" value="{% trans 'Create' %}" />
 </form>
 {% endif %}
-{% if recent_sessions %}
-<h2>{% trans "Recent and Upcoming Sessions" %}</h2>
+{% endif %}
+{% if not recent_sessions %}
+<p>{% trans "No sessions yet." %}</p>
+{% endif %}
 <table class="scroll hover">
   <thead>
     <tr>
       <th>{% trans "Date" %}</th>
+      <th>{% trans "Status" %}</th>
       <th>{% trans "Players present" %}</th>
       <th>{% trans "Log" %}</th>
       {% if game.gm.user == request.user %}
@@ -176,18 +215,24 @@
     {% for session in recent_sessions %}
     <tr>
       <td><a href="{{ session.get_absolute_url }}">{{ session.scheduled_time }}</a></td>
+      <td><span class="label {% if session.status == 'cancel' %}secondary{% elif session.status == 'complete' %}success{% else %}primary{% endif %}">{{ session.get_status_display }}</span></td>
       <td>{{ session.get_players_present|join:", " }}</td>
       <td>{{ session.adventurelog.body_rendered|truncatewords_html:30 }}</td>
       {% if game.gm.user == request.user %}
       <td>{{ session.gm_notes_rendered|truncatewords_html:30 }}</td>
       {% endif %}
     </tr>
+    {% empty %}
     {% endfor %}
   </tbody>
 </table>
-{% if game.sessions > recent_sessions.count %}
+{% if recent_sessions and game.sessions > recent_sessions.count %}
 <a href="{% url 'games:session_list' game=game.slug %}" class="button">{% trans "See all sessions" %}</a>
 {% endif %}
+        </div>
+      </div>
+    </div>
 {% endif %}
-{% endblock %}
+    {% endblock %}
+  </div>
 {% endblock %}

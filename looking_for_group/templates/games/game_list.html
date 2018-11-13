@@ -20,22 +20,22 @@
 <table class="scroll hover">
   <thead>
     <tr>
-      <th>{% trans "Title" %}</th>
+      <th width="300">{% trans "Title" %}</th>
       <th>{% trans "Type" %}</th>
       <th>{% trans "Status" %}</th>
-      <th>{% trans "Start" %}</th>
-      <th>{% trans "End" %}</th>
-      <th>{% trans "GM" %}</th>
-      <th>{% trans "Frequency (if applicable)" %}</th>
-      <th class="text-right">{% trans "Session Length (hours)" %}</th>
-      <th>{% trans "Adult Themes?" %}</th>
-      <th>{% trans "Content Warning" %}</th>
-      <th>{% trans "Privacy Setting" %}</th>
-      <th>{% trans "Players (current/min/max)" %}</th>
-      <th>{% trans "Game Type" %}</th>
-      <th>{% trans "Game System" %}</th>
+      <th width="100">{% trans "Start" %}</th>
+      <th width="100">{% trans "End" %}</th>
+      <th><abbr title="{% trans 'Game master' %}">{% trans "GM" %}</abbr></th>
+      <th><abbr title="{% trans 'Frequency' %}">{% trans "Freq" %}</abbr></th>
+      <th class="text-right">{% trans "Length (hours)" %}</th>
+      <th><abbr title="{% trans 'Adult themes?' %}">{% trans "Adult" %}</abbr></th>
+      <th><abbr title="{% trans 'Content Warning' %}">{% trans "CW" %}</abbr></th>
+      <th class="text-right">{% trans 'Privacy' %}</th>
+      <th class="text-right">{% trans "Players" %}</th>
+      <th width="500">{% trans "Description" %}</th>
+      <th>{% trans "Game" %}</th>
+      <th>{% trans "System" %}</th>
       <th>{% trans "Module" %}</th>
-      <th>{% trans "Description" %}</th>
     </tr>
   </thead>
   <tbody>
@@ -47,16 +47,16 @@
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
       <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="profile_circle_small" %} {{ game.gm }}</a></td>
-      <td>{{ game.game_get_display_game_frequency }} </td>
+      <td>{{ game.get_game_frequency_display }} </td>
       <td class="text-right">{{ game.session_length }}</td>
       <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
       <td>{{ game.content_warning }}</td>
-      <td>{{ game.get_privacy_level_display }}</td>
-      <td><strong>{{ game.players.count }}</strong>/{{ game.min_players }}/{{ game.max_players }}</td>
-      <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.game.title }} ({{ game.published_game.name }})</a>{% else %}N/A{% endif %}</td>
-      <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}N/A{% endif %}</td>
+      <td class="text-right">{% if game.privacy_level == 'private' %}<abbr title="{{ game.get_privacy_level_display }}"><i class="fas fa-lock"></i></abbr>{% elif game.privacy_level == "community" %}<abbr title="{{ game.get_privacy_level_display }}"><i class="fas fa-users"></i></abbr>{% else %}<abbr title="{{ game.get_privacy_level_display }}"><i class="fas fa-lock-open"></i> </abbr> {% endif %}</td>
+      <td class="text-right"><abbr title="{% trans 'Current players' %}"><strong>{{ game.players.count }}</strong></abbr> / <abbr title="{% trans 'Minimum players' %}">{{ game.min_players }}</abbr> / <abbr title="{% trans 'Maximum players' %}">{{ game.max_players }}</abbr></td>
+      <td width="500">{{ game.game_description_rendered|truncatewords_html:20|safe }}</td>
+      <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.game.title }} ({{ game.published_game.name }})</a>{% else %}{% if game.published_module %}<a href="{{ game.published_module.parent_game_edition.get_absolute_url }}">{{ game.published_module.parent_game_edition }}</a>{% else %}{% trans "Homebrew" %}{% endif %}{% endif %}</td>
+      <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}{% if not game.published_game and not game.published_module %}{% trans 'Homebrew' %}{% else %}{% if game.published_game.game_system %}<a href="{{ game.published_game.game_system.get_absolute_url }}">{{ game.published_game.game_system.name }}</a>{% elif game.published_module and game.published_module.parent_game_edition.game_system %}<a href="{{ game.published_module.parent_game_edition.game_system.get_absolute_url }}">{{ game.published_module.parent_game_edition.game_system.name }}</a>{% endif %}{% endif %}{% endif %}</td>
       <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
-      <td>{{ game_description_rendered|truncatewords_html:20 }}</td>
     </tr>
     {% empty %}
     <!-- No results -->
