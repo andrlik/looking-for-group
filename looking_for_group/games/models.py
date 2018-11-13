@@ -456,16 +456,11 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
                 return next_occurrence.start
         return None
 
-    @property
-    def next_session(self):
+    def get_next_session(self):
         if self.event:
-            try:
-                session = GameSession.objects.get(
-                    game=self, occurrence=self.get_next_scheduled_session_occurrence()
-                )
-            except ObjectDoesNotExist:
-                return None
-            return session
+            sessions_to_check = GameSession.objects.filter(game=self, status='pending')
+            if sessions_to_check.count() > 0:
+                return sessions_to_check.earliest('scheduled_time')
         return None
 
     def create_session_from_occurrence(self, occurrence):

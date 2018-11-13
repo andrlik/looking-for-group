@@ -7,8 +7,8 @@
 {% has_perm 'community.transfer_owner' request.user community as is_owner %}
 {% block commdetailactive %} class="is-active"{% endblock %}
 {% block content %}
-<span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} {% avatar community.owner.user 20 %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a>. {% blocktrans count counter=community.gameposting_set|length %}There is {{ counter }} game posted in this community.{% plural %}There are {{ counter }} games posted in this community. {% endblocktrans %}</span>
-<p>{{ community.description_rendered|safe }}</p>
+<span class="meta">{% blocktrans count counter=community.members.count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} {% avatar community.owner.user 20 %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a>. {% blocktrans count counter=community.gameposting_set|length %}There is {{ counter }} game posted in this community.{% plural %}There are {{ counter }} games posted in this community. {% endblocktrans %}</span>
+<p>{{ community.description_rendered|default_if_none:"No description yet."|safe }}</p>
 {% if community.linked_with_discord %}
 <h2>{% trans "Discord Servers" %}</h2>
 <p>{% blocktrans count counter=community.discord.servers.all|length %}This community is linked to {{ counter }} Discord server.{% plural %}This community is linked to {{ counter }} Discord servers.{% endblocktrans %}</p>
