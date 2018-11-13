@@ -146,6 +146,7 @@
           {% cookielaw_banner %}
 {% endblock %}
         {% if messages %}
+        <div class="clearfix">
           {% for message in messages %}
 
             <div class="callout {% if message.tags %}{{ message.tags }}{% endif %}" data-closable>
@@ -154,6 +155,7 @@
             </button>
             {{ message }}</div>
           {% endfor %}
+          </div>
         {% endif %}
       </div>
       {% block content %}
