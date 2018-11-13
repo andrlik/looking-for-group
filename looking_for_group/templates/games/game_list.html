@@ -26,14 +26,14 @@
       <th>{% trans "Start" %}</th>
       <th>{% trans "End" %}</th>
       <th>{% trans "GM" %}</th>
-      <th>{% trans "Frequency (if applicable)" %}</th>
+      <th>{% trans "Frequency" %}</th>
       <th class="text-right">{% trans "Session Length (hours)" %}</th>
       <th>{% trans "Adult Themes?" %}</th>
-      <th>{% trans "Content Warning" %}</th>
-      <th>{% trans "Privacy Setting" %}</th>
+      <th><abbr title="{% trans 'Content Warning' %}">{% trans "CW" %}</abbr></th>
+      <th>{% trans "Privacy" %}</th>
       <th>{% trans "Players (current/min/max)" %}</th>
-      <th>{% trans "Game Type" %}</th>
-      <th>{% trans "Game System" %}</th>
+      <th>{% trans "Game" %}</th>
+      <th>{% trans "System" %}</th>
       <th>{% trans "Module" %}</th>
       <th>{% trans "Description" %}</th>
     </tr>
@@ -56,7 +56,7 @@
       <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.game.title }} ({{ game.published_game.name }})</a>{% else %}N/A{% endif %}</td>
       <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}N/A{% endif %}</td>
       <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
-      <td>{{ game.game_description_rendered|truncatewords_html:20 }}</td>
+      <td>{{ game.game_description_rendered|truncatewords_html:20|safe }}</td>
     </tr>
     {% empty %}
     <!-- No results -->
