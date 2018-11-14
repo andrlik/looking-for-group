@@ -100,6 +100,8 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         blank=True,
         help_text=_("HTML generated from the makdown description."),
     )
+    community_logo_image = models.ImageField(verbose_name=_("Community Logo"), null=True, blank=True, help_text=_("Optional featured logo for your community."))
+    community_logo_cw = models.CharField(verbose_name=_("Logo content warning"), help_text=_("Content warning for community logo, if applicable. If populated, we'll initially hide the logo behind a warning."), max_length=50, null=True, blank=True)
     url = models.URLField(
         null=True,
         blank=True,
