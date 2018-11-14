@@ -69,7 +69,7 @@ def sync_discord_servers_from_discord_account(
         logger.debug("Found a valid social token. Proceeding.")
         stoken = stokens[0]
         gamer_discord, created = GamerDiscordLink.objects.get_or_create(
-            gamer=gamer, socialaccount=socialaccount
+            gamer=gamer, socialaccount=socialaccount, defaults={'sync_status': 'pending'}
         )
         gamer_discord.sync_status = "syncing"
         gamer_discord.save()
