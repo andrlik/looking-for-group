@@ -36,7 +36,7 @@
             </tr>
             <tr>
               <td>{% trans "Games posted" %}</td>
-              <td class="text-right">{{ community.gameposting_set|length }}</td>
+              <td class="text-right">{{ community.gameposting_set.count }}</td>
             </tr>
           </tbody>
         </table>
@@ -105,7 +105,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for game in active_game_list %}
+        {% for game in active_games %}
         <tr>
           <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
           <td>{{ game.get_game_type_display }}</td>
