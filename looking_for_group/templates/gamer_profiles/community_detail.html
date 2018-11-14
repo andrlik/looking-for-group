@@ -36,7 +36,7 @@
             </tr>
             <tr>
               <td>{% trans "Games posted" %}</td>
-              <td class="text-right">{{ community.gameposting_set|length }}</td>
+              <td class="text-right">{{ community.gameposting_set.count }}</td>
             </tr>
           </tbody>
         </table>
