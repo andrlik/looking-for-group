@@ -87,7 +87,12 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     Represents a player community, e.g. GeeklyInc.
     """
 
-    name = models.CharField(max_length=255, unique=True, db_index=True, help_text=_("Community Name (must be unique)"))
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        help_text=_("Community Name (must be unique)"),
+    )
     slug = models.SlugField(max_length=50, unique=True, db_index=True)
     owner = models.ForeignKey("GamerProfile", on_delete=models.CASCADE)
     description = models.TextField(
@@ -100,8 +105,21 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         blank=True,
         help_text=_("HTML generated from the makdown description."),
     )
-    community_logo_image = models.ImageField(verbose_name=_("Community Logo"), null=True, blank=True, help_text=_("Optional featured logo for your community."))
-    community_logo_cw = models.CharField(verbose_name=_("Logo content warning"), help_text=_("Content warning for community logo, if applicable. If populated, we'll initially hide the logo behind a warning."), max_length=50, null=True, blank=True)
+    community_logo = models.ImageField(
+        verbose_name=_("Community Logo"),
+        null=True,
+        blank=True,
+        help_text=_("Optional featured logo for your community."),
+    )
+    community_logo_cw = models.CharField(
+        verbose_name=_("Logo content warning"),
+        help_text=_(
+            "Content warning for community logo, if applicable. If populated, we'll initially hide the logo behind a warning."
+        ),
+        max_length=50,
+        null=True,
+        blank=True,
+    )
     url = models.URLField(
         null=True,
         blank=True,
@@ -143,18 +161,20 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            max_length = self._meta.get_field('slug').max_length
+            max_length = self._meta.get_field("slug").max_length
             temp_slug = slugify(self.name, allow_unicode=True)[:max_length]
             for x in itertools.count(1):
                 if not type(self).objects.filter(slug=temp_slug).exists():
                     break
 
-                temp_slug = "{}-{}".format(temp_slug[:max_length - len(str(x)) - 1], x)
+                temp_slug = "{}-{}".format(temp_slug[: max_length - len(str(x)) - 1], x)
             self.slug = temp_slug
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse("gamer_profiles:community-detail", kwargs={"community": self.slug})
+        return reverse(
+            "gamer_profiles:community-detail", kwargs={"community": self.slug}
+        )
 
     def get_member_count(self):
         return self.members.count()
@@ -203,7 +223,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         return membership
 
     def get_pending_applicant_count(self):
-        return CommunityApplication.objects.filter(status__in=['review', 'hold'], community=self).count()
+        return CommunityApplication.objects.filter(
+            status__in=["review", "hold"], community=self
+        ).count()
 
     def remove_member(self, gamer):
         """
@@ -323,7 +345,9 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    username = models.TextField(unique=True, db_index=True, help_text=_('Cached value from user.'))
+    username = models.TextField(
+        unique=True, db_index=True, help_text=_("Cached value from user.")
+    )
     private = models.BooleanField(
         default=True,
         help_text=_("Only allow GMs and communities I belong/apply to see profile."),
@@ -333,14 +357,15 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         null=True,
         blank=True,
         help_text=_("A few words about your RPG experience. (Visible to GM.)"),
-        verbose_name=_("RPG Experience")
+        verbose_name=_("RPG Experience"),
     )
     ttgame_experience = models.TextField(
         null=True,
         blank=True,
         help_text=_(
             "A few words about your non-RPG tabletop experience. (Visible to GM)"
-        ), verbose_name=_('Tabletop game experience')
+        ),
+        verbose_name=_("Tabletop game experience"),
     )
     playstyle = models.TextField(
         max_length=500,
@@ -446,13 +471,15 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         super().save(*args, **kwargs)
 
     def block(self, blocker):
-        block, created = BlockedUser.objects.get_or_create(blocker=blocker, blockee=self)
+        block, created = BlockedUser.objects.get_or_create(
+            blocker=blocker, blockee=self
+        )
         return
 
     def blocked_by(self, gamer):
-        '''
+        """
         Check to see if self is blocked by indicated gamer.
-        '''
+        """
         try:
             BlockedUser.objects.get(blocker=gamer, blockee=self)
         except ObjectDoesNotExist:
@@ -557,7 +584,7 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
     )
 
     def less_than(self, role_choice):
-        '''
+        """
         Compares a role to the current one and evaluates whether the current role
         than the compared role.
 
@@ -565,12 +592,8 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
             The role to compare. Must be a value from COMMUNITY_ROLES
 
         :returns: True or False
-        '''
-        role_choice_values = {
-            "admin": 3,
-            "moderator": 2,
-            "member": 1,
-        }
+        """
+        role_choice_values = {"admin": 3, "moderator": 2, "member": 1}
         if role_choice not in role_choice_values.keys():
             raise ValueError(_('Role must be one of "admin", "moderator", or "member"'))
         return role_choice_values[self.community_role] < role_choice_values[role_choice]
@@ -622,11 +645,15 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
         )
         if memberships:
             raise AlreadyInCommunity
-        bans = BannedUser.objects.filter(community=self.community, banned_user=self.gamer)
+        bans = BannedUser.objects.filter(
+            community=self.community, banned_user=self.gamer
+        )
         if bans:
             raise CurrentlyBanned
         kicks = KickedUser.objects.filter(
-            community=self.community, kicked_user=self.gamer, end_date__gt=timezone.now()
+            community=self.community,
+            kicked_user=self.gamer,
+            end_date__gt=timezone.now(),
         )
         if kicks:
             raise CurrentlySuspended
@@ -663,7 +690,7 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
         self.save()
 
     class Meta:
-        ordering = ['community__name', 'modified']
+        ordering = ["community__name", "modified"]
 
 
 class BlockedUser(TimeStampedModel, AbstractUUIDModel, models.Model):

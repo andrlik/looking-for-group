@@ -15,3 +15,10 @@
 <li{% block deleteactive %}{% endblock %}><a href="{% url 'games:game_delete' gameid=game.slug %}">{% trans "Delete game" %}</a></li>
 {% endif %}
 {% endblock %}
+{% block js_extra %}
+<script type="text/javascript">
+  function cw_off() {
+    $('#cw_overlay').css('display', 'none');
+  }
+</script>
+{% endblock %}

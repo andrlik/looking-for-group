@@ -42,6 +42,8 @@ class GamePostingForm(forms.ModelForm):
             "game_type",
             "title",
             "status",
+            "featured_image",
+            "featured_image_cw",
             "min_players",
             "max_players",
             "adult_themes",
