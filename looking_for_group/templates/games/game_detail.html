@@ -4,7 +4,30 @@
 {% block gameactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
 {% block mobileheader %}{{ game.title }}{% endblock %}
+{% block og_graph %}
+<meta name="twitter:title" content="{{ game.title }} on LFG Directory">
+<meta name="twitter:description" content="{{ game.game_description_rendered|truncatewords_html:15|striptags }}">
+{% if game.featured_image and not game.featured_image_cw %}
+<meta name="twitter:card" content="summary_large_image" >
+<meta name="twitter:image" content="{{ game.featured_image.url }}">
+<meta property="og:image" content="{{ game.featured_image.url }}">
+{% else %}
+<meta name="twitter:card" content="summary">
+{% endif %}
+<meta property="og:site_name" content="{{ game.title }} on LFG Directory">
+<meta property="og_description" content="{{ game.game_description_rendered|truncatewords_html:15|striptags }}">
+{% endblock %}
 {% block content %}
+{% if game.featured_image %}
+<div id="feature-image">
+  <img alt="{% blocktrans with gname=game.title %}Featured image for {{ gname }}{% endblocktrans %}" class="thumbnail logo" src="{{ game.featured_image.url }}" />
+  {% if game.featured_image_cw %}
+  <div id="cw_overlay" onclick="cw_off()">
+    <div id="overlay_text"><p>{% trans 'CW:' %} {{ game.featured_image_cw }}</p><p>{% trans "Click to reveal" %}</p></div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">

@@ -6,7 +6,7 @@
 {% block mobileheader %}{% blocktrans with cname=community.name %}Editing: {{ cname }}{% endblocktrans %}{% endblock %}
 {% block content %}
 <p>{% blocktrans %}You may edit your community details below.{% endblocktrans %}</p>
-<form data-abide method="post" action="">
+<form data-abide enctype="multipart/form-data" method="post" action="">
   {% csrf_token %}
   {{ form|as_foundation }}
   <div class="clearfix">

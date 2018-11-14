@@ -6,7 +6,7 @@
 {% block mobileheader %}{% trans "Create new community" %}{% endblock %}
 {% block content %}
 <p>{% blocktrans %}Fill out the form below to create your brand new community.{% endblocktrans %}</p>
-<form data-abide method="post" action="">
+<form data-abide enctype="multipart/form-data" method="post" action="">
   {% csrf_token %}
   {{ form|as_foundation }}
   <div class="clearfix">

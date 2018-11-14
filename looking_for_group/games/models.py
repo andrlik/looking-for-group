@@ -297,6 +297,8 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
     gm = models.ForeignKey(
         GamerProfile, null=True, on_delete=models.CASCADE, related_name="gmed_games"
     )
+    featured_image = models.ImageField(verbose_name=_("Featured image"), help_text=_("Featured image for the game to give players a flavor of your game."), null=True, blank=True)
+    featured_image_cw = models.CharField(max_length=50, verbose_name=_("Featured image content warning"), help_text=_("Content warning for featured image, if applicable. If populated, we will hide the featured image behind a warning that users must dismiss."), blank=True, null=True)
     min_players = models.PositiveIntegerField(
         default=1,
         help_text=_(

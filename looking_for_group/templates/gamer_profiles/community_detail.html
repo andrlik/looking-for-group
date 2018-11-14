@@ -6,7 +6,30 @@
 {% has_perm 'community.edit_community' request.user community as is_admin %}
 {% has_perm 'community.transfer_owner' request.user community as is_owner %}
 {% block commdetailactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block og_graph %}
+<meta name="twitter:title" content="{{ community.name }} on LFG Directory">
+<meta name="twitter:description" content="{{ community.description_rendered|truncatewords_html:15|striptags }}">
+{% if community.community_logo and not community.community_logo_cw %}
+<meta name="twitter:card" content="summary_large_image" >
+<meta name="twitter:image" content="{{ community.community_logo.url }}">
+<meta property="og:image" content="{{ community.community_logo.url }}">
+{% else %}
+<meta name="twitter:card" content="summary">
+{% endif %}
+<meta property="og:site_name" content="{{ community.name }} on LFG Directory">
+<meta property="og_description" content="{{ community.description_rendered|truncatewords_html:15|striptags }}">
+{% endblock %}
 {% block content %}
+{% if community.community_logo %}
+<div id="feature-image">
+  <img alt="{% trans 'Logo for' %} {{ community.name }}" class="thumbnail logo" src="{{ community.community_logo.url }}" />
+  {% if community.community_logo_cw %}
+  <div id="cw_overlay" onclick="cw_off()">
+    <div id="overlay_text"><p>{% trans 'Logo CW:' %} {{ community.community_logo_cw }}</p><p>{% trans 'Click to reveal' %}</p></div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">

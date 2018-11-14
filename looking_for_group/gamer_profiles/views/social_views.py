@@ -254,6 +254,8 @@ class CommunityCreateView(LoginRequiredMixin, generic.CreateView):
     model = models.GamerCommunity
     fields = [
         "name",
+        "community_logo",
+        "community_logo_cw",
         "description",
         "url",
         "private",
@@ -354,6 +356,8 @@ class CommunityUpdateView(
     template_name = "gamer_profiles/community_edit.html"
     fields = [
         "name",
+        "community_logo",
+        "community_logo_cw",
         "description",
         "url",
         "private",
