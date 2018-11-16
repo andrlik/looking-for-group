@@ -11,7 +11,7 @@ class GameForm(forms.ModelForm):
     class Meta:
         model = models.PublishedGame
         fields = ["title", "image", "url", "description", "publication_date", "tags"]
-        widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"})}
+        widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
 class SystemForm(forms.ModelForm):
@@ -31,7 +31,7 @@ class SystemForm(forms.ModelForm):
             "publication_date",
             "tags",
         ]
-        widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"})}
+        widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
 class EditionForm(forms.ModelForm):
@@ -52,7 +52,7 @@ class EditionForm(forms.ModelForm):
             "url",
             "tags",
         ]
-        widgets = {"release_date": forms.widgets.DateInput(attrs={"class": "dp"})}
+        widgets = {"release_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
 class SourceBookForm(forms.ModelForm):
@@ -63,7 +63,7 @@ class SourceBookForm(forms.ModelForm):
     class Meta:
         model = models.SourceBook
         fields = ["title", "image", "corebook", "release_date", "isbn", "tags"]
-        widgets = {"release_date": forms.widgets.DateInput(attrs={"class": "dp"})}
+        widgets = {"release_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
 class ModuleForm(forms.ModelForm):
@@ -82,4 +82,4 @@ class ModuleForm(forms.ModelForm):
             "isbn",
             "tags",
         ]
-        widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"})}
+        widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
