@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import factory.django
 from allauth.socialaccount import providers
 from allauth.socialaccount.models import SocialAccount, SocialApp, SocialLogin, SocialToken
@@ -7,14 +9,16 @@ from allauth.tests import MockedResponse
 from allauth.tests import TestCase as AllAuthTestCase
 from allauth.tests import mocked_response
 from django.contrib.sites.models import Site
+from django.db.models.signals import post_save
 from django.test import TransactionTestCase
 from django.test.client import RequestFactory
+from django.utils import timezone
 
 from .. import models
 from ...gamer_profiles.tests import factories
 from ..provider import DiscordProviderWithGuilds
 from ..signals import updated_discord_social_account
-from ..tasks import prune_servers, sync_discord_servers_from_discord_account
+from ..tasks import find_discord_orphans, orphan_discord_sync, prune_servers, sync_discord_servers_from_discord_account
 from ..views import DiscordGuildOAuth2Adapater
 
 # Create your tests here.
@@ -83,17 +87,50 @@ class AbstractDiscordTest(TransactionTestCase):
         self.socialaccount = SocialAccount.objects.create(
             user=self.gamer1.user, provider="discord_with_guilds"
         )
-        self.stoken = SocialToken.objects.create(
-            app=self.app,
-            account=self.socialaccount,
-            token="jlkdjlsjldsjdfsjslkdj",
-            token_secret="jkdjlsdjldfkj",
-            expires_at=None,
-        )
+        with factory.django.mute_signals(post_save):
+            self.stoken = SocialToken.objects.create(
+                app=self.app,
+                account=self.socialaccount,
+                token="jlkdjlsjldsjdfsjslkdj",
+                token_secret="jkdjlsdjldfkj",
+                expires_at=timezone.now() + timedelta(days=30),
+            )
 
 
 class AllAuthAbstractDiscordTestCase(AbstractDiscordTest, AllAuthTestCase):
     pass
+
+
+class DiscordOrphanTest(AbstractDiscordTest):
+    """
+    Tests our orphan tasks, first by supressing the post_save generation of GDLs.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.gamer4 = factories.GamerProfileFactory()
+        self.g4a = SocialAccount.objects.create(
+            user=self.gamer4.user, uid=123456789, provider="discord_with_guilds"
+        )
+        with factory.django.mute_signals(post_save):
+            self.g4t = SocialToken.objects.create(
+                app=self.app,
+                account=self.g4a,
+                token="jkdjsdlkjdslj",
+                token_secret="kdjksljdlskjdlsfk",
+                expires_at=timezone.now() + timedelta(days=30),
+            )
+
+    def test_orphan_discovery(self):
+        assert find_discord_orphans() == 2
+
+    def test_discord_sync_with_pending(self):
+        assert find_discord_orphans() == 2
+        assert orphan_discord_sync(pretend=True) == 2
+        self.gamer4.discord.sync_status = "synced"
+        self.gamer4.discord.last_successful_sync = timezone.now()
+        self.gamer4.discord.save()
+        assert orphan_discord_sync(pretend=True) == 1
 
 
 class DiscordServerPruneTest(AbstractDiscordTest):
