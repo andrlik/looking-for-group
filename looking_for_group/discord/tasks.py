@@ -2,6 +2,7 @@ import logging
 
 import requests
 from allauth.socialaccount.models import SocialToken
+from django.db import IntegrityError
 from django.utils import timezone
 from django_q.tasks import async_task
 
@@ -68,9 +69,13 @@ def sync_discord_servers_from_discord_account(
     if stokens:
         logger.debug("Found a valid social token. Proceeding.")
         stoken = stokens[0]
-        gamer_discord, created = GamerDiscordLink.objects.get_or_create(
-            gamer=gamer, socialaccount=socialaccount, defaults={'sync_status': 'pending'}
-        )
+        try:
+            gamer_discord, created = GamerDiscordLink.objects.get_or_create(
+                gamer=gamer, socialaccount=socialaccount, defaults={'sync_status': 'pending'}
+            )
+        except IntegrityError:
+            logger.debug("Tried to create another GamerDiscordLink but another process beat us. We will exit and let it proceed.")
+            return 0, 0, 0, 0, 0
         gamer_discord.sync_status = "syncing"
         gamer_discord.save()
         current_servers = gamer_discord.get_server_discord_id_list()
@@ -176,3 +181,38 @@ def sync_discord_servers_from_discord_account(
         # unneeded servers.
         async_task(prune_servers)
     return new_links, unlinks, new_servers, new_memberships, memberships_updated
+
+
+def find_discord_orphans():
+    """
+    Find orphan discord accounts and creates discord sync items as necessary.
+    """
+    sts = SocialToken.objects.filter(account__provider__icontains='discord', expires_at__gt=timezone.now()).exclude(account__in=[gda.socialaccount for gda in GamerDiscordLink.objects.all()])
+    logger.debug("Found {} orphan discord accounts.".format(sts.count()))
+    added = 0
+    for st in sts:
+        try:
+            gda, created = GamerDiscordLink.objects.get_or_create(gamer=st.account.user.gamerprofile, socialaccount=st.account)
+            if created:
+                added += 1
+        except IntegrityError:
+            pass  # Something else took care of this already.
+    logger.debug("Added {} gamer discord links for orphans.".format(added))
+    return added
+
+
+def orphan_discord_sync(pretend=False):
+    """
+    Checks system for orphan discord accounts and syncs them if necessary.
+    """
+    # First, we get orphans and try to create missing links.
+    added_accounts = find_discord_orphans()
+    pending_sync = GamerDiscordLink.objects.filter(sync_status='pending', last_successful_sync__isnull=True)
+    logger.debug("Adding {} accounts to the sync queue for a total of {}.".format(added_accounts, pending_sync.count()))
+    if not pretend:
+        for gda in pending_sync:
+            sync_discord_servers_from_discord_account(gda.gamer, gda.socialaccount)
+        logger.debug("Synced {} accounts".format(pending_sync.count()))
+    else:
+        logger.debug("Pretended to sync {} accounts".format(pending_sync.count()))  # pragma: no cover
+    return pending_sync.count()
