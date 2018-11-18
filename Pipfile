@@ -51,8 +51,9 @@ django-ical = "*"
 "psycopg2" = "*"
 django-notifications-hq = "*"
 elasticsearch = "<6"
-haystack = {editable = true, ref = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8", git = "https://github.com/andrlik/django-haystack.git"}
+haystack = {editable = true,ref = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8",git = "https://github.com/andrlik/django-haystack.git"}
 django-markdown-filter = "*"
+django-node-assets = "*"
 
 [dev-packages]
 sphinx = "*"
@@ -69,6 +70,3 @@ django-coverage-plugin = "*"
 pytest-django = "*"
 pytest-env = "*"
 isort = "*"
-
-[requires]
-python_version = "3.7"

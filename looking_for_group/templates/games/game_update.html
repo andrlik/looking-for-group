@@ -13,4 +13,19 @@
     <a class="button float-left secondary" href="{% url 'games:game_detail' gameid=game.slug %}">{% trans "Cancel and return to game detail" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}">
   </div>
 </form>
+
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_game_description')[0],
+    autosave: {
+      enabled: true,
+      uniqueId: "game_description",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
 {% endblock %}

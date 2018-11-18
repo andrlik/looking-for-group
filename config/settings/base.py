@@ -84,9 +84,10 @@ THIRD_PARTY_APPS = [
     "star_ratings",
     "django_q",
     "schedule",
-    'notifications',
+    "notifications",
     "haystack",
     "markdown_filter",
+    "django_node_assets",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -173,7 +174,7 @@ MIDDLEWARE = [
 # STATIC
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = str(ROOT_DIR("staticfiles"))
+STATIC_ROOT = str(ROOT_DIR.path("staticfiles"))
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
@@ -279,7 +280,12 @@ AUTOSLUG_SLUGIFY_FUNCTION = "slugify.slugify"
 # ------------------------------------------------------------------------------
 # https://django-compressor.readthedocs.io/en/latest/quickstart/#installation
 INSTALLED_APPS += ["compressor"]
-STATICFILES_FINDERS += ["compressor.finders.CompressorFinder"]
+STATICFILES_FINDERS += [
+    "compressor.finders.CompressorFinder",
+    "django_node_assets.finders.NodeModulesFinder",
+]
+NODE_PACKAGE_JSON = str(ROOT_DIR.path("package.json"))
+NODE_MODULES_ROOT = str(ROOT_DIR.path("node_modules"))
 
 # django-libsass
 COMPRESS_PRECOMPILERS = [("text/x-scss", "django_libsass.SassCompiler")]
@@ -295,7 +301,7 @@ AVATAR_GRAVATAR_DEFAULT = "identicon"
 AVATAR_CLEANUP_DELETED = True
 AVATAR_AUTO_GENERATE_SIZES = (80, 30)
 AVATAR_GRAVATAR_BASE_URL = "https://www.gravatar.com/avatar/"
-AVATAR_GRAVATAR_FIELD = 'avatar_email'
+AVATAR_GRAVATAR_FIELD = "avatar_email"
 
 
 # -----------------------------------------------------------------------------
@@ -316,11 +322,6 @@ Q_CLUSTER = {"name": "looking_for_group"}
 # Notifications
 # ------------------------------------------------------------------------------
 
-DJANGO_NOTIFICATIONS_CONFIG = {'USE_JSONFIELD': True}
+DJANGO_NOTIFICATIONS_CONFIG = {"USE_JSONFIELD": True}
 
-MARKDOWN_FILTER_WHITELIST_TAGS = [
-'a',
-'p',
-'code',
-'h1',
-]
+MARKDOWN_FILTER_WHITELIST_TAGS = ["a", "p", "code", "h1"]
