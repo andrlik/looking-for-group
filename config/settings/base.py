@@ -284,7 +284,7 @@ STATICFILES_FINDERS += [
     "compressor.finders.CompressorFinder",
     "django_node_assets.finders.NodeModulesFinder",
 ]
-NODE_PACKAGE_JSON = str(ROOT_DIR("package.json"))
+NODE_PACKAGE_JSON = str(ROOT_DIR.path("package.json"))
 NODE_MODULES_ROOT = str(ROOT_DIR.path("node_modules"))
 
 # django-libsass

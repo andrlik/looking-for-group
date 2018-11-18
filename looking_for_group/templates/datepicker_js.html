@@ -1,6 +1,5 @@
 {% load static compress %}
-<script src="https://cdn.jsdelivr.net/combine/npm/typo-js@1,npm/codemirror@5,npm/codemirror@5/mode/markdown/markdown.min.js,npm/codemirror@5/mode/gfm/gfm.min.js,npm/codemirror@5/mode/xml/xml.min.js,npm/codemirror@5/addon/selection/mark-selection.min.js,npm/codemirror@5/addon/mode/overlay.min.js,npm/codemirror@5/addon/edit/continuelist.min.js,npm/codemirror@5/addon/display/fullscreen.min.js,npm/codemirror@5/addon/display/placeholder.min.js,npm/codemirror-spell-checker@1"></script>
 {% compress js %}
 <script type="text/javascript" src="{% static 'js/foundation-datepicker.min.js' %}" ></script>
-  <script type="text/javascript" src="{% static 'js/simplemde.js' %}"></script>
+<script type="text/javascript" src="{% static 'simplemde/dist/simplemde.min.js' %}"></script>
 {% endcompress %}

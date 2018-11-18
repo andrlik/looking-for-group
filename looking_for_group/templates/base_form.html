@@ -3,14 +3,12 @@
 {% block css_extra %}
 {% compress css %}
 <link href="{% static 'css/foundation-datepicker.min.css' %}" rel="stylesheet" />
-<link href="{% static 'css/simplemde.min.css' %}" rel="stylesheet" />
 {% endcompress %}
 {% endblock %}
 
 {% block js_extra %}
 {% compress js %}
 <script type="text/javascript" src="{% static 'js/foundation-datepicker.min.js' %}" ></script>
-<script type="text/javascript" src="{% static 'js/simplemde.js' %}" ></script>
 {% endcompress %}
 {% block dtp_logic %}
 <script type="text/javascript">
