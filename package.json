@@ -1,7 +1,9 @@
 {
   "name": "looking_for_group",
   "version": "0.1.0",
-  "dependencies": {},
+  "dependencies": {
+    "simplemde": "andrlik/simplemde-markdown-editor#master"
+  },
   "devDependencies": {
     "browser-sync": "^2.24.7",
     "del": "^2.2.2",

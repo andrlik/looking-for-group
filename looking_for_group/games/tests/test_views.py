@@ -179,6 +179,7 @@ class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
         self.view_name = "games:game_create"
         self.valid_post_data = {
             "title": "A Valid Campaign",
+            "status": "open",
             "game_type": "campaign",
             "privacy_level": "private",
             "min_players": 1,
@@ -520,6 +521,7 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
         self.valid_post_data = {
             "title": "A Valid Campaign",
             "game_type": "campaign",
+            "status": "open",
             "privacy_level": "private",
             "min_players": 1,
             "max_players": 3,
@@ -531,6 +533,7 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
         self.invalid_post_data = {
             "title": "A Valid Campaign",
             "game_type": "campaign",
+            "status": "open",
             "privacy_level": "private",
             "min_players": 1,
             "max_players": 3,
@@ -803,6 +806,55 @@ class GameSessionUpdateTest(AbstractGameSessionTest):
                 models.GameSession.objects.get(pk=self.session2.pk).gm_notes
                 == "This will be wild and **wacky**!"
             )
+
+
+class GameSessionCompleteTest(AbstractGameSessionTest):
+    """
+    Test for completion and undo completion.
+    """
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:session_complete_toggle"
+        self.url_kwargs = {"session": self.session2.slug}
+        self.session2.refresh_from_db()
+        self.post_complete_data = {
+            "status": "complete",
+        }
+        self.post_pending_data = {
+            "status": "pending"
+        }
+        self.post_cancel_data = {
+            "status": "cancel",
+        }
+
+    def test_post_required(self):
+        self.get(self.view_name, **self.url_kwargs)
+        self.response_405()
+
+    def test_login_required(self):
+        self.post(self.view_name, data=self.post_complete_data, **self.url_kwargs)
+        self.response_302()
+        assert "accounts/login" in self.last_response['location']
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.username):
+            self.post(self.view_name, data=self.post_complete_data, **self.url_kwargs)
+            self.response_403()
+
+    def test_authoriized_user_bad_status(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.post_cancel_data, **self.url_kwargs)
+            assert models.GameSession.objects.get(pk=self.session2.pk).status == "pending"
+
+    def test_authorized_user_valid_posts(self):
+        with self.login(username=self.gamer1.username):
+            with mute_signals(post_save):
+                self.post(self.view_name, data=self.post_complete_data, **self.url_kwargs)
+                self.response_302()
+                assert models.GameSession.objects.get(pk=self.session2.pk).status == "complete"
+                self.post(self.view_name, data=self.post_pending_data, **self.url_kwargs)
+                self.response_302()
+                assert models.GameSession.objects.get(pk=self.session2.pk).status == "pending"
 
 
 class GameSessionMoveTest(AbstractGameSessionTest):

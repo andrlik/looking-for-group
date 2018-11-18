@@ -42,3 +42,15 @@ def community_role_flag(context, community):
                     "gamer_profiles:community-join", kwargs={"community": community.pk}
                 ),
             )
+
+
+@register.simple_tag(takes_context=True)
+def is_blocked_by_user(context, gamer):
+    '''
+    Takes a gamer profile as an argument and compares to request.user. If gamer is blocked by request.user, then retun True.
+    Should be assigned to a variable, e.g. {% is_blocked_by_gamer gamer as blocked %}
+    '''
+    block_record = models.BlockedUser.objects.filter(blockee=gamer, blocker=context['user'].gamerprofile)
+    if block_record.count() > 0:
+        return True
+    return False

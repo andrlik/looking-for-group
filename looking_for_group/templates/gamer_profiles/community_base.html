@@ -17,3 +17,11 @@
 <li{% block deleteactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-delete' community=community.slug %}" class="alert">{% trans "Delete community" %}</a></li>
 {% endif %}
 {% endblock %}
+
+{% block js_extra %}
+<script type="text/javascript">
+  function cw_off() {
+    $('#cw_overlay').css('display', 'none');
+  }
+</script>
+{% endblock %}

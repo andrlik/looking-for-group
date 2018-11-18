@@ -374,6 +374,10 @@ $app-dashboard-top-nav-height: 60px;
   max-height: 400px;
 }
 
+.thumbnail.logo {
+  max-height: 200px;
+}
+
 .stats-list {
   list-style-type: none;
   clear: left;
@@ -602,4 +606,48 @@ ul.footer-list {
 
 .off-canvas-content {
   height:100vh;
+}
+
+.callout {
+  max-width: 75%;
+}
+
+section.description-text{
+  max-width:75%;
+
+}
+
+#feature-image {
+  position: relative;
+  max-height: 400px;
+  max-width: 100%;
+  display: block;
+
+  #cw_overlay {
+    position:absolute;
+    height:100%;
+    display:block;
+    text-align: center;
+    max-width:100%;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background-color: $dark-gray;
+    opacity: 1;
+    z-index: 2;
+    cursor: pointer;
+
+    #overlay_text {
+      position:absolute;
+      left: 50%;
+      top: 50%;
+      margin:auto;
+      color: $white;
+      font-weight: bold;
+      transform: translate(-50%,-50%);
+      font-size: 1.5em;
+      -ms-transform: translate(-50%, -50%);
+    }
+  }
 }

@@ -2,6 +2,7 @@ import logging
 
 import requests
 from allauth.socialaccount.models import SocialToken
+from django.utils import timezone
 from django_q.tasks import async_task
 
 from ..gamer_profiles.models import CommunityMembership
@@ -68,7 +69,7 @@ def sync_discord_servers_from_discord_account(
         logger.debug("Found a valid social token. Proceeding.")
         stoken = stokens[0]
         gamer_discord, created = GamerDiscordLink.objects.get_or_create(
-            gamer=gamer, socialaccount=socialaccount
+            gamer=gamer, socialaccount=socialaccount, defaults={'sync_status': 'pending'}
         )
         gamer_discord.sync_status = "syncing"
         gamer_discord.save()
@@ -157,18 +158,19 @@ def sync_discord_servers_from_discord_account(
                     membership.community_role = guild_dict[server.pk]
                     membership.save()
                     memberships_updated += 1
-    logger.info(
-        "Updated discord records for gamer {0}. Linked {1} servers, unlinked {2} servers, created {3} new servers, added {4} new memberships, and updated {5} existing memberships.".format(
-            gamer.username,
-            new_links,
-            unlinks,
-            new_servers,
-            new_memberships,
-            memberships_updated,
+        logger.info(
+            "Updated discord records for gamer {0}. Linked {1} servers, unlinked {2} servers, created {3} new servers, added {4} new memberships, and updated {5} existing memberships.".format(
+                gamer.username,
+                new_links,
+                unlinks,
+                new_servers,
+                new_memberships,
+                memberships_updated,
+            )
         )
-    )
-    gamer_discord.sync_status = "synced"
-    gamer_discord.save()
+        gamer_discord.sync_status = "synced"
+        gamer_discord.last_successful_sync = timezone.now()
+        gamer_discord.save()
     if unlinks:
         # Since we've unlinked, let's practice good housekeeping and prune any
         # unneeded servers.

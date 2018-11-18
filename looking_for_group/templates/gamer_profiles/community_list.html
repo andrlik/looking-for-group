@@ -18,7 +18,7 @@
     <th class="text-right">{% trans "Members" %}</th>
     <th>{% trans "Owner" %}</th>
     <th>{% trans "Public/Private" %}</th>
-    <th>{% trans "Description" %}</th>
+    <th width="400">{% trans "Description" %}</th>
     <th class="text-right">{% trans "Games" %}</th>
     <th>{% trans "Your status" %}</th>
   </thead>
@@ -26,9 +26,9 @@
   {% for community in object_list %}
     <tr>
       <td><a href="{{ community.get_absolute_url }}">{{ community.name }}</a></td>
-      <td class="text-right">{{ community.member_count }}</td>
+      <td class="text-right">{{ community.members.count }}</td>
       <td>{% avatar community.owner.user 30 %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a></td>
-      <td>{% if community.private %}{% trans "Private" %}{% else %}{% trans "Public" %}{% endif %}</td>
+      <td>{% if community.private %}<abbr title="{% trans 'Private' %}"><i class="fas fa-lock"></i></abbr>{% else %}<abbr title="{% trans 'Public' %}"><i class="fas fa-lock-open"></i></abbr>{% endif %}</td>
       <td>{{ community.description_rendered|truncatewords_html:100|safe }}</td>
       <td class="text-right">{% if community.private %}{% trans "Hidden" %}{% else %}{{ community.gameposting_set.count }}{% endif %}</td>
       <td>{% community_role_flag community %}</td>

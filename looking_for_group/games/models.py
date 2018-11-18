@@ -297,6 +297,8 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
     gm = models.ForeignKey(
         GamerProfile, null=True, on_delete=models.CASCADE, related_name="gmed_games"
     )
+    featured_image = models.ImageField(verbose_name=_("Featured image"), help_text=_("Featured image for the game to give players a flavor of your game."), null=True, blank=True)
+    featured_image_cw = models.CharField(max_length=50, verbose_name=_("Featured image content warning"), help_text=_("Content warning for featured image, if applicable. If populated, we will hide the featured image behind a warning that users must dismiss."), blank=True, null=True)
     min_players = models.PositiveIntegerField(
         default=1,
         help_text=_(
@@ -368,7 +370,7 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
         blank=True,
         help_text=_("Your estimate for how long a session will take in hours."),
     )
-    end_date = models.DateTimeField(
+    end_date = models.DateField(
         null=True,
         blank=True,
         help_text=_(
@@ -456,16 +458,11 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
                 return next_occurrence.start
         return None
 
-    @property
-    def next_session(self):
+    def get_next_session(self):
         if self.event:
-            try:
-                session = GameSession.objects.get(
-                    game=self, occurrence=self.get_next_scheduled_session_occurrence()
-                )
-            except ObjectDoesNotExist:
-                return None
-            return session
+            sessions_to_check = GameSession.objects.filter(game=self, status='pending')
+            if sessions_to_check.count() > 0:
+                return sessions_to_check.earliest('scheduled_time')
         return None
 
     def create_session_from_occurrence(self, occurrence):

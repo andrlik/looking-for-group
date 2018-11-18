@@ -47,6 +47,7 @@ urlpatterns = [
         view=views.GameSessionUncancel.as_view(),
         name="session_uncancel",
     ),
+    path("sessions/<slug:session>/completetoggle/", views.GameSessionCompleteUnComplete.as_view(), name="session_complete_toggle"),
     path(
         "my/characters/",
         view=views.CharacterListForGamer.as_view(),

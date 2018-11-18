@@ -9,7 +9,7 @@
   <dt>{% trans "Receive news via email:" %}</dt>
   <dd>{{ preferences.news_emails|yesno:"Yes,No" }}</dd>
   <dt>{% trans "Notification Digests (receive unread notifications via email in digest format)" %}</dt>
-  <dd>{{ preferences.notification_digests|yesno:"Yes,No" }}</dd>
+  <dd>{{ preferences.notification_digest|yesno:"Yes,No" }}</dd>
   <dt>{% trans "Volunteer to provide feedback?" %}</dt>
   <dd>{{ preferences.feedback_volunteer|yesno:"Yes,No" }}</dd>
 </dl>
