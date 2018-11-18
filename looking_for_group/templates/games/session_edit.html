@@ -10,3 +10,17 @@
   <a href="{{ session.get_absolute_url }}" class="button secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button success" value="{% trans 'Save changes' %}"/>
 </form>
 {% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_gm_notes')[0],
+    autosave: {
+      enabled: true,
+      uniqueId: "gm_notes",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
+{% endblock %}

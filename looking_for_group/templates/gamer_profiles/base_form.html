@@ -1,0 +1,11 @@
+{% extends "gamer_profiles/base.html" %}
+{% load static i18n %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% block dtp_logic %}
+{% include "datepicker_logic.html" %}
+{% endblock %}
+{% endblock %}
