@@ -263,6 +263,10 @@ $app-dashboard-top-nav-height: 60px;
     font-size: rem-calc(24);
     width: 40px;
   }
+  .fab.large {
+    font-size: rem-calc(24);
+    width: 40px;
+  }
 }
 
 .reveal-for-medium {
@@ -313,6 +317,12 @@ $app-dashboard-top-nav-height: 60px;
     width: 80px;
     .fa.large {
       width: auto;
+    }
+    .fab.large {
+      width: auto;
+    }
+    .fab {
+      font-weight: 900;
     }
   }
 
@@ -580,8 +590,10 @@ ul.search-result-list {
 table {
   width:95%;
 }
-.fa-discord {
+h2 {
+  .fa-discord {
   color: #6577be;
+  }
 }
 footer{
   padding: 16px
