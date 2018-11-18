@@ -271,6 +271,12 @@ GAME_APPLICATION_STATUS_CHOICES = (
 )
 
 
+SESSION_TYPE_CHOICES = (
+    ("normal", "Normal"),
+    ("adhoc", "Ad hoc"),
+)
+
+
 # Create your models here.
 class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLinkedModel, models.Model):
     """
@@ -625,6 +631,7 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
 
     game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
+    session_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES, default='normal', db_index=True)
     scheduled_time = models.DateTimeField()
     status = models.CharField(
         max_length=15, choices=SESSION_STATUS_CHOICES, default="pending", db_index=True
