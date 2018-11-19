@@ -7,7 +7,8 @@ test:
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/$POSTGRES_DB"
     DJANGO_SETTINGS_MODULE: "config.settings.test"
   before_script:
-    - apt-get install nodejs
+    - curl -sL https://deb.nodesource.com/setup_11.x | bash -
+    - apt-get install -y nodejs
     - python -V
     - pip install pipenv
     - npm install --production
