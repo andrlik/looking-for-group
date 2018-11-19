@@ -3,13 +3,21 @@ from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
+from schedule.models import (
+    Calendar,
+    Event,
+    EventManager,
+    EventRelation,
+    EventRelationManager,
+    Occurrence,
+    Rule,
+)
 
-from ..game_catalog.models import GameEdition, GameSystem, PublishedGame, PublishedModule
+from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..game_catalog.utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from .utils import check_table_exists
@@ -271,14 +279,13 @@ GAME_APPLICATION_STATUS_CHOICES = (
 )
 
 
-SESSION_TYPE_CHOICES = (
-    ("normal", "Normal"),
-    ("adhoc", "Ad hoc"),
-)
+SESSION_TYPE_CHOICES = (("normal", "Normal"), ("adhoc", "Ad hoc"))
 
 
 # Create your models here.
-class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLinkedModel, models.Model):
+class GamePosting(
+    TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLinkedModel, models.Model
+):
     """
     A user-created game.
     """
@@ -303,8 +310,23 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
     gm = models.ForeignKey(
         GamerProfile, null=True, on_delete=models.CASCADE, related_name="gmed_games"
     )
-    featured_image = models.ImageField(verbose_name=_("Featured image"), help_text=_("Featured image for the game to give players a flavor of your game."), null=True, blank=True)
-    featured_image_cw = models.CharField(max_length=50, verbose_name=_("Featured image content warning"), help_text=_("Content warning for featured image, if applicable. If populated, we will hide the featured image behind a warning that users must dismiss."), blank=True, null=True)
+    featured_image = models.ImageField(
+        verbose_name=_("Featured image"),
+        help_text=_(
+            "Featured image for the game to give players a flavor of your game."
+        ),
+        null=True,
+        blank=True,
+    )
+    featured_image_cw = models.CharField(
+        max_length=50,
+        verbose_name=_("Featured image content warning"),
+        help_text=_(
+            "Content warning for featured image, if applicable. If populated, we will hide the featured image behind a warning that users must dismiss."
+        ),
+        blank=True,
+        null=True,
+    )
     min_players = models.PositiveIntegerField(
         default=1,
         help_text=_(
@@ -383,13 +405,21 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
             "What date does this end? (Only used for adventures/campaigns.) You can set this later if you prefer."
         ),
     )
-    game_description = models.TextField(help_text=_("Description of the game. You can used Markdown for formatting/link."))
+    game_description = models.TextField(
+        help_text=_(
+            "Description of the game. You can used Markdown for formatting/link."
+        )
+    )
     game_description_rendered = models.TextField(
         blank=True,
         null=True,
         help_text=_("Automated rendering of markdown text as HTML."),
     )
-    communities = models.ManyToManyField(GamerCommunity, blank=True, help_text=_('Which communities would you like to post this in? (Optional)'))
+    communities = models.ManyToManyField(
+        GamerCommunity,
+        blank=True,
+        help_text=_("Which communities would you like to post this in? (Optional)"),
+    )
     sessions = models.PositiveIntegerField(default=0)
     players = models.ManyToManyField(GamerProfile, through="Player")
     event = models.ForeignKey(
@@ -420,7 +450,9 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
         return player_calendars
 
     def get_pending_applicant_count(self):
-        return GamePostingApplication.objects.filter(game=self, status='pending').count()
+        return GamePostingApplication.objects.filter(
+            game=self, status="pending"
+        ).count()
 
     def generate_player_events_from_master_event(self):
         events_generated = 0
@@ -466,9 +498,9 @@ class GamePosting(TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLin
 
     def get_next_session(self):
         if self.event:
-            sessions_to_check = GameSession.objects.filter(game=self, status='pending')
+            sessions_to_check = GameSession.objects.filter(game=self, status="pending")
             if sessions_to_check.count() > 0:
-                return sessions_to_check.earliest('scheduled_time')
+                return sessions_to_check.earliest("scheduled_time")
         return None
 
     def create_session_from_occurrence(self, occurrence):
@@ -589,7 +621,9 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     @property
     def current_character(self):
-        characters = Character.objects.filter(status__in=['pending', 'approved'], player=self)
+        characters = Character.objects.filter(
+            status__in=["pending", "approved"], player=self
+        )
         if characters.count() > 0:
             return characters[0]
         return None
@@ -631,7 +665,9 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
 
     game = models.ForeignKey(GamePosting, on_delete=models.CASCADE)
-    session_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES, default='normal', db_index=True)
+    session_type = models.CharField(
+        max_length=20, choices=SESSION_TYPE_CHOICES, default="normal", db_index=True
+    )
     scheduled_time = models.DateTimeField()
     status = models.CharField(
         max_length=15, choices=SESSION_STATUS_CHOICES, default="pending", db_index=True
@@ -658,6 +694,12 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     occurrence = models.ForeignKey(
         Occurrence, null=True, blank=True, on_delete=models.SET_NULL
     )
+    event = models.ForeignKey(
+        GameEvent,
+        null=True,
+        blank=True,
+        help_text=_("Cannot be used with occurrence. For ad hoc events only."),
+    )
 
     def get_absolute_url(self):
         return reverse_lazy("games:session_detail", kwargs={"session": self.slug})
@@ -675,6 +717,15 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
                     + timedelta(minutes=int(60 * self.game.session_length)),
                 )
             self.save()
+
+    def save(self, *args, **kwargs):
+        if self.session_type == "adhoc" and self.occurrence:
+            raise IntegrityError(_("Ad hoc sessions can only be linked to an event."))
+        if self.session_type == "normal" and self.event:
+            raise IntegrityError(
+                _("Normal sessions can only be linked to an occurrence.")
+            )
+        return super().save(*args, **kwargs)
 
     def cancel(self):
         """

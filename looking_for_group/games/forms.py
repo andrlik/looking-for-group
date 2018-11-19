@@ -120,6 +120,15 @@ class GameSessionForm(forms.ModelForm):
         fields = ["players_expected", "players_missing", "gm_notes"]
 
 
+class AdHocGameSessionForm(GameSessionForm):
+    '''
+    Much like the normal form except provides direct access to the scheduled_time field.
+    '''
+
+    class Meta:
+        fields = ["scheduled_time", "players_expected", "players_missing", "gm_notes"]
+
+
 class GameSessionCompleteUncompleteForm(forms.ModelForm):
 
     class Meta:

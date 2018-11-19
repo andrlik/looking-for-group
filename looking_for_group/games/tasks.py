@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import timezone
 from schedule.models import Calendar, Occurrence
+from datetime import timedelta
 
 from . import models
 
@@ -61,7 +62,9 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
                         "Updated {} records requiring changes.".format(updated_records)
                     )
                 logger.debug("Adding any missing occurences...")
-                child_events = game_event.get_child_events().exclude(id__in=[c.event.id for c in child_occurences_to_update])
+                child_events = game_event.get_child_events().exclude(
+                    id__in=[c.event.id for c in child_occurences_to_update]
+                )
                 occ_created = 0
                 for event in child_events:
                     with transaction.atomic():
@@ -87,15 +90,30 @@ def sync_calendar_for_arriving_player(player):
     with transaction.atomic():
         events_created = player.game.generate_player_events_from_master_event()
         logger.debug("Created {} child events.".format(events_created))
-        player_event = player.game.event.get_child_events().filter(calendar__slug=player.gamer.username)[0]
-        occurences_to_sync = player.game.event.occurrence_set.filter(start__gte=timezone.now())
+        player_event = player.game.event.get_child_events().filter(
+            calendar__slug=player.gamer.username
+        )[0]
+        occurences_to_sync = player.game.event.occurrence_set.filter(
+            start__gte=timezone.now()
+        )
         if occurences_to_sync.count() > 0:
             logger.debug("Preparing to sync occurences.")
             synced_occurences = 0
             for occ in occurences_to_sync:
                 with transaction.atomic():
-                    pocc = Occurrence.objects.create(event=player_event, title=occ.title, description=occ.description, start=occ.start, end=occ.end, cancelled=occ.cancelled, original_start=occ.original_start, original_end=occ.original_end)
-                    models.ChildOccurenceLink.objects.create(master_event_occurence=occ, child_event_occurence=pocc)
+                    pocc = Occurrence.objects.create(
+                        event=player_event,
+                        title=occ.title,
+                        description=occ.description,
+                        start=occ.start,
+                        end=occ.end,
+                        cancelled=occ.cancelled,
+                        original_start=occ.original_start,
+                        original_end=occ.original_end,
+                    )
+                    models.ChildOccurenceLink.objects.create(
+                        master_event_occurence=occ, child_event_occurence=pocc
+                    )
                     synced_occurences += 1
             logger.debug("Synced {} occurences.".format(synced_occurences))
 
@@ -107,25 +125,58 @@ def clear_calendar_for_departing_player(player):
     except ObjectDoesNotExist:  # pragma: no cover
         pass  # No need to delete anything.
     if player.game.event:
-        candidate_events = player.game.event.get_child_events().filter(calendar=player_calendar)
+        candidate_events = player.game.event.get_child_events().filter(
+            calendar=player_calendar
+        )
         if candidate_events.count() == 1:
-            logger.debug("Player leaving game has a child event, doing a cascade delete.")
+            logger.debug(
+                "Player leaving game has a child event, doing a cascade delete."
+            )
             candidate_events[0].delete()
         elif candidate_events.count() > 1:  # pragma: no cover
-            logger.debug("Player has more than 1 child event here. Something is very wrong but deleting anyway.")
+            logger.debug(
+                "Player has more than 1 child event here. Something is very wrong but deleting anyway."
+            )
             candidate_events.delete()
         else:
             logger.debug("No events to delete.")
 
 
 def calculate_player_attendance(gamesession):
-    '''
+    """
     Takes all the players that were expected at the game session and
     recalculates their attendance.
-    '''
+    """
     game_players = gamesession.players_expected.all()
     if game_players:
         for player in game_players:
             player.sessions_expected = player.gamesession_set.count()
             player.sessions_missed = player.missed_sessions.count()
             player.save()
+
+
+def generate_or_update_master_event_occurrence_for_adhoc_session(gamesession):
+    """
+    If an adhoc session, generate necessary events.
+    """
+
+    gm_calendar, created = Calendar.objects.get_or_create(
+        slug=gamesession.game.gm.username,
+        defaults={"name": "{}'s calendar".format(gamesession.game.gm.username)},
+    )
+    if not gamesession.event:
+        gamesession.event = models.GameEvent.objects.create(
+            start=gamesession.scheduled_time,
+            end=gamesession.scheduled_time
+            + timedelta(minutes=gamesession.game.session_length * 60),
+            title="Ad hoc session for {}".format(gamesession.game.title),
+            description=gamesession.game.description,
+            creator=gamesession.game.gm,
+            calendar=gm_calendar,
+        )
+    else:
+        gamesession.event.start = gamesession.scheduled_time
+        gamesession.event.end = gamesession.scheduled_time + timedelta(
+            minutes=gamesession.game.session_length * 60
+        )
+        gamesession.event.save()
