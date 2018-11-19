@@ -17,7 +17,8 @@ from .tasks import (
     create_game_player_events,
     create_or_update_linked_occurences_on_edit,
     sync_calendar_for_arriving_player,
-    update_child_events_for_master
+    update_child_events_for_master,
+    update_player_calendars_for_adhoc_session
 )
 
 logger = logging.getLogger("games")
@@ -188,6 +189,10 @@ def sync_calendar_on_player_clear(sender, instance, action, pk_set, *args, **kwa
     if action == "post_clear":
         # All players removed, let's clean up the calendars.
         instance.event.get_child_events().delete()
+        adhocsessions = instance.gamesession_set.filter(session_type='adhoc')
+        if adhocsessions.count() > 0:
+            for sess in adhocsessions:
+                sess.event.get_child_events().delete()
 
 
 @receiver(post_save, sender=models.Player)
@@ -243,3 +248,9 @@ def generate_or_update_master_event_occurrence_for_adhoc_session(sender, instanc
                 minutes=instance.game.session_length * 60
             )
             instance.event.save()
+
+
+@receiver(post_save, sender=models.GameSession)
+def update_player_calendars_for_adhoc_session(sender, instance, created, *args, **kwargs):
+    if instance.session_type == "adhoc":
+        async_task(update_player_calendars_for_adhoc_session, instance)

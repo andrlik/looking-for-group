@@ -7,8 +7,10 @@ test:
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/$POSTGRES_DB"
     DJANGO_SETTINGS_MODULE: "config.settings.test"
   before_script:
+    - apt-get install nodejs
     - python -V
     - pip install pipenv
+    - npm install --production
     - pipenv sync --dev
   script:
   - pipenv run pytest -n 2

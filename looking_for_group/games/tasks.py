@@ -139,6 +139,14 @@ def clear_calendar_for_departing_player(player):
             candidate_events.delete()
         else:
             logger.debug("No events to delete.")
+    logger.debug("Checking for ad hoc sessions")
+    adhocsessions = player.game.gamesession_set.filter(session_type='adhoc').prefetch_related('players_expected')
+    if adhocsessions.count() > 0:
+        for sess in adhocsessions:
+            candidate_events = sess.event.get_child_events().filter(calendar=player_calendar)
+            if candidate_events.count() > 0:
+                logger.debug("Removing an adhoc child event.")
+                candidate_events.delete()
 
 
 def calculate_player_attendance(gamesession):
@@ -158,14 +166,28 @@ def update_player_calendars_for_adhoc_session(gamesession):
     """
     For all players expected for a given ad hoc session, add or update the events
     on their calendar as needed. If not in the expected list, remove the related event.
+
+    :param gamesession: The :class:`looking_for_group.games.models.GameSession` that is the basis for updating.
+    :returns: two ints -- number of created child events, number of deleted child events
+    :raises: ValueError
     """
     if gamesession.session_type != "adhoc":
         raise ValueError("This method may only be used for ad hoc sessions!")
     # First we check for any players expected. If a related event does not exist, create it.
+    calendar_list = []
+    created = 0
+    deleted = 0
     for player in gamesession.players_expected.all():
-        pass  # Create event if missing.
-    non_attending_players = models.Player.objects.filter(game=gamesession.game).exclude(
+        pcal, created = Calendar.objects.get_or_create(slug=player.gamer.username, default={'name': "{}'s calendar".format(player.gamer.username)})  # Create event if missing.
+        calendar_list.append(pcal)
+    gamesession.event.generate_missing_child_events(calendar_list)
+    created = len(calendar_list)
+    non_attending_player_usernames = [np.gamer.username for np in models.Player.objects.filter(game=gamesession.game).exclude(
         id__in=[p.id for p in gamesession.players_expected.all()]
-    )
-    for np in non_attending_players:
-        pass  # Remove event
+    )]
+    for child_event in gamesession.event.get_child_events():
+        if child_event.calendar.slug in non_attending_player_usernames:
+            child_event.delete()
+            deleted += 1
+    logger.debug("Created {} new child events and deleted {} child events".format(created, deleted))
+    return created, deleted

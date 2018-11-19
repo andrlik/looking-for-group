@@ -543,6 +543,11 @@ class GamePosting(
         self.sessions = GameSession.objects.filter(status="complete", game=self).count()
         self.save()
 
+    def delete(self, *args, **kwargs):
+        if self.event:
+            self.event.delete()
+        return super().delete(*args, **kwargs)
+
     class Meta:
         ordering = ["status", "start_time", "-end_date", "-created"]
         verbose_name = "Game"
@@ -719,6 +724,13 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
                 _("Normal sessions can only be linked to an occurrence.")
             )
         return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.event:
+            self.event.delete()
+        if self.occurrence:
+            self.occurrence.delete()
+        return super().delete(*args, **kwargs)
 
     def cancel(self):
         """
