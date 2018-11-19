@@ -48,6 +48,9 @@ class GameSystem(
     description = models.TextField(
         null=True, blank=True, help_text=_("Description of the system.")
     )
+    description_rendered = models.TextField(
+        null=True, blank=True
+    )
     original_publisher = models.ForeignKey(
         GamePublisher,
         help_text=_("Publisher who originally released the rules system."),
@@ -94,6 +97,7 @@ class PublishedGame(
     description = models.TextField(
         null=True, blank=True, help_text=_("Description of the game.")
     )
+    description_rendered = models.TextField(null=True, blank=True)
     url = models.URLField(
         null=True, blank=True, help_text=_("More info can be found here.")
     )
@@ -142,6 +146,7 @@ class GameEdition(
     description = models.TextField(
         null=True, blank=True, help_text=_("Description of the edition if applicable.")
     )
+    description_rendered = models.TextField(null=True, blank=True)
     url = models.URLField(
         null=True,
         blank=True,

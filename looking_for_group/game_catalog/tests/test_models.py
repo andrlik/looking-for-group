@@ -57,3 +57,13 @@ class TestTagInheritance(TestCase):
     def test_tag_names_only(self):
         tag_names = self.edition.inherited_tag_names
         assert tag_names == ['discovery', 'monkey', 'weird']
+
+
+class TestMarkdown(TestCase):
+    """
+    Test markdown conversion.
+    """
+
+    def test_published_game(self):
+        pg = PublishedGame.objects.create(title="Johnson", description="I'm **strong**!")
+        assert pg.description_rendered == "<p>I'm <strong>strong</strong>!</p>"
