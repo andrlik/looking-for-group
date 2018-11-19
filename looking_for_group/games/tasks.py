@@ -24,31 +24,46 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
     game_event = models.GameEvent.objects.get(id=occurence.event.id)
     if game_event.is_master_event():
         # Check to ensure this is related to a game posting.
-        try:
-            game = models.GamePosting.objects.get(event=game_event)
-        except ObjectDoesNotExist:  # pragma: no cover
-            return
-        if game.players.count() > 0:
-            # This is a game and we need to make sure the players have the event.
-            # First, we retrive any existing links.
-            logger.debug("This is an master event occurrence linked to a game.")
-            with transaction.atomic():
-                if not created:
-                    logger.debug(
-                        "This is an updated occurrence, checking for exising child occurences..."
+        # This is a game and we need to make sure the players have the event.
+        # First, we retrive any existing links.
+        logger.debug("This is an master event occurrence linked to a game.")
+        with transaction.atomic():
+            if not created:
+                logger.debug(
+                    "This is an updated occurrence, checking for exising child occurences..."
+                )
+                polinks = models.ChildOccurenceLink.objects.filter(
+                    master_event_occurence=occurence
+                )
+                logger.debug(
+                    "Found {} existing occurences to update.".format(
+                        polinks.count()
                     )
-                    polinks = models.ChildOccurenceLink.objects.filter(
-                        master_event_occurence=occurence
-                    )
-                    logger.debug(
-                        "Found {} existing occurences to update.".format(
-                            polinks.count()
-                        )
-                    )
-                    child_occurences_to_update = Occurrence.objects.filter(
-                        id__in=[p.child_event_occurence.id for p in polinks]
-                    )
-                    updated_records = child_occurences_to_update.update(
+                )
+                child_occurences_to_update = Occurrence.objects.filter(
+                    id__in=[p.child_event_occurence.id for p in polinks]
+                )
+                updated_records = child_occurences_to_update.update(
+                    title=occurence.title,
+                    description=occurence.description,
+                    start=occurence.start,
+                    end=occurence.end,
+                    cancelled=occurence.cancelled,
+                    original_start=occurence.original_start,
+                    original_end=occurence.original_end,
+                )
+                logger.debug(
+                    "Updated {} records requiring changes.".format(updated_records)
+                )
+            logger.debug("Adding any missing occurences...")
+            child_events = game_event.get_child_events().exclude(
+                id__in=[c.event.id for c in child_occurences_to_update]
+            )
+            occ_created = 0
+            for event in child_events:
+                with transaction.atomic():
+                    child_occurence = Occurrence.objects.create(
+                        event=event,
                         title=occurence.title,
                         description=occurence.description,
                         start=occurence.start,
@@ -57,32 +72,12 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
                         original_start=occurence.original_start,
                         original_end=occurence.original_end,
                     )
-                    logger.debug(
-                        "Updated {} records requiring changes.".format(updated_records)
+                    models.ChildOccurenceLink.objects.create(
+                        master_event_occurence=occurence,
+                        child_event_occurence=child_occurence,
                     )
-                logger.debug("Adding any missing occurences...")
-                child_events = game_event.get_child_events().exclude(
-                    id__in=[c.event.id for c in child_occurences_to_update]
-                )
-                occ_created = 0
-                for event in child_events:
-                    with transaction.atomic():
-                        child_occurence = Occurrence.objects.create(
-                            event=event,
-                            title=occurence.title,
-                            description=occurence.description,
-                            start=occurence.start,
-                            end=occurence.end,
-                            cancelled=occurence.cancelled,
-                            original_start=occurence.original_start,
-                            original_end=occurence.original_end,
-                        )
-                        models.ChildOccurenceLink.objects.create(
-                            master_event_occurence=occurence,
-                            child_event_occurence=child_occurence,
-                        )
-                        occ_created += 1
-                logger.debug("Created {} new linked occurences.".format(occ_created))
+                    occ_created += 1
+            logger.debug("Created {} new linked occurences.".format(occ_created))
 
 
 def sync_calendar_for_arriving_player(player):
@@ -120,9 +115,12 @@ def sync_calendar_for_arriving_player(player):
 def clear_calendar_for_departing_player(player):
 
     try:
+        logger.debug("trying to fetch calendar for departing player.")
         player_calendar = Calendar.objects.get(slug=player.gamer.username)
     except ObjectDoesNotExist:  # pragma: no cover
+        logger.debug("Calendar does not exist!")
         pass  # No need to delete anything.
+    logger.debug("Found calendar!")
     if player.game.event:
         candidate_events = player.game.event.get_child_events().filter(
             calendar=player_calendar
@@ -143,7 +141,8 @@ def clear_calendar_for_departing_player(player):
     adhocsessions = player.game.gamesession_set.filter(session_type='adhoc').prefetch_related('players_expected')
     if adhocsessions.count() > 0:
         for sess in adhocsessions:
-            candidate_events = sess.event.get_child_events().filter(calendar=player_calendar)
+            mevent = models.GameEvent.objects.get(id=sess.occurrence.event.id)
+            candidate_events = mevent.get_child_events().filter(calendar=player_calendar)
             if candidate_events.count() > 0:
                 logger.debug("Removing an adhoc child event.")
                 candidate_events.delete()
@@ -177,17 +176,30 @@ def update_player_calendars_for_adhoc_session(gamesession):
     calendar_list = []
     created = 0
     deleted = 0
-    for player in gamesession.players_expected.all():
-        pcal, created = Calendar.objects.get_or_create(slug=player.gamer.username, default={'name': "{}'s calendar".format(player.gamer.username)})  # Create event if missing.
-        calendar_list.append(pcal)
-    gamesession.event.generate_missing_child_events(calendar_list)
-    created = len(calendar_list)
-    non_attending_player_usernames = [np.gamer.username for np in models.Player.objects.filter(game=gamesession.game).exclude(
-        id__in=[p.id for p in gamesession.players_expected.all()]
-    )]
-    for child_event in gamesession.event.get_child_events():
-        if child_event.calendar.slug in non_attending_player_usernames:
-            child_event.delete()
-            deleted += 1
+    with transaction.atomic():
+        logger.debug("Checking for players associated with this session...")
+        master_event = models.GameEvent.objects.get(pk=gamesession.occurrence.event.pk)
+        if gamesession.players_expected.count() > 0:
+            logger.debug("This session has players, grabbing calendars")
+            for player in gamesession.players_expected.all():
+                pcal, created = Calendar.objects.get_or_create(slug=player.gamer.username, defaults={'name': "{}'s calendar".format(player.gamer.username)})  # Create event if missing.
+                calendar_list.append(pcal)
+            logger.debug("Running generation for {} calendars".format(len(calendar_list)))
+            master_event.generate_missing_child_events(calendar_list)
+            created = len(calendar_list)
+        logger.debug("Checking for missing players...")
+        if gamesession.players_expected.count() < gamesession.game.players.count():
+            logger.debug("We do have players not associated with this session, grabbing their usernames.")
+            non_attending_player_usernames = [np.gamer.username for np in models.Player.objects.filter(game=gamesession.game).exclude(
+                id__in=[p.id for p in gamesession.players_expected.all()]
+            )]
+            logger.debug("Found {} usernames for clearing of child events".format(len(non_attending_player_usernames)))
+            if master_event.get_child_events().count() > 0:
+                logger.debug("Fetching child events for session...")
+                for child_event in master_event.get_child_events():
+                    if child_event.calendar.slug in non_attending_player_usernames:
+                        logger.debug("Child event is for a non-participating player, removing this from their calendar.")
+                        child_event.delete()
+                        deleted += 1
     logger.debug("Created {} new child events and deleted {} child events".format(created, deleted))
     return created, deleted

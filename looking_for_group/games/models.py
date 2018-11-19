@@ -124,10 +124,12 @@ class GameEvent(Event):
         logger.debug("Found {} existing child events".format(existing_events.count()))
         if calendarlist:
             for calendar in calendarlist:
+                logger.debug("Evaluation calendar for {}".format(calendar.slug))
                 user = GamerProfile.objects.get(username=calendar.slug).user
                 if not existing_events.filter(calendar=calendar):
                     logger.debug("Event missing from this calendar, creating")
                     with transaction.atomic():
+                        logger.debug("Generating child event first...")
                         child_event = type(self).objects.create(
                             start=self.start,
                             end=self.end,
@@ -139,11 +141,14 @@ class GameEvent(Event):
                             calendar=calendar,
                             color_event=self.color_event,
                         )
-                        GameEventRelation.objects.create_relation(
+                        logger.debug("Created event with pk of {}".format(child_event.pk))
+                        logger.debug("Now creating event relation back to master event...")
+                        ch_rel = GameEventRelation.objects.create_relation(
                             event=child_event,
                             content_object=self,
                             distinction="playerevent",
                         )
+                        logger.debug("Created event relation {} for child event {}".format(ch_rel.pk, child_event.pk))
                         logger.debug(
                             "Added event {} for calendar {}".format(
                                 child_event.title, calendar.slug
@@ -490,7 +495,7 @@ class GamePosting(
 
     def get_next_session(self):
         if self.event:
-            sessions_to_check = GameSession.objects.filter(game=self, status="pending")
+            sessions_to_check = GameSession.objects.filter(game=self, session_type='normal', status="pending")
             if sessions_to_check.count() > 0:
                 return sessions_to_check.earliest("scheduled_time")
         return None
@@ -691,13 +696,6 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     occurrence = models.ForeignKey(
         Occurrence, null=True, blank=True, on_delete=models.SET_NULL
     )
-    event = models.ForeignKey(
-        GameEvent,
-        null=True,
-        blank=True,
-        help_text=_("Cannot be used with occurrence. For ad hoc events only."),
-        on_delete=models.SET_NULL,
-    )
 
     def get_absolute_url(self):
         return reverse_lazy("games:session_detail", kwargs={"session": self.slug})
@@ -708,26 +706,17 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         """
         with transaction.atomic():
             self.scheduled_time = new_schedule_time
+            logger.debug("Moving occurrence...")
             if self.occurrence:
                 self.occurrence.move(
                     new_schedule_time,
                     new_schedule_time
                     + timedelta(minutes=int(60 * self.game.session_length)),
                 )
+            logger.debug("Saving self...")
             self.save()
 
-    def save(self, *args, **kwargs):
-        if self.session_type == "adhoc" and self.occurrence:
-            raise IntegrityError(_("Ad hoc sessions can only be linked to an event."))
-        if self.session_type == "normal" and self.event:
-            raise IntegrityError(
-                _("Normal sessions can only be linked to an occurrence.")
-            )
-        return super().save(*args, **kwargs)
-
     def delete(self, *args, **kwargs):
-        if self.event:
-            self.event.delete()
         if self.occurrence:
             self.occurrence.delete()
         return super().delete(*args, **kwargs)

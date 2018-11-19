@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_delete
 from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -655,6 +655,56 @@ class GameSessionListTest(AbstractGameSessionTest):
             )
 
 
+class GameSessionAdHocCreateTest(AbstractGameSessionTest):
+    """
+    Test view for creating a game session in an ad hoc manner.
+    """
+
+    def setUp(self):
+        super().setUp()
+        models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
+        self.view_name = "games:session_adhoc_create"
+        self.url_kwargs = {"gameid": self.gp2.slug}
+        self.post_data = {
+            "scheduled_time": (timezone.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M"),
+            "players_expected": [
+                f.pk for f in models.Player.objects.filter(game=self.gp2)
+            ],
+            "players_missing": [],
+            "gm_notes": "",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm_but_closed(self):
+        self.session2.status = "complete"
+        self.session2.save()
+        self.gp2.status = "closed"
+        self.gp2.save()
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_302()
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+    def test_valid_update(self):
+        session_count = models.GameSession.objects.filter(game=self.gp2).count()
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert models.GameSession.objects.count() - session_count == 1
+
+
 class GameSessionCreateTest(AbstractGameSessionTest):
     """
     Game Session create view.
@@ -1208,7 +1258,7 @@ class PlayerLeaveTest(AbstractViewTestCaseSignals):
 
     def test_leave_submit(self):
         with self.login(username=self.gamer4.username):
-            with mute_signals(post_delete):
+            with mute_signals(pre_delete):
                 self.post(self.view_name, data={}, **self.url_kwargs)
                 self.response_302()
             with pytest.raises(ObjectDoesNotExist):
@@ -1245,7 +1295,7 @@ class PlayerKickTest(AbstractViewTestCaseSignals):
 
     def test_kick_submit(self):
         with self.login(username=self.gamer1.username):
-            with mute_signals(post_delete):
+            with mute_signals(pre_delete):
                 self.post(self.view_name, data={}, **self.url_kwargs)
                 self.response_302()
             with pytest.raises(ObjectDoesNotExist):

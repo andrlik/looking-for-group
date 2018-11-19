@@ -47,7 +47,11 @@ urlpatterns = [
         view=views.GameSessionUncancel.as_view(),
         name="session_uncancel",
     ),
-    path("sessions/<slug:session>/completetoggle/", views.GameSessionCompleteUnComplete.as_view(), name="session_complete_toggle"),
+    path(
+        "sessions/<slug:session>/completetoggle/",
+        views.GameSessionCompleteUnComplete.as_view(),
+        name="session_complete_toggle",
+    ),
     path(
         "my/characters/",
         view=views.CharacterListForGamer.as_view(),
@@ -63,6 +67,11 @@ urlpatterns = [
         "game/<slug:gameid>/sessions/create/",
         view=views.GameSessionCreate.as_view(),
         name="session_create",
+    ),
+    path(
+        "game/<slug:gameid>/sessions/create/adhoc/",
+        view=views.GameSessionAdHocCreate.as_view(),
+        name="session_adhoc_create",
     ),
     path(
         "logs/<slug:log>/edit/",
@@ -102,8 +111,16 @@ urlpatterns = [
         views.GamePostingApplyView.as_view(),
         name="game_apply",
     ),
-    path("game/<slug:gameid>/applications/", view=views.GamePostingApplicantList.as_view(), name='game_applicant_list'),
-    path("applications/<slug:application>/approval/", view=views.GamePostingApplicationApproveReject.as_view(), name='game_application_approve_reject'),
+    path(
+        "game/<slug:gameid>/applications/",
+        view=views.GamePostingApplicantList.as_view(),
+        name="game_applicant_list",
+    ),
+    path(
+        "applications/<slug:application>/approval/",
+        view=views.GamePostingApplicationApproveReject.as_view(),
+        name="game_application_approve_reject",
+    ),
     path(
         "applications/<slug:application>/",
         views.GamePostingApplicationDetailView.as_view(),
