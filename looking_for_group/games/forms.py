@@ -120,6 +120,19 @@ class GameSessionForm(forms.ModelForm):
         fields = ["players_expected", "players_missing", "gm_notes"]
 
 
+class AdHocGameSessionForm(GameSessionForm):
+    '''
+    Much like the normal form except provides direct access to the scheduled_time field.
+    '''
+
+    class Meta:
+        model = models.GameSession
+        fields = ["scheduled_time", "players_expected", "players_missing", "gm_notes"]
+        widgets = {
+            "scheduled_time": forms.widgets.DateTimeInput(attrs={'class': 'dtp'}, format="%Y-%m-%d %H:%M")
+        }
+
+
 class GameSessionCompleteUncompleteForm(forms.ModelForm):
 
     class Meta:

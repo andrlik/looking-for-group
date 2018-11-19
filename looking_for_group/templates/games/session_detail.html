@@ -8,6 +8,8 @@
 <dl>
   <dt>{% trans "Scheduled Time" %}</dt>
   <dd>{{ session.scheduled_time }}</dd>
+  <dt>{% trans "Session type" %}</dt>
+  <dd>{{ session.get_session_type_display }}</dd>
   <dt>{% trans "Status" %}</dt>
   <dd><span class="label {% if session.status == 'complete' %}success{% elif session.status == 'cancel' %}alert{% else %}primary{% endif %}">{{ session.get_status_display }}</span></dd>
 </dl>

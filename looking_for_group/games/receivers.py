@@ -2,8 +2,8 @@ import logging
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.db.models import F
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -17,7 +17,8 @@ from .tasks import (
     create_game_player_events,
     create_or_update_linked_occurences_on_edit,
     sync_calendar_for_arriving_player,
-    update_child_events_for_master
+    update_child_events_for_master,
+    update_player_calendars_for_adhoc_session
 )
 
 logger = logging.getLogger("games")
@@ -169,7 +170,8 @@ def update_games_created_count(sender, instance, created, *args, **kwargs):
 def update_child_events_when_master_event_updated(
     sender, instance, created, *args, **kwargs
 ):
-    async_task(update_child_events_for_master, instance)
+    if not created:
+        async_task(update_child_events_for_master, instance)
 
 
 @receiver(post_save, sender=models.GamePosting)
@@ -188,6 +190,10 @@ def sync_calendar_on_player_clear(sender, instance, action, pk_set, *args, **kwa
     if action == "post_clear":
         # All players removed, let's clean up the calendars.
         instance.event.get_child_events().delete()
+        adhocsessions = instance.gamesession_set.filter(session_type='adhoc')
+        if adhocsessions.count() > 0:
+            for sess in adhocsessions:
+                sess.event.get_child_events().delete()
 
 
 @receiver(post_save, sender=models.Player)
@@ -204,10 +210,9 @@ def update_games_joined(sender, instance, created, *args, **kwargs):
         instance.gamer.save()
 
 
-@receiver(post_delete, sender=models.Player)
+@receiver(pre_delete, sender=models.Player)
 def clear_calendar_on_player_remove(sender, instance, *args, **kwargs):
-    if instance.game.event:
-        async_task(clear_calendar_for_departing_player, instance)
+    async_task(clear_calendar_for_departing_player, instance)
 
 
 @receiver(post_delete, sender=models.Player)
@@ -215,3 +220,51 @@ def update_games_left(sender, instance, *args, **kwargs):
     gamer = instance.gamer
     gamer.games_left = F('games_left') + 1
     gamer.save()
+
+
+@receiver(pre_save, sender=models.GameSession)
+def generate_master_event_occurrence_for_adhoc_session(sender, instance, *args, **kwargs):
+    """
+    If an adhoc session, generate or update necessary event.
+    """
+    if instance.session_type == "adhoc":
+        gm_calendar, created = Calendar.objects.get_or_create(
+            slug=instance.game.gm.username,
+            defaults={"name": "{}'s calendar".format(instance.game.gm.username)},
+        )
+        if not instance.occurrence:
+            logger.debug("No occurrence defined yet, creating a master event for ad hoc session...")
+            master_event = models.GameEvent.objects.create(
+                start=instance.scheduled_time,
+                end=instance.scheduled_time
+                + timedelta(minutes=instance.game.session_length * 60),
+                title="Ad hoc session for {}".format(instance.game.title),
+                description=instance.game.game_description,
+                creator=instance.game.gm.user,
+                calendar=gm_calendar,
+            )
+            logger.debug("Master event created with pk of {}! Proceeding to fetch occurrence...".format(master_event.pk))
+            master_occurrence = master_event.get_occurrences(instance.scheduled_time - timedelta(days=5), instance.scheduled_time + timedelta(days=60))[0]
+            calendar_list = []
+            if instance.players_expected.count() > 0:
+                logger.debug("Players are associated with this. Adding any missing child events for adhoc session.")
+                for player in instance.players_expected.all():
+                    c, created = Calendar.objects.get_or_create(slug=player.gamer.username, defaults={'name': "{}'s calendar".format(player.gamer.username)})
+                    calendar_list.append(c)
+                master_event.generate_missing_child_events(calendar_list)
+            logger.debug("Persisting occurrence...")
+            master_occurrence.save()
+            logger.debug("Occurence saved with pk of {}".format(master_occurrence.pk))
+            instance.occurrence = master_occurrence
+
+
+@receiver(post_save, sender=models.GameSession)
+def check_update_player_calendars_for_adhoc_session(sender, instance, created, *args, **kwargs):
+    if instance.session_type == "adhoc":
+        async_task(update_player_calendars_for_adhoc_session, instance)
+
+
+@receiver(m2m_changed, sender=models.GameSession.players_expected.through)
+def update_player_calendars_on_player_add(sender, instance, action, pk_set, *args, **kwargs):
+    if instance.session_type == "adhoc":
+        async_task(update_player_calendars_for_adhoc_session, instance)

@@ -3,13 +3,13 @@ from datetime import timedelta
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_save
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.test import TransactionTestCase
 from django.utils import timezone
 from factory.django import mute_signals
 from schedule.models import Calendar, Rule
 
-from .. import models
+from .. import models, tasks
 from ...gamer_profiles.tests import factories
 from ..utils import check_table_exists
 
@@ -187,4 +187,94 @@ class GameSessionModelMethods(AbstractGamesModelTest):
     """
 
     # Currently no specific methods required.
-    pass
+    def setUp(self):
+        super().setUp()
+
+    def test_create_adhoc_event_generated(self):
+        with mute_signals(post_save):
+            adhoc_session = models.GameSession.objects.create(
+                game=self.game_posting,
+                session_type="adhoc",
+                scheduled_time=timezone.now() + timedelta(days=3),
+            )
+        assert adhoc_session.occurrence
+        assert (
+            models.GameEvent.objects.get(id=adhoc_session.occurrence.event.id)
+            .get_child_events()
+            .count()
+            == 0
+        )
+
+    def test_adhoc_add_to_calendar(self):
+        with mute_signals(post_save):
+            adhoc_session = models.GameSession.objects.create(
+                game=self.game_posting,
+                session_type="adhoc",
+                scheduled_time=timezone.now() + timedelta(days=3),
+            )
+        with mute_signals(m2m_changed):
+            adhoc_session.players_expected.add(self.player1, self.player2)
+        tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+        child_events = models.GameEvent.objects.get(
+            id=adhoc_session.occurrence.event.id
+        ).get_child_events()
+        assert child_events.count() == 2
+        for ce in child_events.all():
+            assert ce.calendar.slug in [
+                self.player1.gamer.username,
+                self.player2.gamer.username,
+            ]
+
+    def test_adhoc_update_session(self):
+        with mute_signals(post_save):
+            adhoc_session = models.GameSession.objects.create(
+                game=self.game_posting,
+                session_type="adhoc",
+                scheduled_time=timezone.now() + timedelta(days=3),
+            )
+        with mute_signals(m2m_changed):
+            adhoc_session.players_expected.add(self.player1, self.player2)
+            adhoc_session.players_expected.remove(self.player2)
+        tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+        child_events = models.GameEvent.objects.get(
+            id=adhoc_session.occurrence.event.id
+        ).get_child_events()
+        assert child_events.count() == 1
+
+    def test_adhoc_player_leave(self):
+        with mute_signals(post_save):
+            adhoc_session = models.GameSession.objects.create(
+                game=self.game_posting,
+                session_type="adhoc",
+                scheduled_time=timezone.now() + timedelta(days=3),
+            )
+        with mute_signals(m2m_changed):
+            adhoc_session.players_expected.add(self.player1, self.player2)
+        tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+        with mute_signals(pre_delete):
+            tasks.clear_calendar_for_departing_player(self.player2)
+            self.player2.delete()
+        assert (
+            models.GameEvent.objects.get(id=adhoc_session.occurrence.event.id)
+            .get_child_events()
+            .count()
+            == 1
+        )
+
+    def test_adhoc_player_clear(self):
+        with mute_signals(post_save):
+            adhoc_session = models.GameSession.objects.create(
+                game=self.game_posting,
+                session_type="adhoc",
+                scheduled_time=timezone.now() + timedelta(days=3),
+            )
+        with mute_signals(m2m_changed):
+            adhoc_session.players_expected.add(self.player1, self.player2)
+            adhoc_session.players_expected.clear()
+        tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+        assert (
+            models.GameEvent.objects.get(id=adhoc_session.occurrence.event.id)
+            .get_child_events()
+            .count()
+            == 0
+        )

@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_delete
 from django.utils import timezone
 from factory.django import mute_signals
 from schedule.models import Calendar, Rule
@@ -171,7 +171,7 @@ class TestEventEdits(AbstractTaskTestCase):
             assert models.ChildOccurenceLink.objects.count() == 3
 
     def test_calendar_clear_for_departing_player(self):
-        with mute_signals(post_save, post_delete):
+        with mute_signals(post_save, post_delete, pre_delete):
             start_time = timezone.now() + timedelta(days=2)
             self.game.start_time = start_time
             self.game.game_frequency = "weekly"

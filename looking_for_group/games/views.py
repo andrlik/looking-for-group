@@ -858,6 +858,52 @@ class GameSessionCreate(
         )
 
 
+class GameSessionAdHocCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
+    """
+    Same as a normal game session create, but instead more permissive in that you can select the time first.
+    """
+    model = models.GameSession
+    permission_required = 'game.can_edit_listing'
+    template_name = 'games/adhoc_session_create.html'
+    form_class = forms.AdHocGameSessionForm
+
+    def dispatch(self, request, *args, **kwargs):
+        game_slug = kwargs.pop('gameid', None)
+        self.game = get_object_or_404(models.GamePosting, slug=game_slug)
+        if request.user.is_authenticated and request.user.has_perm(self.permission_required, self.game):
+            if self.game.status == "closed":
+                logger.debug("Game is finiahed. Sessions cannot be added.")
+                messages.error(
+                    request,
+                    _("This game is complete and new sessions cannot be created."),
+                )
+                return HttpResponseRedirect(self.game.get_absolute_url())
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['game'] = self.game
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['game'] = self.game
+        return context
+
+    def get_permission_object(self):
+        return self.game
+
+    def get_success_url(self):
+        self.object.get_absolute_url()
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.game = self.game
+        self.object.save()
+        messages.success(self.request, _("You successfully created a new ad hoc session."))
+        return HttpResponseRedirect(self.get_success_url())
+
+
 class GameSessionDetail(
     LoginRequiredMixin,
     SelectRelatedMixin,
