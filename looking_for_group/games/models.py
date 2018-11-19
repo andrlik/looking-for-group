@@ -3,19 +3,11 @@ from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models, transaction, IntegrityError
+from django.db import IntegrityError, models, transaction
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from schedule.models import (
-    Calendar,
-    Event,
-    EventManager,
-    EventRelation,
-    EventRelationManager,
-    Occurrence,
-    Rule,
-)
+from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..game_catalog.utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
@@ -699,6 +691,7 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         null=True,
         blank=True,
         help_text=_("Cannot be used with occurrence. For ad hoc events only."),
+        on_delete=models.SET_NULL,
     )
 
     def get_absolute_url(self):
