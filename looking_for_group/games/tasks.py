@@ -4,7 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import timezone
 from schedule.models import Calendar, Occurrence
-from datetime import timedelta
 
 from . import models
 
@@ -155,28 +154,18 @@ def calculate_player_attendance(gamesession):
             player.save()
 
 
-def generate_or_update_master_event_occurrence_for_adhoc_session(gamesession):
+def update_player_calendars_for_adhoc_session(gamesession):
     """
-    If an adhoc session, generate necessary events.
+    For all players expected for a given ad hoc session, add or update the events
+    on their calendar as needed. If not in the expected list, remove the related event.
     """
-
-    gm_calendar, created = Calendar.objects.get_or_create(
-        slug=gamesession.game.gm.username,
-        defaults={"name": "{}'s calendar".format(gamesession.game.gm.username)},
+    if gamesession.session_type != "adhoc":
+        raise ValueError("This method may only be used for ad hoc sessions!")
+    # First we check for any players expected. If a related event does not exist, create it.
+    for player in gamesession.players_expected.all():
+        pass  # Create event if missing.
+    non_attending_players = models.Player.objects.filter(game=gamesession.game).exclude(
+        id__in=[p.id for p in gamesession.players_expected.all()]
     )
-    if not gamesession.event:
-        gamesession.event = models.GameEvent.objects.create(
-            start=gamesession.scheduled_time,
-            end=gamesession.scheduled_time
-            + timedelta(minutes=gamesession.game.session_length * 60),
-            title="Ad hoc session for {}".format(gamesession.game.title),
-            description=gamesession.game.description,
-            creator=gamesession.game.gm,
-            calendar=gm_calendar,
-        )
-    else:
-        gamesession.event.start = gamesession.scheduled_time
-        gamesession.event.end = gamesession.scheduled_time + timedelta(
-            minutes=gamesession.game.session_length * 60
-        )
-        gamesession.event.save()
+    for np in non_attending_players:
+        pass  # Remove event

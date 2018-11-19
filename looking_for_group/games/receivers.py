@@ -2,8 +2,8 @@ import logging
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.db.models import F
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django_q.tasks import async_task
@@ -215,3 +215,31 @@ def update_games_left(sender, instance, *args, **kwargs):
     gamer = instance.gamer
     gamer.games_left = F('games_left') + 1
     gamer.save()
+
+
+@receiver(pre_save, sender=models.GameSession)
+def generate_or_update_master_event_occurrence_for_adhoc_session(sender, instance, *args, **kwargs):
+    """
+    If an adhoc session, generate or update necessary event.
+    """
+    if instance.session_type == "adhoc":
+        gm_calendar, created = Calendar.objects.get_or_create(
+            slug=instance.game.gm.username,
+            defaults={"name": "{}'s calendar".format(instance.game.gm.username)},
+        )
+        if not instance.event:
+            instance.event = models.GameEvent.objects.create(
+                start=instance.scheduled_time,
+                end=instance.scheduled_time
+                + timedelta(minutes=instance.game.session_length * 60),
+                title="Ad hoc session for {}".format(instance.game.title),
+                description=instance.game.description,
+                creator=instance.game.gm,
+                calendar=gm_calendar,
+            )
+        else:
+            instance.event.start = instance.scheduled_time
+            instance.event.end = instance.scheduled_time + timedelta(
+                minutes=instance.game.session_length * 60
+            )
+            instance.event.save()
