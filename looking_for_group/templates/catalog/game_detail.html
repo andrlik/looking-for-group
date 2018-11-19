@@ -14,7 +14,7 @@
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ game.inherited_tag_names|join:", " }}</dd>
 </dl>
-<p>{{ game.description }}</p>
+{{ game.description_rendered|safe }}
 
 {% if is_editor %}
 <div class="clearfix">

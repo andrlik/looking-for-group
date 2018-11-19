@@ -20,7 +20,7 @@
   <dd>{{ system.inherited_tag_names|join:", " }}</dd>
 </dl>
 
-<p>{{ system.description }}</p>
+{{ system.description_rendered|safe }}
 
 {% if is_editor %}
 <div class="clearfix">

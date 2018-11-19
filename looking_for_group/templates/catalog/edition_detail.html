@@ -23,7 +23,7 @@
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ edition.inherited_tag_names|join:', ' }}</dd>
 </dl>
-<p>{{ edition.description }}</p>
+{{ edition.description_rendered|safe }}
 
 {% if is_editor %}
 <div class="clearfix">
