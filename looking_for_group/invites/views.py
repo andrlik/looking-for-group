@@ -1,11 +1,11 @@
 from datetime import timedelta
 
-from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
@@ -54,15 +54,16 @@ class CreateInvite(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateVi
         invite.content_object = self.content_object
         invite.save()
         messages.success(self.request, _("Invite created!"))
-        return HttpResponseRedirect(self.content_object.get_absolute_url())
+        return HttpResponseRedirect(
+            reverse_lazy(
+                "{}:invite_list".format(invite.content_type.app_label),
+                kwargs={"slug": self.content_object.slug},
+            )
+        )
 
 
 class InviteDeleteView(
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    SelectRelatedMixin,
-    PrefetchRelatedMixin,
-    generic.edit.DeleteView,
+    LoginRequiredMixin, PermissionRequiredMixin, generic.edit.DeleteView
 ):
     """
     View for deleting an invite object.
@@ -71,39 +72,32 @@ class InviteDeleteView(
     model = models.Invite
     permission_required = "invite.can_delete"
     template_name = "invites/invite_delete.html"
-    prefetch_related = ["content_object"]
-    select_related = ["content_type"]
     slug_url_kwarg = "invite"
     context_object_name = "invite"
 
-    def get_success_url(self):
-        return self.object.content_object.get_absolute_url()
-
     def delete(self, request, *args, **kwargs):
         messages.success(request, _("Invite deleted."))
+        obj = self.get_object()
+        self.success_url = reverse_lazy(
+            "{}:invite_list".format(obj.content_type.app_label),
+            kwargs={"slug": obj.slug},
+        )
         return super().delete(request, *args, **kwargs)
 
 
-class InviteAcceptView(
-    LoginRequiredMixin,
-    SelectRelatedMixin,
-    PrefetchRelatedMixin,
-    generic.edit.UpdateView,
-):
+class InviteAcceptView(LoginRequiredMixin, generic.edit.UpdateView):
     """
     View for accepting an invite.
     """
 
     model = models.Invite
-    select_related = ["content_type"]
-    prefetch_related = ["content_object"]
     slug_url_kwarg = "invite"
     context_object_name = "invite"
     fields = ["status"]
     template_name = "invites/invite_accept.html"
 
-    def get_object(self):
-        self.object = super().get_object()
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
         if self.object.status != "pending":
             if self.object.status == "expired":
                 messages.error(
@@ -116,8 +110,8 @@ class InviteAcceptView(
                         "This invite has already been accepted and cannot be used again."
                     ),
                 )
-            return HttpResponseRedirect(self.object.content_object.get_absolute_url())
-        return self.object
+            return HttpResponseRedirect(reverse_lazy("home"))
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         self.model.objects.filter(

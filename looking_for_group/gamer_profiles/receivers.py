@@ -9,6 +9,7 @@ from notifications.signals import notify
 
 from . import models
 from ..discord.models import CommunityDiscordLink
+from ..invites.models import Invite
 from ..invites.signals import invite_accepted
 from ..users.models import User
 
@@ -124,9 +125,9 @@ def remove_blocked_user_from_friends(sender, instance, created, *args, **kwargs)
         instance.blocker.friends.remove(instance.blockee)
 
 
-@receiver(invite_accepted)
+@receiver(invite_accepted, sender=Invite)
 def process_accepted_invite(sender, invite, acceptor, *args, **kwargs):
-    if invite.content_type.name == "gamercommunity":
+    if invite.content_type.name.lower() == "community":
         logger.debug("Accepted invite was for a game community. Processing...")
         try:
             invite.content_object.add_member(acceptor.gamerprofile)

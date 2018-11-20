@@ -26,11 +26,11 @@ class AbstractInviteTestCase(TestCase):
         self.comm1 = GamerCommunityFactory(owner=self.gamer1)
         self.comm2 = GamerCommunityFactory(owner=self.gamer2)
         self.comm3 = GamerCommunityFactory(owner=self.gamer3)
-        self.comm1.add_member(self.gamer4, community_role="moderator")
-        self.comm1.add_member(self.gamer3, community_role="member")
-        self.comm2.add_member(self.gamer4, community_role="moderator")
+        self.comm1.add_member(self.gamer4, role="moderator")
+        self.comm1.add_member(self.gamer3, role="member")
+        self.comm2.add_member(self.gamer4, role="moderator")
         self.comm3.add_member(self.gamer1)
-        self.comm3.add_member(self.gamer4, community_role="moderator")
+        self.comm3.add_member(self.gamer4, role="moderator")
         self.comm2.invites_allowed = "moderator"
         self.comm2.save()
         self.comm1.invites_allowed = "member"
@@ -38,7 +38,7 @@ class AbstractInviteTestCase(TestCase):
         self.gp1 = GamePosting.objects.create(
             title="the long dark tea time of the soul",
             gm=self.gamer1,
-            description="Lots of spoooooooky stuff",
+            game_description="Lots of spoooooooky stuff",
         )
         self.player1 = Player.objects.create(gamer=self.gamer2, game=self.gp1)
         self.admin_url_kwargs = {
@@ -125,19 +125,22 @@ class InviteDeletionTest(AbstractInviteTestCase):
     def setUp(self):
         super().setUp()
         self.view_name = "invites:invite_delete"
-        self.invite1 = Invite.objects.create(
-            label="test_game_invite", content_object=self.gp1, creator=self.gamer1
+        self.invite1 = Invite(
+            label="test_game_invite", content_object=self.gp1, creator=self.gamer1.user
         )
-        self.invite2 = Invite.objects.create(
+        self.invite1.save()
+        self.invite2 = Invite(
             label="community_test_invite",
             content_object=self.comm1,
-            creator=self.gamer3,
+            creator=self.gamer3.user,
         )
-        self.invite3 = Invite.objects.create(
+        self.invite2.save()
+        self.invite3 = Invite(
             label="community_test_invite_dos",
             content_object=self.comm1,
-            creator=self.gamer1,
+            creator=self.gamer1.user,
         )
+        self.invite3.save()
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_name, invite=self.invite1.slug)
@@ -188,19 +191,22 @@ class InviteAcceptTest(AbstractInviteTestCase):
         self.view_name = "invites:invite_accept"
         self.post_data = {"status": "accepted"}
         self.bad_post_data = {"status": "expired"}
-        self.invite1 = Invite.objects.create(
-            label="test_game_invite", content_object=self.gp1, creator=self.gamer1
+        self.invite1 = Invite(
+            label="test_game_invite", content_object=self.gp1, creator=self.gamer1.user
         )
-        self.invite2 = Invite.objects.create(
+        self.invite1.save()
+        self.invite2 = Invite(
             label="community_test_invite",
             content_object=self.comm1,
-            creator=self.gamer3,
+            creator=self.gamer3.user,
         )
-        self.invite3 = Invite.objects.create(
+        self.invite2.save()
+        self.invite3 = Invite(
             label="community_test_invite_dos",
             content_object=self.comm1,
-            creator=self.gamer1,
+            creator=self.gamer1.user,
         )
+        self.invite3.save()
         self.gamer5 = GamerProfileFactory()
 
     def test_login_required(self):

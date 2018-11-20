@@ -205,8 +205,11 @@ def is_allowed_invites(user, community):
         if community.invites_allowed == "member":
             return True
         if community.invites_allowed == "moderator":
-            if community.get_role(user.gamerprofile) == "Moderator":
-                return True
+            try:
+                if community.get_role(user.gamerprofile) == "Moderator":
+                    return True
+            except NotInCommunity:
+                pass
     return False
 
 
@@ -228,8 +231,8 @@ rules.add_perm("community.ban_user", is_community_admin)
 rules.add_perm("community.edit_roles", is_community_admin)
 rules.add_perm("community.edit_gamer_role", is_community_superior)
 rules.add_perm("community.transfer_ownership", is_community_owner)
-rules.add_perm("gamercommunity.can_invite", is_valid_inviter)
-rules.add_perm("gamercommunity.can_admin_invites", is_community_admin)
+rules.add_perm("community.can_invite", is_valid_inviter)
+rules.add_perm("community.can_admin_invites", is_community_admin)
 rules.add_perm("profile.view_detail", is_profile_viewer)
 rules.add_perm("profile.delete_note", is_note_author)
 rules.add_perm("profile.can_friend", is_possible_friend)

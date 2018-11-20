@@ -1764,3 +1764,16 @@ class MyMuteList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
         return models.MutedUser.objects.filter(
             muter=self.request.user.gamerprofile
         ).order_by("-created")
+
+
+class CommunityInviteList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
+    """
+    Provide a list of current community invites. If an admin, show all of them.
+    """
+    model = models.GamerCommunity
+    template_name = 'gamer_profiles/community_invites.html'
+    select_related = ['owner']
+    prefetch_related = ['members']
+    permission_required = 'community.view_details'
+    context_object_name = 'community'
+    slug_url_kwarg = 'slug'

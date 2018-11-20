@@ -1782,3 +1782,15 @@ class CharacterDelete(
         context = super().get_context_data(**kwargs)
         context["game"] = context["character"].game
         return context
+
+
+class GameInviteList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
+    """
+    List of invites for a game (loaded via template tags)
+    """
+    model = models.GamePosting
+    template_name = "games/invite_list.html"
+    slug_url_kwarg = "slug"
+    permission_required = "game.can_edit_listing"
+    select_related = ['gm', 'published_game', 'game_system', 'published_module']
+    prefetch_related = ['players', 'gamesession_set']

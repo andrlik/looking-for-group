@@ -13,6 +13,7 @@ from notifications.signals import notify
 from schedule.models import Calendar, Occurrence, Rule
 
 from . import models
+from ..invites.models import Invite
 from ..invites.signals import invite_accepted
 from .tasks import (
     calculate_player_attendance,
@@ -297,9 +298,9 @@ def update_player_calendars_on_player_add(
         async_task(update_player_calendars_for_adhoc_session, instance)
 
 
-@receiver(invite_accepted)
+@receiver(invite_accepted, sender=Invite)
 def process_invite_accepted(sender, invite, acceptor, *args, **kwargs):
-    if invite.content_type.name == "gameposting":
+    if invite.content_type.name.lower() == "game":
         logger.debug(
             "Invite for game {} accepted. Processing...".format(
                 invite.content_object.title
