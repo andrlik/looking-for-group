@@ -1,0 +1,20 @@
+{% extends "invites/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Create invite link" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Create invite link" %}{% endblock %}
+{% block mobileheader %}{% trans "Create invite link" %}{% endblock %}
+{% block content %}
+{% if ct == "game" %}
+<p>{% blocktrans with gname=content_object.title %}Creating player invite for {{ gname }}:{% endblocktrans %}</p>
+{% endif %}
+{% if ct == "community" %}
+<p>{% blocktrans with cname=content_object.name %}Creating community invite for {{ cname }}:{% endblocktrans %}</p>
+{% endif %}
+<form method="post" action="">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ content_object.get_absolute_url }}" class="button secondary float-left">{% trans "Discard info and return" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Create invite' %}" />
+  </div>
+</form>
+{% endblock %}

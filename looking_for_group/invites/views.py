@@ -39,8 +39,9 @@ class CreateInvite(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateVi
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["content_object"] = self.content_object
+        context["ct"] = self.content_type.name.lower()
         context[
-            self.content_type.name
+            self.content_type.name.lower()
         ] = self.content_object  # for a more friendly reference in template
         return context
 

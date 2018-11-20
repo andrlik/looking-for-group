@@ -1,0 +1,25 @@
+{% extends "invites/base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% trans "Accept invite?" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Accept invite?" %}{% endblock %}
+{% block mobileheader %}{% trans "Accept invite?" %}{% endblock %}
+{% block content %}
+{% if invite.content_type.name == "Game" %}
+<p>{% blocktrans with gname=invite.content_object.title %}Accept game invite to {{ gname }}?{% endblocktrans %}</p>
+{% else %}
+<p>{% blocktrans with cname=invite.content_object.name %}Accept community invite to {{ cname }}?{% endblocktrans %}</p>
+{% endif %}
+<dl>
+  <dt>{% trans "Invite from:" %}</dt>
+  <dd>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></dd>
+  <dt>{% trans "Expires" %}</dt>
+  <dd>{{ invite.expires_at }}</dd>
+</dl>
+<form method="post" action="">
+  {% csrf_token %}
+  <input type="hidden" id="id_status" name="status" value="accepted" />
+  <div class="clearfix">
+    <a href="{% url 'home' %}" class="button secondary float-left">{% trans "Maybe later" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Accept invite'" />
+  </div>
+</form>
+{% endblock %}
