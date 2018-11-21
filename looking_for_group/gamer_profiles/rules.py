@@ -202,14 +202,15 @@ def is_note_author(user, note):
 @predicate
 def is_allowed_invites(user, community):
     if user.is_authenticated:
-        if community.invites_allowed == "member":
-            return True
-        if community.invites_allowed == "moderator":
-            try:
-                if community.get_role(user.gamerprofile) == "Moderator":
+        try:
+            role = community.get_role(user.gamerprofile)
+            if community.invites_allowed == "member":
+                return True
+            if community.invites_allowed == "moderator":
+                if role == "Moderator":
                     return True
-            except NotInCommunity:
-                pass
+        except NotInCommunity:
+            pass
     return False
 
 

@@ -7,9 +7,10 @@
 {% block content %}
 {% has_perm "community.can_invite" user community as is_inviter %}
 {% has_perm "community.can_admin_invites" user community as is_invite_admin %}
-{% get_active_invites_for_object_by_creator community user as your_active_invite_list %}
-{% get_accepted_invites_for_object_by_creator community user as your_accepted_invite_list %}
-{% get_expired_invites_for_object_by_creator community user as your_expired_invite_list %}
+{% get_active_invites_for_object_by_creator community request.user as your_active_invite_list %}
+{% get_accepted_invites_for_object_by_creator community request.user as your_accepted_invite_list %}
+{% get_expired_invites_for_object_by_creator community request.user as your_expired_invite_list %}
+<p>{% blocktrans %}Invites are one-use links that allow someone to immediately join your community without having to go through the application process.{% endblocktrans %}</p>
 {% if is_invite_admin %}
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="admin-tabs">
   <li class="tabs-title is-active"><a href="#your_invites" aria-selected="true">{% trans "Your invites" %}</a></li>
@@ -28,6 +29,9 @@
         {% if not your_active_invite_list %}
         <p>{% trans "You have no pending invites for this community." %}</p>
         {% endif %}
+        <div class="clearfix">
+          <a href="{% url 'invites:invite_create' content_type=ct.id object_id=community.pk %}" class="button float-right">{% trans "Create new invite link" %}</a>
+        </div>
         <table class="scroll hover">
           <thead>
             <tr>
@@ -44,7 +48,7 @@
             <tr>
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
-              <td><a href="{% url 'invites:invite_accept' invite=invite.slug %}">{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
+              <td><a href="https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}">https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
               <td>{{ invite.get_status_display }}</td>
               <td class="text-right">{{ invite.expires_at }}</td>
               <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
@@ -58,15 +62,11 @@
         {% if not your_accepted_invite_list %}
         <p>{% trans "You have no accepted invites for this community." %}</p>
         {% endif %}
-        <div class="clearfix">
-          <a href="{% url 'invites:invite_create' content_type=ct object_id=community.pk %}" class="button float-right">{% trans "Create new invite link" %}</a>
-        </div>
         <table class="scroll hover">
           <thead>
             <tr>
               <th>{% trans "Label" %}</th>
               <th class="text-right">{% trans "Created at" %}</th>
-              <th>{% trans "Invite URL" %}</th>
               <th>{% trans "Status" %}</th>
               <th>{% trans "Accepted by" %}</th>
               <th class="text-right">{% trans "Expires" %}</th>
@@ -78,7 +78,6 @@
             <tr>
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
-              <td><a href="{% url 'invites:invite_accept' invite=invite.slug %}">{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
               <td>{{ invite.get_status_display }}</td>
               <td>{% avatar invite.accepted_by 30 %} <a href="{{ invite.accepted_by.gamerprofile.get_absolute_url }}">{{ invite.accepted_by.gamerprofile.get_absolute_url }}</a></td>
               <td class="text-right">{{ invite.expires_at }}</td>
@@ -98,7 +97,6 @@
             <tr>
               <th>{% trans "Label" %}</th>
               <th class="text-right">{% trans "Created at" %}</th>
-              <th>{% trans "Invite URL" %}</th>
               <th>{% trans "Status" %}</th>
               <th class="text-right">{% trans "Expired" %}</th>
               <th></th>
@@ -110,7 +108,6 @@
               <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
-              <td>{% trans "None" %}</td>
               <td>{{ invite.get_status_display }}</td>
               <td class="text-right">{{ invite.expires_at }}</td>
               <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
@@ -157,7 +154,7 @@
               <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
-              <td><a href="{% url 'invites:invite_accept' invite=invite.slug %}">{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
+              <td><a href="https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}">https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
               <td>{{ invite.get_status_display }}</td>
               <td class="text-right">{{ invite.expires_at }}</td>
               <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
@@ -177,7 +174,6 @@
               <th>{% trans "Creator" %}</th>
               <th>{% trans "Label" %}</th>
               <th class="text-right">{% trans "Created at" %}</th>
-              <th>{% trans "Invite URL" %}</th>
               <th>{% trans "Status" %}</th>
               <th>{% trans "Accepted by" %}</th>
               <th class="text-right">{% trans "Expiration" %}</th>
@@ -190,7 +186,6 @@
               <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
-              <td><a href="{% url 'invites:invite_accept' invite=invite.slug %}">{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
               <td>{{ invite.get_status_display }}</td>
               <td>{% avatar invite.accepted_by 30 %} <a href="{{ invite.accepted_by.gamerprofile.get_absolute_url }}">{{ invite.accepted_by.gamerprofile }}</a></td>
               <td class="text-right">{{ invite.expires_at }}</td>
@@ -211,7 +206,6 @@
               <th>{% trans "Creator" %}</th>
               <th>{% trans "Label" %}</th>
               <th class="text-right">{% trans "Created at" %}</th>
-              <th>{% trans "Invite URL" %}</th>
               <th>{% trans "Status" %}</th>
               <th class="text-right">{% trans "Expired" %}</th>
               <th></th>
@@ -223,7 +217,6 @@
               <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
-              <td>{% trans "None" %}</td>
               <td>{{ invite.get_status_display }}</td>
               <td class="text-right">{{ invite.expires_at }}</td>
               <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>

@@ -19,8 +19,8 @@ def get_active_invites_for_object(obj):
 
 
 @register.simple_tag()
-def get_active_invites_for_object_by_creator(object, user):
-    return get_accepted_invites_for_object().filter(creator=user)
+def get_active_invites_for_object_by_creator(obj, user):
+    return get_active_invites_for_object(obj).filter(creator=user)
 
 
 @register.simple_tag()
@@ -36,7 +36,7 @@ def get_expired_invites_for_object(obj):
 
 @register.simple_tag()
 def get_expired_invites_for_object_by_creator(obj, user):
-    return get_expired_invites_for_object().filter(creator=user)
+    return get_expired_invites_for_object(obj).filter(creator=user)
 
 
 @register.simple_tag()
@@ -52,4 +52,4 @@ def get_accepted_invites_for_object(obj):
 
 @register.simple_tag()
 def get_accepted_invites_for_object_by_creator(obj, user):
-    return get_accepted_invites_for_object().filter(creator=user)
+    return get_accepted_invites_for_object(obj).filter(creator=user)

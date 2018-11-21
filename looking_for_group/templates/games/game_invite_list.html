@@ -10,6 +10,7 @@
   {% get_active_invites_for_object game as active_invite_list %}
   {% get_accepted_invites_for_object game as accepted_invite_list %}
   {% get_expired_invites_for_object game as expired_invite_list %}
+<p>{% blocktrans %}Invites are one-use links that allow someone to immediately join your game without having to go through the application process.{% endblocktrans %}</p>
     <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="all-tabs">
       <li class="tabs-title is-active"><a href="#all_pending" aria-selected="true">{% trans "Pending invites" %} ({{ active_invite_list|length }})</a></li>
       <li class="tabs-title"><a href="#all_accepted" data-tabs-target="all_accepted">{% trans "Accepted invites" %} ({{ accepted_invite_list|length }})</a></li>
@@ -21,7 +22,7 @@
         <p>{% trans "There are no pending invites for this game." %}</p>
         {% endif %}
         <div class="clearfix">
-          <a href="{% url 'invites:invite_create' content_type=ct object_id=game.pk %}" class="button float-right">{% trans "Create new invite link" %}</a>
+          <a href="{% url 'invites:invite_create' content_type=ct.id object_id=game.pk %}" class="button float-right">{% trans "Create new invite link" %}</a>
         </div>
         <table class="scroll hover">
           <thead>
@@ -39,7 +40,7 @@
             <tr>
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
-              <td><a href="{% url 'invites:invite_accept' invite=invite.slug %}">{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
+              <td><a href="https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}">https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
               <td>{{ invite.get_status_display }}</td>
               <td class="text-right">{{ invite.expires_at }}</td>
               <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>

@@ -1775,7 +1775,7 @@ class CommunityInviteList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelate
     template_name = 'gamer_profiles/community_invite_list.html'
     select_related = ['owner']
     prefetch_related = ['members']
-    permission_required = 'community.view_details'
+    permission_required = 'invite.can_create'
     context_object_name = 'community'
     slug_url_kwarg = 'slug'
 
