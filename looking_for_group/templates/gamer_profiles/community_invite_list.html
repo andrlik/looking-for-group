@@ -30,7 +30,7 @@
         <p>{% trans "You have no pending invites for this community." %}</p>
         {% endif %}
         <div class="clearfix">
-          <a href="{% url 'invites:invite_create' content_type=ct.id object_id=community.pk %}" class="button float-right">{% trans "Create new invite link" %}</a>
+          <a href="{% url 'invites:invite_create' content_type=ct.id slug=community.slug %}" class="button float-right">{% trans "Create new invite link" %}</a>
         </div>
         <table class="scroll hover">
           <thead>

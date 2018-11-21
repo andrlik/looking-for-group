@@ -123,7 +123,7 @@ urlpatterns = [
     path(
         "communities/<slug:slug>/invites/",
         view=views.CommunityInviteList.as_view(),
-        name="invite_list",
+        name="community_invite_list",
     ),
     path(
         "profiles/<slug:gamer>/",

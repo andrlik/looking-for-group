@@ -1,5 +1,5 @@
 {% extends "invites/base.html" %}
-{% load i18n foundation_formtags %}
+{% load i18n foundation_formtags invite_tags %}
 {% block subtitle %}{% trans "Create invite link" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Create invite link" %}{% endblock %}
 {% block mobileheader %}{% trans "Create invite link" %}{% endblock %}
@@ -14,7 +14,8 @@
   {% csrf_token %}
   {{ form|as_foundation }}
   <div class="clearfix">
-    <a href="{{ content_object.get_absolute_url }}" class="button secondary float-left">{% trans "Discard info and return" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Create invite' %}" />
+    {% get_invite_view_name_for_content_object content_object as view_name %}
+    <a href="{% url view_name slug=content_object.slug %} " class="button secondary float-left">{% trans "Discard info and return" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Create invite' %}" />
   </div>
 </form>
 {% endblock %}

@@ -43,19 +43,19 @@ class AbstractInviteTestCase(TestCase):
         self.player1 = Player.objects.create(gamer=self.gamer2, game=self.gp1)
         self.admin_url_kwargs = {
             "content_type": ContentType.objects.get_for_model(self.comm3).id,
-            "object_id": self.comm3.pk,
+            "slug": self.comm3.slug,
         }
         self.mod_url_kwargs = {
             "content_type": ContentType.objects.get_for_model(self.comm2).id,
-            "object_id": self.comm2.pk,
+            "slug": self.comm2.slug,
         }
         self.mem_url_kwargs = {
             "content_type": ContentType.objects.get_for_model(self.comm1).id,
-            "object_id": self.comm1.pk,
+            "slug": self.comm1.slug,
         }
         self.game_url_kwargs = {
             "content_type": ContentType.objects.get_for_model(self.gp1).pk,
-            "object_id": self.gp1.pk,
+            "slug": self.gp1.slug,
         }
 
     def tearDown(self):
