@@ -4,11 +4,19 @@
 {% block sectiontitle %}{% trans "Dashboard" %}{% endblock %}
 {% block mobileheader %}{% trans "Dashboard" %}{% endblock %}
 {% block content %}
-<p>{% blocktrans %}Feel the pulse of your gaming communities.{% endblocktrans %}</p>
 {% if motd %}
-<div class="callout">
-  <h5>{% blocktrans with dname=request.user.display_name %}Hi, {{ dname }}!{% endblocktrans %}</h5>
-  <p>{{ motd }}</p>
+<div class="grid-x grid-margin-x">
+  <div class="cell auto">
+    <div class="callout">
+      <h5>{% blocktrans with dname=request.user.display_name|default_if_none:"friend" %}Hi, {{ dname }}!{% endblocktrans %}</h5>
+      <ul class="motd">
+        {% for m in motd %}
+        <li>{{ m|default_if_none:"" }}</li>
+        {% empty %}
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
 </div>
 {% endif %}
 <h2>{% trans "Your stats" %}</h2>

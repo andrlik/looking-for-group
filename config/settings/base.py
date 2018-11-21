@@ -97,6 +97,7 @@ LOCAL_APPS = [
     "looking_for_group.games.apps.GamesConfig",
     "looking_for_group.user_preferences.apps.UserPreferencesConfig",
     "looking_for_group.invites.apps.InvitesConfig",
+    "looking_for_group.motd.apps.MotdConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -221,6 +222,7 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
+                "looking_for_group.motd.context_processor.motd",
             ],
         },
     }
