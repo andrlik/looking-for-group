@@ -40,18 +40,18 @@ class CreateInvite(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateVi
     def dispatch(self, request, *args, **kwargs):
         ct_pk = kwargs.pop("content_type", None)
         obj_slug = kwargs.pop("slug", None)
-        self.content_type = get_object_or_404(ContentType, id=ct_pk)
+        self.ct = get_object_or_404(ContentType, id=ct_pk)
         self.content_object = get_object_or_404(
-            self.content_type.model_class(), slug=obj_slug
+            self.ct.model_class(), slug=obj_slug
         )
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["content_object"] = self.content_object
-        context["ct"] = self.content_type.name.lower()
+        context["ct"] = self.ct.name.lower()
         context[
-            self.content_type.name.lower()
+            self.ct.name.lower()
         ] = self.content_object  # for a more friendly reference in template
         return context
 
