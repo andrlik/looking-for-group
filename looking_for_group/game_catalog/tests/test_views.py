@@ -114,8 +114,11 @@ class PublisherViews(AbstractViewTest):
         assert len(self.get_context("object_list")) == 2
 
     def test_detail_retrieval(self):
-        self.assertGoodView("game_catalog:pub-detail", publisher=self.mcg.pk)
-        self.assertGoodView("game_catalog:pub-detail", publisher=self.wotc.pk)
+        with self.assertNumQueriesLessThan(100):
+            self.get("game_catalog:pub-detail", publisher=self.mcg.pk)
+            self.response_200()
+            self.get("game_catalog:pub-detail", publisher=self.wotc.pk)
+            self.response_200()
 
 
 class PublisherCreateTest(AbstractEditingViewTest):
