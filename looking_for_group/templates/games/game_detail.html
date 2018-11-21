@@ -188,7 +188,7 @@
         <a href="" class="button">{% trans "Message" %}</a>
       </td>
       <td>
-        <a href="{% url 'games:player_kick' game=game.slug player=player.slug %}" class="button alert">{% trans "Kick player from game" %}</a>
+        <a href="{% url 'games:player_kick' gameid=game.slug player=player.slug %}" class="button alert">{% trans "Kick player from game" %}</a>
       </td>
       {% else %}
       <td></td>
