@@ -4,6 +4,7 @@ from braces.views import SelectRelatedMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.db.models.query_utils import Q
+from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import generic
@@ -19,6 +20,18 @@ from ..games import models as game_models
 
 
 logger = logging.getLogger("gamer_profiles")
+
+
+class HomeView(generic.TemplateView):
+    """
+    Handles making sure logged in users go to dashboard instead.
+    """
+    template_name = "pages/home.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return HttpResponseRedirect(reverse_lazy('dashboard'))
+        return super().dispatch(request, *args, **kwargs)
 
 
 class SettingsView(LoginRequiredMixin, SelectRelatedMixin, generic.DetailView):
