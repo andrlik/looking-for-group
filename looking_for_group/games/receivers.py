@@ -6,11 +6,15 @@ from django.db.models import F
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 from django_q.tasks import async_task
 from markdown import markdown
+from notifications.signals import notify
 from schedule.models import Calendar, Occurrence, Rule
 
 from . import models
+from ..invites.models import Invite
+from ..invites.signals import invite_accepted
 from .tasks import (
     calculate_player_attendance,
     clear_calendar_for_departing_player,
@@ -26,7 +30,7 @@ logger = logging.getLogger("games")
 
 @receiver(pre_save, sender=models.GamePosting)
 def set_end_date_for_game_on_complete(sender, instance, *args, **kwargs):
-    if instance.status in ['closed', 'cancel'] and not instance.end_date:
+    if instance.status in ["closed", "cancel"] and not instance.end_date:
         instance.end_date = timezone.now()
 
 
@@ -56,7 +60,7 @@ def render_markdown_log_body(sender, instance, *args, **kwargs):
 
 @receiver(post_save, sender=models.GameSession)
 def update_complete_session_count(sender, instance, *args, **kwargs):
-    if instance.status == 'complete':
+    if instance.status == "complete":
         instance.game.update_completed_session_count()
 
 
@@ -87,7 +91,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
                 logger.debug("Updating start time to {}".format(instance.start_time))
                 instance.event.start = instance.start_time
             if instance.event.end != instance.start_time + timedelta(
-                    minutes=int(60 * instance.session_length)
+                minutes=int(60 * instance.session_length)
             ):
                 instance.event.end = instance.start_time + timedelta(
                     minutes=int(60 * instance.session_length)
@@ -132,7 +136,9 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
             )
             if created:
                 logger.debug(
-                    "Created new calendar for user {} with slug {}".format(instance.gm.username, calendar.slug)
+                    "Created new calendar for user {} with slug {}".format(
+                        instance.gm.username, calendar.slug
+                    )
                 )
             rule = None
             if frequency:
@@ -162,7 +168,7 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=models.GamePosting)
 def update_games_created_count(sender, instance, created, *args, **kwargs):
     if created:
-        instance.gm.games_created = F('games_created') + 1
+        instance.gm.games_created = F("games_created") + 1
         instance.gm.save()
 
 
@@ -190,7 +196,7 @@ def sync_calendar_on_player_clear(sender, instance, action, pk_set, *args, **kwa
     if action == "post_clear":
         # All players removed, let's clean up the calendars.
         instance.event.get_child_events().delete()
-        adhocsessions = instance.gamesession_set.filter(session_type='adhoc')
+        adhocsessions = instance.gamesession_set.filter(session_type="adhoc")
         if adhocsessions.count() > 0:
             for sess in adhocsessions:
                 sess.event.get_child_events().delete()
@@ -206,7 +212,7 @@ def sync_calendar_on_player_add(sender, instance, created, *args, **kwargs):
 @receiver(post_save, sender=models.Player)
 def update_games_joined(sender, instance, created, *args, **kwargs):
     if created:
-        instance.gamer.games_joined = F('games_joined') + 1
+        instance.gamer.games_joined = F("games_joined") + 1
         instance.gamer.save()
 
 
@@ -218,12 +224,14 @@ def clear_calendar_on_player_remove(sender, instance, *args, **kwargs):
 @receiver(post_delete, sender=models.Player)
 def update_games_left(sender, instance, *args, **kwargs):
     gamer = instance.gamer
-    gamer.games_left = F('games_left') + 1
+    gamer.games_left = F("games_left") + 1
     gamer.save()
 
 
 @receiver(pre_save, sender=models.GameSession)
-def generate_master_event_occurrence_for_adhoc_session(sender, instance, *args, **kwargs):
+def generate_master_event_occurrence_for_adhoc_session(
+    sender, instance, *args, **kwargs
+):
     """
     If an adhoc session, generate or update necessary event.
     """
@@ -233,7 +241,9 @@ def generate_master_event_occurrence_for_adhoc_session(sender, instance, *args, 
             defaults={"name": "{}'s calendar".format(instance.game.gm.username)},
         )
         if not instance.occurrence:
-            logger.debug("No occurrence defined yet, creating a master event for ad hoc session...")
+            logger.debug(
+                "No occurrence defined yet, creating a master event for ad hoc session..."
+            )
             master_event = models.GameEvent.objects.create(
                 start=instance.scheduled_time,
                 end=instance.scheduled_time
@@ -243,13 +253,27 @@ def generate_master_event_occurrence_for_adhoc_session(sender, instance, *args, 
                 creator=instance.game.gm.user,
                 calendar=gm_calendar,
             )
-            logger.debug("Master event created with pk of {}! Proceeding to fetch occurrence...".format(master_event.pk))
-            master_occurrence = master_event.get_occurrences(instance.scheduled_time - timedelta(days=5), instance.scheduled_time + timedelta(days=60))[0]
+            logger.debug(
+                "Master event created with pk of {}! Proceeding to fetch occurrence...".format(
+                    master_event.pk
+                )
+            )
+            master_occurrence = master_event.get_occurrences(
+                instance.scheduled_time - timedelta(days=5),
+                instance.scheduled_time + timedelta(days=60),
+            )[0]
             calendar_list = []
             if instance.players_expected.count() > 0:
-                logger.debug("Players are associated with this. Adding any missing child events for adhoc session.")
+                logger.debug(
+                    "Players are associated with this. Adding any missing child events for adhoc session."
+                )
                 for player in instance.players_expected.all():
-                    c, created = Calendar.objects.get_or_create(slug=player.gamer.username, defaults={'name': "{}'s calendar".format(player.gamer.username)})
+                    c, created = Calendar.objects.get_or_create(
+                        slug=player.gamer.username,
+                        defaults={
+                            "name": "{}'s calendar".format(player.gamer.username)
+                        },
+                    )
                     calendar_list.append(c)
                 master_event.generate_missing_child_events(calendar_list)
             logger.debug("Persisting occurrence...")
@@ -259,12 +283,43 @@ def generate_master_event_occurrence_for_adhoc_session(sender, instance, *args, 
 
 
 @receiver(post_save, sender=models.GameSession)
-def check_update_player_calendars_for_adhoc_session(sender, instance, created, *args, **kwargs):
+def check_update_player_calendars_for_adhoc_session(
+    sender, instance, created, *args, **kwargs
+):
     if instance.session_type == "adhoc":
         async_task(update_player_calendars_for_adhoc_session, instance)
 
 
 @receiver(m2m_changed, sender=models.GameSession.players_expected.through)
-def update_player_calendars_on_player_add(sender, instance, action, pk_set, *args, **kwargs):
+def update_player_calendars_on_player_add(
+    sender, instance, action, pk_set, *args, **kwargs
+):
     if instance.session_type == "adhoc":
         async_task(update_player_calendars_for_adhoc_session, instance)
+
+
+@receiver(invite_accepted, sender=Invite)
+def process_invite_accepted(sender, invite, acceptor, *args, **kwargs):
+    if invite.content_type.name.lower() == "game":
+        logger.debug(
+            "Invite for game {} accepted. Processing...".format(
+                invite.content_object.title
+            )
+        )
+        player, created = models.Player.objects.get_or_create(
+            game=invite.content_object, gamer=acceptor.gamerprofile
+        )
+        if created:
+            logger.debug(
+                "Player {} added to game {}".format(
+                    acceptor.gamerprofile, invite.content_object.title
+                )
+            )
+            notify.send(
+                acceptor,
+                recipient=invite.creator,
+                verb=_(" accepted your invite"),
+                target=invite.content_object,
+            )
+        else:
+            logger.debug("Player was already a member of game... moving on.")

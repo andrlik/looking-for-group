@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, models, transaction
@@ -12,6 +13,7 @@ from schedule.models import Calendar, Event, EventManager, EventRelation, EventR
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..game_catalog.utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
+from ..invites.models import Invite
 from .utils import check_table_exists
 
 logger = logging.getLogger("games")
@@ -426,6 +428,7 @@ class GamePosting(
         related_name="games",
         on_delete=models.SET_NULL,
     )
+    invites = GenericRelation(Invite)
 
     def __str__(self):
         return "Game: {0} [{1}]".format(self.title, self.id)

@@ -1,0 +1,17 @@
+{% extends "invites/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Delete invite" %} - {% endblock %}
+{% block sectionheader %}{% trans "Delete invite" %}{% endblock %}
+{% block mobileheader %}{% trans "Delete invite" %}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans %}Deleting this invite will remove the record permanently. If it was still pending, it will no longer be able to be accepted.{% endblocktrans %}</p>
+</div>
+<form method="post" action="">
+  <div class="clearfix">
+    <a href="{{ invite.content_object.get_absolute_url }}" class="button secondary float-left">{% trans "Go back" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Delete' %}" />
+  </div>
+</form>
+
+{% endblock %}

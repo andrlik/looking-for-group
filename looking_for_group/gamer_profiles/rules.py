@@ -199,6 +199,24 @@ def is_note_author(user, note):
     return False
 
 
+@predicate
+def is_allowed_invites(user, community):
+    if user.is_authenticated:
+        try:
+            role = community.get_role(user.gamerprofile)
+            if community.invites_allowed == "member":
+                return True
+            if community.invites_allowed == "moderator":
+                if role == "Moderator":
+                    return True
+        except NotInCommunity:
+            pass
+    return False
+
+
+is_valid_inviter = is_community_admin | is_allowed_invites
+
+
 rules.add_perm("community.list_communities", is_user)
 rules.add_perm("community.view_details", is_community_member | is_public_community)
 rules.add_perm("community.edit_community", is_community_admin)
@@ -214,6 +232,8 @@ rules.add_perm("community.ban_user", is_community_admin)
 rules.add_perm("community.edit_roles", is_community_admin)
 rules.add_perm("community.edit_gamer_role", is_community_superior)
 rules.add_perm("community.transfer_ownership", is_community_owner)
+rules.add_perm("community.can_invite", is_valid_inviter)
+rules.add_perm("community.can_admin_invites", is_community_admin)
 rules.add_perm("profile.view_detail", is_profile_viewer)
 rules.add_perm("profile.delete_note", is_note_author)
 rules.add_perm("profile.can_friend", is_possible_friend)

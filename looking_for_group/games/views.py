@@ -5,6 +5,7 @@ from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
@@ -85,9 +86,11 @@ class GamePostingListView(
         q_public = Q(privacy_level="public")
         get_dict = self.request.GET.copy()
         query_string_data = {}
-        queryset = models.GamePosting.objects.exclude(
-            status__in=["cancel", "closed"]
-        ).filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community).distinct()
+        queryset = (
+            models.GamePosting.objects.exclude(status__in=["cancel", "closed"])
+            .filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
+            .distinct()
+        )
         if get_dict.pop("filter_present", None):
             self.filter_game_status = get_dict.pop("game_status", None)
             edition = get_dict.pop("edition", None)
@@ -858,19 +861,24 @@ class GameSessionCreate(
         )
 
 
-class GameSessionAdHocCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
+class GameSessionAdHocCreate(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView
+):
     """
     Same as a normal game session create, but instead more permissive in that you can select the time first.
     """
+
     model = models.GameSession
-    permission_required = 'game.can_edit_listing'
-    template_name = 'games/adhoc_session_create.html'
+    permission_required = "game.can_edit_listing"
+    template_name = "games/adhoc_session_create.html"
     form_class = forms.AdHocGameSessionForm
 
     def dispatch(self, request, *args, **kwargs):
-        game_slug = kwargs.pop('gameid', None)
+        game_slug = kwargs.pop("gameid", None)
         self.game = get_object_or_404(models.GamePosting, slug=game_slug)
-        if request.user.is_authenticated and request.user.has_perm(self.permission_required, self.game):
+        if request.user.is_authenticated and request.user.has_perm(
+            self.permission_required, self.game
+        ):
             if self.game.status == "closed":
                 logger.debug("Game is finiahed. Sessions cannot be added.")
                 messages.error(
@@ -882,12 +890,12 @@ class GameSessionAdHocCreate(LoginRequiredMixin, PermissionRequiredMixin, generi
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['game'] = self.game
+        kwargs["game"] = self.game
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['game'] = self.game
+        context["game"] = self.game
         return context
 
     def get_permission_object(self):
@@ -900,7 +908,9 @@ class GameSessionAdHocCreate(LoginRequiredMixin, PermissionRequiredMixin, generi
         self.object = form.save(commit=False)
         self.object.game = self.game
         self.object.save()
-        messages.success(self.request, _("You successfully created a new ad hoc session."))
+        messages.success(
+            self.request, _("You successfully created a new ad hoc session.")
+        )
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1022,7 +1032,12 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
         return HttpResponseRedirect(session.get_absolute_url())
 
 
-class GameSessionCompleteUnComplete(LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.edit.UpdateView):
+class GameSessionCompleteUnComplete(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PermissionRequiredMixin,
+    generic.edit.UpdateView,
+):
     """
     Mark a session either complete or incomplete.
     """
@@ -1031,7 +1046,7 @@ class GameSessionCompleteUnComplete(LoginRequiredMixin, SelectRelatedMixin, Perm
     slug_url_kwarg = "session"
     context_object_name = "session"
     form_class = forms.GameSessionCompleteUncompleteForm
-    select_related = ['game']
+    select_related = ["game"]
     permission_required = "game.can_edit_listing"
 
     def get_success_url(self):
@@ -1039,14 +1054,17 @@ class GameSessionCompleteUnComplete(LoginRequiredMixin, SelectRelatedMixin, Perm
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in ["post"]:
-            return HttpResponseNotAllowed(['POST'])
+            return HttpResponseNotAllowed(["POST"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
         return self.get_object().game
 
     def form_invalid(self, form):
-        messages.error(self.request, _("You have submitted invalid data. Were you tampering with the request?"))
+        messages.error(
+            self.request,
+            _("You have submitted invalid data. Were you tampering with the request?"),
+        )
         return HttpResponseRedirect(self.get_success_url())
 
     def form_valid(self, form):
@@ -1054,7 +1072,6 @@ class GameSessionCompleteUnComplete(LoginRequiredMixin, SelectRelatedMixin, Perm
         if new_version.status not in ["complete", "pending"]:
             return self.form_invalid(form)
         return super().form_valid(form)
-
 
 
 class GameSessionCancel(
@@ -1411,7 +1428,11 @@ class CalendarJSONView(
         return Calendar.objects.all()
 
     def get_data(self, context):
-        print("Trying request with start {}, end {}, slug {}, and timezone {}".format(self.start, self.end, self.calendar_slug, self.timezone))
+        print(
+            "Trying request with start {}, end {}, slug {}, and timezone {}".format(
+                self.start, self.end, self.calendar_slug, self.timezone
+            )
+        )
         return _api_occurrences(self.start, self.end, self.calendar_slug, self.timezone)
 
 
@@ -1781,4 +1802,29 @@ class CharacterDelete(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["game"] = context["character"].game
+        return context
+
+
+class GameInviteList(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.DetailView,
+):
+    """
+    List of invites for a game (loaded via template tags)
+    """
+
+    model = models.GamePosting
+    template_name = "games/game_invite_list.html"
+    slug_url_kwarg = "slug"
+    permission_required = "game.can_edit_listing"
+    select_related = ["gm", "published_game", "game_system", "published_module"]
+    prefetch_related = ["players", "gamesession_set"]
+    context_object_name = "game"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["ct"] = ContentType.objects.get_for_model(context["game"])
         return context

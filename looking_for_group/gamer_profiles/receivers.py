@@ -2,13 +2,16 @@ import logging
 
 import bleach
 from bleach_whitelist.bleach_whitelist import markdown_attrs, markdown_tags
-from django.db.models.signals import post_save, pre_save, post_delete
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from markdown import markdown
+from notifications.signals import notify
 
 from . import models
-from ..users.models import User
 from ..discord.models import CommunityDiscordLink
+from ..invites.models import Invite
+from ..invites.signals import invite_accepted
+from ..users.models import User
 
 logger = logging.getLogger("gamer_profiles")
 
@@ -107,7 +110,7 @@ def add_owner_to_community(sender, instance, created, *args, **kwargs):
 @receiver(post_save, sender=models.GamerCommunity)
 def create_placeholder_discord_link(sender, instance, created, *args, **kwargs):
     """
-    add a placeholder object in the discord app. we use get_or_create to prevent duplicates. 
+    add a placeholder object in the discord app. we use get_or_create to prevent duplicates.
     """
     if created:
         CommunityDiscordLink.objects.get_or_create(community=instance)
@@ -120,4 +123,15 @@ def remove_blocked_user_from_friends(sender, instance, created, *args, **kwargs)
     """
     if created:
         instance.blocker.friends.remove(instance.blockee)
-        
+
+
+@receiver(invite_accepted, sender=Invite)
+def process_accepted_invite(sender, invite, acceptor, *args, **kwargs):
+    if invite.content_type.name.lower() == "community":
+        logger.debug("Accepted invite was for a game community. Processing...")
+        try:
+            invite.content_object.add_member(acceptor.gamerprofile)
+            notify.send(acceptor, recipient=invite.creator, verb="accepted your invite", target=invite.content_object)
+            logger.debug("Gamer {} was added to community {}".format(acceptor.gamerprofile, invite.content_object.name))
+        except models.AlreadyInCommunity:
+            logger.debug("Gamer {} was already a member of {}. Moving on...".format(acceptor.gamerprofile, invite.content_object.name))

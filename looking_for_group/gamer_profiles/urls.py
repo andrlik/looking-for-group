@@ -121,6 +121,11 @@ urlpatterns = [
         name="community-ban-delete",
     ),
     path(
+        "communities/<slug:slug>/invites/",
+        view=views.CommunityInviteList.as_view(),
+        name="invite_list",
+    ),
+    path(
         "profiles/<slug:gamer>/",
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",
