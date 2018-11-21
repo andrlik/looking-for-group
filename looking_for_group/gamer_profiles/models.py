@@ -1,6 +1,7 @@
 import itertools
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
@@ -14,6 +15,7 @@ from star_ratings.models import AbstractBaseRating
 
 from ..game_catalog.models import GameSystem, PublishedGame
 from ..game_catalog.utils import AbstractUUIDModel
+from ..invites.models import Invite
 
 
 class NotInCommunity(Exception):
@@ -155,6 +157,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
     member_count = models.PositiveIntegerField(
         default=0, help_text=_("Current total count of members.")
     )
+    invites = GenericRelation(Invite)
 
     def __str__(self):
         return self.name

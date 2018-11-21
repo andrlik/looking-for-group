@@ -64,6 +64,11 @@ urlpatterns = [
         name="session_list",
     ),
     path(
+        "game/<slug:slug>/invites/",
+        view=views.GameInviteList.as_view(),
+        name="game_invite_list",
+    ),
+    path(
         "game/<slug:gameid>/sessions/create/",
         view=views.GameSessionCreate.as_view(),
         name="session_create",

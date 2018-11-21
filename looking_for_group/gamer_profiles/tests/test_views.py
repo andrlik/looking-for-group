@@ -9,6 +9,7 @@ from test_plus import TestCase
 
 from . import factories
 from .. import models
+from ...invites.models import Invite
 
 
 class AbstractViewTest(TestCase):
@@ -129,10 +130,14 @@ class TestCommunityList(AbstractViewTest):
     def test_logged_in_user(self):
         with self.login(username=self.gamer2.username):
             self.assertGoodView("gamer_profiles:community-list")
-            self.assertResponseContains("<span class='membership label secondary'>Member</span>")
+            self.assertResponseContains(
+                "<span class='membership label secondary'>Member</span>"
+            )
         with self.login(username=self.gamer1.username):
             self.assertGoodView("gamer_profiles:community-list")
-            self.assertResponseContains("<span class='membership label primary'>Admin</span>")
+            self.assertResponseContains(
+                "<span class='membership label primary'>Admin</span>"
+            )
         with self.login(username=self.gamer3.username):
             self.assertGoodView("gamer_profiles:community-list")
             self.assertResponseNotContains("<span class='membership'>")
@@ -1849,3 +1854,49 @@ class DeleteGamerNoteTest(AbstractViewTest):
             self.response_302()
             with pytest.raises(ObjectDoesNotExist):
                 models.GamerNote.objects.get(pk=self.gn.pk)
+
+
+class CommunityInviteTest(AbstractViewTest):
+    """
+    Abstract view test.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community_invite_list"
+        self.url_kwargs = {"slug": self.community1.slug}
+        for x in range(3):
+            Invite.objects.create(
+                creator=self.gamer1.user,
+                label="test {}".format(x),
+                content_object=self.community1,
+            )
+        self.community1.add_member(self.gamer3)
+        self.community1.invites_allowed = "member"
+        self.community1.save()
+        Invite.objects.create(
+            creator=self.gamer3.user,
+            label="test gamer 3",
+            content_object=self.community1,
+        )
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_view_for_non_member(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_view_with_member(self):
+        with self.login(username=self.gamer3.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+        self.community1.invites_allowed = "admin"
+        self.community1.save()
+        with self.login(username=self.gamer3.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_view_with_admin(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)

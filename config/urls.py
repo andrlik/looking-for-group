@@ -32,6 +32,7 @@ urlpatterns = [
     path("social/", include("looking_for_group.gamer_profiles.urls")),
     path("social/avatar/", include('avatar.urls')),
     path("games/", include('looking_for_group.games.urls')),
+    path("invites/", include('looking_for_group.invites.urls')),
     path("search/", include('haystack.urls')),
     path("ratings/", include(rating_url_override)),
     path("settings/", include('looking_for_group.user_preferences.urls')),

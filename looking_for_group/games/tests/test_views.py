@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_delete, post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete
 from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -14,6 +14,7 @@ from test_plus.test import BaseTestCase
 
 from .. import models
 from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
+from ...invites.models import Invite
 from ..utils import mkfirstOfmonth, mkLastOfMonth
 
 
@@ -479,38 +480,47 @@ class GamePostingApplicationApproveTest(AbstractViewTestCaseNoSignals):
     """
     Test approval reject view for player applications.
     """
+
     def setUp(self):
         super().setUp()
-        self.application = models.GamePostingApplication.objects.create(game=self.gp2, gamer=self.gamer3, message="You up?", status="pending")
+        self.application = models.GamePostingApplication.objects.create(
+            game=self.gp2, gamer=self.gamer3, message="You up?", status="pending"
+        )
         self.view_name = "games:game_application_approve_reject"
-        self.url_kwargs = {'application': self.application.slug}
+        self.url_kwargs = {"application": self.application.slug}
 
     def test_post_required(self):
         self.get(self.view_name, **self.url_kwargs)
         self.response_405()
 
     def test_login_required(self):
-        self.post(self.view_name, data={'status': 'approve'}, **self.url_kwargs)
+        self.post(self.view_name, data={"status": "approve"}, **self.url_kwargs)
         self.response_302()
-        assert 'accounts/login' in self.last_response['location']
+        assert "accounts/login" in self.last_response["location"]
 
     def test_unauthorized_user(self):
         with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data={'status': 'approve'}, **self.url_kwargs)
+            self.post(self.view_name, data={"status": "approve"}, **self.url_kwargs)
             self.response_403()
 
     def test_authorized_approval(self):
         with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data={'status': 'approve'}, **self.url_kwargs)
+            self.post(self.view_name, data={"status": "approve"}, **self.url_kwargs)
             self.response_302()
-            assert models.GamePostingApplication.objects.get(id=self.application.id).status == "approve"
+            assert (
+                models.GamePostingApplication.objects.get(id=self.application.id).status
+                == "approve"
+            )
             assert models.Player.objects.get(game=self.gp2, gamer=self.gamer3)
 
     def test_authorized_reject(self):
         with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data={'status': 'deny'}, **self.url_kwargs)
+            self.post(self.view_name, data={"status": "deny"}, **self.url_kwargs)
             self.response_302()
-            assert models.GamePostingApplication.objects.get(id=self.application.id).status == "deny"
+            assert (
+                models.GamePostingApplication.objects.get(id=self.application.id).status
+                == "deny"
+            )
 
 
 class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
@@ -666,7 +676,9 @@ class GameSessionAdHocCreateTest(AbstractGameSessionTest):
         self.view_name = "games:session_adhoc_create"
         self.url_kwargs = {"gameid": self.gp2.slug}
         self.post_data = {
-            "scheduled_time": (timezone.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M"),
+            "scheduled_time": (timezone.now() + timedelta(days=1)).strftime(
+                "%Y-%m-%d %H:%M"
+            ),
             "players_expected": [
                 f.pk for f in models.Player.objects.filter(game=self.gp2)
             ],
@@ -862,20 +874,15 @@ class GameSessionCompleteTest(AbstractGameSessionTest):
     """
     Test for completion and undo completion.
     """
+
     def setUp(self):
         super().setUp()
         self.view_name = "games:session_complete_toggle"
         self.url_kwargs = {"session": self.session2.slug}
         self.session2.refresh_from_db()
-        self.post_complete_data = {
-            "status": "complete",
-        }
-        self.post_pending_data = {
-            "status": "pending"
-        }
-        self.post_cancel_data = {
-            "status": "cancel",
-        }
+        self.post_complete_data = {"status": "complete"}
+        self.post_pending_data = {"status": "pending"}
+        self.post_cancel_data = {"status": "cancel"}
 
     def test_post_required(self):
         self.get(self.view_name, **self.url_kwargs)
@@ -884,7 +891,7 @@ class GameSessionCompleteTest(AbstractGameSessionTest):
     def test_login_required(self):
         self.post(self.view_name, data=self.post_complete_data, **self.url_kwargs)
         self.response_302()
-        assert "accounts/login" in self.last_response['location']
+        assert "accounts/login" in self.last_response["location"]
 
     def test_unauthorized_user(self):
         with self.login(username=self.gamer3.username):
@@ -894,17 +901,29 @@ class GameSessionCompleteTest(AbstractGameSessionTest):
     def test_authoriized_user_bad_status(self):
         with self.login(username=self.gamer1.username):
             self.post(self.view_name, data=self.post_cancel_data, **self.url_kwargs)
-            assert models.GameSession.objects.get(pk=self.session2.pk).status == "pending"
+            assert (
+                models.GameSession.objects.get(pk=self.session2.pk).status == "pending"
+            )
 
     def test_authorized_user_valid_posts(self):
         with self.login(username=self.gamer1.username):
             with mute_signals(post_save):
-                self.post(self.view_name, data=self.post_complete_data, **self.url_kwargs)
+                self.post(
+                    self.view_name, data=self.post_complete_data, **self.url_kwargs
+                )
                 self.response_302()
-                assert models.GameSession.objects.get(pk=self.session2.pk).status == "complete"
-                self.post(self.view_name, data=self.post_pending_data, **self.url_kwargs)
+                assert (
+                    models.GameSession.objects.get(pk=self.session2.pk).status
+                    == "complete"
+                )
+                self.post(
+                    self.view_name, data=self.post_pending_data, **self.url_kwargs
+                )
                 self.response_302()
-                assert models.GameSession.objects.get(pk=self.session2.pk).status == "pending"
+                assert (
+                    models.GameSession.objects.get(pk=self.session2.pk).status
+                    == "pending"
+                )
 
 
 class GameSessionMoveTest(AbstractGameSessionTest):
@@ -1620,3 +1639,32 @@ class CharacterGamerList(AbstractCharacterListTest):
         with self.login(username=self.gamer2.username):
             self.assertGoodView(self.view_name)
             assert self.expected_value == len(self.get_context("character_list"))
+
+
+class GameInviteListTest(AbstractViewTestCaseNoSignals):
+    """
+    Test the invite list view.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "games:game_invite_list"
+        self.url_kwargs = {"slug": self.gp2.slug}
+        for x in range(3):
+            Invite.objects.create(
+                creator=self.gamer1.user,
+                label="test {}".format(x),
+                content_object=self.gp2,
+            )
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_player(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_gm(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)

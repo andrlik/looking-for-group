@@ -1,0 +1,233 @@
+{% extends "gamer_profiles/community_base.html" %}
+{% load i18n invite_tags avatar_tags rules %}
+{% block subtitle %}{% blocktrans with cname=community.name %}Invites for {{ cname }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}{% blocktrans with cname=community.name %}Invites for {{ cname }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with cname=community.name %}Invites for {{ cname }}{% endblocktrans %}{% endblock %}
+{% block inviteactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+{% has_perm "community.can_invite" user community as is_inviter %}
+{% has_perm "community.can_admin_invites" user community as is_invite_admin %}
+{% get_active_invites_for_object_by_creator community request.user as your_active_invite_list %}
+{% get_accepted_invites_for_object_by_creator community request.user as your_accepted_invite_list %}
+{% get_expired_invites_for_object_by_creator community request.user as your_expired_invite_list %}
+<p>{% blocktrans %}Invites are one-use links that allow someone to immediately join your community without having to go through the application process.{% endblocktrans %}</p>
+{% if is_invite_admin %}
+<ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="admin-tabs">
+  <li class="tabs-title is-active"><a href="#your_invites" aria-selected="true">{% trans "Your invites" %}</a></li>
+  <li class="tabs-title"><a href="#all_invites" data-tabs-target="all_invites">{% trans "All invites" %}</a></li>
+</ul>
+<div class ="tabs-content" data-tabs-content="admin-tabs">
+  <div class="tabs-panel is-active" id="your_invites">
+    {% endif %}
+    <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="your-tabs">
+      <li class="tabs-title is-active"><a href="#your_pending" aria-selected="true">{% trans "Your pending invites" %} ({{ your_active_invite_list|length }})</a></li>
+      <li class="tabs-title"><a href="#your_accepted" data-tabs-target="your_accepted">{% trans "Your accepted invites" %} ({{ your_accepted_invite_list|length }})</a></li>
+      <li class="tabs-title"><a href="#your_expired" data-tabs-target="your_expired">{% trans "Your expired invites" %} ({{ your_expired_invite_list|length }})</a></li>
+    </ul>
+    <div class="tabs-content" data-tabs-content="your-tabs">
+      <div class="tabs-panel is-active" id="your_pending">
+        {% if not your_active_invite_list %}
+        <p>{% trans "You have no pending invites for this community." %}</p>
+        {% endif %}
+        <div class="clearfix">
+          <a href="{% url 'invites:invite_create' content_type=ct.id slug=community.slug %}" class="button float-right">{% trans "Create new invite link" %}</a>
+        </div>
+        <table class="scroll hover">
+          <thead>
+            <tr>
+              <th>{% trans "Label" %}</th>
+              <th class="text-right">{% trans "Created at" %}</th>
+              <th>{% trans "Invite URL" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th class="text-right">{% trans "Expires" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in your_active_invite_list %}
+            <tr>
+              <td>{{ invite.label }}</td>
+              <td class="text-right">{{ invite.created }}</td>
+              <td><a href="https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}">https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
+              <td>{{ invite.get_status_display }}</td>
+              <td class="text-right">{{ invite.expires_at }}</td>
+              <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="tabs-panel" id="your_accepted">
+        {% if not your_accepted_invite_list %}
+        <p>{% trans "You have no accepted invites for this community." %}</p>
+        {% endif %}
+        <table class="scroll hover">
+          <thead>
+            <tr>
+              <th>{% trans "Label" %}</th>
+              <th class="text-right">{% trans "Created at" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th>{% trans "Accepted by" %}</th>
+              <th class="text-right">{% trans "Expires" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in your_accepted_invite_list %}
+            <tr>
+              <td>{{ invite.label }}</td>
+              <td class="text-right">{{ invite.created }}</td>
+              <td>{{ invite.get_status_display }}</td>
+              <td>{% avatar invite.accepted_by 30 %} <a href="{{ invite.accepted_by.gamerprofile.get_absolute_url }}">{{ invite.accepted_by.gamerprofile.get_absolute_url }}</a></td>
+              <td class="text-right">{{ invite.expires_at }}</td>
+              <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="tabs-panel" id="your_expired">
+        {% if not your_expired_invite_list %}
+        <p>{% trans "You have no expired invites for this community." %}</p>
+        {% endif %}
+        <table class="scroll hover">
+          <thead>
+            <tr>
+              <th>{% trans "Label" %}</th>
+              <th class="text-right">{% trans "Created at" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th class="text-right">{% trans "Expired" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in your_expired_invite_list %}
+            <tr>
+              <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
+              <td>{{ invite.label }}</td>
+              <td class="text-right">{{ invite.created }}</td>
+              <td>{{ invite.get_status_display }}</td>
+              <td class="text-right">{{ invite.expires_at }}</td>
+              <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+        <p>{% trans "Expired invites are automatically deleted after thirty days." %}</p>
+      </div>
+    </div>
+
+    {% if is_invite_admin %}
+  </div>
+  {% get_active_invites_for_object community as active_invite_list %}
+  {% get_accepted_invites_for_object community as accepted_invite_list %}
+  {% get_expired_invites_for_object community as expired_invite_list %}
+  <div class="tabs-panel" id="all_invites">
+    <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="all-tabs">
+      <li class="tabs-title is-active"><a href="#all_pending" aria-selected="true">{% trans "All pending invites" %} ({{ active_invite_list|length }})</a></li>
+      <li class="tabs-title"><a href="#all_accepted" data-tabs-target="all_accepted">{% trans "All accepted invites" %} ({{ accepted_invite_list|length }})</a></li>
+      <li class="tabs-title"><a href="#all_expired" data-tabs-target="all_expired">{% trans "All expired invites" %} ({{ expired_invite_list|length }})</a></li>
+    </ul>
+    <div class="tabs-content" data-tabs-content="all-tabs">
+      <div class="tabs-panel is-active" id="all_pending">
+        {% if not active_invite_list %}
+        <p>{% trans "There are no pending invites for this community." %}</p>
+        {% endif %}
+        <table class="scroll hover">
+          <thead>
+            <tr>
+              <th>{% trans "Creator" %}</th>
+              <th>{% trans "Label" %}</th>
+              <th class="text-right">{% trans "Created at" %}</th>
+              <th>{% trans "Invite URL" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th class="text-right">{% trans "Expires" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in active_invite_list %}
+            <tr>
+              <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
+              <td>{{ invite.label }}</td>
+              <td class="text-right">{{ invite.created }}</td>
+              <td><a href="https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}">https://{{ request.get_host }}{% url 'invites:invite_accept' invite=invite.slug %}</a></td>
+              <td>{{ invite.get_status_display }}</td>
+              <td class="text-right">{{ invite.expires_at }}</td>
+              <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="tabs-panel" id="all_accepted">
+        {% if not accepted_invite_list %}
+        <p>{% trans "There are no accepted invites for this community." %}</p>
+        {% endif %}
+        <table class="scroll hover">
+          <thead>
+            <tr>
+              <th>{% trans "Creator" %}</th>
+              <th>{% trans "Label" %}</th>
+              <th class="text-right">{% trans "Created at" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th>{% trans "Accepted by" %}</th>
+              <th class="text-right">{% trans "Expiration" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in accepted_invite_list %}
+            <tr>
+              <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
+              <td>{{ invite.label }}</td>
+              <td class="text-right">{{ invite.created }}</td>
+              <td>{{ invite.get_status_display }}</td>
+              <td>{% avatar invite.accepted_by 30 %} <a href="{{ invite.accepted_by.gamerprofile.get_absolute_url }}">{{ invite.accepted_by.gamerprofile }}</a></td>
+              <td class="text-right">{{ invite.expires_at }}</td>
+              <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="tabs-panel" id="all_expired">
+        {% if not expired_invite_list %}
+        <p>{% trans "There are no expired invites for this community." %}</p>
+        {% endif %}
+        <table class="scroll hover">
+          <thead>
+            <tr>
+              <th>{% trans "Creator" %}</th>
+              <th>{% trans "Label" %}</th>
+              <th class="text-right">{% trans "Created at" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th class="text-right">{% trans "Expired" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in expired_invite_list %}
+            <tr>
+              <td>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></td>
+              <td>{{ invite.label }}</td>
+              <td class="text-right">{{ invite.created }}</td>
+              <td>{{ invite.get_status_display }}</td>
+              <td class="text-right">{{ invite.expires_at }}</td>
+              <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

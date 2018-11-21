@@ -3,9 +3,12 @@
 {% block innernavmenu %}
 {% has_perm 'community.edit_community' user community as is_admin %}
 {% has_perm 'community.transfer_owner' user community as is_owner %}
-
+{% has_perm 'invite.can_invite' user community as is_inviter %}
 <li><a href="{% url 'gamer_profiles:community-list' %}">{% trans "Back to community list" %}</a></li>
 <li{% block commdetailactive %}{% endblock %}><a href="{{ community.get_absolute_url }}">{% trans "Community details" %}</a></li>
+{% if is_inviter %}
+<li{% block inviteactive %}{% endblock %}><a href="{% url 'gamer_profiles:community_invite_list' slug=community.slug %}">{% trans "Invites" %}</a></li>
+{% endif %}
 {% if is_admin %}
 <li{% block membersactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "Manage members" %}</a></li>
 <li{% block editcommactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-edit' community=community.slug %}">{% trans "Edit community" %}</a></li>
