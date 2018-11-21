@@ -66,7 +66,7 @@ urlpatterns = [
     path(
         "game/<slug:slug>/invites/",
         view=views.GameInviteList.as_view(),
-        name="invite_list",
+        name="game_invite_list",
     ),
     path(
         "game/<slug:gameid>/sessions/create/",

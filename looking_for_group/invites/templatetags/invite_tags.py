@@ -3,6 +3,7 @@ from django.template import Library
 from django.utils import timezone
 
 from ..models import Invite
+from ..views import get_invite_view_name_for_object
 
 register = Library()
 
@@ -53,3 +54,8 @@ def get_accepted_invites_for_object(obj):
 @register.simple_tag()
 def get_accepted_invites_for_object_by_creator(obj, user):
     return get_accepted_invites_for_object(obj).filter(creator=user)
+
+
+@register.simple_tag()
+def get_invite_view_name_for_content_object(obj):
+    return get_invite_view_name_for_object(obj)

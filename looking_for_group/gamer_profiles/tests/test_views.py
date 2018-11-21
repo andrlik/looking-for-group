@@ -1863,7 +1863,7 @@ class CommunityInviteTest(AbstractViewTest):
 
     def setUp(self):
         super().setUp()
-        self.view_name = "gamer_profiles:invite_list"
+        self.view_name = "gamer_profiles:community_invite_list"
         self.url_kwargs = {"slug": self.community1.slug}
         for x in range(3):
             Invite.objects.create(

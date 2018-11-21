@@ -1648,7 +1648,7 @@ class GameInviteListTest(AbstractViewTestCaseNoSignals):
 
     def setUp(self):
         super().setUp()
-        self.view_name = "games:invite_list"
+        self.view_name = "games:game_invite_list"
         self.url_kwargs = {"slug": self.gp2.slug}
         for x in range(3):
             Invite.objects.create(

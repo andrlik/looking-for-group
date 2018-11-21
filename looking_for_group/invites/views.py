@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
@@ -15,6 +15,16 @@ from . import models
 from .signals import invite_accepted
 
 # Create your views here.
+
+
+def get_invite_view_name_for_object(obj):
+    """
+    Generates a view name from the content object.
+    NOTE: Must have a corresonding view in appropriate app.
+    """
+    ct = ContentType.objects.get_for_model(obj)
+    view_name = "{}:{}_invite_list".format(ct.app_label, ct.name.lower())
+    return view_name
 
 
 class CreateInvite(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
@@ -29,10 +39,10 @@ class CreateInvite(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateVi
 
     def dispatch(self, request, *args, **kwargs):
         ct_pk = kwargs.pop("content_type", None)
-        obj_pk = kwargs.pop("object_id", None)
+        obj_slug = kwargs.pop("slug", None)
         self.content_type = get_object_or_404(ContentType, id=ct_pk)
         self.content_object = get_object_or_404(
-            self.content_type.model_class(), pk=obj_pk
+            self.content_type.model_class(), slug=obj_slug
         )
         return super().dispatch(request, *args, **kwargs)
 
@@ -57,7 +67,7 @@ class CreateInvite(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateVi
         messages.success(self.request, _("Invite created!"))
         return HttpResponseRedirect(
             reverse_lazy(
-                "{}:invite_list".format(invite.content_type.app_label),
+                get_invite_view_name_for_object(self.content_object),
                 kwargs={"slug": self.content_object.slug},
             )
         )
@@ -79,9 +89,10 @@ class InviteDeleteView(
     def delete(self, request, *args, **kwargs):
         messages.success(request, _("Invite deleted."))
         obj = self.get_object()
+        view_name = get_invite_view_name_for_object(obj.content_object)
         self.success_url = reverse_lazy(
-            "{}:invite_list".format(obj.content_type.app_label),
-            kwargs={"slug": obj.slug},
+            view_name,
+            kwargs={"slug": obj.content_object.slug},
         )
         return super().delete(request, *args, **kwargs)
 
