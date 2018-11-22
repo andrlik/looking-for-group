@@ -77,7 +77,7 @@
           {% for session in next_sessions %}
           <tr>
             <td>{{ session.title }}</td>
-            <td>{{ session.start|date:"Y-m-d H:M" }}</td>
+            <td>{{ session.start|date:"Y-m-d H:i" }}</td>
           </tr>
           <a href="{% url 'games:calendar_detail' gamer=request.user.username %}">{% trans "See all" %}</a>
           {% empty %}
