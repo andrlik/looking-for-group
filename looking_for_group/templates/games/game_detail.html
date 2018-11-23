@@ -220,7 +220,7 @@
           {% else %}
           <form action="{% url 'games:session_create' gameid=game.slug %}" method="post">
             {% csrf_token %}
-            <input id="id_game" name="game" type="hidden" value="{{ game.slug }}" />
+            <input id="id_game" name="game" type="hidden" value="{{ game.pk }}" />
             <p>{% blocktrans with session_time=game.next_session_time %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}</p>
             <input type="submit" class="button float-left" value="{% trans 'Create next regular session' %}" />
           </form><br /><br />
