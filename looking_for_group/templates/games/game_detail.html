@@ -253,9 +253,9 @@
       <td><a href="{{ session.get_absolute_url }}">{{ session.scheduled_time }}</a></td>
       <td><span class="label {% if session.status == 'cancel' %}secondary{% elif session.status == 'complete' %}success{% else %}primary{% endif %}">{{ session.get_status_display }}</span></td>
       <td>{{ session.get_players_present|join:", " }}</td>
-      <td>{{ session.adventurelog.body_rendered|truncatewords_html:30 }}</td>
+      <td>{{ session.adventurelog.body_rendered|safe|truncatewords_html:30 }}</td>
       {% if game.gm.user == request.user %}
-      <td>{{ session.gm_notes_rendered|truncatewords_html:30 }}</td>
+      <td>{{ session.gm_notes_rendered|safe|truncatewords_html:30 }}</td>
       {% endif %}
     </tr>
     {% empty %}

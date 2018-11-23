@@ -33,10 +33,10 @@
       <td class="text-right">{{ session.players_expected.count }}</td>
       <td class="text-right">{{ session.players_missing.count }}</td>
       {% if request.user.gamerprofile == game.gm %}
-      <td>{{ session.gm_notes_rendered|truncatewords_html:40 }}</td>
+      <td>{{ session.gm_notes_rendered|safe|truncatewords_html:40 }}</td>
       {% endif %}
       <td>{{ session.adventurelog.title }}</td>
-      <td>{{ session.adventurelog.body_rendered|truncatewords_html:50 }}</td>
+      <td>{{ session.adventurelog.body_rendered|safe|truncatewords_html:50 }}</td>
       <td><a href="{{ session.get_absolute_url }}">{% trans "Details" %}</a></td>
     </tr>
     {% empty %}
