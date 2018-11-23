@@ -613,6 +613,9 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     sessions_expected = models.PositiveIntegerField(default=0)
     sessions_missed = models.PositiveIntegerField(default=0)
 
+    def __str__(self):
+        return str(self.gamer)
+
     def get_attendance_rating_for_game(self):
         if self.game.sessions > 0 and self.sessions_expected > 0:
             return 1 - (float(self.sessions_missed) / float(self.sessions_expected))
