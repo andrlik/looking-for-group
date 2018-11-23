@@ -804,7 +804,7 @@ class GameSessionCreate(
     model = models.GameSession
     permission_required = "game.can_edit_listing"
     fields = ["game"]
-    # template_name = "games/session_create.html"
+    template_name = "games/session_create.html"
     http_method_names = ["post"]
 
     def dispatch(self, request, *args, **kwargs):
