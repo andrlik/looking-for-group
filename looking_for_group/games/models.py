@@ -661,7 +661,7 @@ class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     )
 
     def __str__(self):
-        return "{0} ({1})".format(self.name, self.player.gamer.display_name)
+        return "{0} ({1})".format(self.name, self.player.gamer.username)
 
     def get_absolute_url(self):
         return reverse_lazy("games:character_detail", kwargs={"character": self.slug})
