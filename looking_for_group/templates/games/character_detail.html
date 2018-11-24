@@ -13,7 +13,7 @@
   <dt>{% trans "Character Status" %}</dt>
   <dd>{{ character.get_status_display }}</dd>
   <dt>{% trans "Player" %}</dt>
-  <dd>{% avatar character.player.gamer.user 30 %} <a href="{{ character.player.gamer.get_absolute_url }}">{{ character.player.gamer.display_name }}</a></dd>
+  <dd>{% avatar character.player.gamer.user 30 %} <a href="{{ character.player.gamer.get_absolute_url }}">{{ character.player.gamer }}</a></dd>
   <dt>{% trans "Game" %}</dt>
   <dd>{{ character.game.title }}</dd>
   <dt>{% trans "Character Sheet" %}</dt>
