@@ -169,7 +169,7 @@ class GameEvent(Event):
         return self.get_child_events()
 
     def get_master_event(self):
-        ct = ContentType.objects.get_for_model(self)
+        ct = ContentType.objects.get_for_model(Event)
         try:
             masterevent = EventRelation.objects.filter(
                 event=self, content_type=ct, distinction="playerevent"
