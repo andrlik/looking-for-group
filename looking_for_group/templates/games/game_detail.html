@@ -262,7 +262,7 @@
     {% endfor %}
   </tbody>
 </table>
-{% if recent_sessions and game.sessions > recent_sessions.count %}
+{% if recent_sessions and game.sessions > recent_sessions|length %}
 <a href="{% url 'games:session_list' game=game.slug %}" class="button">{% trans "See all sessions" %}</a>
 {% endif %}
         </div>

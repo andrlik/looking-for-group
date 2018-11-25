@@ -63,7 +63,7 @@
       <h5>{% trans "Upcoming game sessions" %}</h5>
     </div>
     <div class="card-section">
-      {% if not next_session %}
+      {% if not next_sessions %}
       <p>{% trans "None scheduled" %}</p>
       {% endif %}
       <table class="hover scroll">
@@ -76,14 +76,15 @@
         <tbody>
           {% for session in next_sessions %}
           <tr>
-            <td>{{ session.title }}</td>
+            <td><a href="{{ session.game.get_absolute_url }}">{{ session.title }}</a></td>
             <td>{{ session.start|date:"Y-m-d H:i" }}</td>
           </tr>
-          <a href="{% url 'games:calendar_detail' gamer=request.user.username %}">{% trans "See all" %}</a>
+         
           {% empty %}
           {% endfor %}
         </tbody>
       </table>
+      <a href="{% url 'games:calendar_detail' gamer=request.user.username %}">{% trans "See all" %}</a> 
     </div>
   </div></div>
     <div class="cell medium-auto">
