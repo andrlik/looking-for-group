@@ -120,7 +120,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
                         next_sessions.append(next(next_occurences))
                     except StopIteration:
                         pass  # No next occurrence
-        context["next_sessions"] = next_sessions
+        context["next_sessions"] = sorted(next_sessions, key=lambda k: k.start)
         context[
             "pending_community_applications"
         ] = social_models.CommunityApplication.objects.filter(
