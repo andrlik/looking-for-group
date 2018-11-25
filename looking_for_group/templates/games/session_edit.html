@@ -1,4 +1,4 @@
-{% extends "games/base.html" %}
+{% extends "games/game_base_form.html" %}
 {% load i18n foundation_formtags %}
 {% block subtitle %}{% blocktrans with gametitle=session.game.title %}Edit session for {{ gametitle }}{% endblocktrans %} - {% endblock %}
 {% block sessionactive %}{% blocktrans with gametitle=session.game.title sesdate=session.scheduled_time %}Edit session of {{ gametitle }} scheduled for {{ sesdate }}.{% endblocktrans %}{% endblock %}

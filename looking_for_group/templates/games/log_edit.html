@@ -1,4 +1,4 @@
-{% extends "games/base.html" %}
+{% extends "games/game_base_form.html" %}
 {% load i18n avatar_tags foundation_formtags %}
 {% block subtitle %}{% blocktrans with gametitle=log.session.game.title %}Editing log entry for {{ gametitle }}{% endblocktrans %} - {% endblock %}
 {% block content %}
@@ -21,7 +21,7 @@
       <tbody>
         {% for player in log.session.players_expected.all %}
         <tr>
-          <td>{% avatar 20 player.gamer.user %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer.display_name }}</a></td>
+          <td>{% avatar player.gamer.user 30 %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
           <td class="text-right">{% if session.status != "complete" %}{% trans "N/A (session not complete)" %}{% else %}{% if player in session.players_missing.all %}😢{% else %}😄{% endif %}{% endif %}</td>
         </tr>
         {% empty %}
