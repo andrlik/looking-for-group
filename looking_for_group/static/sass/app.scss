@@ -671,3 +671,7 @@ section.description-text{
 ul.motd {
   list-style-type: none;
 }
+
+.motd-mono {
+  font-family: $font-family-monospace;
+}

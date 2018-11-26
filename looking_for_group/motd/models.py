@@ -32,7 +32,8 @@ class MOTD(TimeStampedModel, models.Model):
     timebased = models.BooleanField(default=False, help_text=_("Is this message based on a date range or should it always be an option?"))
     start = models.DateTimeField(null=True, blank=True, help_text=_("The earliest time this message should begin appearing."))
     end = models.DateTimeField(null=True, blank=True, help_text=_("The latest time this message should appear."))
-    message = models.CharField(max_length=250, help_text=_("The plain text of the message you want to appear."))
+    message = models.TextField(max_length=500, help_text=_("The plain text of the message you want to appear."))
+    monospace = models.BooleanField(default=False, help_text=_("Display this message using a monospace typeface."))
 
     objects = MOTDManager()
 

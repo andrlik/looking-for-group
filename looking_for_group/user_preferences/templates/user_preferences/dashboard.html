@@ -11,7 +11,7 @@
       <h5>{% blocktrans with dname=request.user.display_name|default_if_none:"friend" %}Hi, {{ dname }}!{% endblocktrans %}</h5>
       <ul class="motd">
         {% for m in motd %}
-        <li>{{ m|default_if_none:"" }}</li>
+        <li>{% if m.monospace %}<pre class="motd-mono">{% endif %}{{ m|default_if_none:"" }}{% if m.monospace %}</pre>{% endif %}</li>
         {% empty %}
         {% endfor %}
       </ul>
@@ -79,12 +79,12 @@
             <td>{{ session.title }}</td>
             <td>{{ session.start|date:"Y-m-d H:i" }}</td>
           </tr>
-         
+
           {% empty %}
           {% endfor %}
         </tbody>
       </table>
-      <a href="{% url 'games:calendar_detail' gamer=request.user.username %}">{% trans "See all" %}</a> 
+      <a href="{% url 'games:calendar_detail' gamer=request.user.username %}">{% trans "See all" %}</a>
     </div>
   </div></div>
     <div class="cell medium-auto">
