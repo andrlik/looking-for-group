@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.db.models.query_utils import Q
-from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -22,7 +22,7 @@ from schedule.models import Calendar
 from schedule.periods import Month
 from schedule.views import _api_occurrences
 
-from . import forms, models
+from . import forms, models, serializers
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from .mixins import JSONResponseMixin
 from .utils import mkfirstOfmonth, mkLastOfMonth
@@ -1828,3 +1828,27 @@ class GameInviteList(
         context = super().get_context_data(**kwargs)
         context["ct"] = ContentType.objects.get_for_model(context["game"])
         return context
+
+
+class ExportGameDataView(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
+    """
+    Serializes game data for export and delivers a JSON file.
+    """
+    model = models.GamePosting
+    slug_url_kwarg = 'gameid'
+    permission_required = 'game.can_edit_listing'
+    select_related = ['gm', 'published_game', 'game_system', 'published_module']
+    prefetch_related = ['gamesession_set', 'character_set', 'players', 'gamesession_set__players_expected__gamer', 'gamesession_set__players_missing__gamer', 'gamesession_set__adventurelog', 'gamesession_set__adventurelog__initial_author', 'gamesession_set__adventurelog__last_edited_by']
+    context_object_name = 'game'
+
+    def get_data(self):
+        serializer = serializers.GameDataSerializer(self.get_object())
+        return serializer.data
+
+    def get_queryset(self):
+        return models.GamePosting.objects.all()
+
+    def render_to_response(self, context, **response_kwargs):
+        response = HttpResponse(self.get_data(), content_type='application/json')
+        response['Content-Disposition'] = 'attachment; filename="game_{}.json"'.format(context['game'].slug)
+        return response

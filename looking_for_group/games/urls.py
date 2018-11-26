@@ -64,6 +64,11 @@ urlpatterns = [
         name="session_list",
     ),
     path(
+        "game/<slug:gameid>/export/",
+        view=views.ExportGameDataView.as_view(),
+        name="game_export",
+    ),
+    path(
         "game/<slug:slug>/invites/",
         view=views.GameInviteList.as_view(),
         name="game_invite_list",

@@ -12,6 +12,7 @@
 {% if is_gm %}
 <li{% block editactive %}{% endblock %}><a href="{% url 'games:game_edit' gameid=game.slug %}">{% trans "Edit game" %}</a></li>
 <li{% block appactive %}{% endblock %}><a href="{% url 'games:game_applicant_list' gameid=game.slug %}">{% trans "Review applicants" %}</a></li>
+<li><a href="{% url 'games:game_export' gameid=game.slug %}" title="Export game data">{% trans "Export" %}</a></li>
 <li{% block inviteactive %}{% endblock %}><a href="{% url 'games:game_invite_list' slug=game.slug %}">{% trans "Invites" %}</a></li>
 <li{% block deleteactive %}{% endblock %}><a href="{% url 'games:game_delete' gameid=game.slug %}">{% trans "Delete game" %}</a></li>
 {% endif %}

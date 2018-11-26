@@ -1668,3 +1668,27 @@ class GameInviteListTest(AbstractViewTestCaseNoSignals):
     def test_gm(self):
         with self.login(username=self.gamer1.username):
             self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class GameExportTest(AbstractGameSessionTest):
+    """
+    Test export view.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = 'games:game_export'
+        self.url_kwargs = {'gameid': self.gp2.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_unauthorized_user(self):
+        for gamer in [self.gamer2, self.gamer4]:
+            with self.login(username=gamer.username):
+                self.get(self.view_name, **self.url_kwargs)
+                self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
