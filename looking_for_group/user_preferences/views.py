@@ -1,6 +1,7 @@
 import logging
 
-from braces.views import SelectRelatedMixin
+from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.db.models.query_utils import Q
@@ -8,6 +9,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import generic
+from django_q.tasks import async_task
 from notifications.models import Notification
 
 from . import models
@@ -17,6 +19,10 @@ from ..gamer_profiles import models as social_models
 from ..games import models as game_models
 
 # Create your views here.
+
+
+def delete_user(user):
+    user.delete()
 
 
 logger = logging.getLogger("gamer_profiles")
@@ -217,3 +223,30 @@ class PrivacyView(generic.TemplateView):
 
 class TermsView(generic.TemplateView):
     template_name = 'tos.html'
+
+
+class DeleteAccount(LoginRequiredMixin, generic.DeleteView):
+    """
+    Deleting account view.
+    """
+    model = social_models.GamerProfile
+    template_name = 'user_preferences/delete_account.html'
+    context_object_name = 'gamer'
+
+    def get_queryset(self):
+        return self.model.objects.all().select_related('user').prefetch_related('communities', 'gmed_games', 'player_set', 'player_set__character_set')
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        return queryset.get(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['owned_communities'] = social_models.GamerCommunity.objects.filter(owner=context['gamer'])
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object().user
+        async_task(delete_user, user)
+        logout(request)
+        return HttpResponseRedirect('/')
