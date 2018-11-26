@@ -202,6 +202,11 @@ urlpatterns = [
         name="block-gamer",
     ),
     path(
+        "profiles/<slug:gamer>/export/",
+        view=views.ExportProfileView.as_view(),
+        name="profile_export",
+    ),
+    path(
         "me/blocks/<uuid:block>/unblock/",
         view=views.RemoveBlock.as_view(),
         name="unblock-gamer",

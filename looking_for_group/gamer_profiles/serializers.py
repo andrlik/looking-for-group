@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
 from . import models
+from ..games.models import GamePosting, Player
+from ..games.serializers import GameDataSerializer
 from ..users.models import User
 
 
@@ -58,12 +60,23 @@ class GamerProfileSerializer(serializers.ModelSerializer):
     """
 
     user = UserListingField()
+    timezone = serializers.SerializerMethodField()
     communities = CommunityListingField(many=True)
+    player_game_list = serializers.SerializerMethodField()
+    gmed_games = GameDataSerializer(many=True, read_only=True)
+    preferred_games = serializers.StringRelatedField(many=True, read_only=True)
+    preferred_systems = serializers.StringRelatedField(many=True, read_only=True)
+
+    def get_player_game_list(self, obj):
+        games_played = GamePosting.objects.filter(id__in=[p.game.id for p in Player.objects.filter(gamer=obj)])
+        return [{'title': g.title, 'gm': str(g.gm), 'sessions': g.sessions} for g in games_played]
+
+    def get_timezone(self, obj):
+        return obj.user.timezone
 
     class Meta:
         model = models.GamerProfile
         fields = (
-            "id",
             "user",
             "private",
             "playstyle",
@@ -79,12 +92,14 @@ class GamerProfileSerializer(serializers.ModelSerializer):
             "preferred_systems",
             "communities",
             "reputation_score",
+            "player_game_list",
+            "gmed_games",
+            "timezone",
         )
         read_only_fields = (
             "id",
             "user",
             "communities",
-            "reputation_score",
         )
 
 

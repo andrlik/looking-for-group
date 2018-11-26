@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.forms import modelform_factory
-from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -18,9 +18,10 @@ from django.utils.http import is_safe_url
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from notifications.signals import notify
+from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
 
-from .. import models
+from .. import models, serializers
 from ..forms import BlankDistructiveForm, GamerProfileForm, KickUserForm, OwnershipTransferForm
 
 logger = logging.getLogger("gamer_profiles")
@@ -475,8 +476,12 @@ class CommunityApplicantList(
         )
         context = super().get_context_data(**kwargs)
         context["community"] = self.community
-        context["approved_applicants"] = all_apps.filter(status="approve").order_by('-modified')
-        context["rejected_applicants"] = all_apps.filter(status="reject").order_by('-modified')
+        context["approved_applicants"] = all_apps.filter(status="approve").order_by(
+            "-modified"
+        )
+        context["rejected_applicants"] = all_apps.filter(status="reject").order_by(
+            "-modified"
+        )
         return context
 
 
@@ -496,7 +501,7 @@ class CommunityApplicantDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = context['application'].community
+        context["community"] = context["application"].community
         return context
 
 
@@ -531,7 +536,13 @@ class UpdateApplication(
                         self.request, _("Application successfully submitted.")
                     )
                     for admin in application.community.get_admins():
-                        notify.send(application.gamer, recipient=admin.gamer.user, verb=_('submitted application'), action_object=application, target=application.community)
+                        notify.send(
+                            application.gamer,
+                            recipient=admin.gamer.user,
+                            verb=_("submitted application"),
+                            action_object=application,
+                            target=application.community,
+                        )
                     return HttpResponseRedirect(self.get_success_url())
             except models.AlreadyInCommunity:
                 messages.error(
@@ -589,7 +600,13 @@ class CreateApplication(
             try:
                 self.object.submit_application()
                 for admin in self.object.community.get_admins():
-                        notify.send(self.object.gamer, recipient=admin.gamer.user, verb=_('submitted application'), action_object=self.object, target=self.object.community)
+                    notify.send(
+                        self.object.gamer,
+                        recipient=admin.gamer.user,
+                        verb=_("submitted application"),
+                        action_object=self.object,
+                        target=self.object.community,
+                    )
                 messages.success(self.request, _("Application successfully submitted."))
                 return HttpResponseRedirect(self.object.community.get_absolute_url())
             except models.AlreadyInCommunity:
@@ -716,7 +733,13 @@ class ApproveApplication(
                     )
                 ),
             )
-        notify.send(self.request.user.gamerprofile, recipient=application.gamer.user, verb="approved your application", action_object=application, target=application.community)
+        notify.send(
+            self.request.user.gamerprofile,
+            recipient=application.gamer.user,
+            verb="approved your application",
+            action_object=application,
+            target=application.community,
+        )
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -729,7 +752,13 @@ class RejectApplication(ApproveApplication):
         application = self.get_object()
         application.reject_application()
         messages.success(self.request, _("Application rejected."))
-        notify.send(sender=models.CommunityApplication, recipient=application.gamer.user, verb=_('community application was rejected'), action_object=application, target=application.community)
+        notify.send(
+            sender=models.CommunityApplication,
+            recipient=application.gamer.user,
+            verb=_("community application was rejected"),
+            action_object=application,
+            target=application.community,
+        )
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1208,11 +1237,7 @@ class GamerFriendRequestView(
                 )
                 messages.info(
                     request,
-                    _(
-                        "You are already friends with {}".format(
-                            self.target_gamer
-                        )
-                    ),
+                    _("You are already friends with {}".format(self.target_gamer)),
                 )
                 return HttpResponseRedirect(
                     reverse_lazy(
@@ -1356,13 +1381,13 @@ class GamerFriendRequestApprove(
             friend_request.accept()
             messages.success(
                 self.request,
-                _(
-                    "You are now friends with {}".format(
-                        friend_request.requestor
-                    )
-                ),
+                _("You are now friends with {}".format(friend_request.requestor)),
             )
-            notify.send(self.request.user.gamerprofile, recipient=friend_request.requestor.user, verb=_("accepted your friend request."))
+            notify.send(
+                self.request.user.gamerprofile,
+                recipient=friend_request.requestor.user,
+                verb=_("accepted your friend request."),
+            )
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1399,7 +1424,7 @@ class GamerFriendRequestListView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['gamer'] = self.request.user.gamerprofile
+        context["gamer"] = self.request.user.gamerprofile
         context["sent_requests"] = models.GamerFriendRequest.objects.filter(
             requestor=self.request.user.gamerprofile, status="new"
         )
@@ -1614,13 +1639,11 @@ class BlockGamer(LoginRequiredMixin, generic.CreateView):
         )
         if created:
             messages.success(
-                self.request,
-                _("You have successfully blocked {}".format(self.gamer)),
+                self.request, _("You have successfully blocked {}".format(self.gamer))
             )
         else:
             messages.error(
-                self.request,
-                _("You have already blocked {}".format(self.gamer)),
+                self.request, _("You have already blocked {}".format(self.gamer))
             )
         return HttpResponseRedirect(self.get_success_url())
 
@@ -1667,7 +1690,7 @@ class BlockList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
 
     model = models.BlockedUser
     template_name = "gamer_profiles/block_list.html"
-    context_object_name = 'block_list'
+    context_object_name = "block_list"
     select_related = ["blockee"]
 
     def get_queryset(self):
@@ -1677,7 +1700,7 @@ class BlockList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['gamer'] = self.request.user.gamerprofile
+        context["gamer"] = self.request.user.gamerprofile
         return context
 
 
@@ -1712,13 +1735,11 @@ class MuteGamer(LoginRequiredMixin, generic.CreateView):
         )
         if created:
             messages.success(
-                self.request,
-                _("You have successfully muted {}.".format(self.gamer)),
+                self.request, _("You have successfully muted {}.".format(self.gamer))
             )
         else:
             messages.error(
-                self.request,
-                _("You have already muted {}.".format(self.gamer)),
+                self.request, _("You have already muted {}.".format(self.gamer))
             )
         return HttpResponseRedirect(self.get_success_url())
 
@@ -1767,19 +1788,63 @@ class MyMuteList(LoginRequiredMixin, SelectRelatedMixin, generic.ListView):
         ).order_by("-created")
 
 
-class CommunityInviteList(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
+class CommunityInviteList(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.DetailView,
+):
     """
     Provide a list of current community invites. If an admin, show all of them.
     """
+
     model = models.GamerCommunity
-    template_name = 'gamer_profiles/community_invite_list.html'
-    select_related = ['owner']
-    prefetch_related = ['members']
-    permission_required = 'invite.can_create'
-    context_object_name = 'community'
-    slug_url_kwarg = 'slug'
+    template_name = "gamer_profiles/community_invite_list.html"
+    select_related = ["owner"]
+    prefetch_related = ["members"]
+    permission_required = "invite.can_create"
+    context_object_name = "community"
+    slug_url_kwarg = "slug"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ct'] = ContentType.objects.get_for_model(context['community'])
+        context["ct"] = ContentType.objects.get_for_model(context["community"])
         return context
+
+
+class ExportProfileView(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.DetailView,
+):
+    """
+    Export profile data as JSON.
+    """
+
+    select_related = ["user", "preferred_games", "preferred_systems"]
+    prefetch_related = ["gmed_games", "communities"]
+    permission_required = "profile.edit_profile"
+    model = models.GamerProfile
+    slug_url_kwarg = "gamer"
+    context_object_name = "gamer"
+    slug_field = "username"
+
+    def get_queryset(self):
+        return models.GamerProfile.objects.all()
+
+    def get_data(self):
+        serializer = serializers.GamerProfileSerializer(self.get_object())
+        return serializer.data
+
+    def render_to_response(self, context, **response_kwargs):
+        data = self.get_data()
+        response = HttpResponse(
+            JSONRenderer().render(data), content_type="application/json"
+        )
+        response["Content-Disposition"] = 'attachment; filename="{}.json"'.format(
+            context["gamer"].username
+        )
+        return response

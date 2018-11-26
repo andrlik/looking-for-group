@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from notifications.signals import notify
+from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar
 from schedule.periods import Month
@@ -1849,6 +1850,6 @@ class ExportGameDataView(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelated
         return models.GamePosting.objects.all()
 
     def render_to_response(self, context, **response_kwargs):
-        response = HttpResponse(self.get_data(), content_type='application/json')
+        response = HttpResponse(JSONRenderer().render(self.get_data()), content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="game_{}.json"'.format(context['game'].slug)
         return response

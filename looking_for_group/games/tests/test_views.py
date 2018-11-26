@@ -1692,3 +1692,25 @@ class GameExportTest(AbstractGameSessionTest):
     def test_authorized_user(self):
         with self.login(username=self.gamer1.username):
             self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class ProfileExportTest(AbstractGameSessionTest):
+    """
+    Export an entire profile.
+    """
+    def setUp(self):
+        super().setUp()
+        self.view_name = 'gamer_profiles:profile_export'
+        self.url_kwargs = {'gamer': self.gamer1.username}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_unauthrorized_user(self):
+        with self.login(username=self.gamer4.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)

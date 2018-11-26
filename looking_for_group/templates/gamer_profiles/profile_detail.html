@@ -109,5 +109,9 @@
 </div>
 {% endif %}
 
+{% if gamer.user == request.user %}
+<a href="{% url 'gamer_profiles:profile_export' gamer=gamer.username %}" class="button primary">{% trans "Export your profile data" %}</a>
+{% endif %}
+
 
 {% endblock %}
