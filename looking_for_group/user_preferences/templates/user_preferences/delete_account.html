@@ -1,0 +1,62 @@
+{% extends "user_preferences/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Delete your account" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Delete your account" %}{% endblock %}
+{% block mobileheader %}{% trans "Delete your account" %}{% endblock %}
+{% block deleteactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "We are so sorry to see you go!" %}</h5>
+  <p>{% trans "If you wish to proceed, the following types of data will also be deleted. Please review this list carefully before confirming." %}</p>
+  <ul>
+    <li>
+      {% trans "Owned communities (you should transfer ownership of these to another user if you do not want them to be deleted)" %}
+      <ul>
+        {% for comm in owned_communities %}
+        <li><a href="{{ comm.get_absolute_url }}">{{ comm.name }}</a></li>
+        {% empty %}
+        <li>{% trans "None" %}</li>
+        {% endfor %}
+      </ul>
+    </li>
+    <li>
+      {% trans "GMed Games and all associated records" %}
+      <ul>
+        {% for game in gamer.gmed_games.all %}
+        <li>
+          <a href="{{ game.get_absolute_url }}">{{ game.title }}</a>
+          <ul>
+            <li>{% trans "Sessions:" %} {{ game.sessions }}</li>
+            <li>{% trans "Player records:" %} {{ game.players.count }}</li>
+            <li>{% trans "Characters:" %} {{ game.character_set.count }}</li>
+          </ul>
+        </li>
+        {% empty %}
+        <li>{% trans "None" %}</li>
+        {% endfor %}
+      </ul>
+    </li>
+    <li>
+      {% trans "Played game records" %}
+      <ul>
+        {% for game in gameposting_set %}
+        <li><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></li>
+        {% empty %}
+        <li>{% trans "None" %}</li>
+        {% endfor %}
+      </ul>
+    </li>
+    <li>{% blocktrans with gnotes=gamer.authored_notes.count %}Private gamer notes: {{ gnotes }}{% endblocktrans %}</li>
+  </ul>
+</div>
+
+<form action="" method="post" novalidate data-abide>
+  <p>{% blocktrans %}Deleting your account cannot be undone. Once you confirm, your account will immediately be deactivated and depending on server load your requested deletion will be completed anywhere between a few seconds to a few hours. Your account will also be removed from our emergency database backups within two weeks.{% endblocktrans %}</p>
+  <p>{% blocktrans %}If you are sure you want to proceed, please confirm by entering your personalized, time-dependent confirmation key in the form below. Your key is: {% endblocktrans %}<pre>{{ delete_confirm_key }}</pre></p>
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{% url 'user_preferences:setting-view' %}" class="button secondary float-left">{% trans "Nevermind, I'll stick around." %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Delete my account' %}" />
+  </div>
+</form>
+
+{% endblock %}

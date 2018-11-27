@@ -1,16 +1,28 @@
+import hashlib
 import logging
 
-from braces.views import SelectRelatedMixin
+import factory.django
+from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models.query_utils import Q
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete, pre_save
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 from django.views import generic
+from django_q import humanhash
+from django_q.tasks import async_task
 from notifications.models import Notification
+from schedule.models import Calendar
 
-from . import models
+from . import forms, models
 from ..discord import models as discord_models
 from ..game_catalog import models as catalog_models
 from ..gamer_profiles import models as social_models
@@ -20,6 +32,49 @@ from ..games import models as game_models
 
 
 logger = logging.getLogger("gamer_profiles")
+
+
+def delete_user(user):
+    with transaction.atomic():
+        logger.debug("Delete user called, entering transaction.")
+        logger.debug("Starting search for player records...")
+        players = game_models.Player.objects.filter(gamer=user.gamerprofile).select_related('gamer')
+        logger.debug("Found {} player records, deleting...".format(players.count()))
+        if len(players) > 0:
+            for player in players:
+                player.delete()
+        logger.debug("Proceeding to search for gmed_games to delete...")
+        games = user.gamerprofile.gmed_games.all()
+        logger.debug("Found {} gmed games... deleting.".format(games.count()))
+        if len(games) > 0:
+            for game in games:
+                with factory.django.mute_signals(pre_delete, post_delete):
+                    game.event.remove_child_events()
+                    game.event.delete()
+                    players = game_models.Player.objects.filter(game=game).select_related('gamer')
+                    for player in players:
+                        logger.debug("Deleting player {} from game {}".format(player.gamer, game.title))
+                        player.delete()
+                    logger.debug("Players deleted, deleting game...")
+                with factory.django.mute_signals(pre_delete, post_delete, m2m_changed, pre_save, post_save):
+                    game.delete()
+        logger.debug("Games deleted, moving on.")
+        try:
+            logger.debug("Searching for calendar...")
+            cal = Calendar.objects.get(slug=user.username)
+            logger.debug("Calendar found for user, deleting...")
+            cal.delete()
+            logger.debug("Calendar successfully deleted.")
+        except ObjectDoesNotExist:
+            logger.debug("no calendar found, moving on...")
+        logger.debug("Now calling delete on user object.")
+        user.delete()
+
+
+def generate_delete_key(user_pk):
+    concat_data = ", ".join([str(timezone.now()), str(user_pk)])
+    digest = hashlib.sha256(concat_data.encode())
+    return humanhash.humanize(digest.hexdigest())
 
 
 class HomeView(generic.TemplateView):
@@ -217,3 +272,53 @@ class PrivacyView(generic.TemplateView):
 
 class TermsView(generic.TemplateView):
     template_name = 'tos.html'
+
+
+class DeleteAccount(LoginRequiredMixin, generic.DeleteView):
+    """
+    Deleting account view.
+    """
+    model = social_models.GamerProfile
+    template_name = 'user_preferences/delete_account.html'
+    context_object_name = 'gamer'
+    success_url = "/"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            self.object = self.get_object()
+            self.owned_communities = social_models.GamerCommunity.objects.filter(owner=self.object)
+            self.oc_count = self.owned_communities.count()
+            logger.debug("Found {} communities owned by user requesting deletion.".format(self.oc_count))
+            if self.oc_count > 0:
+                messages.warning(request, _("You have {} communities for which you are the owner. You should transfer these to another admin or else these communities will be deleted for ALL USERS."))
+        return super().dispatch(request, *args, **kwargs)
+
+
+    def get_queryset(self):
+        return self.model.objects.all().select_related('user').prefetch_related('communities', 'gmed_games', 'player_set', 'player_set__character_set')
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        return queryset.get(user=self.request.user)
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['owned_communities'] = self.owned_communities
+        context['delete_confirm_key'] = cache.get_or_set("delete_confirm_key_{}".format(self.request.user.username), generate_delete_key(self.request.user.pk))
+        context['form'] = kwargs.get('form', forms.DeleteAccountForm(delete_confirm_key=context['delete_confirm_key']))
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        user = self.object.user
+        form = forms.DeleteAccountForm(request.POST, delete_confirm_key=cache.get_or_set("delete_confirm_key_{}".format(request.user.username), generate_delete_key(request.user.pk)))
+        if not form.is_valid():
+            messages.error(request, _("You must confirm deletion using the confirmation key below."))
+            logger.debug("form invalid, sending back to user to fix.")
+            return self.get(request, form=form, *args, **kwargs)
+        logger.debug("Form valid, starting deletion process task.")
+        logger.debug("Logging out user...")
+        logout(request)
+        delete_user(user)
+        logger.debug("Redirecting to home.")
+        return HttpResponseRedirect(self.get_success_url())

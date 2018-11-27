@@ -117,6 +117,7 @@ def clear_calendar_for_departing_player(player):
     try:
         logger.debug("trying to fetch calendar for departing player.")
         player_calendar = Calendar.objects.get(slug=player.gamer.username)
+
     except ObjectDoesNotExist:  # pragma: no cover
         logger.debug("Calendar does not exist!")
         pass  # No need to delete anything.
