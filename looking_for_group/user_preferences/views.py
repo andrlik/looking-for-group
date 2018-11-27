@@ -38,7 +38,9 @@ def delete_user(user):
     with transaction.atomic():
         logger.debug("Delete user called, entering transaction.")
         logger.debug("Starting search for player records...")
-        players = game_models.Player.objects.filter(gamer=user.gamerprofile).select_related('gamer')
+        players = game_models.Player.objects.filter(
+            gamer=user.gamerprofile
+        ).select_related("gamer")
         logger.debug("Found {} player records, deleting...".format(players.count()))
         if len(players) > 0:
             for player in players:
@@ -51,12 +53,20 @@ def delete_user(user):
                 with factory.django.mute_signals(pre_delete, post_delete):
                     game.event.remove_child_events()
                     game.event.delete()
-                    players = game_models.Player.objects.filter(game=game).select_related('gamer')
+                    players = game_models.Player.objects.filter(
+                        game=game
+                    ).select_related("gamer")
                     for player in players:
-                        logger.debug("Deleting player {} from game {}".format(player.gamer, game.title))
+                        logger.debug(
+                            "Deleting player {} from game {}".format(
+                                player.gamer, game.title
+                            )
+                        )
                         player.delete()
                     logger.debug("Players deleted, deleting game...")
-                with factory.django.mute_signals(pre_delete, post_delete, m2m_changed, pre_save, post_save):
+                with factory.django.mute_signals(
+                    pre_delete, post_delete, m2m_changed, pre_save, post_save
+                ):
                     game.delete()
         logger.debug("Games deleted, moving on.")
         try:
@@ -81,11 +91,12 @@ class HomeView(generic.TemplateView):
     """
     Handles making sure logged in users go to dashboard instead.
     """
+
     template_name = "pages/home.html"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return HttpResponseRedirect(reverse_lazy('dashboard'))
+            return HttpResponseRedirect(reverse_lazy("dashboard"))
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -267,53 +278,86 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
 
 
 class PrivacyView(generic.TemplateView):
-    template_name = 'privacy.html'
+    template_name = "privacy.html"
 
 
 class TermsView(generic.TemplateView):
-    template_name = 'tos.html'
+    template_name = "tos.html"
 
 
 class DeleteAccount(LoginRequiredMixin, generic.DeleteView):
     """
     Deleting account view.
     """
+
     model = social_models.GamerProfile
-    template_name = 'user_preferences/delete_account.html'
-    context_object_name = 'gamer'
+    template_name = "user_preferences/delete_account.html"
+    context_object_name = "gamer"
     success_url = "/"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             self.object = self.get_object()
-            self.owned_communities = social_models.GamerCommunity.objects.filter(owner=self.object)
+            self.owned_communities = social_models.GamerCommunity.objects.filter(
+                owner=self.object
+            )
             self.oc_count = self.owned_communities.count()
-            logger.debug("Found {} communities owned by user requesting deletion.".format(self.oc_count))
+            logger.debug(
+                "Found {} communities owned by user requesting deletion.".format(
+                    self.oc_count
+                )
+            )
             if self.oc_count > 0:
-                messages.warning(request, _("You have {} communities for which you are the owner. You should transfer these to another admin or else these communities will be deleted for ALL USERS."))
+                messages.warning(
+                    request,
+                    _(
+                        "You have {} communities for which you are the owner. You should transfer these to another admin or else these communities will be deleted for ALL USERS.".format(
+                            self.oc_count
+                        )
+                    ),
+                )
         return super().dispatch(request, *args, **kwargs)
 
-
     def get_queryset(self):
-        return self.model.objects.all().select_related('user').prefetch_related('communities', 'gmed_games', 'player_set', 'player_set__character_set')
+        return (
+            self.model.objects.all()
+            .select_related("user")
+            .prefetch_related(
+                "communities", "gmed_games", "player_set", "player_set__character_set"
+            )
+        )
 
     def get_object(self):
         queryset = self.get_queryset()
         return queryset.get(user=self.request.user)
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['owned_communities'] = self.owned_communities
-        context['delete_confirm_key'] = cache.get_or_set("delete_confirm_key_{}".format(self.request.user.username), generate_delete_key(self.request.user.pk))
-        context['form'] = kwargs.get('form', forms.DeleteAccountForm(delete_confirm_key=context['delete_confirm_key']))
+        context["owned_communities"] = self.owned_communities
+        context["delete_confirm_key"] = cache.get_or_set(
+            "delete_confirm_key_{}".format(self.request.user.username),
+            generate_delete_key(self.request.user.pk),
+        )
+        context["form"] = kwargs.get(
+            "form",
+            forms.DeleteAccountForm(delete_confirm_key=context["delete_confirm_key"]),
+        )
         return context
 
     def delete(self, request, *args, **kwargs):
         user = self.object.user
-        form = forms.DeleteAccountForm(request.POST, delete_confirm_key=cache.get_or_set("delete_confirm_key_{}".format(request.user.username), generate_delete_key(request.user.pk)))
+        form = forms.DeleteAccountForm(
+            request.POST,
+            delete_confirm_key=cache.get_or_set(
+                "delete_confirm_key_{}".format(request.user.username),
+                generate_delete_key(request.user.pk),
+            ),
+        )
         if not form.is_valid():
-            messages.error(request, _("You must confirm deletion using the confirmation key below."))
+            messages.error(
+                request,
+                _("You must confirm deletion using the confirmation key below."),
+            )
             logger.debug("form invalid, sending back to user to fix.")
             return self.get(request, form=form, *args, **kwargs)
         logger.debug("Form valid, starting deletion process task.")
