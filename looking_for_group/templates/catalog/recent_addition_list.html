@@ -1,0 +1,32 @@
+{% extends "catalog/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Recent additions to catalog" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Recent additions" %}{% endblock %}
+{% block mobileheader %}{% trans "Recent additions" %}{% endblock %}
+{% block recentactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<p>{% trans "Now showing the 30 most recent additions to the RPG database:" %}</p>
+
+<table class="scroll hover">
+  <thead>
+    <tr>
+      <th>{% trans "Record type" %}</th>
+      <th>{% trans "Title" %}</th>
+      <th>{% trans "Tags" %}</th>
+      <th class="text-right">{% trans "Added" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for obj in recent_addition_list %}
+    <tr>
+      <td>{{ obj.type }}</td>
+      <td><a href="{{ obj.object.get_absolute_url }}">{% if obj.object.title %}{{ obj.object.title }}{% else %}{{ obj.object.name }}{% endif %}</a></td>
+      <td>{{ obj.object.inherited_tag_names|join:", " }}</td>
+      <td class="text-right">{{ obj.when }}</td>
+    </tr>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
