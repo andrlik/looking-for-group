@@ -34,7 +34,9 @@
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
-  <a href="{{ log.session.get_absolute_url }}" class="button secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button success" value="{% trans 'Save' %}" />
+  <div class="clearfix">
+    <a href="{{ log.session.get_absolute_url }}" class="button float-left secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save' %}" />
+  </div>
 </form>
 {% endblock %}
 {% block simplemde %}

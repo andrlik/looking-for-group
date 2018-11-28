@@ -84,7 +84,9 @@
 <h3>{{ session.adventurelog.title }}</h3>
 <p class="meta">{% blocktrans with create=session.adventurelog.created author=session.adventurelog.initial_author %}Posted by {{ author }} at {{ create }}. {% endblocktrans %}{% if session.adventurelog.last_edited_by %}{% blocktrans with mod=session.adventurelog.modified editor=session.adventurelog.last_edited_by %}Last edited by {{ editor }} at {{ mod }}.{% endblocktrans %}{% endif %}</p>
 {{ session.adventurelog.body_rendered|safe }}
-<a href="{% url 'games:log_edit' log=session.adventurelog.slug %}" class="button">{% trans "Edit Log Entry" %}</a> {% if request.user.gamerprofile == session.game.gm %} <a href="{% url 'games:log_delete' log=session.adventurelog.slug %}" class="button alert">{% trans "Delete Log Entry" %}</a>{% endif %}
+<div class="clearfix">
+  <a href="{% url 'games:log_edit' log=session.adventurelog.slug %}" class="button float-left">{% trans "Edit Log Entry" %}</a> {% if request.user.gamerprofile == session.game.gm %} <a href="{% url 'games:log_delete' log=session.adventurelog.slug %}" class="button float-right alert">{% trans "Delete Log Entry" %}</a>{% endif %}
+</div>
 {% else %}
 <p>{% trans "The log entry for this session hasn't been created yet." %}</p>
 <a href="{% url 'games:log_create' session=session.slug %}" class="button">{% trans "Create Log Entry" %}</a>
