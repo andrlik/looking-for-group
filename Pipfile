@@ -53,6 +53,7 @@ elasticsearch = "<6"
 haystack = {editable = true,ref = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8",git = "https://github.com/andrlik/django-haystack.git"}
 django-markdown-filter = "*"
 django-node-assets = "*"
+factory-boy = "*"
 
 [dev-packages]
 sphinx = "*"
@@ -62,7 +63,6 @@ pytest-cov = "*"
 pytest-xdist = "*"
 "flake8" = "*"
 coverage = "*"
-factory-boy = "*"
 django-test-plus = "*"
 django-debug-toolbar = "*"
 django-coverage-plugin = "*"
