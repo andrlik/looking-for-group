@@ -155,6 +155,7 @@ urlpatterns = [
         view=views.PublishedModuleDeleteView.as_view(),
         name="module-delete",
     ),
+    path("recent/", view=views.RecentAdditionsView.as_view(), name="recent_additions"),
 ]
 
 

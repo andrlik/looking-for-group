@@ -595,3 +595,17 @@ class PublishedModuleViews(AbstractViewTest):
     def test_detail_retrieval(self):
         for m in [self.cos, self.tiamat, self.vv]:
             self.assertGoodView("game_catalog:module-detail", module=m.pk)
+
+
+class RecentAdditionViewTest(AbstractViewTest):
+    """
+    Basic test for the recent additions view
+    """
+    def setUp(self):
+        super().setUp()
+        self.view_name = 'game_catalog:recent_additions'
+
+    def test_list_retrieval(self):
+        with self.assertNumQueriesLessThan(150):
+            self.get(self.view_name)
+            self.response_200()

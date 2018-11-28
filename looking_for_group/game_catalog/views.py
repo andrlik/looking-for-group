@@ -1,5 +1,6 @@
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -8,6 +9,7 @@ from rules.contrib.views import PermissionRequiredMixin
 
 from . import forms
 from .models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
+from .utils import combined_recent
 
 # Create your views here.
 # Note, we don't provide create, edit, or delete views for these now as we'll handle those via the admin.
@@ -513,3 +515,36 @@ class PublishedModuleDeleteView(
     def delete(self, request, *args, **kwargs):
         self.success_url = self.get_object().parent_game_edition.get_absolute_url()
         return super().delete(request, *args, **kwargs)
+
+
+class RecentAdditionsView(generic.ListView):
+    """
+    Retrieve a list of recently added objects to the catalog and display as a list.
+    """
+
+    template_name = "catalog/recent_addition_list.html"
+    model = GameEdition
+    context_object_name = "recent_addition_list"
+
+    def get_queryset(self):
+        return cache.get_or_set(
+            "recent_rpg_additions",
+            combined_recent(
+                30,
+                Edition=GameEdition.objects.all()
+                .select_related("publisher", "game", "game_system")
+                .prefetch_related("sourcebooks", "tags", "publishedmodule_set"),
+                Sourcebook=SourceBook.objects.all()
+                .select_related("edition")
+                .prefetch_related("tags"),
+                Publisher=GamePublisher.objects.all().prefetch_related(
+                    "gamesystem_set", "gameedition_set", "publishedmodule_set"
+                ),
+                System=GameSystem.objects.all()
+                .select_related("original_publisher")
+                .prefetch_related("game_editions"),
+                Module=PublishedModule.objects.all().select_related(
+                    "parent_game_edition", "publisher"
+                ),
+            ),
+        )
