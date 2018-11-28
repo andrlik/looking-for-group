@@ -223,7 +223,7 @@
             <input id="id_game" name="game" type="hidden" value="{{ game.pk }}" />
             <p>{% blocktrans with session_time=game.next_session_time %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}</p>
             <input type="submit" class="button float-left" value="{% trans 'Create next regular session' %}" />
-          </form><br /><br />
+          </form>
           {% endif %}
           {% endif %}
           {% if game.status != "closed" and game.status != "cancel" and game.gm.user == request.user %}
@@ -231,6 +231,7 @@
           {% endif %}
           {% endif %}
           </div>
+          <br /><br />
           {% endif %}
 {% if not recent_sessions %}
 <p>{% trans "No sessions yet." %}</p>
