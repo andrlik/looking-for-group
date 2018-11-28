@@ -11,7 +11,7 @@
   <thead>
     <tr>
       <th>{% trans "Record type" %}</th>
-      <th>{% trans "Title" %}</th>
+      <th>{% trans "Title/Name" %}</th>
       <th>{% trans "Tags" %}</th>
       <th class="text-right">{% trans "Added" %}</th>
     </tr>
@@ -20,7 +20,7 @@
     {% for obj in recent_addition_list %}
     <tr>
       <td>{{ obj.type }}</td>
-      <td><a href="{{ obj.object.get_absolute_url }}">{% if obj.object.title %}{{ obj.object.title }}{% else %}{{ obj.object.name }}{% endif %}</a></td>
+      <td><a href="{{ obj.object.get_absolute_url }}">{% if obj.type == "Sourcebook" %}{{ obj.object.title }} - {{ obj.object.edition }}{% elif obj.type == "Module" %}{{ obj.object.title }} - {{ obj.object.parent_game_edition }}{% elif obj.type == "Edition" %}{{ obj.object }}{% else %}{{ obj.object.name }}{% endif %}</a></td>
       <td>{{ obj.object.inherited_tag_names|join:", " }}</td>
       <td class="text-right">{{ obj.when }}</td>
     </tr>
