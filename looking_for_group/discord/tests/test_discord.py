@@ -1,3 +1,5 @@
+import re
+import warnings
 from datetime import timedelta
 
 import factory.django
@@ -33,13 +35,28 @@ class DiscordGuildTests(OAuth2TestsMixin, AllAuthTestCase):
             200,
             """{
             "id": "80351110224678912",
-            "username": "Nelly",
+            "username": "Nelly!@",
             "discriminator": "1337",
             "avatar": "8342729096ea3675442027381ff50dfe",
             "verified": true,
             "email": "nelly@example.com"
         }""",
         )
+
+    def test_auto_signup(self):
+        resp_mocks = self.get_mocked_response()
+        if not resp_mocks:
+            warnings.warn("Cannot test provider %s, no oauth mock"
+                          % self.provider.id)
+            return
+        resp = self.login(resp_mocks)
+        self.assertRedirects(
+            resp, "/accounts/profile/", fetch_redirect_response=False
+        )
+        self.assertFalse(re.match('[@#$%^&*(){}!?+=<>]', resp.context['user'].username))
+        self.assertEqual(resp.context['user'].display_name, "Nelly!@")
+        self.assertNotEqual(resp.context['user'].username, "Nelly!@")
+        self.assertFalse(resp.context['user'].has_usable_password())
 
 
 class AbstractDiscordTest(TransactionTestCase):
