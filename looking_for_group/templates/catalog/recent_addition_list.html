@@ -1,12 +1,12 @@
 {% extends "catalog/base.html" %}
-{% load i18n %}
+{% load i18n cache %}
 {% block subtitle %}{% trans "Recent additions to catalog" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Recent additions" %}{% endblock %}
 {% block mobileheader %}{% trans "Recent additions" %}{% endblock %}
 {% block recentactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 <p>{% trans "Now showing the 30 most recent additions to the RPG database:" %}</p>
-
+{% cache 500 recent_addition_table %}
 <table class="scroll hover">
   <thead>
     <tr>
@@ -28,5 +28,5 @@
     {% endfor %}
   </tbody>
 </table>
-
+{% endcache %}
 {% endblock %}
