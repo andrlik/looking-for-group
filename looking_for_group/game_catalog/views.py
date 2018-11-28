@@ -532,19 +532,15 @@ class RecentAdditionsView(generic.ListView):
             combined_recent(
                 30,
                 Edition=GameEdition.objects.all()
-                .select_related("publisher", "game", "game_system")
-                .prefetch_related("sourcebooks", "tags", "publishedmodule_set"),
+                .select_related("game")
+                .prefetch_related("tags"),
                 Sourcebook=SourceBook.objects.all()
                 .select_related("edition")
                 .prefetch_related("tags"),
-                Publisher=GamePublisher.objects.all().prefetch_related(
-                    "gamesystem_set", "gameedition_set", "publishedmodule_set"
-                ),
-                System=GameSystem.objects.all()
-                .select_related("original_publisher")
-                .prefetch_related("game_editions"),
+                Publisher=GamePublisher.objects.all(),
+                System=GameSystem.objects.all(),
                 Module=PublishedModule.objects.all().select_related(
-                    "parent_game_edition", "publisher"
+                    "parent_game_edition"
                 ),
             ),
         )
