@@ -63,7 +63,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         discriminator = data.get('discriminator')
         user = sociallogin.user
         if re.match('[!$?+=#.@%^*(){}]', username):
-            username = slugify(username)
+            username = slugify(external_username)
         try:
             username = self.clean_username(username)
         except ValidationError:
