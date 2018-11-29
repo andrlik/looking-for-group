@@ -2,14 +2,13 @@ import re
 
 from allauth.account import app_settings
 from allauth.account.adapter import DefaultAccountAdapter
-from allauth.account.utils import filter_users_by_username, user_field
+from allauth.account.utils import filter_users_by_username, user_field, user_username, user_email, valid_email_or_none
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.utils import generate_unique_username, get_user_model
+from allauth.utils import generate_unique_username
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.utils.text import slugify
-from django_registration.validators import validate_confusables
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -62,7 +61,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         name = data.get('name')
         discriminator = data.get('discriminator')
         user = sociallogin.user
-        if re.match('[!$?+=#.@%^*(){}]', username):
+        if re.match('[!$?+=#.@%^*(){}]', external_username):
             username = slugify(external_username)
         try:
             username = self.clean_username(username)
