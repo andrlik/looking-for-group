@@ -1,6 +1,7 @@
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -107,7 +108,16 @@ class GameSystemCreateView(
         return self.model
 
     def get_success_url(self):
+        pub_key = make_template_fragment_key('publisher_publications', [self.object.original_publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key did not exist yet
         return self.object.get_absolute_url()
+
+    def form_valid(self, form):
+        self.object = form.save()
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class GameSystemListView(SelectRelatedMixin, PrefetchRelatedMixin, generic.ListView):
@@ -146,6 +156,11 @@ class GameSystemUpdateView(
     template_name = "catalog/system_edit.html"
 
     def get_success_url(self):
+        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().original_publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key did not exist yet
         return self.object.get_absolute_url()
 
 
@@ -168,6 +183,14 @@ class GameSystemDeleteView(
     permission_required = "catalog.can_edit"
     template_name = "catalog/system_delete.html"
     success_url = reverse_lazy("game_catalog:system-list")
+
+    def delete(self, request, *args, **kwargs):
+        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().original_publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key did not exist yet
+        return super().delete(request, *args, **kwargs)
 
 
 class PublishedGameCreateView(
@@ -272,6 +295,13 @@ class EditionCreateView(
         edition = form.save(commit=False)
         edition.game = self.game
         edition.save()
+        try:
+            # Now attempt to invalidate the publisher cache.
+            pub_key = make_template_fragment_key('publisher_publications', [edition.publisher.pk])
+            cache.incr_version(pub_key)
+        except ValueError:
+            # pub_key is not active
+            pass
         return HttpResponseRedirect(edition.get_absolute_url())
 
 
@@ -288,6 +318,14 @@ class EditionUpdateView(
     context_object_name = "edition"
     slug_url_kwarg = "edition"
     template_name = "catalog/edition_edit.html"
+
+    def form_valid(self, form):
+        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key didn't exist
+        return super().form_valid(form)
 
     def get_success_url(self):
         return self.object.get_absolute_url()
@@ -325,6 +363,11 @@ class EditionDeleteView(
     def delete(self, request, *args, **kwargs):
         self.game = self.get_object().game
         self.success_url = self.game.get_absolute_url()
+        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key did not exist
         return super().delete(request, *args, **kwargs)
 
 
@@ -443,6 +486,11 @@ class PublishedModuleCreateView(
         self.module = form.save(commit=False)
         self.module.parent_game_edition = self.edition
         self.module.save()
+        pub_key = make_template_fragment_key('publisher_publications', [self.module.publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key did not exist yet
         return HttpResponseRedirect(self.module.get_absolute_url())
 
 
@@ -478,6 +526,11 @@ class PublishedModuleUpdateView(
     template_name = "catalog/module_edit.html"
 
     def get_success_url(self):
+        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key did not exist yet
         return self.object.get_absolute_url()
 
 
@@ -513,6 +566,11 @@ class PublishedModuleDeleteView(
     prefetch_related = ["gameposting_set"]
 
     def delete(self, request, *args, **kwargs):
+        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        try:
+            cache.incr_version(pub_key)
+        except ValueError:
+            pass  # Key didn't exist yet.
         self.success_url = self.get_object().parent_game_edition.get_absolute_url()
         return super().delete(request, *args, **kwargs)
 

@@ -6,14 +6,16 @@
 {% block editactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 <p></p>
-{% avatar gamer.user %}
+{% avatar gamer.user class="avatar" %}<br /><br />
 <p><span class="small-control-text"><a href="{% if request.user|has_avatar %}{% url 'avatar_change' %}{% else %}{% url 'avatar_change' %}{% endif %}?next={{ gamer.get_absolute_url }}" class="button"> {% trans "Change profile picture" %}</a></span></p>
 <p>{% trans "You can update your profile details below." %}
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
   {{ profile_form|as_foundation }}
-  <p><a href="{{ gamer.get_absolute_url }}"><button class="secondary button">{% trans "Go Back" %}</button></a>    <button type="submit" class="button success">{% trans "Save changes" %}</button></p>
+  <div class="clearfix">
+    <a href="{{ gamer.get_absolute_url }}" class="button secondary float-left">{% trans "Go Back" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}" />
+  </div>
 </form>
 
 {% endblock %}

@@ -47,7 +47,7 @@
           <tbody>
             <tr>
               <td>{% trans "Game Master" %}</td>
-              <td>{% avatar game.gm.user 30 class="profile_circle_small" %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm }}</a></td>
+              <td>{% avatar game.gm.user 30 class="avatar" %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm }}</a></td>
             </tr>
             <tr>
               <td>{% trans "GM Stats" %}</td>
@@ -55,6 +55,7 @@
                 <ul class="stats-list">
                   <li>{{ game.gm.gmed_games.count|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
                   <li>{{ game.gm.games_finished|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
+                  <li>{{ game.gm.get_sessions_run|default_if_none:"0" }} <span class="stats-list-label">{% trans "Sessions run" %}</span></li>
                 </ul>
               </td>
             </tr>
@@ -168,7 +169,7 @@
   <tbody>
     {% for player in player_list %}
     <tr>
-      <td>{% avatar player.gamer.user 20 class="profile_circle_small" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
+      <td>{% avatar player.gamer.user 20 class="avatar" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
       <td>{% if player.current_character %}<a href="{{ player.current_character.get_absolute_url }}">{{ player.current_character.name }}</a>{% else %}{% trans "Pending" %}{% endif %}</td>
       <td>{{ player.created }}</td>
       <td>{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game|default_if_none:"No data" }}</td>

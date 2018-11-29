@@ -1051,7 +1051,7 @@ class GameSessionCompleteUnComplete(
     permission_required = "game.can_edit_listing"
 
     def get_success_url(self):
-        self.get_object().get_absolute_url()
+        self.new_version.get_absolute_url()
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in ["post"]:
@@ -1069,10 +1069,11 @@ class GameSessionCompleteUnComplete(
         return HttpResponseRedirect(self.get_success_url())
 
     def form_valid(self, form):
-        new_version = form.save(commit=False)
-        if new_version.status not in ["complete", "pending"]:
+        self.new_version = form.save(commit=False)
+        if self.new_version.status not in ["complete", "pending"]:
             return self.form_invalid(form)
-        return super().form_valid(form)
+        self.new_version.save()
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class GameSessionCancel(

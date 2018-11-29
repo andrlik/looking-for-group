@@ -30,7 +30,7 @@
       <tbody>
         {% for application in applicants %}
         <tr>
-          <td>{% avatar 20 application.gamer.user %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
+          <td>{% avatar application.gamer.user 30 class="avatar" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
           <td>{{ application.message }}</td>
           <td><span class="label primary">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
@@ -60,7 +60,7 @@
       <tbody>
         {% for app in approved_applicants %}
         <tr>
-          <td>{% avatar app.gamer.user 20 %} <a href="{{ app.gamer.get_absolute_url }}">{{ app.gamer }}</a></td>
+          <td>{% avatar app.gamer.user 30 class="avatar" %} <a href="{{ app.gamer.get_absolute_url }}">{{ app.gamer }}</a></td>
           <td>{{ app.message }}</td>
           <td><span class="label success">{{ app.get_status_display }}</span></td>
           <td>{{ app.created }}</td>
@@ -90,7 +90,7 @@
       <tbody>
         {% for app in rejected_applicants %}
         <tr>
-          <td>{% avatar app.gamer.user 20 %} <a href="{{ app.gamer.get_absolute_url }}">{{ app.gamer }}</a></td>
+          <td>{% avatar app.gamer.user 30 class="avatar" %} <a href="{{ app.gamer.get_absolute_url }}">{{ app.gamer }}</a></td>
         <td>{{ app.message }}</td>
         <td><span class="label alert">{{ app.get_status_display }}</span></td>
         <td>{{ app.created }}</td>

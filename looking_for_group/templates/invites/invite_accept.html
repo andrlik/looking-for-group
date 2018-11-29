@@ -11,7 +11,7 @@
 {% endif %}
 <dl>
   <dt>{% trans "Invite from:" %}</dt>
-  <dd>{% avatar invite.creator 30 %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></dd>
+  <dd>{% avatar invite.creator 30 class="avatar" %} <a href="{{ invite.creator.gamerprofile.get_absolute_url }}">{{ invite.creator.gamerprofile }}</a></dd>
   <dt>{% trans "Expires" %}</dt>
   <dd>{{ invite.expires_at }}</dd>
 </dl>

@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize rules %}
+{% load i18n humanize rules cache %}
 {% block subtitle %}{{ publisher.name }} - {% endblock %}
 {% block sectiontitle %}{{ publisher.name }}{% endblock %}
 {% block mobileheader %}{{ publisher.name }}{% endblock %}
@@ -16,6 +16,8 @@
   <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left">{% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right">{% trans "Delete publisher" %}</a>
 </div>
 {% endif %}
+
+{% cache 900 publisher_publications publisher.pk %}
 
 <h2>{% trans "Publications" %}</h2>
 
@@ -113,6 +115,6 @@
     {% endif %}
   </div>
 </div>
-
+{% endcache %}
 <span class='disclaimer'>{% blocktrans with pubname=publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span>
 {% endblock %}

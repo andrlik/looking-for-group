@@ -29,6 +29,8 @@
       <th>{% trans "Member" %}</th>
       <th>{% trans "Community Role" %}</th>
       <th>{% trans "Member Since" %}</th>
+      <th>{% trans "LFG?" %}</th>
+      <th>{% trans "Timezone" %}</th>
       <th>{% trans "Games Created" %}</th>
       <th>{% trans "Games Joined" %}</th>
       <th>{% trans "Games Left" %}</th>
@@ -47,9 +49,11 @@
   <tbody>
     {% for member in object_list %}
     <tr>
-      <td>{% avatar member.gamer.user 30 class="profile_circle_small" %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer }}</a></td>
+      <td>{% avatar member.gamer.user 30 class="avatar" %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer }}</a></td>
       <td>{{ member.get_community_role_display }}</td>
       <td>{{ member.created|timesince }}</td>
+      <td>{{ member.gamer.get_player_status_display }}</td>
+      <td>{{ member.gamer.user.get_timezone_display }}</td>
       <td>{{ member.gamer.games_created|default_if_none:"0" }}</td>
       <td>{{ member.gamer.games_joined|default_if_none:"0" }}</td>
       <td>{{ member.gamer.games_left|default_if_none:"0" }}</td>

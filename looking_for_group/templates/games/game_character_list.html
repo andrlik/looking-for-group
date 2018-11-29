@@ -25,7 +25,7 @@
   <tbody>
     {% for character in character_list %}
     <tr>
-      <td>{% avatar character.player.gamer.user 30 %}<a href="{{ character.player.gamer.get_absolute_url }}">{{ character.player.gamer }}</a></td>
+      <td>{% avatar character.player.gamer.user 30 class="avatar" %}<a href="{{ character.player.gamer.get_absolute_url }}">{{ character.player.gamer }}</a></td>
       <td><a href="{{ character.get_absolute_url }}">{{ character.name }}</a></td>
       <td>{{ character.description }}</td>
       <td><span class="label {% if character.status == 'inactive' %}secondary{% elif character.status == 'approved' %}success{% elif character.status == 'rejected' %}alert{% else %}primary{% endif %}">{{ character.get_status_display }}</span></td>
