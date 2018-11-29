@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n dash_tags %}
+{% load i18n dash_tags cache %}
 {% block subtitle %}{% trans "Dashboard" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Dashboard" %}{% endblock %}
 {% block mobileheader %}{% trans "Dashboard" %}{% endblock %}
@@ -146,6 +146,7 @@
     </div>
   </div>
   </div></div>
+  {% cache 900 site_stats_template_fragment %}
   <h2>{% trans "Site stats" %}</h2>
   <div class="grid-x grid-margin-x">
     <div class="cell medium-auto">
@@ -198,5 +199,6 @@
         </div>
       </div>
     </div>
+    {% endcache %}
   </div>
 {% endblock %}
