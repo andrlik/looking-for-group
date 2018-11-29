@@ -89,12 +89,29 @@
       <div class="card-divider"><h5>{% trans "Members" %}</h5></div>
       <div class="card-section">
 <div class="member-list">
-  <ul>
-    {% for member in community.get_members|slice:":20" %}
-    <li>{% avatar member.gamer.user 30 %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer  }}</a></li>
+
+    <table class="hover scroll">
+      <thead>
+        <tr>
+          <th>{% trans "Member" %}</th>
+          <th>{% trans "Role" %}</th>
+          <th>{% trans "LFG?" %}</th>
+          <th>{% trans "Timezone" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in community.get_members|slice:":20" %}
+        <tr>
+          <td>{% avatar member.gamer.user 30 %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer  }}</a></td>
+          <td>{{ member.get_community_role_display }}</td>
+          <td>{{ member.gamer.get_player_status_display }}</td>
+          <td>{{ member.gamer.user.get_timezone_display }}</td>
+        </tr>
     {% endfor %}
-    <p><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "See all members..." %}</a></p>
-  </ul>
+      </tbody>
+    </table>
+    <p><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "See all members with details..." %}</a></p>
+
 </div>
       </div>
     </div>

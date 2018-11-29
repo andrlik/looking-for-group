@@ -13,8 +13,8 @@
   <dd>{{ gamer.user.bio }}</dd>
   <dt><a href="{{ gamer.user.homepage_url }}" rel="nofollow">{% trans "Homepage" %}</a></dt>
   <dd></dd>
-  <dt>{% trans "Time zone" %}</dt>
-  <dd>{{ gamer.user.timezone }}</dd>
+  <dt>{% trans "Timezone" %}</dt>
+  <dd>{{ gamer.user.get_timezone_display }}</dd>
   <dt>{% trans "RPG Experience" %}</dt>
   <dd>{{ gamer.rpg_experience }}</dd>
   <dt>{% trans "Tabletop Game Experience" %}</dt>

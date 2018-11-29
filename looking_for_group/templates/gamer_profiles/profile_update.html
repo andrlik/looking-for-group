@@ -13,7 +13,9 @@
   {% csrf_token %}
   {{ form|as_foundation }}
   {{ profile_form|as_foundation }}
-  <p><a href="{{ gamer.get_absolute_url }}"><button class="secondary button">{% trans "Go Back" %}</button></a>    <button type="submit" class="button success">{% trans "Save changes" %}</button></p>
+  <div class="clearfix">
+    <a href="{{ gamer.get_absolute_url }}" class="button secondary float-left">{% trans "Go Back" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}" />
+  </div>
 </form>
 
 {% endblock %}

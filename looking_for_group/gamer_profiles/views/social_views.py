@@ -1501,9 +1501,12 @@ class GamerProfileUpdateView(
             return self.form_invalid(form)
         with transaction.atomic():
             form.save()
-            obj = profile_form.save()
+            profile_form.save()
             messages.success(self.request, _("Profile updated!"))
-            cache.set("profile_".format(obj.username), obj)
+            try:
+                cache.incr_version("profile_{}".format(self.request.user.username))
+            except ValueError:
+                pass  # The key already expired
         return HttpResponseRedirect(self.get_success_url())
 
 
