@@ -79,7 +79,7 @@
               <td>{{ invite.label }}</td>
               <td class="text-right">{{ invite.created }}</td>
               <td>{{ invite.get_status_display }}</td>
-              <td>{% avatar invite.accepted_by 30 %} <a href="{{ invite.accepted_by.gamerprofile.get_absolute_url }}">{{ invite.accepted_by.gamerprofile.get_absolute_url }}</a></td>
+              <td>{% avatar invite.accepted_by 30 class="invite" %} <a href="{{ invite.accepted_by.gamerprofile.get_absolute_url }}">{{ invite.accepted_by.gamerprofile.get_absolute_url }}</a></td>
               <td class="text-right">{{ invite.expires_at }}</td>
               <td><a href="{% url 'invites:invite_delete' invite=invite.slug %}" class="button alert">{% trans "Delete invite" %}</a></td>
             </tr>

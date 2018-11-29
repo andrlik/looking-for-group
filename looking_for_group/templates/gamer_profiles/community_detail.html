@@ -47,7 +47,7 @@
           <tbody>
             <tr>
               <td><strong>{% trans "Owner" %}</strong></td>
-              <td>{% avatar community.owner.user 30 class="profile_circle_small" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a></td>
+              <td>{% avatar community.owner.user 30 class="avatar" %}  <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a></td>
             </tr>
             <tr>
               <td><strong>{% trans "Community site" %}</strong></td>
@@ -99,7 +99,7 @@
       <tbody>
         {% for member in community.get_members|slice:":20" %}
         <tr>
-          <td>{% avatar member.gamer.user 30 %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer  }}</a></td>
+          <td>{% avatar member.gamer.user 30 class="avatar" %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer  }}</a></td>
           <td>{{ member.get_community_role_display }}</td>
           <td>{{ member.gamer.get_player_status_display }}</td>
           <td>{{ member.gamer.user.get_timezone_display }}</td>
@@ -149,7 +149,7 @@
           <td><span class="label {% if game.status == 'started' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
           <td>{{ game.start_time|default_if_none:"Pending" }}</td>
           <td>{{ game.end_date|default_if_none:"N/A" }}</td>
-          <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="profile_circle_small" %} {{ game.gm }}</a></td>
+          <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="avatar" %} {{ game.gm }}</a></td>
           <td>{{ game.get_game_frequency_display }} </td>
           <td class="text-right">{{ game.session_length }}</td>
           <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>

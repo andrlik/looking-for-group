@@ -46,7 +46,7 @@
       <td><span class="label {% if game.status == 'started' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
       <td>{{ game.start_time|default_if_none:"Pending" }}</td>
       <td>{{ game.end_date|default_if_none:"N/A" }}</td>
-      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="profile_circle_small" %} {{ game.gm }}</a></td>
+      <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="avatar" %} {{ game.gm }}</a></td>
       <td>{{ game.get_game_frequency_display }} </td>
       <td class="text-right">{{ game.session_length }}</td>
       <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>

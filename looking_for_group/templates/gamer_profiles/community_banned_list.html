@@ -29,9 +29,9 @@
       <tbody>
         {% for ban in ban_list %}
         <tr>
-          <td>{% avatar ban.banned_user.user 20 %} {{ ban.banned_user.display_name }} ({{ ban.banned_user.username }})</td>
+          <td>{% avatar ban.banned_user.user 30 class="avatar" %} {{ ban.banned_user.display_name }} ({{ ban.banned_user.username }})</td>
           <td>{{ ban.created }}</td>
-          <td><a href="{{ ban.banner.get_absolute_url }}">{% avatar ban.banner.user 20 %} {{ ban.banner.display_name }} ({{ ban.banner.username }})</a></td>
+          <td><a href="{{ ban.banner.get_absolute_url }}">{% avatar ban.banner.user 30 class="avatar" %} {{ ban.banner.display_name }} ({{ ban.banner.username }})</a></td>
           <td>{{ ban.reason }}</td>
           <td>{{ ban.end_date }}</td>
           <td><a href="{% url 'gamer_profiles:community-ban-edit' community=community.slug ban=ban.pk %}"><button class="button primary">{% trans "Edit" %}</button></a></td>

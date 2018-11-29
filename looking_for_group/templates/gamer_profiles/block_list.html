@@ -19,7 +19,7 @@
   <tbody>
     {% for block in block_list %}
     <tr>
-      <td>{% avatar block.blockee.user 30 %} <a href="{{ block.blockee.get_absolute_url }}">{{ block.blockee }}</a></td>
+      <td>{% avatar block.blockee.user 30 class="avatar" %} <a href="{{ block.blockee.get_absolute_url }}">{{ block.blockee }}</a></td>
       <td class="text-right">{{ block.created }}</td>
       <td><form action="{% url 'gamer_profiles:unblock-gamer' block=block.pk %}" method="post">{% csrf_token %}<button class="button alert" type="submit">{% trans "Remove block" %}</button></form></td>
     </tr>

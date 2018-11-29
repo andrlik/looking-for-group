@@ -1,8 +1,8 @@
 {% extends "gamer_profiles/profile_base.html" %}
 {% load avatar_tags i18n humanize ratings %}
 {% block subtitle %}{{ gamer }} - {% endblock %}
-{% block sectiontitle %}{% avatar gamer.user %}{{ gamer }}{% endblock %}
-{% block mobileheader %}{% avatar gamer.user %}{{ gamer }}{% endblock %}
+{% block sectiontitle %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
+{% block mobileheader %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block detailactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 

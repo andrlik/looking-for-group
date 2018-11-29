@@ -49,7 +49,7 @@
   <tbody>
     {% for member in object_list %}
     <tr>
-      <td>{% avatar member.gamer.user 30 class="profile_circle_small" %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer }}</a></td>
+      <td>{% avatar member.gamer.user 30 class="avatar" %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer }}</a></td>
       <td>{{ member.get_community_role_display }}</td>
       <td>{{ member.created|timesince }}</td>
       <td>{{ member.gamer.get_player_status_display }}</td>

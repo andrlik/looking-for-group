@@ -30,7 +30,7 @@
 
       {% for player in session.players_expected.all %}
     <tr>
-      <td>{% avatar player.gamer.user 30 %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
+      <td>{% avatar player.gamer.user 30 class="avatar" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
       {% if session.status != "complete" %}
       <td>{% trans "N/A" %}</td>
       <td>{% trans "N/A" %}</td>
