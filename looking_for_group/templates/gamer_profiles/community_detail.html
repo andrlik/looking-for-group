@@ -46,23 +46,20 @@
         <table class="hover scroll">
           <tbody>
             <tr>
-              <td>{% trans "Owner" %}</td>
+              <td><strong>{% trans "Owner" %}</strong></td>
               <td>{% avatar community.owner.user 30 class="profile_circle_small" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner }}</a></td>
             </tr>
             <tr>
-              <td>{% trans "Community site" %}</td>
+              <td><strong>{% trans "Community site" %}</strong></td>
               <td>{% if community.url %}<a href="{{ community.url }}" target="_blank">{{ community.url }}</a>{% else %}{% trans "No URL provided" %}{% endif %}</td>
-            </tr>
-            <tr>
-              <td>{% trans "Total members" %}</td>
-              <td class="text-right">{{ community.members.count }}</td>
-            </tr>
-            <tr>
-              <td>{% trans "Games posted" %}</td>
-              <td class="text-right">{{ community.gameposting_set.count }}</td>
             </tr>
           </tbody>
         </table>
+        <ul class="stats-list">
+          <li>{{ community.members.count }} <span class="stats-list-label">{% trans "Members" %}</span></li>
+          <li>{{ community.gameposting_set.count }} <span class="stats-list-label">{% trans "Games posted" %}</span></li>
+          <li{% if active_games %} class="stats-list-positive"{% endif %}>{{ active_games|length }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
+        </ul>
       </div>
     </div>
   </div>
