@@ -465,6 +465,9 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
             return "{} ({})".format(self.user.display_name, self.username)
         return self.username
 
+    def get_sessions_run(self):
+        return self.gmed_games.aggregate(models.Sum('sessions'))['sessions__sum']
+
     def get_absolute_url(self):
         return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.username})
 
