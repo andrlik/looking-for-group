@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.forms import modelform_factory
@@ -1184,6 +1185,10 @@ class GamerProfileDetailView(
     permission_required = "profile.view_detail"
     template_name = "gamer_profiles/profile_detail.html"
 
+    def get_object(self, queryset=None):
+        obj = cache.get_or_set("profile_{}".format(self.kwargs['gamer']), super().get_object(queryset))
+        return obj
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["gamer_notes"] = models.GamerNote.objects.filter(
@@ -1496,8 +1501,9 @@ class GamerProfileUpdateView(
             return self.form_invalid(form)
         with transaction.atomic():
             form.save()
-            profile_form.save()
+            obj = profile_form.save()
             messages.success(self.request, _("Profile updated!"))
+            cache.set("profile_".format(obj.username), obj)
         return HttpResponseRedirect(self.get_success_url())
 
 
