@@ -61,7 +61,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         name = data.get('name')
         discriminator = data.get('discriminator')
         user = sociallogin.user
-        if re.match('[!$?+=#.@%^*(){}]', external_username):
+        if re.match('[\S!$?+=#.@%^*(){}]', username):
             username = slugify(external_username)
         else:
             username = external_username
