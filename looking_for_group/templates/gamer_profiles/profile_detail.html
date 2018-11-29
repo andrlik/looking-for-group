@@ -11,8 +11,10 @@
   <dd>{{ gamer.display_name }}</dd>
   <dt>{% trans "Bio" %}</dt>
   <dd>{{ gamer.user.bio }}</dd>
+  {% if gamer.user.homepage_url %}
   <dt><a href="{{ gamer.user.homepage_url }}" rel="nofollow">{% trans "Homepage" %}</a></dt>
   <dd></dd>
+  {% endif %}
   <dt>{% trans "Timezone" %}</dt>
   <dd>{{ gamer.user.get_timezone_display }}</dd>
   <dt>{% trans "RPG Experience" %}</dt>
