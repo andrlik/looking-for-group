@@ -173,9 +173,11 @@
       <td>{% if player.current_character %}<a href="{{ player.current_character.get_absolute_url }}">{{ player.current_character.name }}</a>{% else %}{% trans "Pending" %}{% endif %}</td>
       <td>{{ player.created }}</td>
       {% if game.sessions > 0 %}
-      <td>{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game }}%</td>
+      {% with rank=player.get_attendance_rating_for_game %}
+      <td><span class="label {% if rank > 80 %}success{% elif rank < 50 %}alert{% else %}primary{% endif %}">{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game }}%</span></td>
+      {% endwith %}
       {% else %}
-      <td>{% trans "No data yet" %}</td>
+      <td><span class="label secondary">{% trans "No data yet" %}</span></td>
       {% endif %}
       {% if player.user == request.user %}
       <td>
