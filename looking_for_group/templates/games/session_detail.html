@@ -37,8 +37,7 @@
       {% else %}
       <td><a href="{{ player.current_character.get_absolute_url }}">{{ player.current_character.name }}</a></td>
       {% if player in session.players_missed.all %}
-      <td>
-        😢</td>
+      <td>😢</td>
       {% else %}
       <td>😄</td>
       {% endif %}
