@@ -174,7 +174,7 @@
       <td>{{ player.created }}</td>
       {% if game.sessions > 0 %}
       {% with rank=player.get_attendance_rating_for_game %}
-      <td><span class="label {% if rank > 80 %}success{% elif rank < 50 %}alert{% else %}primary{% endif %}">{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game }}%</span></td>
+      <td><span class="label {% if rank > 80 %}success{% elif rank < 50 %}alert{% else %}primary{% endif %}"><abbr title="{% trans 'Sessions expected' %}">{{ player.sessions_expected }}</abbr> / <abbr title="{% trans 'Sessions missed' %}">{{ player.sessions_missed }}</abbr> / <abbr title="{% trans 'Attendance rating' %}"><strong>{{ player.get_attendance_rating_for_game }}%</strong></abbr></span></td>
       {% endwith %}
       {% else %}
       <td><span class="label secondary">{% trans "No data yet" %}</span></td>
