@@ -60,7 +60,7 @@
   </div>
   <div class="cell medium-auto">
     {% if session.status == "complete" %}
-    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="'pending" /><input type="submit" class="button primary" value="{% trans 'Undo completion' %}" /></form>
+    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="pending" /><input type="submit" class="button primary" value="{% trans 'Undo completion' %}" /></form>
     {% elif session.status == "cancel" %}
     <button class="button disabled">{% trans "Mark complete" %}</button>
     {% else %}
