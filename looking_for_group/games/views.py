@@ -1050,9 +1050,6 @@ class GameSessionCompleteUnComplete(
     select_related = ["game"]
     permission_required = "game.can_edit_listing"
 
-    def get_success_url(self):
-        self.new_version.get_absolute_url()
-
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in ["post"]:
             return HttpResponseNotAllowed(["POST"])
@@ -1066,14 +1063,14 @@ class GameSessionCompleteUnComplete(
             self.request,
             _("You have submitted invalid data. Were you tampering with the request?"),
         )
-        return HttpResponseRedirect(self.get_success_url())
+        return HttpResponseRedirect(self.get_object().get_absolute_url())
 
     def form_valid(self, form):
         self.new_version = form.save(commit=False)
         if self.new_version.status not in ["complete", "pending"]:
             return self.form_invalid(form)
         self.new_version.save()
-        return HttpResponseRedirect(self.get_success_url())
+        return HttpResponseRedirect(self.new_version.get_absolute_url())
 
 
 class GameSessionCancel(
