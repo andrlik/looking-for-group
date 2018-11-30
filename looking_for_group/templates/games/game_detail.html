@@ -172,7 +172,11 @@
       <td>{% avatar player.gamer.user 20 class="avatar" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
       <td>{% if player.current_character %}<a href="{{ player.current_character.get_absolute_url }}">{{ player.current_character.name }}</a>{% else %}{% trans "Pending" %}{% endif %}</td>
       <td>{{ player.created }}</td>
-      <td>{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game|default_if_none:"No data" }}</td>
+      {% if game.sessions > 0 %}
+      <td>{{ player.sessions_expected }}/{{ player.sessions_missed }}/{{ player.get_attendance_rating_for_game }}%</td>
+      {% else %}
+      <td>{% trans "No data yet" %}</td>
+      {% endif %}
       {% if player.user == request.user %}
       <td>
         {% if player.current_character %}

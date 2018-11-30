@@ -157,8 +157,8 @@ def calculate_player_attendance(gamesession):
     game_players = gamesession.players_expected.all()
     if game_players:
         for player in game_players:
-            player.sessions_expected = player.gamesession_set.count()
-            player.sessions_missed = player.missed_sessions.count()
+            player.sessions_expected = player.gamesession_set.filter(status='complete').count()
+            player.sessions_missed = player.missed_sessions.filter(status='complete').count()
             player.save()
 
 
