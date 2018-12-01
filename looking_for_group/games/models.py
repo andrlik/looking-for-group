@@ -618,7 +618,7 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     def get_attendance_rating_for_game(self):
         if self.game.sessions > 0 and self.sessions_expected > 0:
-            return 1 - (float(self.sessions_missed) / float(self.sessions_expected))
+            return (1 - (float(self.sessions_missed) / float(self.sessions_expected))) * 100
         return None
 
     def get_attendance_average(self):
@@ -721,6 +721,9 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
                 )
             logger.debug("Saving self...")
             self.save()
+
+    def get_players_present(self):
+        return self.players_expected.exclude(id__in=[m.id for m in self.players_missing.all()])
 
     def delete(self, *args, **kwargs):
         if self.occurrence:

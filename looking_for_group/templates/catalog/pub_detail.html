@@ -22,9 +22,9 @@
 <h2>{% trans "Publications" %}</h2>
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="publisher-tabs">
-  <li class="tabs-title is-active"><a href="#games_panel" data-tabs-target="games_panel" aria-selected="true">{% trans "Games" %} ({{ publisher.gameedition_set.count }})</a></li>
-  <li class="tabs-title"><a href="#system_panel" data-tab-target="system_panel">{% trans "Game Systems" %} ({{ publisher.gamesystem_set.count }})</a></li>
-  <li class="tabs-title"><a href="#module_panel" data-tab-target="module_panel">{% trans "Modules" %} ({{ publisher.publishedmodule_set.count }})</a></li>
+  <li class="tabs-title is-active"><a href="#games_panel" data-tabs-target="games_panel" aria-selected="true">{% trans "Games" %} ({{ publisher.gameedition_set.all|length }})</a></li>
+  <li class="tabs-title"><a href="#system_panel" data-tab-target="system_panel">{% trans "Game Systems" %} ({{ publisher.gamesystem_set.all|length }})</a></li>
+  <li class="tabs-title"><a href="#module_panel" data-tab-target="module_panel">{% trans "Modules" %} ({{ publisher.publishedmodule_set.all|length }})</a></li>
 </ul>
 
 <div class="tabs-content" data-tabs-content="publisher-tabs">
@@ -57,7 +57,7 @@
     {% endif %}
   </div>
   <div class="tabs-panel" id="system_panel">
-    {% if publisher.gamesystem_set.count %}
+    {% if publisher.gamesystem_set.all %}
     <table class="stack hover">
       <thead>
         <tr>
@@ -77,6 +77,7 @@
           <td>{% if game.url %}<a href="{{ game.url }}" target="_blank">{% trans "Official Page" %}</a>{% endif %}</td>
           <td>{{ game.tags.names|join:", " }}</td>
         </tr>
+        {% empty %}
         {% endfor %}
       </tbody>
     </table>
@@ -85,7 +86,7 @@
     {% endif %}
   </div>
   <div class="tabs-panel" id="module_panel">
-    {% if publisher.publishedmodule_set.count %}
+    {% if publisher.publishedmodule_set.all %}
     <table class="scroll hover">
       <thead>
         <tr>
