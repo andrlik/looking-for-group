@@ -15,7 +15,7 @@ Your notifications are below:
 {% if "friend" in notification.verb %}
 {% include "user_preferences/friend_request_notification.txt" %}
 {% elif "settings" in notification.verb %}
-- {{ notification.actor }} {{ notification.verb }} [Settings](https://app.lfg.directory{% url 'user_preferences:setting-view' %}). You may also want to check out your profile info here: [Profile](https://app.lfg.direcotry{{ notification.actor.gamerprofile.get_absolute_url }}).
+- {{ notification.actor }} {{ notification.verb }} [Settings](https://app.lfg.directory{% url 'user_preferences:setting-view' %}). You may also want to check out your profile info here: [Profile](https://app.lfg.directory{{ user.gamerprofile.get_absolute_url }}).
 {% else %}
 {% include "user_preferences/generic_notification.txt" %}
 {% endif %}
