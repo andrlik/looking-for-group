@@ -2,7 +2,7 @@ import hashlib
 import logging
 
 import factory.django
-from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from braces.views import SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,13 +12,11 @@ from django.db import transaction
 from django.db.models.query_utils import Q
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete, pre_save
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from django_q import humanhash
-from django_q.tasks import async_task
 from notifications.models import Notification
 from schedule.models import Calendar
 
@@ -170,7 +168,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         )
         gm_q = Q(gm=gamer)
         context["gamer_active_games"] = (
-            game_models.GamePosting.objects.filter(player_q | gm_q)
+            game_models.GamePosting.objects.filter(status__in=['open', 'started', 'replace']).filter(player_q | gm_q)
             .select_related("event")
             .prefetch_related("gamesession_set")
         )
