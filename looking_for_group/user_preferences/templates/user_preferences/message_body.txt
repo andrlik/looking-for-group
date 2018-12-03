@@ -4,7 +4,7 @@ You have requested to receive email digests of unread notifications on [LFG Dire
 
 Your notifications are below:
 
-{% for notification in notification %}
+{% for notification in notifications %}
 {% if "community" in notification.verb %}
 {% if "reject" not in notification.verb %}
 {% include "user_preferences/community_notification.txt" %}
