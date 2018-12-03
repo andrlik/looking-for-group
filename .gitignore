@@ -288,3 +288,8 @@ looking_for_group/media/
 .env
 .envs/*
 .dir-local*
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
