@@ -222,7 +222,8 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
-                "looking_for_group.motd.context_processor.motd",
+                "looking_for_group.motd.context_processors.motd",
+"looking_for_group.context_processors.app_version",
             ],
         },
     }
