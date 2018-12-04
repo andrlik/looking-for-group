@@ -7,6 +7,8 @@ __pycache__/
 # C extensions
 *.so
 
+*.dump
+
 # Distribution / packaging
 .Python
 build/
