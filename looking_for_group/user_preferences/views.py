@@ -181,7 +181,10 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
                 if game.event:
                     next_occurences = game.event.occurrences_after(timezone.now())
                     try:
-                        next_sessions.append(next(next_occurences))
+                        occ = next(next_occurences)
+                        while occ.cancelled:
+                            occ = next(next_occurences)
+                        next_sessions.append(occ)
                     except StopIteration:
                         pass  # No next occurrence
         context["next_sessions"] = sorted(next_sessions, key=lambda k: k.start)
