@@ -102,6 +102,8 @@ class GamePostingListView(
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
                 query_string_data["game_status"] = self.filter_game_status[0]
+            else:
+                queryset = queryset.exclude(status__in=["cancel", "closed"])
             if edition and edition[0] != "":
                 query_string_data["edition"] = edition[0]
                 self.is_filtered = True
