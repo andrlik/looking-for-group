@@ -76,7 +76,7 @@
         <tbody>
           {% for session in next_sessions %}
           <tr>
-            <td>{{ session.title }}</td>
+            <td><a href="{{ session.event.get_related_game.get_absolute_url }}">{{ session.title }}</a></td>
             <td>{{ session.start|date:"Y-m-d H:i" }}</td>
           </tr>
 
