@@ -281,7 +281,7 @@ tags
 [Ss]cripts
 pyvenv.cfg
 pip-selfcheck.json
-.env-staging
+.env-*
 
 ### Project template
 
