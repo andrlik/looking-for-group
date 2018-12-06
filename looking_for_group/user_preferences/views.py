@@ -182,7 +182,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
                     next_occurences = game.event.occurrences_after(timezone.now())
                     try:
                         occ = next(next_occurences)
-                        while occ.cancelled:
+                        while occ.cancelled or occ.start < timezone.now():
                             occ = next(next_occurences)
                         next_sessions.append(occ)
                     except StopIteration:
