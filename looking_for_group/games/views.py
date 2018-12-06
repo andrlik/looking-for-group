@@ -13,12 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.db.models.query_utils import Q
-from django.http import (
-    Http404,
-    HttpResponse,
-    HttpResponseNotAllowed,
-    HttpResponseRedirect,
-)
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -94,11 +89,9 @@ class GamePostingListView(
         q_public = Q(privacy_level="public")
         get_dict = self.request.GET.copy()
         query_string_data = {}
-        queryset = (
-            models.GamePosting.objects.exclude(status__in=["cancel", "closed"])
-            .filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
-            .distinct()
-        )
+        queryset = models.GamePosting.objects.filter(
+            q_gm | q_public | q_gm_is_friend | q_isplayer | q_community
+        ).distinct()
         if get_dict.pop("filter_present", None):
             self.filter_game_status = get_dict.pop("game_status", None)
             edition = get_dict.pop("edition", None)
@@ -109,6 +102,8 @@ class GamePostingListView(
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
                 query_string_data["game_status"] = self.filter_game_status[0]
+            else:
+                queryset = queryset.exclude(status__in=["cancel", "closed"])
             if edition and edition[0] != "":
                 query_string_data["edition"] = edition[0]
                 self.is_filtered = True
@@ -138,6 +133,8 @@ class GamePostingListView(
                     pass
             if query_string_data:
                 self.filter_querystring = urllib.parse.urlencode(query_string_data)
+        else:
+            queryset = queryset.exclude(status__in=["cancel", "closed"])
         return queryset
 
 
