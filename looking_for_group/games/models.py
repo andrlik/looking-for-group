@@ -182,6 +182,11 @@ class GameEvent(Event):
     def master_event(self):
         return self.get_master_event()
 
+    def get_related_game(self):
+        if self.is_master_event():
+            return GamePosting.objects.get(event=self)
+        return GamePosting.objects.get(event=self.get_master_event())
+
     def is_master_event(self):
         if not self.master_event:
             return True
