@@ -292,6 +292,16 @@
         });
       </script>
       <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
+      <script type="text/javascript">
+        var n = 40;
+        $("abbr").each(function(){
+          $(this).attr("data-tooltip","");
+          $(this).attr("tabindex", ""+n);
+          n++;
+          new Foundation.Tooltip($(this));
+        });
+
+      </script>
       {% block simplemde %}
       {% endblock %}
     {% endblock javascript %}
