@@ -160,7 +160,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         ).select_related("requestor")
         player_q = Q(
             id__in=[
-                g.id
+                g.game.id
                 for g in game_models.Player.objects.filter(gamer=gamer).exclude(
                     game__status__in=["closed", "cancel"]
                 )
