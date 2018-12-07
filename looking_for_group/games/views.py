@@ -1527,6 +1527,7 @@ def _api_occurrences(start, end, calendar_slug, timezone):
                 # make event start and end dates aware in given timezone
                 event_start = event_start.astimezone(current_tz)
                 event_end = event_end.astimezone(current_tz)
+            gevent = models.GameEvent.objects.get(pk=occurrence.event.pk)
             if not occurrence.cancelled:
                 response_data.append(
                     {
@@ -1534,6 +1535,7 @@ def _api_occurrences(start, end, calendar_slug, timezone):
                         "title": occurrence.title,
                         "start": event_start,
                         "end": event_end,
+                        "url": gevent.get_related_game().get_absolute_url(),
                         "existed": existed,
                         "event_id": occurrence.event.id,
                         "color": occurrence.event.color_event,
