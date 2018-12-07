@@ -202,3 +202,21 @@
     {% endcache %}
   </div>
 {% endblock %}
+{% block js_extra %}
+  <script type="text/javascript">
+    var card_num = 0;
+    $("a.dashboard-nav-card").each(function(){
+      $(this).attr("data-tooltip","");
+      $(this).attr("title", $(this).attr("title")+ " (click to view)");
+      $(this).attr("tabindex",""+card_num);
+      card_num++;
+      try
+      {
+        new Foundation.Tooltip($(this));
+      }
+      catch(e){
+        // Suppress warning about two foundation plugins
+      }
+    });
+  </script>
+{% endblock %}
