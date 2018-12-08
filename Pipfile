@@ -54,6 +54,7 @@ haystack = {editable = true,ref = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8",git
 django-markdown-filter = "*"
 django-node-assets = "*"
 factory-boy = "*"
+django-allow-cidr = "*"
 
 [dev-packages]
 sphinx = "*"
