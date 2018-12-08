@@ -1,7 +1,10 @@
+import datetime
 import logging
 import urllib
 
+import pytz
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,9 +22,8 @@ from django.views import generic
 from notifications.signals import notify
 from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
-from schedule.models import Calendar
+from schedule.models import Calendar, Occurrence
 from schedule.periods import Month
-from schedule.views import _api_occurrences
 
 from . import forms, models, serializers
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
@@ -87,11 +89,9 @@ class GamePostingListView(
         q_public = Q(privacy_level="public")
         get_dict = self.request.GET.copy()
         query_string_data = {}
-        queryset = (
-            models.GamePosting.objects.exclude(status__in=["cancel", "closed"])
-            .filter(q_gm | q_public | q_gm_is_friend | q_isplayer | q_community)
-            .distinct()
-        )
+        queryset = models.GamePosting.objects.filter(
+            q_gm | q_public | q_gm_is_friend | q_isplayer | q_community
+        ).distinct()
         if get_dict.pop("filter_present", None):
             self.filter_game_status = get_dict.pop("game_status", None)
             edition = get_dict.pop("edition", None)
@@ -102,6 +102,8 @@ class GamePostingListView(
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
                 query_string_data["game_status"] = self.filter_game_status[0]
+            else:
+                queryset = queryset.exclude(status__in=["cancel", "closed"])
             if edition and edition[0] != "":
                 query_string_data["edition"] = edition[0]
                 self.is_filtered = True
@@ -131,6 +133,8 @@ class GamePostingListView(
                     pass
             if query_string_data:
                 self.filter_querystring = urllib.parse.urlencode(query_string_data)
+        else:
+            queryset = queryset.exclude(status__in=["cancel", "closed"])
         return queryset
 
 
@@ -1435,6 +1439,117 @@ class CalendarJSONView(
         return _api_occurrences(self.start, self.end, self.calendar_slug, self.timezone)
 
 
+def _api_occurrences(start, end, calendar_slug, timezone):
+
+    if not start or not end:
+        raise ValueError("Start and end parameters are required")
+    # version 2 of full calendar
+    # TODO: improve this code with date util package
+    if "-" in start:
+
+        def convert(ddatetime):
+            if ddatetime:
+                ddatetime = ddatetime.split(" ")[0]
+                try:
+                    return datetime.datetime.strptime(ddatetime, "%Y-%m-%d")
+                except ValueError:
+                    # try a different date string format first before failing
+                    return datetime.datetime.strptime(ddatetime, "%Y-%m-%dT%H:%M:%S")
+
+    else:
+
+        def convert(ddatetime):
+            return datetime.datetime.utcfromtimestamp(float(ddatetime))
+
+    start = convert(start)
+    end = convert(end)
+    current_tz = False
+    if timezone and timezone in pytz.common_timezones:
+        # make start and end dates aware in given timezone
+        current_tz = pytz.timezone(timezone)
+        start = current_tz.localize(start)
+        end = current_tz.localize(end)
+    elif settings.USE_TZ:
+        # If USE_TZ is True, make start and end dates aware in UTC timezone
+        utc = pytz.UTC
+        start = utc.localize(start)
+        end = utc.localize(end)
+
+    if calendar_slug:
+        # will raise DoesNotExist exception if no match
+        calendars = [Calendar.objects.get(slug=calendar_slug)]
+    # if no calendar slug is given, get all the calendars
+    else:
+        calendars = Calendar.objects.all()
+    response_data = []
+    # Algorithm to get an id for the occurrences in fullcalendar (NOT THE SAME
+    # AS IN THE DB) which are always unique.
+    # Fullcalendar thinks that all their "events" with the same "event.id" in
+    # their system are the same object, because it's not really built around
+    # the idea of events (generators)
+    # and occurrences (their events).
+    # Check the "persisted" boolean value that tells it whether to change the
+    # event, using the "event_id" or the occurrence with the specified "id".
+    # for more info https://github.com/llazzaro/django-scheduler/pull/169
+    i = 1
+    if Occurrence.objects.all().count() > 0:
+        i = Occurrence.objects.latest("id").id + 1
+    event_list = []
+    for calendar in calendars:
+        # create flat list of events from each calendar
+        event_list += calendar.events.filter(start__lte=end).filter(
+            Q(end_recurring_period__gte=start) | Q(end_recurring_period__isnull=True)
+        )
+    for event in event_list:
+        occurrences = event.get_occurrences(start, end)
+        for occurrence in occurrences:
+            occurrence_id = i + occurrence.event.id
+            existed = False
+
+            if occurrence.id:
+                occurrence_id = occurrence.id
+                existed = True
+
+            recur_rule = occurrence.event.rule.name if occurrence.event.rule else None
+
+            if occurrence.event.end_recurring_period:
+                recur_period_end = occurrence.event.end_recurring_period
+                if current_tz:
+                    # make recur_period_end aware in given timezone
+                    recur_period_end = recur_period_end.astimezone(current_tz)
+                recur_period_end = recur_period_end
+            else:
+                recur_period_end = None
+
+            event_start = occurrence.start
+            event_end = occurrence.end
+            if current_tz:
+                # make event start and end dates aware in given timezone
+                event_start = event_start.astimezone(current_tz)
+                event_end = event_end.astimezone(current_tz)
+            gevent = models.GameEvent.objects.get(pk=occurrence.event.pk)
+            if not occurrence.cancelled:
+                response_data.append(
+                    {
+                        "id": occurrence_id,
+                        "title": occurrence.title,
+                        "start": event_start,
+                        "end": event_end,
+                        "url": gevent.get_related_game().get_absolute_url(),
+                        "existed": existed,
+                        "event_id": occurrence.event.id,
+                        "color": occurrence.event.color_event,
+                        "description": occurrence.description,
+                        "rule": recur_rule,
+                        "end_recurring_period": recur_period_end,
+                        "creator": str(occurrence.event.creator),
+                        "calendar": occurrence.event.calendar.slug,
+                        "cancelled": occurrence.cancelled,
+                    }
+                )
+    return response_data
+
+
 class PlayerLeaveGameView(
     LoginRequiredMixin,
     SelectRelatedMixin,
@@ -1829,16 +1944,32 @@ class GameInviteList(
         return context
 
 
-class ExportGameDataView(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, PermissionRequiredMixin, generic.DetailView):
+class ExportGameDataView(
+    LoginRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    PermissionRequiredMixin,
+    generic.DetailView,
+):
     """
     Serializes game data for export and delivers a JSON file.
     """
+
     model = models.GamePosting
-    slug_url_kwarg = 'gameid'
-    permission_required = 'game.can_edit_listing'
-    select_related = ['gm', 'published_game', 'game_system', 'published_module']
-    prefetch_related = ['gamesession_set', 'character_set', 'players', 'gamesession_set__players_expected__gamer', 'gamesession_set__players_missing__gamer', 'gamesession_set__adventurelog', 'gamesession_set__adventurelog__initial_author', 'gamesession_set__adventurelog__last_edited_by']
-    context_object_name = 'game'
+    slug_url_kwarg = "gameid"
+    permission_required = "game.can_edit_listing"
+    select_related = ["gm", "published_game", "game_system", "published_module"]
+    prefetch_related = [
+        "gamesession_set",
+        "character_set",
+        "players",
+        "gamesession_set__players_expected__gamer",
+        "gamesession_set__players_missing__gamer",
+        "gamesession_set__adventurelog",
+        "gamesession_set__adventurelog__initial_author",
+        "gamesession_set__adventurelog__last_edited_by",
+    ]
+    context_object_name = "game"
 
     def get_data(self):
         serializer = serializers.GameDataSerializer(self.get_object())
@@ -1848,6 +1979,10 @@ class ExportGameDataView(LoginRequiredMixin, SelectRelatedMixin, PrefetchRelated
         return models.GamePosting.objects.all()
 
     def render_to_response(self, context, **response_kwargs):
-        response = HttpResponse(JSONRenderer().render(self.get_data()), content_type='application/json')
-        response['Content-Disposition'] = 'attachment; filename="game_{}.json"'.format(context['game'].slug)
+        response = HttpResponse(
+            JSONRenderer().render(self.get_data()), content_type="application/json"
+        )
+        response["Content-Disposition"] = 'attachment; filename="game_{}.json"'.format(
+            context["game"].slug
+        )
         return response

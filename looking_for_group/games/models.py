@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError, models, transaction
+from django.db import models, transaction
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
@@ -181,6 +181,11 @@ class GameEvent(Event):
     @property
     def master_event(self):
         return self.get_master_event()
+
+    def get_related_game(self):
+        if self.is_master_event():
+            return GamePosting.objects.get(event=self)
+        return GamePosting.objects.get(event=self.get_master_event())
 
     def is_master_event(self):
         if not self.master_event:
@@ -480,6 +485,8 @@ class GamePosting(
             next_occurrence = None
             try:
                 next_occurrence = next(occurrences)
+                while next_occurrence.start < date_cutoff:
+                    next_occurrence = next(occurrences)
                 logger.debug(
                     "found next occurrence starting at {}".format(next_occurrence.start)
                 )

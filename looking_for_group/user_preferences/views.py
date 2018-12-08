@@ -160,7 +160,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         ).select_related("requestor")
         player_q = Q(
             id__in=[
-                g.id
+                g.game.id
                 for g in game_models.Player.objects.filter(gamer=gamer).exclude(
                     game__status__in=["closed", "cancel"]
                 )
@@ -181,7 +181,10 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
                 if game.event:
                     next_occurences = game.event.occurrences_after(timezone.now())
                     try:
-                        next_sessions.append(next(next_occurences))
+                        occ = next(next_occurences)
+                        while occ.cancelled or occ.start < timezone.now():
+                            occ = next(next_occurences)
+                        next_sessions.append(occ)
                     except StopIteration:
                         pass  # No next occurrence
         context["next_sessions"] = sorted(next_sessions, key=lambda k: k.start)

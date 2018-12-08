@@ -22,6 +22,19 @@
       selectable: true,
       navLinks: true,
       timezone: '{{ TIME_ZONE }}',
+      eventClick: function(event){
+        if (event.url) {
+          window.open(event.url);
+          return false;
+        }
+      },
+      eventAfterRender: function(event, element, view){
+       event_title_span = $(element).children('.fc-content').children(".fc-title");
+       event_title_span.text("");
+        event_title_span.add("<span data-tooltip tabindex='"+event.id+"' title='"+event.title+" - (click to open in new tab)'>"+event.title+"</span>").appendTo(event_title_span);
+        new Foundation.Tooltip(event_title_span.children("span"));
+       },
+
     })
   });
 </script>

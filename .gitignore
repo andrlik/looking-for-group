@@ -7,6 +7,8 @@ __pycache__/
 # C extensions
 *.so
 
+*.dump
+
 # Distribution / packaging
 .Python
 build/
@@ -279,7 +281,7 @@ tags
 [Ss]cripts
 pyvenv.cfg
 pip-selfcheck.json
-
+.env-*
 
 ### Project template
 
@@ -288,3 +290,8 @@ looking_for_group/media/
 .env
 .envs/*
 .dir-local*
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

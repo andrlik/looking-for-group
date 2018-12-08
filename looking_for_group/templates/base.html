@@ -233,6 +233,7 @@
         <div class="cell auto">
           <ul class="footer-list">
             <li><a href="https://lfg.directory/blog/">{% trans "Blog" %}</a></li>
+            <li><a href="https://status.lfg.directory/">{% trans "Status" %}</a></li>
             <li><a href="https://lfg.directory/privacy/">{% trans "Privacy policy" %}</a></li>
             <li><a href="https://lfg.directory/terms/">{% trans "Terms and Conditions" %}</a></li>
             <li>v{{APP_VERSION}}</li>
@@ -291,6 +292,16 @@
         });
       </script>
       <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
+      <script type="text/javascript">
+        var n = 40;
+        $("abbr").each(function(){
+          $(this).attr("data-tooltip","");
+          $(this).attr("tabindex", ""+n);
+          n++;
+          new Foundation.Tooltip($(this));
+        });
+
+      </script>
       {% block simplemde %}
       {% endblock %}
     {% endblock javascript %}

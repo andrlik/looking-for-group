@@ -58,6 +58,7 @@ class GamesICalFeed(CalendarICalendar):
                 value = getattr(self, 'item_' + key)(item)
                 if value:
                     event.add(vkey, value)
+            event.add('status', self.item_status(item))
             cal.add_component(event)
 
         response = HttpResponse(cal.to_ical())
@@ -79,3 +80,8 @@ class GamesICalFeed(CalendarICalendar):
         else:
             game = GamePosting.objects.get(event=ge.get_master_event())
         return "https://app.lfg.directory" + str(game.get_absolute_url())
+
+    def item_status(self, item):
+        if item.cancelled:
+            return "CANCELLED"
+        return "CONFIRMED"

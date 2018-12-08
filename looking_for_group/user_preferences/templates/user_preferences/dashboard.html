@@ -76,7 +76,7 @@
         <tbody>
           {% for session in next_sessions %}
           <tr>
-            <td>{{ session.title }}</td>
+            <td><a href="{{ session.event.get_related_game.get_absolute_url }}">{{ session.title }}</a></td>
             <td>{{ session.start|date:"Y-m-d H:i" }}</td>
           </tr>
 
@@ -201,4 +201,22 @@
     </div>
     {% endcache %}
   </div>
+{% endblock %}
+{% block js_extra %}
+  <script type="text/javascript">
+    var card_num = 0;
+    $("a.dashboard-nav-card").each(function(){
+      $(this).attr("data-tooltip","");
+      $(this).attr("title", $(this).attr("title")+ " (click to view)");
+      $(this).attr("tabindex",""+card_num);
+      card_num++;
+      try
+      {
+        new Foundation.Tooltip($(this));
+      }
+      catch(e){
+        // Suppress warning about two foundation plugins
+      }
+    });
+  </script>
 {% endblock %}

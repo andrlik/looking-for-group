@@ -56,9 +56,9 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
                     "Updated {} records requiring changes.".format(updated_records)
                 )
             logger.debug("Adding any missing occurences...")
-            child_events = game_event.get_child_events().exclude(
-                id__in=[c.event.id for c in child_occurences_to_update]
-            )
+            child_events = game_event.get_child_events()
+            if child_occurences_to_update:
+                child_events = child_events.exclude(id__in=[c.event.id for c in child_occurences_to_update])
             occ_created = 0
             for event in child_events:
                 with transaction.atomic():
