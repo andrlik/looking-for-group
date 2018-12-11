@@ -32,7 +32,7 @@ CACHES = {
         }
     }
 }
-ALLOWED_CIDR_NETS = env.list('DJANGO_ALLOWED_CIDR', ['12.0.0.0/16'])
+ALLOWED_CIDR_NETS = env.list('DJANGO_ALLOWED_CIDR', default=['12.0.0.0/16'])
 # SECURITY
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header
