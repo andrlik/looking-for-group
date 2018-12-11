@@ -1,3 +1,5 @@
+import time
+
 from django.contrib.contenttypes.models import ContentType
 from django.test import RequestFactory
 from test_plus.test import TestCase
@@ -11,6 +13,9 @@ class BaseUserTestCase(TestCase):
         self.user = self.make_user()
         self.factory = RequestFactory()
 
+    def tearDown(self):
+        time.sleep(2)  # Wait a bit since the async can cause delay releasing db
+        super().tearDown()
 
 class TestUserRedirectView(BaseUserTestCase):
     def test_get_redirect_url(self):
