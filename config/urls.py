@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views import defaults as default_views
+from django.views.generic import TemplateView
 
 from looking_for_group.user_preferences.views import Dashboard, HomeView, PrivacyView, TermsView
 
@@ -14,6 +15,7 @@ from .api_routers import router
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("dashboard/", view=Dashboard.as_view(), name="dashboard"),
+    path("health/", view=TemplateView(template_name='health_check.html'), name="health"),
     path("privacy/", view=PrivacyView.as_view(), name="privacy"),
     path("terms/", view=TermsView.as_view(), name='terms'),
     # Django Admin, use {% url 'admin:index' %}
