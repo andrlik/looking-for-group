@@ -509,8 +509,8 @@ class GamePostingWithdrawApplication(
             notify.send(
                 self.request.user.gamerprofile,
                 recipient=self.object.game.gm.user,
-                verb="withdrew their application to",
-                action_object=self.object.game,
+                verb="withdrew their application",
+                target=self.object.game,
             )
         return self.object.game.get_absolute_url()
 
@@ -701,8 +701,8 @@ class GamePostingUpdateView(
                         notify.send(
                             obj_to_save.gm,
                             recipient=player.user,
-                            verb="marked incomplete game",
-                            action_object=obj_to_save,
+                            verb="marked incomplete status",
+                            target=obj_to_save,
                         )
             with transaction.atomic():
                 obj_to_save.save()
@@ -745,12 +745,7 @@ class GamePostingDeleteView(
         obj = self.get_object()
         if obj.players.count() > 0:
             for player in obj.players:
-                notify.send(
-                    obj.gm,
-                    recipient=player.user,
-                    verb="deleted game",
-                    action_object=obj,
-                )
+                notify.send(obj.gm, recipient=player.user, verb="deleted", target=obj)
         return super().delete(request, *args, **kwargs)
 
 
@@ -1018,7 +1013,7 @@ class GameSessionMove(LoginRequiredMixin, PermissionRequiredMixin, generic.Updat
                 recipient=player.gamer.user,
                 verb="rescheduled session",
                 action_object=self.object,
-                target=self.object.scheduled_time,
+                target=self.object.game,
             )
         return self.object.get_absolute_url()
 
@@ -1119,6 +1114,7 @@ class GameSessionCancel(
                 recipient=player.gamer.user,
                 verb="cancelled session",
                 action_object=self.object,
+                target=self.object.game,
             )
         return self.get_object().get_absolute_url()
 
@@ -1221,6 +1217,7 @@ class GameSessionUncancel(
                     recipient=player.gamer.user,
                     verb="uncancelled session",
                     action_object=session,
+                    target=session.game,
                 )
         return HttpResponseRedirect(session.get_absolute_url())
 
@@ -1682,7 +1679,7 @@ class CharacterApproveView(
     generic.edit.UpdateView,
 ):
     """
-    Approve a character. TODO: add signal
+    Approve a character.
     """
 
     model = models.Character
@@ -1718,6 +1715,12 @@ class CharacterApproveView(
         character = self.get_object()
         character.status = form.cleaned_data["status"]
         character.save()
+        notify.send(
+            self.request.user.gamerprofile,
+            recipient=character.player.gamer.user,
+            verb="approved your character {}".format(character.name),
+            target=character.game,
+        )
         messages.success(self.request, self.get_success_message_text(character))
         return HttpResponseRedirect(character.get_absolute_url())
 
@@ -1734,8 +1737,9 @@ class CharacterRejectView(CharacterApproveView):
         notify.send(
             character.game.gm,
             recipient=character.player.gamer.user,
-            verb="rejected character",
+            verb="Your character {} was not accepted".format(character.name),
             action_object=character,
+            target=character.game,
         )
         return _(
             "Character {} has been {}.".format(character.name, self.get_valid_status())
