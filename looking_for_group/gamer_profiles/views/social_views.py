@@ -756,7 +756,7 @@ class RejectApplication(ApproveApplication):
         notify.send(
             sender=models.CommunityApplication,
             recipient=application.gamer.user,
-            verb=_("community application was rejected"),
+            verb=_("Your community application was rejected"),
             action_object=application,
             target=application.community,
         )
