@@ -34,6 +34,7 @@ urlpatterns = [
     path("search/", include('haystack.urls')),
     path("ratings/", include(rating_url_override)),
     path("settings/", include('looking_for_group.user_preferences.urls')),
+    path("utils/", include('looking_for_group.adminutils.urls')),
     # path("ratings/", include(rating_urls, namespace="ratings")),
     path("api-auth/", include('rest_framework.urls')),
     path("api/", include(router.urls)),

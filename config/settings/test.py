@@ -49,7 +49,7 @@ TEMPLATES[0]["OPTIONS"]["loaders"] = [  # noqa F405
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-host
 EMAIL_HOST = "localhost"
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-port
