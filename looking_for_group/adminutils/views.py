@@ -17,15 +17,18 @@ from ..users.models import User
 def get_filtered_user_queryset(filters_selected, filter_mode):
 
     pref_queryset = Preferences.objects.select_related('gamer', 'gamer__user').all()
-    if filter_selections:
+    if filters_selected:
         filters = []
-        for filter in filter_selections:
+        for filter in filters_selected:
             if filter_mode != "none":
-                filters.append(Q("{}=True".format(filter)))
+                filters.append(Q(**{filter: True}))
             else:
-                filters.append(Q("{}=False".format(filter)))
+                filters.append(Q(**{filter: False}))
         if filter_mode != "any":
-            pref_queryset = pref_queryset.filter(*filters)
+            first_filter = filters.pop()
+            for item in filters:
+                first_filter &= item
+            pref_queryset = pref_queryset.filter(first_filter)
         else:
             first_filter = filters.pop()
             for item in filters:
@@ -35,11 +38,10 @@ def get_filtered_user_queryset(filters_selected, filter_mode):
 
 
 # Create your views here.
-class CreateMassNotification(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
+class CreateMassNotification(LoginRequiredMixin, PermissionRequiredMixin, generic.FormView):
 
-    model = Notification
     form_class = forms.NotificationForm
-    template_name = 'admin_utils/send_notification.html'
+    template_name = 'adminutils/send_notification.html'
     permission_required = 'adminutils.send_notification'
 
     def form_valid(self, form):
@@ -52,11 +54,10 @@ class CreateMassNotification(LoginRequiredMixin, PermissionRequiredMixin, generi
         return HttpResponseRedirect(reverse_lazy('adminutils:notification'))
 
 
-class SendEmailToUsers(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
+class SendEmailToUsers(LoginRequiredMixin, PermissionRequiredMixin, generic.FormView):
 
-    model = Notification  # We are actually going to ignore this.
     form_class = forms.EmailForm
-    template_name = 'admin_utils/send_email.html'
+    template_name = 'adminutils/send_email.html'
     permission_required = "adminutils.send_email"
 
     def form_valid(self, form):

@@ -23,7 +23,7 @@ class NotificationForm(forms.Form):
         choices=NOTIFICATION_FILTER_CHOICES, required=False
     )
     filter_mode = forms.ChoiceField(
-        default="any",
+        initial="any",
         choices=(
             ("any", _("Users with any of the above are included.")),
             ("all", _("Users with all of the above are include")),
@@ -39,14 +39,15 @@ class EmailForm(forms.Form):
     """
 
     subject = forms.CharField(max_length=255, help_text=_("Subject of email"))
-    body = forms.Textarea(
-        help_text=_("Body of your email. Use Markdown for formatting.")
+    body = forms.CharField(
+        widget=forms.Textarea,
+        help_text=_("Body of your email. Use Markdown for formatting."),
     )
     filter_options = forms.MultipleChoiceField(
         choices=NOTIFICATION_FILTER_CHOICES, required=False
     )
     filter_mode = forms.ChoiceField(
-        default="any",
+        initial="any",
         choices=(
             ("any", _("Users with any of the above are included.")),
             ("all", _("Users with all of the above are include")),

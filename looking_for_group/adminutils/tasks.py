@@ -20,7 +20,7 @@ def send_mass_email(subject, body_plain, recipient_list):
     if mail_batch:
         for recip_list in mail_batch:
             msg = AnymailMessage(subject=subject, body=body_plain, to=[u.email for u in recip_list])
-            msg.attach_alternative(markdown(body_plain), "text/html")
+            msg.attach_alternative("<html>{}</html>".format(markdown(body_plain)), "text/html")
             merge_data = {}
             for u in recip_list:
                 if u.display_name:

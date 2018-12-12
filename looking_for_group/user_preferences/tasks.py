@@ -25,7 +25,7 @@ def send_digest_email(user, notifications):
     if email_to_use:
         body, html_body = form_email_body(user, notifications)
         msg = EmailMultiAlternatives(subject="LFG Directory Activity Digest", from_email="noreply@mg.lfg.directory", to=[email_to_use], body=body)
-        msg.attach_alternative(html_body, 'text/html')
+        msg.attach_alternative("<html>{}</html>".format(html_body), 'text/html')
         msg.send()
         with transaction.atomic():
             notifications.update(emailed=True)

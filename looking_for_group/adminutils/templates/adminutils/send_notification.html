@@ -1,9 +1,9 @@
-{% extends "admin_utils/base.html" %}
+{% extends "adminutils/base.html" %}
 {% load i18n foundation_formtags %}
 {% block subtitle %}{% trans "Send mass notification" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Send mass notification" %}{% endblock %}
 {% block mobileheader %}{% trans "Send mass notification" %}{% endblock %}
-{% block notifyactive %}{% include "is_active_defintion.html" %}{% endblock %}
+{% block notifyactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 <p>{% blocktrans %}Send a mass notification using the form below:{% endblocktrans %}</p>
 
