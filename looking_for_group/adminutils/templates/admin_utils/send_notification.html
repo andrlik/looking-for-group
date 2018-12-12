@@ -1,0 +1,18 @@
+{% extends "admin_utils/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Send mass notification" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Send mass notification" %}{% endblock %}
+{% block mobileheader %}{% trans "Send mass notification" %}{% endblock %}
+{% block notifyactive %}{% include "is_active_defintion.html" %}{% endblock %}
+{% block content %}
+<p>{% blocktrans %}Send a mass notification using the form below:{% endblocktrans %}</p>
+
+<form method="post" action="">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{% url 'dashboard' %}" class="button secondary float-left">{% trans "Nevermind, take me somewhere else" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Send' %}" />
+  </div>
+</form>
+
+{% endblock %}
