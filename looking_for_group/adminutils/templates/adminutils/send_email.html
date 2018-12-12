@@ -17,3 +17,17 @@
 </form>
 
 {% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_body')[0],
+    autosave: {
+      enabled: true,
+      uniqueId: "mass_email_body",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
+{% endblock %}

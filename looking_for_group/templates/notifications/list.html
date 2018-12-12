@@ -42,6 +42,8 @@
         <a href="{{ notification.actor.get_absolute_url }}">{{ notification.actor }}</a> {{ notification.verb }}
         {% elif "settings" in notification.verb %}
         {% blocktrans with aname=notification.actor verb=notification.verb %}{{ aname }} {{ verb }}: {% endblocktrans %}<a href="{% url 'user_preferences:setting-view' %}">{% trans "Settings" %}</a>. {% trans "You may also want to check out your profile info here:" %} <a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Profile" %}</a>
+        {% elif "Announcement:" in notification.verb %}
+        <strong>{% trans "System" %}:</strong> {{ notification.verb }}
         {% else %}
         {% if "not accepted" in notification.verb %}
         {% blocktrans with verb=notification.verb objname=notification.action_object target=notification.target target_type=notification.target_content_type|lower target_url=notification.target.get_absolute_url %}{{ verb }} for {{ target_type }}: <a href="{{ target_url }}">{{ target }}</a>{% endblocktrans %}
