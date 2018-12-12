@@ -1,9 +1,12 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.models.query_utils import Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
+from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from django_q.tasks import async_task
 from notifications.models import Notification
@@ -12,6 +15,8 @@ from rules.contrib.views import PermissionRequiredMixin
 from . import forms, tasks
 from ..user_preferences.models import Preferences
 from ..users.models import User
+
+logger = logging.getLogger("gamer_profiles")
 
 
 def get_filtered_user_queryset(filters_selected, filter_mode):
@@ -51,6 +56,7 @@ class CreateMassNotification(LoginRequiredMixin, PermissionRequiredMixin, generi
         recipients = get_filtered_user_queryset(filter_selections, filter_mode)
         messages.success(self.request, _("Sending your notification to {} users.".format(recipients.count())))
         async_task(tasks.send_mass_notifcation, get_current_site(self.request), message, recipients)
+        logger.debug("Sent notification async task")
         return HttpResponseRedirect(reverse_lazy('adminutils:notification'))
 
 
@@ -68,4 +74,5 @@ class SendEmailToUsers(LoginRequiredMixin, PermissionRequiredMixin, generic.Form
         recipients = get_filtered_user_queryset(filter_selections, filter_mode)
         messages.success(self.request, _('Sending your email to {} users.'.format(recipients.count())))
         async_task(tasks.send_mass_email, subject, body_plain, recipients)
+        logger.debug("Sent email async task.")
         return HttpResponseRedirect(reverse_lazy('adminutils:email'))

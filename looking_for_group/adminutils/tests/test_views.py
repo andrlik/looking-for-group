@@ -55,6 +55,11 @@ class TestNotificationSend(AbstractUtilsTest):
         with self.login(username=self.admin_gamer.username):
             self.assertGoodView(self.view_name)
 
+    def test_post_notification(self):
+        with self.login(username=self.admin_gamer.username):
+            self.post(self.view_name, data={'message': "Hello, friend", 'filter_options': ['feedback_volunteer'], 'filter_mode': 'any'})
+            self.response_302()
+
 
 class TestEmailSend(AbstractUtilsTest):
 
@@ -73,3 +78,8 @@ class TestEmailSend(AbstractUtilsTest):
     def test_admin_access(self):
         with self.login(username=self.admin_gamer.username):
             self.assertGoodView(self.view_name)
+
+    def test_mass_email(self):
+        with self.login(username=self.admin_gamer.username):
+            self.post(self.view_name, data={"subject": "Greetings", "body": "Do you have the time?", "filter_options": ["feedback_volunteer"], "filter_mode": "any"})
+            self.response_302()
