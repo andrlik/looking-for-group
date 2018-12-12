@@ -126,6 +126,12 @@
           <li><a href="{% url 'socialaccount_connections' %}">
             <i class="large fab fa-discord"></i><span class="app-dashboard-sidebar-text">Manage Discord</span>
           </a></li>
+          {% if request.user.is_superuser %}
+          <li><a href="{% url 'adminutils:notification' %}">
+            <i class="large fas fa-mail-bulk"></i><span class="app-dashboard-sidebar-text">Mass Messaging</span>
+          </a>
+          </li>
+          {% endif %}
           <li><a href="{% url 'user_preferences:setting-view' %}">
             <i class="large fas fa-cog"></i><span class="app-dashboard-sidebar-text">Settings</span>
           </a></li>

@@ -98,6 +98,7 @@ LOCAL_APPS = [
     "looking_for_group.user_preferences.apps.UserPreferencesConfig",
     "looking_for_group.invites.apps.InvitesConfig",
     "looking_for_group.motd.apps.MotdConfig",
+    "looking_for_group.adminutils.apps.AdminutilsConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
