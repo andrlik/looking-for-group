@@ -40,6 +40,7 @@ class CreateMassNotification(LoginRequiredMixin, PermissionRequiredMixin, generi
     model = Notification
     form_class = forms.NotificationForm
     template_name = 'admin_utils/send_notification.html'
+    permission_required = 'adminutils.send_notification'
 
     def form_valid(self, form):
         filter_selections = form.cleaned_data['filter_options']
@@ -56,6 +57,7 @@ class SendEmailToUsers(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
     model = Notification  # We are actually going to ignore this.
     form_class = forms.EmailForm
     template_name = 'admin_utils/send_email.html'
+    permission_required = "adminutils.send_email"
 
     def form_valid(self, form):
         filter_selections = form.cleaned_data['filter_options']
