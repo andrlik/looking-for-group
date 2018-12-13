@@ -88,6 +88,10 @@ THIRD_PARTY_APPS = [
     "haystack",
     "markdown_filter",
     "django_node_assets",
+    "ajax_select",
+    "looking_for_group.mailnotify",
+    "postman",
+    "markdownify",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -224,7 +228,8 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "looking_for_group.motd.context_processors.motd",
-"looking_for_group.context_processors.app_version",
+                "looking_for_group.context_processors.app_version",
+                "postman.context_processors.inbox",
             ],
         },
     }
@@ -330,3 +335,34 @@ Q_CLUSTER = {"name": "looking_for_group"}
 DJANGO_NOTIFICATIONS_CONFIG = {"USE_JSONFIELD": True}
 
 MARKDOWN_FILTER_WHITELIST_TAGS = ["a", "p", "code", "h1"]
+
+# ------------------------------------------------------------------------------
+# Postman
+# ------------------------------------------------------------------------------
+
+POSTMAN_I18N_URLS = True
+POSTMAN_DISALLOW_ANONYMOUS = True
+POSTMAN_NOTIFIER_APP = "looking_for_group.mailnotify"
+POSTMAN_AUTO_MODERATE_AS = True
+POSTMAN_AUTOCOMPLETER_APP = {
+    "name": "ajax_select",
+    "field": "AutoCompleteField",
+    "arg_name": "channel",
+    "arg_default": "gamers",
+}
+AJAX_SELECT_BOOTSTRAP = False
+MARKDOWNIFY_FILTER_WHITELIST_TAGS = [
+    "a",
+    "abbr",
+    "code",
+    "acronym",
+    "b",
+    "blockquote",
+    "em",
+    "i",
+    "li",
+    "ol",
+    "p",
+    "strong",
+    "ul",
+]

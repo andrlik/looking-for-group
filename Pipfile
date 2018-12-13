@@ -55,6 +55,9 @@ django-markdown-filter = "*"
 django-node-assets = "*"
 factory-boy = "*"
 django-allow-cidr = "*"
+django-postman = "*"
+django-ajax-selects = "*"
+django-markdownify = "*"
 
 [dev-packages]
 sphinx = "*"

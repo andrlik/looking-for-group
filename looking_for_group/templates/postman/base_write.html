@@ -1,0 +1,36 @@
+{% extends "postman/base.html" %}
+{% load i18n static foundation_formtags %}
+{% block js_extra %}{{ block.super }}
+{% if autocompleter_app.is_active %}{# using the available admin jQuery is enough #}
+{# should not be necessary since AS v1.3 with AJAX_SELECT_BOOTSTRAP set #}
+{#<script type="text/javascript" src="{% static 'admin/js/jquery.min.js' %}"></script>#}
+{% endif %}
+{{ form.media }}{# for ajax_selects (v1.3.6 at least) #}
+{% include "datepicker_js.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block content %}
+<div id="postman">
+<h1>{% block pm_write_title %}{% endblock %}</h1>
+<form action="{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" method="post">{% csrf_token %}
+{% block pm_write_recipient %}{% endblock %}
+{{ form|as_foundation }}
+<button type="submit" class="button success">{% trans "Send" %}</button>
+</form>
+</div>
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+     element: $('#id_body')[0],
+     autosave: {
+        enabled: false
+     },
+     tabSize: 4,
+     indentWithTabs: false,
+     forceSync: true,
+});
+</script>
+{% endblock %}

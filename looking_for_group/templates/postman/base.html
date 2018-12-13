@@ -1,0 +1,27 @@
+{% extends "base.html" %}{# not myself but a site-level one (TEMPLATE_DIRS setting) #}
+{% load i18n static %}{% load postman_tags %}
+{% block subtitle %}{% trans "Messaging" %} - {% endblock %}
+{% block innernav %}
+<div class="title-bar" data-responsive-toggle="section-menu" data-hide-for="medium">
+  <button class="menu-icon" type="button" data-toggle="section-menu"></button>
+  <div class="title-bar-title">{% trans "Controls" %}</div>
+</div>
+<div class="title-bar" data-sticky data-options="marginTop:0;" data-top-anchor="1" data-bottom-anchor="content:bottom" id="section-menu">
+  <div class="title-bar-left show-for-medium">
+    <h1>{% block sectiontitle %}{% endblock %}</h1>
+  </div>
+  <div class="title-bar-right">
+    <nav>
+      <ul id="postman_menu" class="menu align-right">{% postman_unread as unread_count %}
+        {% block innernavmenu %}
+        <li{% block inboxactive %}{% endblock %}><a href="{% url 'postman:inbox' %}">{% trans "Inbox" %}{% if unread_count %} <strong>({{ unread_count }})</strong>{% endif %}</a></li>
+        <li{% block sentactive %}{% endblock %}><a href="{% url 'postman:sent' %}">{% trans "Sent Messages" %}</a></li>
+        <li{% block writeactive %}{% endblock %}><a href="{% url 'postman:write' %}">{% trans "Write" %}</a></li>
+        <li{% block archiveactive %}{% endblock %}><a href="{% url 'postman:archives' %}">{% trans "Archives" %}</a></li>
+        <li{% block trashactive %}{% endblock %}><a href="{% url 'postman:trash' %}">{% trans "Trash" %}</a></li>
+        {% endblock %}
+      </ul>
+    </nav>
+  </div>
+</div>
+{% endblock %}
