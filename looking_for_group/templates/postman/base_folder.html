@@ -9,6 +9,12 @@ in the INSTALLED_APPS setting.
 {% endcomment %}
 {% block sectiontitle %}{% block pm_folder_title %}{% endblock %}{% endblock %}
 {% block content %}
+{% if not request.user.gamerprofile.preferences.notification_digest and not request.user.gamerprofile.preferences.email_messages %}
+<div class="callout warning" data-closeable>
+  <h5>{% trans "No external notifications" %}</h5>
+  <p>{% trans "You currently have no external notifications enabled so you will only be notified of new messages while actively browsing the site. You can optionally enable receiving digests of your unread notifications or receiving copies of messages sent to your email by editing" %} <a href="{% url 'user_preferences:setting-edit' %}">{% trans "your settings." %}</a></p>
+</div>
+{% endif %}
 <div id="postman">
 
   {% autopaginate pm_messages %}
@@ -19,8 +25,8 @@ in the INSTALLED_APPS setting.
   <p>{% trans "No messages." %}</p>
   {% endif %}
   {% block pm_by_modes %}<div id="pm_byModes">
-    <span class="pm_by-mode">{% if by_message %}<a href="{{ by_conversation_url }}">{% endif %}{% trans "by conversation" %}{% if by_message %}</a>{% endif %}</span>
-    <span class="pm_by-mode">{% if by_conversation %}<a href="{{ by_message_url }}">{% endif %}{% trans "by message" %}{% if by_conversation %}</a>{% endif %}</span>
+    <span class="pm_by-mode">{% if by_message %}<a href="{{ by_conversation_url }}" class="button small">{% else %}<button class="button hollow small">{% endif %}{% trans "by conversation" %}{% if by_message %}</a>{% else %}</button>{% endif %}</span>
+    <span class="pm_by-mode">{% if by_conversation %}<a href="{{ by_message_url }}" class="button small">{% else %}<button class="button hollow small">{% endif %}{% trans "by message" %}{% if by_conversation %}</a>{% else %}</button>{% endif %}</span>
   </div>{% endblock pm_by_modes %}
   <div class="clearfix">
   <form action="{% block pm_form_action %}{% endblock %}" method="post">{% csrf_token %}

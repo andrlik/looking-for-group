@@ -1,5 +1,5 @@
 {% extends "postman/base.html" %}
-{% load i18n static foundation_formtags %}
+{% load i18n static foundation_formtags mail_tags rules %}
 {% block js_extra %}{{ block.super }}
 {% if autocompleter_app.is_active %}{# using the available admin jQuery is enough #}
 {# should not be necessary since AS v1.3 with AJAX_SELECT_BOOTSTRAP set #}
@@ -12,13 +12,19 @@
 {% include "datepicker_css.html" %}
 {% endblock %}
 {% block content %}
+{% has_perm 'postman.can_send_messages' request.user form as can_send %}
 <div id="postman">
+  {% if can_send == False %}
+  {% get_silence_end request.user as silence_end %}
+  <p>{% blocktrans with silend=silence_end.ending %}You are currently silenced until {{ silend }} and cannot send messages.{% endblocktrans %}</p>
+  {% else %}
 <h1>{% block pm_write_title %}{% endblock %}</h1>
 <form action="{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" method="post">{% csrf_token %}
 {% block pm_write_recipient %}{% endblock %}
 {{ form|as_foundation }}
 <button type="submit" class="button success">{% trans "Send" %}</button>
 </form>
+{% endif %}
 </div>
 {% endblock %}
 {% block simplemde %}

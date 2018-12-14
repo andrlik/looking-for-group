@@ -89,7 +89,6 @@ THIRD_PARTY_APPS = [
     "markdown_filter",
     "django_node_assets",
     "ajax_select",
-    "looking_for_group.mailnotify",
     "postman",
     "markdownify",
 ]
@@ -103,6 +102,7 @@ LOCAL_APPS = [
     "looking_for_group.invites.apps.InvitesConfig",
     "looking_for_group.motd.apps.MotdConfig",
     "looking_for_group.adminutils.apps.AdminutilsConfig",
+    "looking_for_group.mailnotify.apps.MailnotifyConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -346,7 +346,7 @@ POSTMAN_NOTIFIER_APP = "looking_for_group.mailnotify"
 POSTMAN_AUTO_MODERATE_AS = True
 POSTMAN_AUTOCOMPLETER_APP = {
     "name": "ajax_select",
-    "field": "AutoCompleteField",
+    "field": "AutoCompleteSelectMultipleField",
     "arg_name": "channel",
     "arg_default": "gamers",
 }

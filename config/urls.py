@@ -39,7 +39,7 @@ urlpatterns = [
     # path("ratings/", include(rating_urls, namespace="ratings")),
     path("api-auth/", include('rest_framework.urls')),
     path("api/", include(router.urls)),
-    path("messages/", include('postman.urls', namespace='postman')),
+    path("messages/", include('looking_for_group.mailnotify.urls', namespace='postman')),
     path("ajax_select/", include(ajax_select_urls)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
