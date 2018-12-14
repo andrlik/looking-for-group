@@ -12,7 +12,7 @@ in the INSTALLED_APPS setting.
 {% if not request.user.gamerprofile.preferences.notification_digest and not request.user.gamerprofile.preferences.email_messages %}
 <div class="callout warning" data-closeable>
   <h5>{% trans "No external notifications" %}</h5>
-  <p>{% trans "You currently have no external notifications enabled so you will only be notified of new messages while actively browsing the site. You can optionally enable receiving digests of your unread notifications or receiving copies of messages sent to your email by editing" %} <a href="{% url 'user_preferences:setting-edit' %}">{% trans "your settings." %}</a></p>
+  <p>{% trans "You currently have no external notifications enabled so you will only be notified of new messages while actively browsing the site. You can optionally enable receiving digests of your unread notifications or receiving email copies of messages sent to you by editing" %} <a href="{% url 'user_preferences:setting-edit' %}">{% trans "your settings." %}</a></p>
 </div>
 {% endif %}
 <div id="postman">

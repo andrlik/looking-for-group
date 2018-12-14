@@ -45,5 +45,34 @@ def is_valid_sender_for_user(user, recipient):
 is_valid_sender = is_valid_sender_for_user & is_not_silenced
 
 
+@rules.predicate
+def is_admin(user, obj=None):
+    return user.is_superuser
+
+
+@rules.predicate
+def is_report_creator(user, report):
+    return user == report.reporter
+
+
+@rules.predicate
+def report_not_complete(user, report):
+    return report.status != "complete"
+
+
+is_user_report_editor = is_report_creator & report_not_complete
+
+is_report_reader = is_admin | is_report_creator
+
+is_report_deleter = is_admin | is_user_report_editor
+
+
 rules.add_perm("postman.can_send_messages", is_not_silenced)
 rules.add_perm("postman.can_message_user", is_valid_sender)
+rules.add_perm("postman.report_view", is_report_reader)
+rules.add_perm("postman.report_delete", is_report_deleter)
+rules.add_perm("postman.view_report_list", is_admin)
+rules.add_perm("postman.warn_plaintiff", is_admin)
+rules.add_perm("postman.view_silenced", is_admin)
+rules.add_perm("postman.silence_delete", is_admin)
+rules.add_perm("postman.can_silence", is_admin)

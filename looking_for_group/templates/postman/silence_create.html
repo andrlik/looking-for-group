@@ -1,0 +1,22 @@
+{% extends "postman/silence_base.html" %}
+{% load i18n avatar_tags foundation_formtags %}
+{% block subtitle %}{% trans "Silence user" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Silence user" %}{% endblock %}
+{% block mobileheader %}{% trans "Silence user" %}{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% include "datepicker_logic.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block content %}
+<p>{% trans "Preparing to silence" %} {% avatar report.plaintiff 30 class='avatar' %} <a href="{{ report.plaintiff.gamerprofile.get_absolute_url }}">{{ report.plaintiff.gamerprofile }}</a></p>
+<form method="post" action="">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ report.get_absolute_url }}" class="button secondary float-left">{% trans "Nevermind, return to report details" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Silence user' %}" />
+  </div>
+</form>
+{% endblock %}

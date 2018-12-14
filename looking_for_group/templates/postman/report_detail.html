@@ -1,0 +1,50 @@
+{% extends "postman/report_base.html" %}
+{% load i18n avatar_tags rules markdownify %}
+{% block subtitle %}{% trans "Report detail" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Report detail" %}{% endblock %}
+{% block mobileheader %}{% trans "Report detail" %}{% endblock %}
+{% block content %}
+<p>{% trans "The details of this report can be found below." %}</p>
+<dl>
+  <dt>{% trans "Reporter" %}</dt>
+  <dd>{% avatar report.reporter 30 class="avatar" %} <a href="{{ report.reporter.gamerprofile.get_absolute_url }}">{{ report.reporter.gamerprofile }}</a></dd>
+  <dt>{% trans "Plaintiff" %}</dt>
+  <dd>{% avatar report.plaintiff 30 class="avatar" %} <a href="{{ report.plaintiff.gamerprofile.get_absolute_url }}">{{ report.plaintiff.gamerprofile }}</a></dd>
+  <dt>{% trans "Report type" %}</dt>
+  <dd>{{ report.get_report_type_display }}</dd>
+  <dt>{% trans "Reported at" %}</dt>
+  <dd>{{ report.created }}</dd>
+  <dt>{% trans "Status" %}</dt>
+  <dd>{{ report.get_status_display }}</dd>
+  <dt>{% trans "Details from reporter" %}</dt>
+  <dd>{{ report.details|markdownify|linebreaksbr }}</dd>
+  <dt>{% trans "Related message" %}</dt>
+  <dd>{{ report.message.body|markdownify|linebreaksbr }}</dd>
+</dl>
+{% has_perm 'postman.report_delete' request.user report as can_delete %}
+{% has_perm 'postman.report_update' request.user report as can_edit %}
+{% has_perm 'postman.warn_plaintiff' request.user report as can_warn %}
+{% has_perm 'postman.can_silence' request.user report as can_silence %}
+<span class="button-group">
+  {% if can_edit %}
+  <a href="{% url 'postman:report_update' report=report.slug %}" class="button primary">{% trans "Update report" %}</a>
+  {% endif %}
+  {% if can_warn %}
+  <form method="post" action="{% url 'postman:warn_plaintiff' report=report.slug %}">{% csrf_token %}<input type="hidden" id="id_slug" name="slug" value="{{ report.slug }}" /> <input type="submit" class="button warning" value="{% trans 'Warn plaintiff' %}" /></form>
+  {% endif %}
+  {% if can_silence %}
+  <a href="{% url 'postman:silence_plaintiff' report=report.slug %}" class="button alert">{% trans "Silence plaintiff" %}</a>
+  {% endif %}
+  {% if request.user == report.reporter %}
+  {% if can_delete %}
+  <a href="{% url 'postman:report_withdraw' report=report.slug %}" class="button alert">{% trans "Withdraw report" %}</a>
+  {% else %}
+  <button class="button alert disabled">{% trans "Withdraw report" %}</button>
+  {% endif %}
+  {% elif can_delete %}
+  <a href="{% url 'postman:report_withdraw' report=report.slug %}" class="button alert">{% trans "Delete report" %}</a>
+  {% endif %}
+
+</span>
+
+{% endblock %}

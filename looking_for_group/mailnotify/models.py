@@ -1,5 +1,7 @@
 from anymail.message import AnymailMessage
+from django.contrib.sites.models import Site
 from django.db import models
+from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django_q.tasks import async_task
 from markdown import markdown
@@ -8,7 +10,7 @@ from notifications.signals import notify
 from postman.models import Message
 from postman.utils import format_body, format_subject
 
-from ..game_catalog.utils import AbstractUUIDModel
+from ..game_catalog.utils import AbstractUUIDModel, AbstractUUIDWithSlugModel
 from ..users.models import User
 
 
@@ -45,7 +47,7 @@ def send_email_notification(user, msg):
     email_msg.send()
 
 
-class MessageReport(TimeStampedModel, AbstractUUIDModel):
+class MessageReport(TimeStampedModel, AbstractUUIDWithSlugModel):
     """
     An object that can be used to report harrassment and/or spam.
     """
@@ -99,6 +101,9 @@ class MessageReport(TimeStampedModel, AbstractUUIDModel):
         return "{} report regarding {} filed by {}".format(
             self.get_report_type_display(), self.plaintiff, self.reporter
         )
+
+    def get_absolute_url(self):
+        return reverse_lazy("postman:report_detail", kwargs={"report": self.slug})
 
     def warn_plaintiff(self):
         site = Site.objects.all()[0]
@@ -154,3 +159,6 @@ class SilencedUser(TimeStampedModel, AbstractUUIDModel):
 
     def __str__(self):
         return "{} silended until {}".format(self.user, self.ending or "eternity")
+
+    def get_absolute_url(self):
+        return reverse_lazy("postman:silence_detail", kwargs={"silence": self.pk})

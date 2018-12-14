@@ -91,6 +91,7 @@ from __future__ import unicode_literals
 from django import VERSION
 from django.conf import settings
 from django.conf.urls import url
+from django.urls import path
 from django.views.generic.base import RedirectView
 from postman.views import (
     ArchivesView,
@@ -108,6 +109,7 @@ from postman.views import (
     WriteView
 )
 
+from . import views
 from .rules import user_exchange_filter
 
 if VERSION < (1, 10):
@@ -193,5 +195,47 @@ urlpatterns = [
         MarkUnreadView.as_view(),
         name="mark-unread",
     ),
+    path(
+        "reports/create/<int:message>/",
+        view=views.ReportCreate.as_view(),
+        name="report_create",
+    ),
+    path(
+        "reports/<slug:report>/",
+        view=views.ReportDetail.as_view(),
+        name="report_detail",
+    ),
+    path(
+        "reports/<slug:report>/edit/",
+        view=views.ReportUpdate.as_view(),
+        name="report_update",
+    ),
+    path(
+        "reports/<slug:report>/withdraw/",
+        view=views.ReportWithdraw.as_view(),
+        name="report_withdraw",
+    ),
+    path("reports/", view=views.ReportList.as_view(), name="report_list"),
+    path(
+        "reports/<slug:report>/warn/",
+        view=views.ReportWarnPlaintiff.as_view(),
+        name="warn_plaintiff",
+    ),
+    path(
+        "silenced/create/<slug:report>/",
+        view=views.SilencePlaintiff.as_view(),
+        name="silence_plaintiff",
+    ),
+    path(
+        "silenced/<uuid:silence>/",
+        view=views.SilenceDetailview.as_view(),
+        name="silence_detail",
+    ),
+    path(
+        "silenced/<uuid:silence>/delete/",
+        view=views.SilenceDelete.as_view(),
+        name="silence_delete",
+    ),
+    path("silenced/", view=views.SilenceList.as_view(), name="silence_list"),
     url(r"^$", RedirectView.as_view(url=reverse_lazy("postman:inbox"), permanent=True)),
 ]

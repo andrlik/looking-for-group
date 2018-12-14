@@ -19,6 +19,10 @@
         <li{% block writeactive %}{% endblock %}><a href="{% url 'postman:write' %}">{% trans "Write" %}</a></li>
         <li{% block archiveactive %}{% endblock %}><a href="{% url 'postman:archives' %}">{% trans "Archives" %}</a></li>
         <li{% block trashactive %}{% endblock %}><a href="{% url 'postman:trash' %}">{% trans "Trash" %}</a></li>
+        {% if request.user.is_superuser %}
+        <li{% block reportactive %}{% endblock %}><a href="{% url 'postman:report_list' %}">{% trans "Reports" %}</a></li>
+        <li{% block silenceactive %}{% endblock %}><a href="{% url 'postman:silence_list' %}">{% trans "Silenced" %}</a></li>
+        {% endif %}
         {% endblock %}
       </ul>
     </nav>

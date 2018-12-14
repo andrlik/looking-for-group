@@ -346,7 +346,7 @@ POSTMAN_NOTIFIER_APP = "looking_for_group.mailnotify"
 POSTMAN_AUTO_MODERATE_AS = True
 POSTMAN_AUTOCOMPLETER_APP = {
     "name": "ajax_select",
-    "field": "AutoCompleteSelectMultipleField",
+    "field": "AutoCompleteField",
     "arg_name": "channel",
     "arg_default": "gamers",
 }
