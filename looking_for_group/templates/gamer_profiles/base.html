@@ -13,10 +13,10 @@
     <nav>
       <ul class="menu align-right">
         {% block innernavmenu %}
-        <li{% block allcomactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-list' %}">{% trans "All communities" %}</a></li>
-        <li{% block yourcomactive %}{% endblock %}><a href="{% url 'gamer_profiles:my-community-list' %}">{% trans "Your communities" %}</a></li>
-        <li{% block appactive %}{% endblock %}><a href="{% url 'gamer_profiles:my-application-list' %}">{% trans "Your community applications" %}</a></li>
-        <li{% block createactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-create' %}">{% trans "Create new community" %}</a></li>
+        <li{% block allcomactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-list' %}"><i class="fas fa-globe-americas"></i> {% trans "All communities" %}</a></li>
+        <li{% block yourcomactive %}{% endblock %}><a href="{% url 'gamer_profiles:my-community-list' %}"><i class="fas fa-users"></i> {% trans "Your communities" %}</a></li>
+        <li{% block appactive %}{% endblock %}><a href="{% url 'gamer_profiles:my-application-list' %}"><i class="fas fa-portrait"></i> {% trans "Your community applications" %}</a></li>
+        <li{% block createactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-create' %}"><i class="fas fa-plus-circle"></i> {% trans "Create new community" %}</a></li>
         {% endblock %}
       </ul>
     </nav>

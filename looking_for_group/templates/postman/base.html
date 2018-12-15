@@ -1,0 +1,31 @@
+{% extends "base.html" %}{# not myself but a site-level one (TEMPLATE_DIRS setting) #}
+{% load i18n static %}{% load postman_tags %}
+{% block subtitle %}{% trans "Messaging" %} - {% endblock %}
+{% block innernav %}
+<div class="title-bar" data-responsive-toggle="section-menu" data-hide-for="medium">
+  <button class="menu-icon" type="button" data-toggle="section-menu"></button>
+  <div class="title-bar-title">{% trans "Controls" %}</div>
+</div>
+<div class="title-bar" data-sticky data-options="marginTop:0;" data-top-anchor="1" data-bottom-anchor="content:bottom" id="section-menu">
+  <div class="title-bar-left show-for-medium">
+    <h1>{% block sectiontitle %}{% endblock %}</h1>
+  </div>
+  <div class="title-bar-right">
+    <nav>
+      <ul id="postman_menu" class="menu align-right">{% postman_unread as unread_count %}
+        {% block innernavmenu %}
+        <li{% block inboxactive %}{% endblock %}><a href="{% url 'postman:inbox' %}"><i class="fas fa-inbox"></i> {% trans "Inbox" %}{% if unread_count %} <strong>({{ unread_count }})</strong>{% endif %}</a></li>
+        <li{% block sentactive %}{% endblock %}><a href="{% url 'postman:sent' %}"><i class="fas fa-paper-plane"></i> {% trans "Sent Messages" %}</a></li>
+        <li{% block writeactive %}{% endblock %}><a href="{% url 'postman:write' %}"><i class="fas fa-pencil-alt"></i> {% trans "Write" %}</a></li>
+        <li{% block archiveactive %}{% endblock %}><a href="{% url 'postman:archives' %}"><i class="fas fa-archive"></i> {% trans "Archives" %}</a></li>
+        <li{% block trashactive %}{% endblock %}><a href="{% url 'postman:trash' %}"><i class="fas fa-trash-alt"></i> {% trans "Trash" %}</a></li>
+        {% if request.user.is_superuser %}
+        <li{% block reportactive %}{% endblock %}><a href="{% url 'postman:report_list' %}"><i class="fas fa-exclamation-circle"></i> {% trans "Reports" %}</a></li>
+        <li{% block silenceactive %}{% endblock %}><a href="{% url 'postman:silence_list' %}"><i class="fas fa-microphone-slash"></i> {% trans "Silenced" %}</a></li>
+        {% endif %}
+        {% endblock %}
+      </ul>
+    </nav>
+  </div>
+</div>
+{% endblock %}

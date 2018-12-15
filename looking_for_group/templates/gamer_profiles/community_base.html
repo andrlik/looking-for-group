@@ -4,20 +4,20 @@
 {% has_perm 'community.edit_community' user community as is_admin %}
 {% has_perm 'community.transfer_owner' user community as is_owner %}
 {% has_perm 'invite.can_invite' user community as is_inviter %}
-<li><a href="{% url 'gamer_profiles:community-list' %}">{% trans "Back to community list" %}</a></li>
-<li{% block commdetailactive %}{% endblock %}><a href="{{ community.get_absolute_url }}">{% trans "Community details" %}</a></li>
+<li><a href="{% url 'gamer_profiles:community-list' %}"><i class="fas fa-list"></i> {% trans "Back to community list" %}</a></li>
+<li{% block commdetailactive %}{% endblock %}><a href="{{ community.get_absolute_url }}"><i class="fas fa-book-open "></i> {% trans "Community details" %}</a></li>
 {% if is_inviter %}
-<li{% block inviteactive %}{% endblock %}><a href="{% url 'gamer_profiles:community_invite_list' slug=community.slug %}">{% trans "Invites" %}</a></li>
+<li{% block inviteactive %}{% endblock %}><a href="{% url 'gamer_profiles:community_invite_list' slug=community.slug %}"><i class="fas fa-key"></i> {% trans "Invites" %}</a></li>
 {% endif %}
 {% if is_admin %}
-<li{% block membersactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "Manage members" %}</a></li>
-<li{% block editcommactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-edit' community=community.slug %}">{% trans "Edit community" %}</a></li>
-<li{% block appactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-applicant-list' community=community.slug %}">{% trans "Review applicants" %}</a></li>
-<li{% block discordactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-discord-link' community=community.slug %}">{% trans "Manage Discord links" %}</a></li>
+<li{% block membersactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}"><i class="fas fa-users"></i> {% trans "Manage members" %}</a></li>
+<li{% block editcommactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-edit' community=community.slug %}"><i class="fas fa-edit"></i> {% trans "Edit community" %}</a></li>
+<li{% block appactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-applicant-list' community=community.slug %}"><i class="fas fa-clipboard-list"></i> {% trans "Review applicants" %}</a></li>
+<li{% block discordactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-discord-link' community=community.slug %}"><i class="fab fa-discord"></i> {% trans "Manage Discord links" %}</a></li>
 {% endif %}
 {% if is_owner %}
-<li{% block transferactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-transfer-owner' community=community.slug %}" class="alert">{% trans "Transfer ownership" %}</a></li>
-<li{% block deleteactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-delete' community=community.slug %}" class="alert">{% trans "Delete community" %}</a></li>
+<li{% block transferactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-transfer-owner' community=community.slug %}" class="alert"><i class="fas fa-exchange-alt"></i> {% trans "Transfer ownership" %}</a></li>
+<li{% block deleteactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-delete' community=community.slug %}" class="alert"><i class="fas fa-trash-alt"></i> {% trans "Delete community" %}</a></li>
 {% endif %}
 {% endblock %}
 

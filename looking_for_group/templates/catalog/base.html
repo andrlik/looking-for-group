@@ -13,11 +13,11 @@
   <div class="title-bar-right">
     <nav>
       <ul class="menu align-right">
-        <li{% block gameactive %}{% endblock %}><a href="{% url 'game_catalog:game-list' %}">{% trans "Published Games" %}</a></li>
-        <li{% block systemactive %}{% endblock %}><a href="{% url 'game_catalog:system-list' %}">{% trans "Game Systems" %}</a></li>
-        <li{% block moduleactive %}{% endblock %}><a href="{% url 'game_catalog:module-list' %}">{% trans "Published Modules" %}</a></li>
-        <li{% block pubactive %}{% endblock %}><a href="{% url 'game_catalog:pub-list' %}">{% trans "Publishers" %}</a></li>
-        <li{% block recentactive %}{% endblock %}><a href="{% url 'game_catalog:recent_additions' %}">{% trans "Recent additions" %}</a></li>
+        <li{% block gameactive %}{% endblock %}><a href="{% url 'game_catalog:game-list' %}"><i class="fas fa-book"></i> {% trans "Published Games" %}</a></li>
+        <li{% block systemactive %}{% endblock %}><a href="{% url 'game_catalog:system-list' %}"><i class="fas fa-cogs"></i> {% trans "Game Systems" %}</a></li>
+        <li{% block moduleactive %}{% endblock %}><a href="{% url 'game_catalog:module-list' %}"><i class="fas fa-map"></i> {% trans "Published Modules" %}</a></li>
+        <li{% block pubactive %}{% endblock %}><a href="{% url 'game_catalog:pub-list' %}"><i class="fas fa-building"></i> {% trans "Publishers" %}</a></li>
+        <li{% block recentactive %}{% endblock %}><a href="{% url 'game_catalog:recent_additions' %}"><i class="fas fa-list"></i> {% trans "Recent additions" %}</a></li>
       </ul>
     </nav>
   </div>

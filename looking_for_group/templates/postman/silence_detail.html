@@ -1,0 +1,20 @@
+{% extends "postman/silence_base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% trans "Silence details" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Silence details" %}{% endblock %}
+{% block mobileheader %}{% trans "Silence details" %}{% endblock %}
+{% block content %}
+<dl>
+  <dt>{% trans "Silenced user" %}</dt>
+  <dd>{% avatar silence.user 30 class='avatar' %} <a href="{{ silence.user.gamerprofile.get_absolute_url }}">{{ silence.user.gamerprofile }}</a></dd>
+  <dt>{% trans "Silenced at" %}</dt>
+  <dd>{{ silence.created }}</dd>
+  <dt>{% trans "Report source" %}</dt>
+  <dd><a href="{{ silence.related_report.get_absolute_url }}">{{ silence.related_report.get_report_type_display }}</a></dd>
+  <dt>{% trans "Silenced until" %}</dt>
+  <dd>{{ silence.ending|default_if_none:"Eternity" }}</dd>
+</dl>
+<div class="clearfix">
+  <a href="{% url 'postman:silence_list' %}" class="button secondary float-left">{% trans "Back to list" %}</a> <a href="{% url 'postman:silence_delete' silence=silence.pk %}" class="button alert float-right">{% trans "Delete silence" %}</a>
+</div>
+{% endblock %}

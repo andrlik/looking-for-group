@@ -1,0 +1,82 @@
+{% extends "postman/base.html" %}
+{% load i18n %}{% load postman_tags mail_tags markdownify social_tags %}
+{% load rules %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block sectiontitle %}{% if pm_messages|length > 1 %}{% trans "Conversation" %}{% else %}{% trans "Message" %}{% endif %}{% endblock %}
+{% block mobileheader %}{% if pm_messages|length > 1 %}{% trans "Conversation" %}{% else %}{% trans "Message" %}{% endif %}{% endblock %}
+{% block content %}
+{% has_perm "postman.can_send_messages" request.user as can_send %}
+<div id="postman">
+  {% for message in pm_messages %}
+  <div class="pm_message{% if message.is_pending %} pm_pending{% endif %}{% if message.is_rejected %} pm_rejected{% endif %}{% if message.sender == user and message.sender_archived or message.recipient == user and message.recipient_archived %} pm_archived{% endif %}{% if message.sender == user and message.sender_deleted_at or message.recipient == user and message.recipient_deleted_at %} pm_deleted{% endif %}{% if message.recipient == user and not message.read_at %} pm_unread{% endif %}">
+    <div class="pm_header">
+      <span class="pm_sender">{{ message.obfuscated_sender|or_me:user }}</span> &raquo;
+      <span class="pm_recipient">{{ message.obfuscated_recipient|or_me:user }}</span> |
+      <span class="pm_date">{{ message.sent_at|date:"DATETIME_FORMAT"}}</span> |
+      <span class="pm_subject">{{ message.subject }}</span>
+      {% if message.is_rejected %}  <div class="pm_status">{% trans "Rejected" %}{% if message.moderation_reason %}{% trans ":" %} {{ message.moderation_reason }}{% endif %}</div>{% endif %}
+    </div>
+    <div class="pm_body">{{ message.body|markdownify|linebreaksbr }}</div>
+    {% if message.sender != request.user %}
+    {% if message.related_complaints.count == 0 %}
+    <a href="{% url 'postman:report_create' message=message.id %}" class="button tiny alert">{% trans "Report message" %}</a>
+    {% else %}
+    <button class="button tiny alert disabled">{% trans "Message reported" %}</button>
+    {% endif %}
+    {% endif %}
+  </div>
+  {% if forloop.last %}
+    <form action="" method="post">{% csrf_token %}
+    <input type="hidden" {% if pm_messages|length > 1 and message.thread_id %}name="tpks" value="{{ message.thread_id }}"{% else %}name="pks" value="{{ message.pk }}"{% endif %} />
+
+    <a href="{{ next_url }}" class="button small secondary"><i class="fas fa-chevron-circle-left"></i> {% trans "Back" %}</a>
+
+    <button type="submit" class="button small alert"
+      onclick="this.form.action='{% url 'postman:delete' %}?next={{ next_url|urlencode }}'"><i class="fas fa-trash-alt"></i> {% trans "Delete" %}</button>
+    {% if not archived %}<button type="submit" class="button small primary"
+                           onclick="this.form.action='{% url 'postman:archive' %}?next={{ next_url|urlencode }}'"><i class="fas fa-archive"></i> {% trans "Archive" %}</button>{% endif %}
+
+    {% if reply_to_pk and can_send %}<a href="{% url 'postman:reply' reply_to_pk %}?next={{ next_url|urlencode }}"
+                                       class="button small primary"><i class="fas fa-pencil-alt"></i> {% trans "Reply" %}</a>{% endif %}
+    </form>
+      {% if message.sender != request.user %}
+      {% is_blocked_by_user message.sender.gamerprofile as is_blocked %}
+      {% if is_blocked %}
+      <a href="{% url 'gamer_profiles:my-block-list' %}" class="button alert small hollow">{% trans "Blocked - see block list" %}</a>
+      {% else %}
+      <form method="post" action="{% url 'gamer_profiles:block-gamer' gamer=message.sender.username %}"> {% csrf_token %}<button type="submit" class="button small alert"><i class="fas fa-ban"></i> {% trans 'Block sender' %} </button></form>
+      {% endif %}
+      {% endif %}
+
+  {% if reply_to_pk and can_send %}<hr />
+  <h2>{% trans 'Reply' %}</h2>
+  <form action="{% url 'postman:reply' reply_to_pk %}?next={{ next_url|urlencode }}" method="post">{% csrf_token %}
+    <div id="pm_reply">{{ form.body }}</div>
+    <button type="submit" class="button success"><i class="fas fa-pencil-alt"></i> {% trans 'Reply' %}</button>
+  </form>{% endif %}
+  {% endif %}
+  {% endfor %}
+  {% if not can_send %}
+  {% get_silence_end request.user as silence_end %}
+  <p>{% blocktrans with silend=silence_end.ending %}You are currently silenced until {{ silend }} and cannot send messages.{% endblocktrans %}</p>
+  {% endif %}
+</div>
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_body')[0],
+    autosave: {
+      enabled: false,
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
+{% endblock %}

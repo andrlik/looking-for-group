@@ -15,6 +15,8 @@ logger = logging.getLogger("games")
 
 def form_email_body(user, notification_list):
     plaintext_context = Context(autoescape=False)
+    plaintext_context['request'] = {}
+    plaintext_context['request']['user'] = user
     text_body = render_to_string("user_preferences/message_body.txt", {'user': user, 'notifications': notification_list}, plaintext_context)
     html_body = markdown(text_body)
     return text_body, html_body

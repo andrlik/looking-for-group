@@ -1,5 +1,5 @@
 {% extends "games/game_base.html" %}
-{% load i18n avatar_tags %}
+{% load i18n avatar_tags mail_tags rules %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block gameactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
@@ -128,7 +128,7 @@
       </div>
     </div>
     {% if request.user == game.gm.user %}
-    <a href="{% url 'games:game_edit' gameid=game.slug %}" class="button">{% trans "Edit Game Details" %}</a>
+    <a href="{% url 'games:game_edit' gameid=game.slug %}" class="button"><i class="fas fa-edit"></i> {% trans "Edit Game Details" %}</a>
     {% endif %}
   </div>
 </div>
@@ -155,6 +155,15 @@
 {% if not player_list %}
 <p>{% trans "No players yet" %}</p>
 {% else %}
+{% has_perm 'postman.can_send_messages' request.user as can_send %}
+{% if game.gm.user == request.user %}
+{% if can_send %}
+{% get_recipient_string game.players.all as playermail %}
+<a href="{% url 'postman:write' playermail %}" class="button primary"><i class="fas fa-mail-bulk"></i> {% trans "Send message to all players" %}</a>
+{% else %}
+<button class="button primary disabled"><i class="fas fa-mail-bulk"></i> {% trans "Send message to all players" %}</button>
+{% endif %}
+{% endif %}
 <table class="scroll hover">
   <thead>
     <tr>
@@ -168,13 +177,15 @@
   </thead>
   <tbody>
     {% for player in player_list %}
+    {% has_perm "postman.can_message_user" request.user player.gamer.user as can_send_user %}
+
     <tr>
       <td>{% avatar player.gamer.user 20 class="avatar" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
       <td>{% if player.current_character %}<a href="{{ player.current_character.get_absolute_url }}">{{ player.current_character.name }}</a>{% else %}{% trans "Pending" %}{% endif %}</td>
       <td>{{ player.created }}</td>
       {% if game.sessions > 0 %}
       {% with rank=player.get_attendance_rating_for_game %}
-      <td class="text-center"><span class="label {% if rank > 80 %}success{% elif rank < 50 %}alert{% else %}primary{% endif %}"><abbr title="{% trans 'Sessions expected' %}">{{ player.sessions_expected }}</abbr> / <abbr title="{% trans 'Sessions missed' %}">{{ player.sessions_missed }}</abbr> / <abbr title="{% trans 'Attendance rating' %}"><strong>{{ player.get_attendance_rating_for_game }}%</strong></abbr></span></td>
+      <td class="text-center"><span class="label {% if rank > 80 %}success{% elif rank < 50 %}alert{% else %}primary{% endif %}"><abbr title="{% trans 'Sessions expected' %}">{{ player.sessions_expected }}</abbr> / <abbr title="{% trans 'Sessions missed' %}">{{ player.sessions_missed }}</abbr> / <abbr title="{% trans 'Attendance rating' %}"><strong>{{ player.get_attendance_rating_for_game|default_if_none:"N/A" }}%</strong></abbr></span></td>
       {% endwith %}
       {% else %}
       <td><span class="label secondary">{% trans "No data yet" %}</span></td>
@@ -182,20 +193,26 @@
       {% if player.user == request.user %}
       <td>
         {% if player.current_character %}
-        <a href="{% url 'games:character_update' character=player.current_character.slug %}" class="button primary">{% trans "Manage Character" %}</a>
+        <a href="{% url 'games:character_update' character=player.current_character.slug %}" class="button primary"><i class="fas fa-user-shield"></i> {% trans "Manage Character" %}</a>
         {% else %}
-        <a href="{% url 'games:character_create' game=game.slug player=player.slug %}" class="button primary">{% trans "Add Character" %}</a>
+        <a href="{% url 'games:character_create' game=game.slug player=player.slug %}" class="button primary"><i class="fas fa-user-shield"></i>{% trans "Add Character" %}</a>
         {% endif %}
       </td>
       <td>
-        <a href="{% url 'games:game_leave' game=game.slug player=player.slug %}" class="button alert">{% trans "Leave game" %}</a>
+        <a href="{% url 'games:game_leave' game=game.slug player=player.slug %}" class="button alert"><i class="fas fa-sign-out-alt"></i> {% trans "Leave game" %}</a>
       </td>
+
+
       {% elif game.gm.user == request.user %}
       <td>
-        <!-- <button class="button disabled">{% trans "Message" %}</button> -->
+        {% if can_send_user %}
+          <a href="{% url 'postman:write' player.gamer.user.username %}" class="button primary"><i class="fas fa-envelope"></i> {% trans "Message" %}</a>
+          {% else %}
+          <button class="button disabled"><i class="fas fa-envelope"></i> {% trans "Message" %}</button>
+          {% endif %}
       </td>
       <td>
-        <a href="{% url 'games:player_kick' gameid=game.slug player=player.slug %}" class="button alert">{% trans "Kick player from game" %}</a>
+        <a href="{% url 'games:player_kick' gameid=game.slug player=player.slug %}" class="button alert"><i class="fas fa-user-slash"></i> {% trans "Kick player from game" %}</a>
       </td>
       {% else %}
       <td></td>
@@ -218,7 +235,7 @@
             {% if game.players.count == 0 %}
             <p>{% blocktrans %}You will need to have at least one player in your game before you can create a session.{% endblocktrans %}</p>
             <button class="button disabled primary float-left">{% trans "Create next regular session" %}</button>
-            <div class="float-right"><button class="button primary disabled">{% trans "Create an ad hoc session" %}</button> <abbr title="{% trans 'Create a session that is separate from the main recurrence rules, e.g. a side session.' %}"><i class="fas fa-question-circle"></i></abbr></div>
+            <div class="float-right"><button class="button primary disabled"><i class="fas fa-plus-circle"></i> {% trans "Create an ad hoc session" %}</button> <abbr title="{% trans 'Create a session that is separate from the main recurrence rules, e.g. a side session.' %}"><i class="fas fa-question-circle"></i></abbr></div>
             {% else %}
             {% if game.next_session_time %}
           {% if game.get_next_session and game.get_next_session.scheduled_time == game.next_session_time %}
@@ -234,7 +251,7 @@
           {% endif %}
           {% endif %}
           {% if game.status != "closed" and game.status != "cancel" and game.gm.user == request.user %}
-          <div class="float-right"><p><a href="{% url 'games:session_adhoc_create' gameid=game.slug %}" class="button primary">{% trans "Create an ad hoc session" %}</a> <abbr title="{% trans 'Create a session that is separate from the main game recurrence rules, e.g. a side session.' %}"><i class="fas fa-question-circle"></i></abbr></p></div>
+          <div class="float-right"><p><a href="{% url 'games:session_adhoc_create' gameid=game.slug %}" class="button primary"><i class="fas fa-plus-circle"></i> {% trans "Create an ad hoc session" %}</a> <abbr title="{% trans 'Create a session that is separate from the main game recurrence rules, e.g. a side session.' %}"><i class="fas fa-question-circle"></i></abbr></p></div>
           {% endif %}
           {% endif %}
           </div>

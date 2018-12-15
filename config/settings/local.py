@@ -77,3 +77,39 @@ HAYSTACK_CONNECTIONS = {
         'INDEX_NAME': 'haystack',
     },
 }
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "root": {"level": "WARNING", "handlers": ["console"]},
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s "
+            "%(process)d %(thread)d %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        }
+    },
+    "loggers": {
+        "django.db.backends": {
+            "level": "ERROR",
+            "handlers": ["console"],
+            "propagate": True,
+        },
+        "catalog": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "gamer_profiles": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": True,
+        },
+        "rules": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "games": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "haystack": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "postman": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+    },
+}

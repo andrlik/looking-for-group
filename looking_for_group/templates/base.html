@@ -32,8 +32,10 @@
     {% compress css %}
     <link rel="stylesheet" type="text/x-scss" href="{% static 'sass/app.scss' %}">
     <link type="text/x-scss" href="{% static 'sass/project.scss' %}" rel="stylesheet">
-    {% endcompress %}
     <link rel="stylesheet" type="text/css" href="{% static 'star-ratings/css/star-ratings.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'postman/css/postman.css' %}">
+    {% endcompress %}
+
     {% endblock %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/motion-ui@1.2.3/dist/motion-ui.min.css" />
 
@@ -99,7 +101,8 @@
           <li><a href="{% url 'notifications:unread' %}">
               <i id="dash-badge" data-badge="0" class="live_notify_badge large fa fas fa-bell"></i>
             <span class="app-dashboard-sidebar-text">Notifications</span>
-          </a>
+          </a></li>
+          <li><a href="{% url 'postman:inbox' %}"><i id="dash-message-badge" data-badge="{{ postman_unread_count }}" class="{% if postman_unread_count > 0 %}live_notify_badge_unread{% else %}live_notify_badge{% endif %} large fas fa-envelope"></i><span class="app-dashboard-sidebar-text">Messages</span></a> </li>
           <li><a href="{% url 'games:calendar_detail' gamer=request.user.username %}">
             <i class="large fas fa-calendar-alt"></i><span class="app-dashboard-sidebar-text">Calendar</span>
           </a></li>
@@ -121,7 +124,7 @@
             <i class="large fas fa-ban"></i><span class="app-dashboard-sidebar-text">Blocked Users</span>
           </a></li>
           <li><a href="{% url 'gamer_profiles:profile-edit' %}">
-            <i class="large fas fa-user-circle"></i><span class="app-dashboard-sidebar-text">Edit Profile</span>
+            <i class="large fas fa-user-edit"></i><span class="app-dashboard-sidebar-text">Edit Profile</span>
           </a> </li>
           <li><a href="{% url 'socialaccount_connections' %}">
             <i class="large fab fa-discord"></i><span class="app-dashboard-sidebar-text">Manage Discord</span>
@@ -260,7 +263,8 @@
     {% block javascript %}
       <!-- Required by Foundation 6.4.3 -->
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-      <script src="{% static 'libs/what-input/what-input.min.js' %}"></script>
+      <script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+        <script src="{% static 'libs/what-input/what-input.min.js' %}"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/js/foundation.min.js"></script>
 
       {% if request.user.is_authenticated %}
