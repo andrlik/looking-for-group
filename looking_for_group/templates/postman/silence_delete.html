@@ -1,0 +1,18 @@
+{% extends "postman/silence_base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% trans "Delete silence" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Delete silence" %}{% endblock %}
+{% block mobileheader %}{% trans "Delete silence" %}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans %}Deleting this record will mean that this user will be able to once again send messages.{% endblocktrans %}</p>
+</div>
+<p>{% blocktrans with uname=silence.user.username %}Deleting silence for {{ uname }}:{% endblocktrans %}</p>
+<form method="post" action="">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ silence.get_absolute_url }}" class="button secondary float-left">{% trans "Nevermind, take me back to the silence details." %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Delete record' %}" />
+  </div>
+</form>
+{% endblock %}
