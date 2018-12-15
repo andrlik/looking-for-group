@@ -22,7 +22,7 @@
 <form action="{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" method="post">{% csrf_token %}
 {% block pm_write_recipient %}{% endblock %}
 {{ form|as_foundation }}
-<button type="submit" class="button success">{% trans "Send" %}</button>
+  <button type="submit" class="button success"><i class="fas fa-paper-plane"></i> {% trans "Send" %}</button>
 </form>
 {% endif %}
 </div>

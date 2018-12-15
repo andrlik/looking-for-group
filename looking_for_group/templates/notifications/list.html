@@ -1,5 +1,5 @@
 {% extends "notifications/base.html" %}
-{% load notifications_tags i18n %}
+{% load notifications_tags avatar_tags i18n %}
 {% with all=notifications.count unread=notifications.unread.count %}
 {% block subtitle %}{% trans "Notifications" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Notifications" %}{% endblock %}
@@ -39,7 +39,13 @@
       <td>
 
         {% if "friend" in notification.verb %}
-        <a href="{{ notification.actor.get_absolute_url }}">{{ notification.actor }}</a> {{ notification.verb }}
+        {% avatar notification.actor.user 30 class='avatar' %} <a href="{{ notification.actor.get_absolute_url }}">{{ notification.actor }}</a> {{ notification.verb }}
+        {% elif notification.actor_content_type|lower == "site" %}
+        {{ notification.verb }}
+        {% elif notification.actor_content_type|lower == "message report" %}
+        {{ notification.verb }}: <a href="{{ notification.actor.get_absolute_url }}">{% trans "View report" %}</a>
+        {% elif notification.target_content_type|lower == "message" %}
+        {% avatar notification.actor.user 30 class='avatar' %} <a href="{{ notification.actor.get_absolute_url }}">{{ notification.actor }}</a> {% trans "sent you a new message." %} <a href="{% url 'postman:inbox' %}">{% trans "View messages" %}</a>
         {% elif "settings" in notification.verb %}
         {% blocktrans with aname=notification.actor verb=notification.verb %}{{ aname }} {{ verb }}: {% endblocktrans %}<a href="{% url 'user_preferences:setting-view' %}">{% trans "Settings" %}</a>. {% trans "You may also want to check out your profile info here:" %} <a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Profile" %}</a>
         {% elif "Announcement:" in notification.verb %}

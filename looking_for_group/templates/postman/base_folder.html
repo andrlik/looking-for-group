@@ -31,11 +31,11 @@ in the INSTALLED_APPS setting.
   <div class="clearfix">
   <form action="{% block pm_form_action %}{% endblock %}" method="post">{% csrf_token %}
     {% block pm_form_buttons %}<span id="pm_buttons" class="button-group small">
-    {% block pm_delete_button %}<button type="submit" class="button alert" onclick="this.form.action='{% url 'postman:delete' %}'">{% trans "Delete" %}</button>{% endblock %}
-    {% block pm_archive_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:archive' %}'">{% trans "Archive" %}</button>{% endblock %}
-    {% block pm_undelete_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:undelete' %}'">{% trans "Undelete" %}</button>{% endblock %}
-    {% block pm_read_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:mark-read' %}'">{% trans "Mark as read" %}</button>{% endblock %}
-    {% block pm_unread_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:mark-unread' %}'">{% trans "Mark as unread" %}</button>{% endblock %}
+    {% block pm_delete_button %}<button type="submit" class="button alert" onclick="this.form.action='{% url 'postman:delete' %}'"><i class="fas fa-trash-alt"></i> {% trans "Delete" %}</button>{% endblock %}
+    {% block pm_archive_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:archive' %}'"><i class="fas fa-archive"></i> {% trans "Archive" %}</button>{% endblock %}
+    {% block pm_undelete_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:undelete' %}'"><i class="fas fa-recycle"></i> {% trans "Undelete" %}</button>{% endblock %}
+    {% block pm_read_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:mark-read' %}'"><i class="fas fa-envelope-open"></i> {% trans "Mark as read" %}</button>{% endblock %}
+    {% block pm_unread_button %}<button type="submit" class="button primary" onclick="this.form.action='{% url 'postman:mark-unread' %}'"><i class="fas fa-envelope"></i> {% trans "Mark as unread" %}</button>{% endblock %}
     </span>{% endblock %}
     <table id="pm_messages" class="hover scroll">
       <thead>

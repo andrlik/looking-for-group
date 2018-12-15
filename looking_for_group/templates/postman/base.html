@@ -14,14 +14,14 @@
     <nav>
       <ul id="postman_menu" class="menu align-right">{% postman_unread as unread_count %}
         {% block innernavmenu %}
-        <li{% block inboxactive %}{% endblock %}><a href="{% url 'postman:inbox' %}">{% trans "Inbox" %}{% if unread_count %} <strong>({{ unread_count }})</strong>{% endif %}</a></li>
-        <li{% block sentactive %}{% endblock %}><a href="{% url 'postman:sent' %}">{% trans "Sent Messages" %}</a></li>
-        <li{% block writeactive %}{% endblock %}><a href="{% url 'postman:write' %}">{% trans "Write" %}</a></li>
-        <li{% block archiveactive %}{% endblock %}><a href="{% url 'postman:archives' %}">{% trans "Archives" %}</a></li>
-        <li{% block trashactive %}{% endblock %}><a href="{% url 'postman:trash' %}">{% trans "Trash" %}</a></li>
+        <li{% block inboxactive %}{% endblock %}><a href="{% url 'postman:inbox' %}"><i class="fas fa-inbox"></i> {% trans "Inbox" %}{% if unread_count %} <strong>({{ unread_count }})</strong>{% endif %}</a></li>
+        <li{% block sentactive %}{% endblock %}><a href="{% url 'postman:sent' %}"><i class="fas fa-paper-plane"></i> {% trans "Sent Messages" %}</a></li>
+        <li{% block writeactive %}{% endblock %}><a href="{% url 'postman:write' %}"><i class="fas fa-pencil-alt"></i> {% trans "Write" %}</a></li>
+        <li{% block archiveactive %}{% endblock %}><a href="{% url 'postman:archives' %}"><i class="fas fa-archive"></i> {% trans "Archives" %}</a></li>
+        <li{% block trashactive %}{% endblock %}><a href="{% url 'postman:trash' %}"><i class="fas fa-trash-alt"></i> {% trans "Trash" %}</a></li>
         {% if request.user.is_superuser %}
-        <li{% block reportactive %}{% endblock %}><a href="{% url 'postman:report_list' %}">{% trans "Reports" %}</a></li>
-        <li{% block silenceactive %}{% endblock %}><a href="{% url 'postman:silence_list' %}">{% trans "Silenced" %}</a></li>
+        <li{% block reportactive %}{% endblock %}><a href="{% url 'postman:report_list' %}"><i class="fas fa-exclamation-circle"></i> {% trans "Reports" %}</a></li>
+        <li{% block silenceactive %}{% endblock %}><a href="{% url 'postman:silence_list' %}"><i class="fas fa-microphone-slash"></i> {% trans "Silenced" %}</a></li>
         {% endif %}
         {% endblock %}
       </ul>

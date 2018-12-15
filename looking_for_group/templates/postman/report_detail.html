@@ -27,22 +27,22 @@
 {% has_perm 'postman.can_silence' request.user report as can_silence %}
 <span class="button-group">
   {% if can_edit %}
-  <a href="{% url 'postman:report_update' report=report.slug %}" class="button primary">{% trans "Update report" %}</a>
+  <a href="{% url 'postman:report_update' report=report.slug %}" class="button primary"><i class="fas fa-edit"></i> {% trans "Update report" %}</a>
   {% endif %}
   {% if can_warn %}
-  <form method="post" action="{% url 'postman:warn_plaintiff' report=report.slug %}">{% csrf_token %}<input type="hidden" id="id_slug" name="slug" value="{{ report.slug }}" /> <input type="submit" class="button warning" value="{% trans 'Warn plaintiff' %}" /></form>
+  <form method="post" action="{% url 'postman:warn_plaintiff' report=report.slug %}">{% csrf_token %}<input type="hidden" id="id_slug" name="slug" value="{{ report.slug }}" /> <button type="submit" class="button warning"><i class="fas fa-exclamation-triangle"></i> {% trans 'Warn plaintiff' %}</button></form>
   {% endif %}
   {% if can_silence %}
-  <a href="{% url 'postman:silence_plaintiff' report=report.slug %}" class="button alert">{% trans "Silence plaintiff" %}</a>
+    <a href="{% url 'postman:silence_plaintiff' report=report.slug %}" class="button alert"><i class="fas fa-microphone-slash"></i> {% trans "Silence plaintiff" %}</a>
   {% endif %}
   {% if request.user == report.reporter %}
   {% if can_delete %}
-  <a href="{% url 'postman:report_withdraw' report=report.slug %}" class="button alert">{% trans "Withdraw report" %}</a>
+    <a href="{% url 'postman:report_withdraw' report=report.slug %}" class="button alert"><i class="fas fa-trash-alt"></i> {% trans "Withdraw report" %}</a>
   {% else %}
   <button class="button alert disabled">{% trans "Withdraw report" %}</button>
   {% endif %}
   {% elif can_delete %}
-  <a href="{% url 'postman:report_withdraw' report=report.slug %}" class="button alert">{% trans "Delete report" %}</a>
+  <a href="{% url 'postman:report_withdraw' report=report.slug %}" class="button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete report" %}</a>
   {% endif %}
 
 </span>

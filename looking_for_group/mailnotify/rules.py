@@ -34,7 +34,7 @@ def is_not_silenced(user, obj=None):
     elif silences.filter(ending__gte=timezone.now()).count() > 0:
         logger.debug("user not is silenced for a term.")
         return False
-    return False
+    return True
 
 
 @rules.predicate

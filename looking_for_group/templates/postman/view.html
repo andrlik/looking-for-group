@@ -34,22 +34,22 @@
     <form action="" method="post">{% csrf_token %}
     <input type="hidden" {% if pm_messages|length > 1 and message.thread_id %}name="tpks" value="{{ message.thread_id }}"{% else %}name="pks" value="{{ message.pk }}"{% endif %} />
 
-    <a href="{{ next_url }}" class="button small secondary">{% trans "Back" %}</a>
+    <a href="{{ next_url }}" class="button small secondary"><i class="fas fa-chevron-circle-left"></i> {% trans "Back" %}</a>
 
-      <button type="submit" class="button small alert"
-        onclick="this.form.action='{% url 'postman:delete' %}?next={{ next_url|urlencode }}'">{% trans "Delete" %}</button>
-      {% if not archived %}<button type="submit" class="button small primary"
-                             onclick="this.form.action='{% url 'postman:archive' %}?next={{ next_url|urlencode }}'">{% trans "Archive" %}</button>{% endif %}
+    <button type="submit" class="button small alert"
+      onclick="this.form.action='{% url 'postman:delete' %}?next={{ next_url|urlencode }}'"><i class="fas fa-trash-alt"></i> {% trans "Delete" %}</button>
+    {% if not archived %}<button type="submit" class="button small primary"
+                           onclick="this.form.action='{% url 'postman:archive' %}?next={{ next_url|urlencode }}'"><i class="fas fa-archive"></i> {% trans "Archive" %}</button>{% endif %}
 
     {% if reply_to_pk and can_send %}<a href="{% url 'postman:reply' reply_to_pk %}?next={{ next_url|urlencode }}"
-                                       class="button small primary">{% trans "Reply" %}</a>{% endif %}
+                                       class="button small primary"><i class="fas fa-pencil-alt"></i> {% trans "Reply" %}</a>{% endif %}
     </form>
       {% if message.sender != request.user %}
       {% is_blocked_by_user message.sender.gamerprofile as is_blocked %}
       {% if is_blocked %}
       <a href="{% url 'gamer_profiles:my-block-list' %}" class="button alert small hollow">{% trans "Blocked - see block list" %}</a>
       {% else %}
-      <form method="post" action="{% url 'gamer_profiles:block-gamer' gamer=message.sender.username %}"> {% csrf_token %}<input type="submit" class="button small alert" value="{% trans 'Block sender' %}" /></form>
+      <form method="post" action="{% url 'gamer_profiles:block-gamer' gamer=message.sender.username %}"> {% csrf_token %}<button type="submit" class="button small alert"><i class="fas fa-ban"></i> {% trans 'Block sender' %} </button></form>
       {% endif %}
       {% endif %}
 
@@ -57,7 +57,7 @@
   <h2>{% trans 'Reply' %}</h2>
   <form action="{% url 'postman:reply' reply_to_pk %}?next={{ next_url|urlencode }}" method="post">{% csrf_token %}
     <div id="pm_reply">{{ form.body }}</div>
-    <button type="submit" class="button success">{% trans 'Reply' %}</button>
+    <button type="submit" class="button success"><i class="fas fa-pencil-alt"></i> {% trans 'Reply' %}</button>
   </form>{% endif %}
   {% endif %}
   {% endfor %}
