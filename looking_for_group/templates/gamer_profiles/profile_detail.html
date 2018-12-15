@@ -1,11 +1,11 @@
 {% extends "gamer_profiles/profile_base.html" %}
-{% load avatar_tags i18n humanize ratings %}
+{% load avatar_tags i18n humanize ratings rules %}
 {% block subtitle %}{{ gamer }} - {% endblock %}
 {% block sectiontitle %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block mobileheader %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block detailactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
-
+{% has_perm "postman.can_message_user" request.user gamer.user as can_message %}
 <dl>
   <dt>{% trans "Display Name" %}</dt>
   <dd>{{ gamer.display_name }}</dd>
@@ -24,6 +24,9 @@
   <dt>{% trans "Playstyle" %}</dt>
   <dd>{{ gamer.playstyle }}</dd>
 </dl>
+{% if request.user != gamer.user and can_message %}
+<a href="{% url 'postman:write' gamer.username %}" class="button primary"><i class="fas fa-envelope"></i> {% trans "Message" %}</a>
+{% endif %}
 
 <h2>{% trans "Status" %}</h2>
 

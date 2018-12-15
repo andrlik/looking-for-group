@@ -326,7 +326,7 @@ class CommunityDetailView(
                 )
             messages.info(request, message)
             return HttpResponseRedirect(
-                reverse(view_target, kwargs={"community": obj.pk})
+                reverse(view_target, kwargs={"community": obj.slug})
             )
         logger.debug("user has permissions, proceeding with standard redirect")
         return super().get(request, *args, **kwargs)

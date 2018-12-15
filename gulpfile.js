@@ -86,7 +86,16 @@ gulp.task('watch', function() {
 
 });
 
+//Django Q
+gulp.task('cluster', function() {
+  var cmd = spawn('python', ['manage.py', 'qcluster'], {stdio: 'inherit' });
+  cmd.on('close', function(code) {
+    console.log('qcluster exited with code ' + code);
+    cb(code);
+  });
+});
+
 // Default task
 gulp.task('default', function() {
-    runSequence(['scripts', 'imgCompression'], ['runServer', 'browserSync', 'watch']);
+    runSequence(['scripts', 'imgCompression'], ['runServer', 'browserSync', 'watch', 'cluster']);
 });

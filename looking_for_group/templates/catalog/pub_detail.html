@@ -13,7 +13,7 @@
 
 {% if is_editor %}
 <div class="clearfix">
-  <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left">{% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right">{% trans "Delete publisher" %}</a>
+  <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right"><i class="fas fa-trash-alt"></i> {% trans "Delete publisher" %}</a>
 </div>
 {% endif %}
 

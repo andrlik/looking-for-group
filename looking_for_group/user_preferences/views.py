@@ -128,7 +128,7 @@ class SettingsEdit(LoginRequiredMixin, generic.edit.UpdateView):
     model = models.Preferences
     context_object_name = "preferences"
     template_name = "user_preferences/setting_edit.html"
-    fields = ["news_emails", "notification_digest", "feedback_volunteer"]
+    fields = ["news_emails", "notification_digest", "feedback_volunteer", "email_messages"]
     success_url = reverse_lazy("user_preferences:setting-view")
 
     def get_object(self):

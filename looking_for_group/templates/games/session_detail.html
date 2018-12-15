@@ -53,10 +53,10 @@
 {{ session.gm_notes_rendered|safe }}<br /><br />
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
-    <a href="{% url 'games:session_edit' session=session.slug %}" class="button">{% trans "Edit session details" %}</a>
+    <a href="{% url 'games:session_edit' session=session.slug %}" class="button"><i class="fas fa-edit"></i> {% trans "Edit session details" %}</a>
   </div>
   <div class="cell medium-auto">
-    <a href="{% url 'games:session_move' session=session.slug %}" class="button">{% trans "Reschedule session" %}</a>
+    <a href="{% url 'games:session_move' session=session.slug %}" class="button"><i class="fas fa-calendar"></i> {% trans "Reschedule session" %}</a>
   </div>
   <div class="cell medium-auto">
     {% if session.status == "complete" %}
@@ -84,10 +84,10 @@
 <p class="meta">{% blocktrans with create=session.adventurelog.created author=session.adventurelog.initial_author %}Posted by {{ author }} at {{ create }}. {% endblocktrans %}{% if session.adventurelog.last_edited_by %}{% blocktrans with mod=session.adventurelog.modified editor=session.adventurelog.last_edited_by %}Last edited by {{ editor }} at {{ mod }}.{% endblocktrans %}{% endif %}</p>
 {{ session.adventurelog.body_rendered|safe }}
 <div class="clearfix">
-  <a href="{% url 'games:log_edit' log=session.adventurelog.slug %}" class="button float-left">{% trans "Edit Log Entry" %}</a> {% if request.user.gamerprofile == session.game.gm %} <a href="{% url 'games:log_delete' log=session.adventurelog.slug %}" class="button float-right alert">{% trans "Delete Log Entry" %}</a>{% endif %}
+  <a href="{% url 'games:log_edit' log=session.adventurelog.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit Log Entry" %}</a> {% if request.user.gamerprofile == session.game.gm %} <a href="{% url 'games:log_delete' log=session.adventurelog.slug %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete Log Entry" %}</a>{% endif %}
 </div>
 {% else %}
 <p>{% trans "The log entry for this session hasn't been created yet." %}</p>
-<a href="{% url 'games:log_create' session=session.slug %}" class="button">{% trans "Create Log Entry" %}</a>
+<a href="{% url 'games:log_create' session=session.slug %}" class="button"><i class="fas fa-plus-circle"></i> {% trans "Create Log Entry" %}</a>
 {% endif %}
 {% endblock %}

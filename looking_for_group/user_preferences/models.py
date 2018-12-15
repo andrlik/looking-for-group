@@ -17,6 +17,7 @@ class Preferences(TimeStampedModel, AbstractUUIDModel, models.Model):
     news_emails = models.BooleanField(default=False, help_text=_("Send me occasionally news about the site. NOTE: We will still send you essential notices such as privacy policy and terms of service information, etc."))
     notification_digest = models.BooleanField(default=False, help_text=_("Send me email digests of unread notifications."))
     feedback_volunteer = models.BooleanField(default=False, help_text=_('Is it ok if we occasionally reach out to directly to solicit site feedback?'))
+    email_messages = models.BooleanField(verbose_name='Email messages', default=False, help_text=_("When a user sends me a message, send a copy of it to my email."))
 
     def __str__(self):
         return "Settings for {}".format(self.gamer)

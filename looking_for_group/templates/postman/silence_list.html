@@ -1,0 +1,52 @@
+{% extends "postman/silence_base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% trans "The Silenced" %} - {% endblock %}
+{% block sectiontitle %}{% trans "The Silenced" %}{% endblock %}
+{% block mobileheader %}{% trans "The Silenced" %}{% endblock %}
+{% block content %}
+{% if not silence_list %}
+<p>{% trans "No records found." %}</p>
+{% endif %}
+<table class="hover scroll">
+  <thead>
+    <tr>
+      <th>{% trans "User" %}</th>
+      <th class="text-right">{% trans "Silenced at" %}</th>
+      <th class="text-right">{% trans "Silenced until" %}</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for silence in silence_list %}
+    <td>{% avatar silence.user 30 class='avatar' %} <a href="{{ silence.user.gamerprofile.get_absolute_url }}">{{ silence.user.gamerprofile }}</a></td>
+    <td class="text-right">{{ silence.created }}</td>
+    <td class="text-right">{{ silence.ending|default_if_none:"Eternity" }}</td>
+    <td><a href="{{ silence.get_absolute_url }}" class="button primary">{% trans "View details" %}</a></td>
+    {% empty %}
+    {% endfor %}
+  </tbody>
+</table>
+{% if is_paginated %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if not page_obj.has_previous %}
+    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    {% else %}
+    <li class="pagination-previous"><a href="{% url 'postman:silence_list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+    {% for page_num in paginator.page_range %}
+    {% if page_obj.number == page_num %}
+    <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+    {% else %}
+    <li><a href="{% url 'postman:silence_list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+    {% endif %}
+    {% endfor %}
+    {% if not page_obj.has_next %}
+    <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
+    {% else %}
+    <li class="pagination-next"><a href="{% url 'postman:silence_list' page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}
