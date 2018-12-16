@@ -16,7 +16,7 @@ from .api_routers import router
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("dashboard/", view=Dashboard.as_view(), name="dashboard"),
-    path("health/", view=TemplateView.as_view(template_name='health_check.html'), name="health"),
+    path("health/", view=TemplateView.as_view(template_name='health.html')),
     path("privacy/", view=PrivacyView.as_view(), name="privacy"),
     path("terms/", view=TermsView.as_view(), name='terms'),
     # Django Admin, use {% url 'admin:index' %}
