@@ -18,14 +18,14 @@
 
 {% if is_editor %}
 <div class="clearfix">
-  <a href="{% url 'game_catalog:game-edit' game=game.pk %}" class="button float-left">{% trans "Edit game record" %}</a> <a href="{% url 'game_catalog:game-delete' game=game.pk %}" class="button float-right alert">{% trans "Delete game" %}</a>
+  <a href="{% url 'game_catalog:game-edit' game=game.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit game record" %}</a> <a href="{% url 'game_catalog:game-delete' game=game.pk %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete game" %}</a>
 </div>
 {% endif %}
 
 {% ratings game %}
 
 <h2>{% trans "Editions" %}</h2>
-{% if request.user.is_authenticated and is_editor %}<a href="{% url 'game_catalog:edition_create' game=game.pk %}" class="button">{% trans "Add new edition" %}</a><br />{% endif %}
+{% if request.user.is_authenticated and is_editor %}<a href="{% url 'game_catalog:edition_create' game=game.pk %}" class="button"><i class="fas fa-plus-circle"></i> {% trans "Add new edition" %}</a><br />{% endif %}
 {% if not game.editions.count %}
 <p>{% blocktrans %}There is no edition details in our database for this game yet.{% endblocktrans %}</p>
 {% else %}

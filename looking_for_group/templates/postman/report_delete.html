@@ -1,0 +1,17 @@
+{% extends "postman/report_base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Withdraw report" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Withdraw report" %}{% endblock %}
+{% block mobileheader %}{% trans "Withdraw report" %}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% blocktrans %}Withdrawing your report will remove it from the moderator queue and you will have to recreate it if you wish it to be reviewed.{% endblocktrans %}</p>
+</div>
+<form method="post" action="">
+  {% csrf_token %}
+  <div class="clearfix">
+    <a href="{{ report.get_absolute_url }}" class="button secondary float-left">{% trans "Nevermind, take me back to the report details" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Withdraw report' %}" />
+  </div>
+</form>
+{% endblock %}

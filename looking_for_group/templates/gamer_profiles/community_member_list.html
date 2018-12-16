@@ -60,23 +60,23 @@
       <td>{{ member.gamer.games_finished|default_if_none:"0" }}</td>
       {% if is_admin %}
       {% if request.user == member.gamer.user %}
-      <td><button class="button disabled">{% trans "Edit Member Role" %}</button></td>
+      <td><button class="button disabled"><i class="fas fa-user-edit"></i> {% trans "Edit Member Role" %}</button></td>
       {% else %}
-      <td><a href="{% url 'gamer_profiles:community-edit-gamer-role' community=community.slug gamer=member.gamer.username %}" class="button">{% trans "Edit Member Role" %}</a> </td>
+      <td><a href="{% url 'gamer_profiles:community-edit-gamer-role' community=community.slug gamer=member.gamer.username %}" class="button"><i class="fas fa-user-edit"></i> {% trans "Edit Member Role" %}</a> </td>
       {% endif %}
       {% endif %}
       {% if is_kicker %}
       {% if request.user == member.gamer.user %}
-      <td><button class="disabled alert button">{% trans "Kick from community" %}</button></td>
+      <td><button class="disabled alert button"><i class="fas fa-sign-out-alt"></i> {% trans "Kick from community" %}</button></td>
       {% else %}
-      <td><a href="{% url 'gamer_profiles:community-kick-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert">{% trans "Kick from community" %}</a></td>
+      <td><a href="{% url 'gamer_profiles:community-kick-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert"><i class="fas fa-sign-out-alt"></i>{% trans "Kick from community" %}</a></td>
       {% endif %}
       {% endif %}
       {% if is_banner %}
       {% if request.user == member.gamer.user %}
-      <td><button class="button alert disabled">{% trans "Ban from community" %}</button></td>
+      <td><button class="button alert disabled"><i class="fas fa-ban"></i> {% trans "Ban from community" %}</button></td>
       {% else %}
-      <td><a href="{% url 'gamer_profiles:community-ban-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert">{% trans "Ban from community" %}</a></td>
+      <td><a href="{% url 'gamer_profiles:community-ban-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert"><i class="fas fa-ban"></i> {% trans "Ban from community" %}</a></td>
       {% endif %}
       {% endif %}
     </tr>

@@ -27,7 +27,7 @@
 
 {% if is_editor %}
 <div class="clearfix">
-  <a href="{% url 'game_catalog:edition_edit' edition=edition.slug %}" class="float-left button">{% trans "Edit details" %}</a> <a href="{% url 'game_catalog:edition_delete' edition=edition.slug %}" class="float-right button alert">{% trans "Delete edition" %}</a>
+  <a href="{% url 'game_catalog:edition_edit' edition=edition.slug %}" class="float-left button"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:edition_delete' edition=edition.slug %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete edition" %}</a>
 </div>
 {% endif %}
 
@@ -44,7 +44,7 @@
   <div class="tabs-panel is-active" id="sourcebook_panel">
     {% if is_editor %}
     <div class="clearfix">
-      <a href="{% url 'game_catalog:sourcebook_create' edition=edition.slug %}" class="button float-right">{% trans "Create new sourcebook for edition" %}</a>
+      <a href="{% url 'game_catalog:sourcebook_create' edition=edition.slug %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Create new sourcebook for edition" %}</a>
     </div>
     {% endif %}
     {% if edition.sourcebooks.count == 0 %}
@@ -76,7 +76,7 @@
   <div class="tabs-panel" id="module_panel">
     {% if is_editor %}
     <div class="clearfix">
-      <a href="{% url 'game_catalog:module-create' edition=edition.slug %}" class="button float-right">{% trans "Create new module for this edition." %}</a>
+      <a href="{% url 'game_catalog:module-create' edition=edition.slug %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Create new module for this edition." %}</a>
     </div>
     {% endif %}
     {% if edition.publishedmodule_set.count == 0 %}

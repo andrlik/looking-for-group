@@ -326,7 +326,7 @@ class CommunityDetailView(
                 )
             messages.info(request, message)
             return HttpResponseRedirect(
-                reverse(view_target, kwargs={"community": obj.pk})
+                reverse(view_target, kwargs={"community": obj.slug})
             )
         logger.debug("user has permissions, proceeding with standard redirect")
         return super().get(request, *args, **kwargs)
@@ -756,7 +756,7 @@ class RejectApplication(ApproveApplication):
         notify.send(
             sender=models.CommunityApplication,
             recipient=application.gamer.user,
-            verb=_("community application was rejected"),
+            verb=_("Your community application was rejected"),
             action_object=application,
             target=application.community,
         )

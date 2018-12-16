@@ -1,0 +1,58 @@
+{% extends "postman/report_base.html" %}
+{% load i18n avatar_tags foundation_formtags markdownify %}
+{% block subtitle %}{% trans "Update report" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Update report" %}{% endblock %}
+{% block mobileheader %}{% trans "Update report" %}{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% endblock %}
+{% block content %}
+<p>{% trans "Edit the report below. For your convenience, we are displaying the message that was reported as well." %}</p>
+<h3>{% trans "Report details" %}</h3>
+<dl>
+  <dt>{% trans "Reported by" %}</dt>
+  <dd>{% avatar report.reporter 30 class='avatar' %} <a href="{{ report.reporter.gamerprofile.get_absolute_url }}">{{ report.reporter.gamerprofile }}</a></dd>
+  <dt>{% trans "Reported at" %}</dt>
+  <dd>{{ report.created }}</dd>
+  <dt>{% trans "Report type" %}</dt>
+  <dd>{{ report.get_report_type_display }}</dd>
+  <dt>{% trans "Details provided" %}</dt>
+  <dd>{{ report.details|markdownify|linebreaksbr }}</dd>
+</dl>
+<h3>{% trans "Message details" %}</h3>
+<dl>
+  <dt>{% trans "From" %}</dt>
+  <dd>{% avatar report.message.sender 30 class='avatar' %} <a href="{{ report.message.sender.gamerprofile.get_absolute_url }}">{{ report.message.sender.gamerprofile }}</a></dd>
+  <dt>{% trans "Received" %}</dt>
+  <dd>{{ report.message.sent_at }}</dd>
+  <dt>{% trans "Subject" %}</dt>
+  <dd>{{ report.message.subject }}</dd>
+  <dt>{% trans "Message body" %}</dt>
+  <dd>{{ report.message.body|markdownify|linebreaksbr }}
+</dl>
+
+<form method="post" action="">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ report.get_absolute_url }}" class="button secondary float-left">{% trans "Return to report details" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Update report' %}" />
+  </div>
+</form>
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_admin_response')[0],
+    autosave: {
+      enabled: false
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
+
+{% endblock %}

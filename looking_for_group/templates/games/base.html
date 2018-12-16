@@ -13,11 +13,11 @@
     <nav>
       <ul class="menu align-right">
         {% block innernavmenu %}
-        <li{% block allgamesactive %}{% endblock %}><a href="{% url 'games:game_list' %}">{% trans "All visible games" %}</a></li>
-        <li{% block yourgamesactive %}{% endblock %}><a href="{% url 'games:my_game_list' %}">{% trans "Your games" %}</a></li>
-        <li{% block charactive %}{% endblock %}><a href="{% url 'games:character_gamer_list' %}">{% trans "Your characters" %}</a></li>
-        <li{% block appactive %}{% endblock %}><a href="{% url 'games:my-game-applications' %}">{% trans "Your game applications" %}</a></li>
-        <li{% block createactive %}{% endblock %}><a href="{% url 'games:game_create' %}">{% trans "Create new game" %}</a></li>
+        <li{% block allgamesactive %}{% endblock %}><a href="{% url 'games:game_list' %}"><i class="fas fa-globe-americas"></i> {% trans "All visible games" %}</a></li>
+        <li{% block yourgamesactive %}{% endblock %}><a href="{% url 'games:my_game_list' %}"><i class="fas fa-dice-d20"></i> {% trans "Your games" %}</a></li>
+        <li{% block charactive %}{% endblock %}><a href="{% url 'games:character_gamer_list' %}"><i class="fas fa-user-shield"></i> {% trans "Your characters" %}</a></li>
+        <li{% block appactive %}{% endblock %}><a href="{% url 'games:my-game-applications' %}"><i class="fas fa-portrait"></i> {% trans "Your game applications" %}</a></li>
+        <li{% block createactive %}{% endblock %}><a href="{% url 'games:game_create' %}"><i class="fas fa-plus-circle"></i> {% trans "Create new game" %}</a></li>
         {% endblock %}
       </ul>
     </nav>

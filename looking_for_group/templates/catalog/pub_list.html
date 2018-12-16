@@ -9,7 +9,7 @@
 {% if is_editor %}
 <br />
 <div class="clearfix">
-  <a href="{% url 'game_catalog:pub-create' %}" class="button float-right">{% trans "Create new publisher" %}</a>
+  <a href="{% url 'game_catalog:pub-create' %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Create new publisher" %}</a>
 </div>
 {% endif %}
 {% if not object_list.exists %}

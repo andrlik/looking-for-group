@@ -3,18 +3,18 @@
 {% block innernavmenu %}
 {% has_perm 'game.can_edit_listing' request.user game as is_gm %}
 {% has_perm 'game.can_view_detailed_listing' request.user game as is_member %}
-<li><a href="{% url 'games:game_list' %}">{% trans "Back to game listings" %}</a></li>
-<li{% block gameactive %}{% endblock %}>{% block gamedetaillink %}<a href="{{ game.get_absolute_url }}">{% trans "Game details" %}</a>{% endblock %}</li>
+<li><a href="{% url 'games:game_list' %}"><i class="fas fa-list"></i> {% trans "Back to game listings" %}</a></li>
+<li{% block gameactive %}{% endblock %}>{% block gamedetaillink %}<a href="{{ game.get_absolute_url }}"><i class="fas fa-book-open"></i> {% trans "Game details" %}</a>{% endblock %}</li>
 {% if is_member %}
-<li{% block sessionactive %}{% endblock %}><a href="{% url 'games:session_list' gameid=game.slug %}">{% trans "View sessions" %}</a></li>
-<li{% block charactive %}{% endblock %}><a href="{% url 'games:character_game_list' gameid=game.slug %}">{% trans "View characters" %}</a></li>
+<li{% block sessionactive %}{% endblock %}><a href="{% url 'games:session_list' gameid=game.slug %}"><i class="fas fa-history"></i> {% trans "View sessions" %}</a></li>
+<li{% block charactive %}{% endblock %}><a href="{% url 'games:character_game_list' gameid=game.slug %}"><i class="fas fa-user-shield"></i> {% trans "View characters" %}</a></li>
 {% endif %}
 {% if is_gm %}
-<li{% block editactive %}{% endblock %}><a href="{% url 'games:game_edit' gameid=game.slug %}">{% trans "Edit game" %}</a></li>
-<li{% block appactive %}{% endblock %}><a href="{% url 'games:game_applicant_list' gameid=game.slug %}">{% trans "Review applicants" %}</a></li>
-<li><a href="{% url 'games:game_export' gameid=game.slug %}" title="Export game data">{% trans "Export" %}</a></li>
-<li{% block inviteactive %}{% endblock %}><a href="{% url 'games:game_invite_list' slug=game.slug %}">{% trans "Invites" %}</a></li>
-<li{% block deleteactive %}{% endblock %}><a href="{% url 'games:game_delete' gameid=game.slug %}">{% trans "Delete game" %}</a></li>
+<li{% block editactive %}{% endblock %}><a href="{% url 'games:game_edit' gameid=game.slug %}"><i class="fas fa-edit"></i> {% trans "Edit game" %}</a></li>
+<li{% block appactive %}{% endblock %}><a href="{% url 'games:game_applicant_list' gameid=game.slug %}"><i class="fas fa-clipboard-list"></i> {% trans "Review applicants" %}</a></li>
+<li><a href="{% url 'games:game_export' gameid=game.slug %}" title="Export game data"><i class="fas fa-file-export"></i> {% trans "Export" %}</a></li>
+<li{% block inviteactive %}{% endblock %}><a href="{% url 'games:game_invite_list' slug=game.slug %}"><i class="fas fa-key"></i> {% trans "Invites" %}</a></li>
+<li{% block deleteactive %}{% endblock %}><a href="{% url 'games:game_delete' gameid=game.slug %}"><i class="fas fa-trash-alt"></i> {% trans "Delete game" %}</a></li>
 {% endif %}
 {% endblock %}
 {% block js_extra %}

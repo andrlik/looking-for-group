@@ -58,6 +58,16 @@ def render_markdown_log_body(sender, instance, *args, **kwargs):
         instance.body_rendered = None
 
 
+@receiver(post_save, sender=models.AdventureLog)
+def notify_on_log_create_edit(sender, instance, created, *args, **kwargs):
+    if created:
+        for player in instance.session.players_expected.all():
+            if instance.initial_author != player.gamer:
+                notify.send(instance.initial_author, recipient=player.gamer.user, verb="posted a new adventure log", target=instance.session)
+        if instance.initial_author != instance.session.game.gm:
+            notify.send(instance.initial_author, recipient=instance.session.game.gm.user, verb="posted a new adventure log", target=instance.session)
+
+
 @receiver(post_save, sender=models.GameSession)
 def update_complete_session_count(sender, instance, *args, **kwargs):
     if instance.status == "complete":

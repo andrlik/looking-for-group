@@ -32,9 +32,6 @@ CACHES = {
         }
     }
 }
-
-
-
 # SECURITY
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-proxy-ssl-header
@@ -113,7 +110,7 @@ TEMPLATES[0]['OPTIONS']['loaders'] = [  # noqa F405
 # https://docs.djangoproject.com/en/dev/ref/settings/#default-from-email
 DEFAULT_FROM_EMAIL = env(
     'DJANGO_DEFAULT_FROM_EMAIL',
-    default='Looking for Group <noreply@geek-looking-for-group.herokuapp.com>'
+    default='Looking for Group <noreply@mg.lfg.directory>'
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#server-email
 SERVER_EMAIL = env('DJANGO_SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
@@ -155,6 +152,7 @@ COMPRESS_OFFLINE = env.bool('COMPRESS_OFFLINE', default=True)
 # ------------------------------------------------------------------------------
 # https://docs.sentry.io/clients/python/integrations/django/
 INSTALLED_APPS += ['raven.contrib.django.raven_compat']  # noqa F405
+
 MIDDLEWARE = ['allow_cidr.middleware.AllowCIDRMiddleware', 'raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware'] + MIDDLEWARE  # noqa: F405
 ALLOWED_CIDR_NETS = env.list('DJANGO_ALLOWED_CIDR_NETS', default=['12.0.0.0/11', '172.31.0.0/11'])
 # Sentry

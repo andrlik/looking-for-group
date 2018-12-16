@@ -436,7 +436,7 @@ class GamePosting(
     invites = GenericRelation(Invite)
 
     def __str__(self):
-        return "Game: {0} [{1}]".format(self.title, self.id)
+        return self.title
 
     def get_absolute_url(self):
         return reverse_lazy("games:game_detail", kwargs={"gameid": self.slug})
@@ -709,6 +709,13 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     occurrence = models.ForeignKey(
         Occurrence, null=True, blank=True, on_delete=models.SET_NULL
     )
+
+    def __str__(self):
+        return "{} (session at {})".format(self.game.title, self.scheduled_time.strftime("%Y-%m-%d %H:%M %Z"))
+
+    @property
+    def title(self):
+        return self.game.title
 
     def get_absolute_url(self):
         return reverse_lazy("games:session_detail", kwargs={"session": self.slug})

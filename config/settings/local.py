@@ -33,6 +33,7 @@ TEMPLATES[0]['OPTIONS']['debug'] = DEBUG  # noqa F405
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-host
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'localhost'
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-port
 EMAIL_PORT = 1025
@@ -74,5 +75,41 @@ HAYSTACK_CONNECTIONS = {
         "ENGINE": 'haystack.backends.elasticsearch5_backend.Elasticsearch5SearchEngine',
         "URL": "http://127.0.0.1:9200/",
         'INDEX_NAME': 'haystack',
+    },
+}
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "root": {"level": "WARNING", "handlers": ["console"]},
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s "
+            "%(process)d %(thread)d %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        }
+    },
+    "loggers": {
+        "django.db.backends": {
+            "level": "ERROR",
+            "handlers": ["console"],
+            "propagate": True,
+        },
+        "catalog": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "gamer_profiles": {
+            "level": "DEBUG",
+            "handlers": ["console"],
+            "propagate": True,
+        },
+        "rules": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "games": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "haystack": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "postman": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
     },
 }

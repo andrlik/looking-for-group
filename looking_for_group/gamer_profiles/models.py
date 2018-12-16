@@ -717,7 +717,7 @@ class BlockedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
     )
 
     def __str__(self):
-        return "{0} blocked {2}".format(self.blockee.username, self.blockee.username)
+        return "{0} blocked {1}".format(self.blocker.username, self.blockee.username)
 
 
 class MutedUser(TimeStampedModel, AbstractUUIDModel, models.Model):

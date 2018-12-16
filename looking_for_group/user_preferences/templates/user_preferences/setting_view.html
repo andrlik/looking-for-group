@@ -12,6 +12,8 @@
   <dd>{{ preferences.notification_digest|yesno:"Yes,No" }}</dd>
   <dt>{% trans "Volunteer to provide feedback?" %}</dt>
   <dd>{{ preferences.feedback_volunteer|yesno:"Yes,No" }}</dd>
+  <dt>{% trans "Receive email copies of messages?" %}</dt>
+  <dd>{{ preferences.email_messages|yesno:"Yes,No" }}</dd>
 </dl>
 
 {% endblock %}

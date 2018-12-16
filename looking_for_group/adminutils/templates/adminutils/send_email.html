@@ -1,0 +1,33 @@
+{% extends "adminutils/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Send mass email" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Send mass email" %}{% endblock %}
+{% block mobileheader %}{% trans "Send mass email" %}{% endblock %}
+{% block emailactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+
+<p>{% blocktrans %}Send a mass email to users with the form below:{% endblocktrans %}</p>
+
+<form method="post" action="">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{% url 'dashboard' %}" class="button secondary float-left">{% trans "Nevermind, take me somewhere else." %}</a> <input type="submit" class="button success float-right" value="{% trans 'Send' %}" />
+  </div>
+</form>
+
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_body')[0],
+    autosave: {
+      enabled: true,
+      uniqueId: "mass_email_body",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
+{% endblock %}

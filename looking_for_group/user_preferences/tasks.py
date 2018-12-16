@@ -15,6 +15,8 @@ logger = logging.getLogger("games")
 
 def form_email_body(user, notification_list):
     plaintext_context = Context(autoescape=False)
+    plaintext_context['request'] = {}
+    plaintext_context['request']['user'] = user
     text_body = render_to_string("user_preferences/message_body.txt", {'user': user, 'notifications': notification_list}, plaintext_context)
     html_body = markdown(text_body)
     return text_body, html_body
@@ -25,7 +27,7 @@ def send_digest_email(user, notifications):
     if email_to_use:
         body, html_body = form_email_body(user, notifications)
         msg = EmailMultiAlternatives(subject="LFG Directory Activity Digest", from_email="noreply@mg.lfg.directory", to=[email_to_use], body=body)
-        msg.attach_alternative(html_body, 'text/html')
+        msg.attach_alternative("<html>{}</html>".format(html_body), 'text/html')
         msg.send()
         with transaction.atomic():
             notifications.update(emailed=True)
