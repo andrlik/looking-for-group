@@ -89,20 +89,28 @@ class AvailableCalendarManager(CalendarManager):
         requestor_occurrences = query_range.get_occurrences()
         matches = []
         gamer_list_length = gamer_list.count()
+        logger.debug("Starting evaluation of {} gamers".format(gamer_list_length))
         for occurrence in requestor_occurrences:
             conflicts = self.check_availability(gamer_list, occurrence.start, occurrence.end, minimum_overlap=150)
-            if conflicts and len(conflicts) < gamer_list_length:
-                matches.append(gamer_list.exclude(id__in=[item['gamer'].pk for item in conflicts]))
+            if (conflicts and len(conflicts) < gamer_list_length) or not conflicts:
+                logger.debug("There is at least one match here. Adding gamer(s) to match list.")
+                match_list = gamer_list.exclude(id__in=[item['gamer'].pk for item in conflicts])
+                logger.debug("Appening {} gamers".format(match_list.count()))
+                matches.append(match_list)
                 gamer_list = gamer_list.filter(id__in=[item['gamer'].pk for item in conflicts])
                 gamer_list_length = gamer_list.count()
+                logger.debug("New list of gamers to evaluate is {}".format(gamer_list_length))
                 if gamer_list_length == 0:
                     break
+        logger.debug("{} matches in list".format(len(matches)))
         if len(matches) > 1:
+            logger.debug("Executing unions")
             qs1 = matches.pop()
             for item in matches:
                 qs1 = qs1.union(item)
             return qs1
         if len(matches) == 1:
+            logger.debug("Grabbing queryset")
             return matches[0]
         return matches
 
@@ -115,11 +123,18 @@ class AvailableCalendarManager(CalendarManager):
         if no conflicts.
         """
         conflict_list = []
+        matches = 0
         for gamer in gamer_list:
+            logger.debug("Evaluating for gamer {}".format(gamer))
             cal = self.get_or_create_availability_calendar_for_gamer(gamer)
             result = cal.check_proposed_time(start, end, minimum_overlap)
             if result:
+                logger.debug("Received {} conflicts".format(len(result)))
                 conflict_list.append({"gamer": gamer, "conflicts": result})
+            else:
+                matches += 1
+                logger.debug("No conflicts for this gamer. Currently {} matching gamers".format(matches))
+        logger.debug("Returning list of {} conflicts".format(len(conflict_list)))
         return conflict_list
 
 
@@ -141,38 +156,52 @@ class AvailableCalendar(Calendar):
         For most RPGs, that means at least 120-180 minutes must overlap, but when checking for a specific session,
         the default will require it all to fit within.
         """
-        if minimum_overlap:
+        logger.debug("Received minimum overlap of {}".format(minimum_overlap))
+        if minimum_overlap and end - start > timedelta(seconds=minimum_overlap * 60):
             minimum_overlap = timedelta(seconds=minimum_overlap * 60)
-        elif minimum_overlap and end - start < minimum_overlap * 60:
+        elif minimum_overlap and end - start < timedelta(seconds=minimum_overlap * 60):
+            logger.debug("Time to check is less than specified minimum overlap, so using time to check instead.")
             minimum_overlap = end - start
         else:
+            logger.debug("Setting minimum overlap to check period")
             minimum_overlap = end - start
+        logger.debug("Minimum overlap is now {}".format(minimum_overlap.seconds))
         end_date_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
         end_date_future_q = Q(end_recurring_period__gt=timezone.now())
         day_period = Day(events=self.events.filter(end_date_empty_q | end_date_future_q), date=start)
         occurrences = day_period.get_occurrences()
+        logger.debug("Occurrences fetched.")
         error_reasons = []
         matches = []
         try:
             for occurrence in occurrences:
+                logger.debug("Evaluating {} - {} against start: {} and end {}".format(occurrence.start, occurrence.end, start, end))
                 if occurrence.start > start and occurrence.end < end and occurrence.end - occurrence.start < minimum_overlap:
+                    logger.debug("Occurrence begins after start and ends before end. Overlap is insufficient.")
                     error_reasons.append(occurrence)
                 elif occurrence.start <= start and occurrence.end < end and occurrence.end - start < minimum_overlap:
+                    logger.debug("Occurrence begins before start, but ends before end. Overlap is insufficient. ")
                     error_reasons.append(occurrence)
                 elif occurrence.start > start and occurrence.end >= end and end - occurrence.start < minimum_overlap:
+                    logger.debug("Occurrence begins after start but occurrence goes late than end. Overlap is still insufficient")
                     error_reasons.append(occurrence)
                 elif occurrence.start <= start and occurrence.end >= end and end - start < minimum_overlap:
+                    logger.debug("occurrence is larger than end and start, but the minimum overlap is still too small")
                     error_reasons.append(occurrence)
                 else:
+                    logger.debug("There is sufficient overlap. This is a MATCH")
                     matches.append(occurrence)
         except StopIteration:
             return ["No availability"]
         if len(matches) > 0:
+            logger.debug("Returning None to signify match")
             return None
         else:
             if len(error_reasons) > 0:
+                logger.debug("Returning list of conflicts.")
                 return error_reasons
             else:
+                logger.debug("Returning default value as user has no availability defined for this day.")
                 return ["No availability"]
 
     class Meta:

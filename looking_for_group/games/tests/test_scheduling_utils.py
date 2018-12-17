@@ -73,9 +73,9 @@ class AbstractAvailTestCase(AbstractViewTestCaseSignals):
                 rule=self.weeklyrule,
             )
         Event.objects.create(
-            calendar=self.cal3,
-            start=make_event_time_for_date(self.weekdays[5], "12:00"),
-            end=make_event_time_for_date(self.weekdays[5], "14:00"),
+            calendar=self.cal4,
+            start=make_event_time_for_date(self.weekdays[3], "12:00"),
+            end=make_event_time_for_date(self.weekdays[3], "14:00"),
             rule=self.weeklyrule,
         )
 
