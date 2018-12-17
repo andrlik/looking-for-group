@@ -204,6 +204,7 @@ MEDIA_URL = "/media/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#templates
 TEMPLATES = [
     {
+        "NAME": "default",
         # https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-TEMPLATES-BACKEND
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # https://docs.djangoproject.com/en/dev/ref/settings/#template-dirs
@@ -230,6 +231,32 @@ TEMPLATES = [
                 "looking_for_group.motd.context_processors.motd",
                 "looking_for_group.context_processors.app_version",
                 "postman.context_processors.inbox",
+            ],
+        },
+    },
+    {
+        "NAME": "light",
+        # https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-TEMPLATES-BACKEND
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        # https://docs.djangoproject.com/en/dev/ref/settings/#template-dirs
+        "DIRS": [str(APPS_DIR.path("user_preferences").path("templates"))],
+        "OPTIONS": {
+            # https://docs.djangoproject.com/en/dev/ref/settings/#template-debug
+            "debug": DEBUG,
+            # https://docs.djangoproject.com/en/dev/ref/settings/#template-loaders
+            # https://docs.djangoproject.com/en/dev/ref/templates/api/#loader-types
+            "loaders": [
+                "django.template.loaders.filesystem.Loader",
+            ],
+            # https://docs.djangoproject.com/en/dev/ref/settings/#template-context-processors
+            "context_processors": [
+                # "django.template.context_processors.debug",
+                # "django.template.context_processors.request",
+                # "django.contrib.auth.context_processors.auth",
+                # "django.template.context_processors.i18n",
+                # "django.template.context_processors.media",
+                # "django.template.context_processors.static",
+                # "django.template.context_processors.tz",
             ],
         },
     }

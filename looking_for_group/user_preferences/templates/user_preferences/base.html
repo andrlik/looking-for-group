@@ -13,8 +13,8 @@
     <nav>
       <ul class="menu align-right">
         {% block innernavmenu %}
-        <li{% block editactive %}{% endblock %}><a href="{% url 'user_preferences:setting-edit' %}">{% trans "Edit Settings" %}</a></li>
-        <li{% block deleteactive %}{% endblock %}><a href="{% url 'user_preferences:account_delete' %}">{% trans "Delete account" %}</a></li>
+        <li{% block editactive %}{% endblock %}><a href="{% url 'user_preferences:setting-edit' %}"><i class="fas fa-edit"></i> {% trans "Edit Settings" %}</a></li>
+        <li{% block deleteactive %}{% endblock %}><a href="{% url 'user_preferences:account_delete' %}"><i class="fas fa-trash-alt"></i> {% trans "Delete account" %}</a></li>
         {% endblock %}
       </ul>
     </nav>
