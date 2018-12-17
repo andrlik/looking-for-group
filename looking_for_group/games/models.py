@@ -5,10 +5,14 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
+from django.db.models.query_utils import Q
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
+from schedule.models.calendars import CalendarManager
+from schedule.periods import Day, Week
 
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..game_catalog.utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
@@ -53,6 +57,126 @@ class GameEventRelationManager(EventRelationManager):
     #     return GameEventRelation.objects.create(event=event, distinction=distinction, content_object=content_object)
 
     pass
+
+
+class AvailableCalendarManager(CalendarManager):
+    """
+    A manager that enables creating and managing availability calendars for users.
+    """
+
+    def get_or_create_availability_calendar_for_gamer(self, gamer):
+        """
+        For the given gamer, either get or create their availability calendar.
+        """
+        gamer_primary_calendar, created = Calendar.objects.get_or_create(slug=gamer.username, defaults={'name': "{}'s calendar".format(gamer.username)})
+        return self.get_or_create_calendar_for_object(gamer_primary_calendar, distinction='available', name="{} availability".format(gamer.username))
+
+    def find_compatible_schedules(self, requester_calendar, gamer_list):
+        """
+        For each gamer in the gamer_list queryset, check their availability calendars
+        and return a narrowed list that only includes the ones with potentially compatible avaialbility from
+        the requestor calendar.
+
+        First we define a Period that represents the next week days. Then we query the avaialbility events from said period in the requestor calendar.
+        For each of those occurrences, we check the avaialbility for conflicts. Gamers who have at least one area of acceptable overlap in the period are
+        included in the returned list of GamerProfiles.
+
+        This queryset can be subsequently used for filtering game lists, etc.
+        """
+        end_date_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
+        end_date_future_q = Q(end_recurring_period__gt=timezone.now())
+        query_range = Week(events=requester_calendar.events.filter(end_date_future_q | end_date_empty_q), date=timezone.now()).next_week()
+        requestor_occurrences = query_range.get_occurrences()
+        matches = []
+        gamer_list_length = gamer_list.count()
+        for occurrence in requestor_occurrences:
+            conflicts = self.check_availability(gamer_list, occurrence.start, occurrence.end, minimum_overlap=150)
+            if conflicts and len(conflicts) < gamer_list_length:
+                matches.append(gamer_list.exclude(id__in=[item['gamer'].pk for item in conflicts]))
+                gamer_list = gamer_list.filter(id__in=[item['gamer'].pk for item in conflicts])
+                gamer_list_length = gamer_list.count()
+                if gamer_list_length == 0:
+                    break
+        if len(matches) > 1:
+            qs1 = matches.pop()
+            for item in matches:
+                qs1 = qs1.union(item)
+            return qs1
+        if len(matches) == 1:
+            return matches[0]
+        return matches
+
+    def check_availability(self, gamer_list, start, end, minimum_overlap=None):
+        """
+        For a given gamer list and two timezone aware datetimes,
+        evaluate whether it falls within their availability. Assumes that the whole
+        time must fit within the schedule.
+        :returns: A list of dicts containing the gamer and the conflict., or any empty list
+        if no conflicts.
+        """
+        conflict_list = []
+        for gamer in gamer_list:
+            cal = self.get_or_create_availability_calendar_for_gamer(gamer)
+            result = cal.check_proposed_time(start, end, minimum_overlap)
+            if result:
+                conflict_list.append({"gamer": gamer, "conflicts": result})
+        return conflict_list
+
+
+class AvailableCalendar(Calendar):
+    """
+    A proxy model that allows checking for availability conflicts by treating events/occurrences
+    as if they represent free time instead of booked time.
+    """
+
+    objects = AvailableCalendarManager()
+
+    def check_proposed_time(self, start, end, minimum_overlap=None):
+        """
+        For two timezone aware datetimes, check if they fall within the availability.
+        Return either None or a dict describing the conflict.
+
+        Minimum overlap is either None to represent the whole time must fit within availability, or
+        a minumum number of minutes that must overlap to get an appropriate value.
+        For most RPGs, that means at least 120-180 minutes must overlap, but when checking for a specific session,
+        the default will require it all to fit within.
+        """
+        if minimum_overlap:
+            minimum_overlap = timedelta(seconds=minimum_overlap * 60)
+        elif minimum_overlap and end - start < minimum_overlap * 60:
+            minimum_overlap = end - start
+        else:
+            minimum_overlap = end - start
+        end_date_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
+        end_date_future_q = Q(end_recurring_period__gt=timezone.now())
+        day_period = Day(events=self.events.filter(end_date_empty_q | end_date_future_q), date=start)
+        occurrences = day_period.get_occurrences()
+        error_reasons = []
+        matches = []
+        try:
+            for occurrence in occurrences:
+                if occurrence.start > start and occurrence.end < end and occurrence.end - occurrence.start < minimum_overlap:
+                    error_reasons.append(occurrence)
+                elif occurrence.start <= start and occurrence.end < end and occurrence.end - start < minimum_overlap:
+                    error_reasons.append(occurrence)
+                elif occurrence.start > start and occurrence.end >= end and end - occurrence.start < minimum_overlap:
+                    error_reasons.append(occurrence)
+                elif occurrence.start <= start and occurrence.end >= end and end - start < minimum_overlap:
+                    error_reasons.append(occurrence)
+                else:
+                    matches.append(occurrence)
+        except StopIteration:
+            return ["No availability"]
+        if len(matches) > 0:
+            return None
+        else:
+            if len(error_reasons) > 0:
+                return error_reasons
+            else:
+                return ["No availability"]
+
+    class Meta:
+        proxy = True
 
 
 class GameEventRelation(EventRelation):
