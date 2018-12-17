@@ -1,9 +1,11 @@
 import logging
 
+from django.contrib.auth.models import AnonymousUser
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
-from django.template import Context
+from django.template import RequestContext
 from django.template.loader import render_to_string
+from django.test import RequestFactory
 from django_q.tasks import async_task
 from markdown import markdown
 from notifications.models import Notification
@@ -14,10 +16,11 @@ logger = logging.getLogger("games")
 
 
 def form_email_body(user, notification_list):
-    plaintext_context = Context(autoescape=False)
-    plaintext_context['request'] = {}
-    plaintext_context['request']['user'] = user
-    text_body = render_to_string("user_preferences/message_body.txt", {'user': user, 'notifications': notification_list}, plaintext_context)
+    factory = RequestFactory()
+    request = factory.get('/')
+    request.user = AnonymousUser()
+    plaintext_context = RequestContext(request, autoescape=False)
+    text_body = render_to_string("user_preferences/message_body.txt", {'receive_user': user, 'notifications': notification_list}, plaintext_context, using="light")
     html_body = markdown(text_body)
     return text_body, html_body
 
