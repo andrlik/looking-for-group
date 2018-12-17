@@ -1,23 +1,27 @@
-Hi {{ user }},
+Hi {{ receive_user }},
 
 You have requested to receive email digests of unread notifications on [LFG Directory](https://app.lfg.directory). Remember, you can always change this mode by changing your preferences [here](https://app.lfg.directory{% url 'user_preferences:setting-view' %}).
 
 Your notifications are below:
 
 {% for notification in notifications %}
-{% if "community" in notification.verb %}
-{% if "reject" not in notification.verb %}
-{% include "user_preferences/community_notification.txt" %}
-{% else %}
-{% include "user_preferences/anon_community_notification.txt" %}
-{% endif %}
-{% else %}
 {% if "friend" in notification.verb %}
-{% include "user_preferences/friend_request_notification.txt" %}
+- [{{ notification.actor}}](https://app.lfg.directory{{ notification.actor.get_absolute_url }}) {{ notification.verb }}
+{% elif notification.actor_content_type|lower == "site" %}
+- {{ notification.verb }}
+{% elif notification.actor_content_type|lower == "message report" %}
+- {{ notification.verb }}: [View report](https://app.lfg.directory{{ notification.actor.get_absolute_url }})
+{% elif notification.target_content_type|lower == "message" %}
+- [{{ notification.actor }}](https://app.lfg.directory{{ notification.actor.get_absolute_url }}) sent you a new message. [View messages](https://app.lfg.directory{% url 'postman:inbox' %})
 {% elif "settings" in notification.verb %}
-- {{ notification.actor }} {{ notification.verb }} [Settings](https://app.lfg.directory{% url 'user_preferences:setting-view' %}). You may also want to check out your profile info here: [Profile](https://app.lfg.directory{{ user.gamerprofile.get_absolute_url }}).
+- {{ notification.actor }} {{ notification.verb }}: [Settings](https://app.lfg.directory{% url 'user_preferences:setting-view' %}) You may also want to checkout your profile info [here](https://app.lfg.directory{{ notification.actor.get_absolute.url }}).
+{% elif "Announcement:" in notification.verb %}
+- **System:** {{ notfication.verb }}
 {% else %}
-{% include "user_preferences/generic_notification.txt" %}
+{% if "not accepted" in notification.verb %}
+- {{ notification.verb }} for {{ notification.target_content_type|lower }}: [{{ notification.target }}](https://app.lfg.directory{{ notification.target.get_absolute_url }})
+{% else %}
+- [{{ notification.actor }}](https://app.lfg.directory{{ notification.actor.get_absolute_url }}) {{ notification.verb }} for {{ notification.target_content_type|lower }}: [{{ notification.target}}](https://app.lfg.directory{{ notification.target.get_absolute.url }})
 {% endif %}
 {% endif %}
 {% empty %}
