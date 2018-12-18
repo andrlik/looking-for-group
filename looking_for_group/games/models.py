@@ -59,6 +59,24 @@ class GameEventRelationManager(EventRelationManager):
     pass
 
 
+class WeekdayAvailable(object):
+    """
+    An object for representing and holding weekday availability in a consistent format.
+    """
+
+    def __init__(self, availability_calendar, base_date=None):
+        end_date_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
+        if not base_date:
+            base_date = timezone.now()
+        cal_events = availability_calendar.events.filter(end_date_empty_q)
+        if cal_events.count() == 0:
+            raise ValueError(_("This is not a valid calendar for representation as nothing is defined."))
+        self.weekdays = [[]] * 7
+        for occurrence in availability_calendar.get_next_week_occurrences(base_date):
+            weekday_key = occurrence.start.weekday()
+            self.weekdays[weekday_key] = occurrence
+
+
 class AvailableCalendarManager(CalendarManager):
     """
     A manager that enables creating and managing availability calendars for users.
@@ -145,6 +163,26 @@ class AvailableCalendar(Calendar):
     """
 
     objects = AvailableCalendarManager()
+
+    def get_next_week_occurrences(self, date_base=None):
+        """
+        Take the date_base and figure out the start of the week.
+        """
+        if not date_base:
+            date_base = timezone.now()
+        date_range = Week(self.events.filter(end_recurring_period__isnull=True, rule__isnull=False), date=date_base).next_week()
+        return date_range.get_occurrences()
+
+    def get_weekly_availability(self, date_base=None):
+        """
+        For the given date_base retrieve weekly schedule in a friendly
+        format.
+        """
+        try:
+            result = WeekdayAvailable(self, date_base)
+        except ValueError:
+            return None
+        return result
 
     def check_proposed_time(self, start, end, minimum_overlap=None):
         """

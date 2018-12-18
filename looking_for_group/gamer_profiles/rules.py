@@ -2,9 +2,12 @@ import logging
 
 import rules
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.query_utils import Q
 from django.utils import timezone
 from rules import predicate
 
+from ..games.models import GamePosting as Game
+from ..games.models import GamePostingApplication, Player
 from .models import BannedUser, BlockedUser, KickedUser, NotInCommunity
 
 logger = logging.getLogger("rules")
@@ -117,6 +120,24 @@ def in_same_community_as_gamer(user, gamer):
 
 
 @predicate
+def is_in_same_game_as_gamer(user, gamer):
+    user_gamer = user.gamerprofile
+    user_gm_games = user_gamer.gmed_games.exclude(status__in=["closed", "cancel"])
+    user_player_games = Player.objects.select_related("game").filter(gamer=user_gamer, game__status__in=["open", "started", "replace"])
+    gamer_player_games = Player.objects.select_related("game").filter(gamer=gamer, game__status__in=["open", "started", "replace"])
+    gamer_gm_games = gamer.gmed_games.exclude(status__in=["closed", "cancel"])
+    gamer_games = gamer_gm_games.union(Game.objects.filter(id__in=[p.game.id for p in gamer_player_games]))
+    gamer_apps = GamePostingApplication.objects.filter(gamer=gamer, status="pending", game__in=user_gm_games)
+    if gamer_apps.count() > 0:
+        return True
+    user_games = user_gm_games.union(Game.objects.filter(id__in=[p.game.id for p in user_player_games]))
+    matching_games = user_games.filter(id__in=[g.id for g in gamer_games])
+    if matching_games.count() > 0:
+        return True
+    return False
+
+
+@predicate
 def is_connected_to_gamer(user, gamer):
     logger.debug(
         "Starting check of is {0} connected to gamer {1}.".format(
@@ -131,7 +152,6 @@ def is_connected_to_gamer(user, gamer):
     logger.debug("Gamer is private... moving on.")
     if in_same_community_as_gamer(user, gamer):
         result = True
-    # Placeholder for "in same game"
     if user.gamerprofile in gamer.friends.all():
         logger.debug("User is a friend of gamer.")
         result = True
@@ -165,7 +185,7 @@ def is_profile_owner(user, gamer):
     return user.gamerprofile == gamer
 
 
-is_profile_viewer_eligible = is_profile_owner | is_connected_to_gamer
+is_profile_viewer_eligible = is_profile_owner | is_connected_to_gamer | is_in_same_game_as_gamer
 
 is_profile_viewer = is_user & is_profile_viewer_eligible
 
@@ -243,3 +263,4 @@ rules.add_perm("profile.edit_profile", is_profile_owner)
 rules.add_perm("profile.view_gamer_notes", is_note_author)
 rules.add_perm("profile.remove_mute", is_muter)
 rules.add_perm("profile.remove_block", is_blocker)
+rules.add_perm("profile.see_detailed_availability", is_in_same_game_as_gamer)

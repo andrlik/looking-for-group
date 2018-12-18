@@ -52,18 +52,21 @@ class AbstractAvailTestCase(AbstractViewTestCaseSignals):
                 start=make_event_time_for_date(self.weekdays[i], "16:00"),
                 end=make_event_time_for_date(self.weekdays[i], "20:00"),
                 rule=self.weeklyrule,
+                title="Avail {}".format(i)
             )
             Event.objects.create(
                 calendar=self.cal2,
                 start=make_event_time_for_date(self.weekdays[i], "12:00"),
                 end=make_event_time_for_date(self.weekdays[i], "17:00"),
                 rule=self.weeklyrule,
+                title="Avail {}".format(i)
             )
             Event.objects.create(
                 calendar=self.cal3,
                 start=make_event_time_for_date(self.weekdays[i], "10:00"),
                 end=make_event_time_for_date(self.weekdays[i], "15:00"),
                 rule=self.weeklyrule,
+                title="Avail {}".format(i)
             )
         for i in [5, 6]:
             Event.objects.create(
@@ -71,12 +74,14 @@ class AbstractAvailTestCase(AbstractViewTestCaseSignals):
                 start=make_event_time_for_date(self.weekdays[i], "00:00"),
                 end=make_event_time_for_date(self.weekdays[i], "23:59"),
                 rule=self.weeklyrule,
+                title="Avail {}".format(i)
             )
         Event.objects.create(
             calendar=self.cal4,
             start=make_event_time_for_date(self.weekdays[3], "12:00"),
             end=make_event_time_for_date(self.weekdays[3], "14:00"),
             rule=self.weeklyrule,
+            title="extraavail"
         )
 
 
@@ -146,3 +151,110 @@ class ListQueryTests(AbstractAvailTestCase):
         gamers = GamerProfile.objects.exclude(id=self.gamer4.id)
         matches = AvailableCalendar.objects.find_compatible_schedules(self.cal4, gamers)
         assert len(matches) == 3
+
+
+class TestUpdateAvailView(AbstractAvailTestCase):
+    """
+    Try to use the view for updating availability.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:set-available"
+        self.new_avail_data = {
+            "monday_all_day": 1,
+            "monday_earliest": "",
+            "monday_latest": "14:50",  # should be ignored
+            "tuesday_earliest": "",
+            "tuesday_latest": "",
+            "wednesday_earliest": "",
+            "wednesday_latest": "",
+            "thursday_earliest": "",
+            "thursday_latest": "",
+            "friday_all_day": 1,
+            "friday_earliest": "",
+            "friday_latest": "",
+            "saturday_earliest": "10:00",
+            "saturday_latest": "15:00",
+            "sunday_earliest": "10:00",
+            "sunday_latest": "17:00"
+        }
+        self.incomplete_start_end = {
+            "monday_all_day": 1,
+            "monday_earliest": "",
+            "monday_latest": "14:50",  # should be ignored
+            "tuesday_earliest": "",
+            "tuesday_latest": "",
+            "wednesday_earliest": "15:00",
+            "wednesday_latest": "",
+            "thursday_earliest": "",
+            "thursday_latest": "17:00",
+            "friday_all_day": 1,
+            "friday_earliest": "",
+            "friday_latest": "",
+            "saturday_earliest": "10:00",
+            "saturday_latest": "15:00",
+            "sunday_earliest": "10:00",
+            "sunday_latest": "17:00"
+        }
+        self.times_wrong = {
+            "monday_all_day": 1,
+            "monday_earliest": "",
+            "monday_latest": "14:50",  # should be ignored
+            "tuesday_earliest": "",
+            "tuesday_latest": "",
+            "wednesday_earliest": "17:00",
+            "wednesday_latest": "13:00",
+            "thursday_earliest": "",
+            "thursday_latest": "",
+            "friday_all_day": 1,
+            "friday_earliest": "",
+            "friday_latest": "",
+            "saturday_earliest": "10:00",
+            "saturday_latest": "15:00",
+            "sunday_earliest": "10:00",
+            "sunday_latest": "17:00"
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_load_correctly(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name)
+
+    def test_backwards_times(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.times_wrong)
+            self.response_200()
+            error_list = self.get_context('form').errors
+            assert len(error_list) == 1
+
+    def test_incomplete_times(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.incomplete_start_end)
+            self.response_200()
+            error_list = self.get_context('form').errors
+            assert len(error_list) == 2
+
+    def test_successful_post(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.new_avail_data)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            occs = self.cal1.get_next_week_occurrences()
+            for occ in occs:
+                if occ.start.weekday() == 0:
+                    assert occ.start.strftime("%H:%M") == "00:00"
+                    assert occ.end.strftime("%H:%M") == "23:59"
+                assert occ.start.weekday() not in [1, 2, 3]
+                if occ.start.weekday() == 4:
+                    assert occ.start.strftime("%H:%M") == "00:00"
+                    assert occ.end.strftime("%H:%M") == "23:59"
+                if occ.start.weekday() == 5:
+                    assert occ.start.strftime("%H:%M") == "10:00"
+                    assert occ.end.strftime("%H:%M") == "15:00"
+                if occ.start.weekday() == 6:
+                    assert occ.start.strftime("%H:%M") == "10:00"
+                    assert occ.end.strftime("%H:%M") == "17:00"

@@ -1,4 +1,6 @@
 <script type="text/javascript">
+
+  Foundation.Abide.defaults.patterns["time"] = /^(00|0[0-9]|1[0-9]|2[0-3]):([0-9]|[0-5][0-9])$/;
   $(function(){
     $('.dp').fdatepicker({
       format: 'yyyy-mm-dd',
@@ -8,6 +10,11 @@
       format: 'yyyy-mm-dd hh:ii',
       disableDblClickSelection: true,
       pickTime: true
+    });
+    $('.tp').fdatepicker({
+      format: 'hh:ii',
+      disableDblClickSelection: true,
+      pickTime:true
     });
   });
 
