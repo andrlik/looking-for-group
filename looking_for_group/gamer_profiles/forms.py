@@ -21,10 +21,19 @@ class OwnershipTransferForm(forms.ModelForm):
 
 class SwitchInput(forms.widgets.CheckboxInput):
 
-    def get_context(name, value, attrs):
+    template_name = "gamer_profiles/switch_control.html"
+    wrap_label = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.attrs['class'] = "{} switch-input".format(self.attrs['class'])
+        except KeyError:
+            self.attrs['class'] = "switch-input"
+
+    def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context['template_name'] = "switch_control.html"
-        context['attrs']['class']['switch-input']
+        context['widget']['label'] = name.replace("_", " ").title()
         return context
 
 
@@ -96,27 +105,27 @@ class GamerAvailabilityForm(forms.Form):
     """
     A form for setting availability for a given date.
     """
-    monday_all_day = forms.BooleanField(required=False, help_text=_("Use this instead of time fields if available all day"))
-    monday_earliest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    monday_latest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    tuesday_all_day = forms.BooleanField(required=False, help_text=_("Use this instead of time fields if available all day"))
-    tuesday_earliest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    tuesday_latest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    wednesday_all_day = forms.BooleanField(required=False, help_text=_("Use this instead of time fields if available all day"))
-    wednesday_earliest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    wednesday_latest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    thursday_all_day = forms.BooleanField(required=False, help_text=_("Use this instead of time fields if available all day"))
-    thursday_earliest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    thursday_latest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    friday_all_day = forms.BooleanField(required=False, help_text=_("Use this instead of time fields if available all day"))
-    friday_earliest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    friday_latest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    saturday_all_day = forms.BooleanField(required=False, help_text=_("Use this instead of time fields if available all day"))
-    saturday_earliest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    saturday_latest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    sunday_all_day = forms.BooleanField(required=False, help_text=_("Use this instead of time fields if available all day"))
-    sunday_earliest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
-    sunday_latest = forms.TimeField(required=False, help_text=_("Leave blank if not available."))
+    monday_all_day = forms.BooleanField(required=False, widget=SwitchInput(), help_text=_("Use this instead of time fields if available all day"))
+    monday_earliest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    monday_latest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    tuesday_all_day = forms.BooleanField(required=False, widget=SwitchInput(), help_text=_("Use this instead of time fields if available all day"))
+    tuesday_earliest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    tuesday_latest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    wednesday_all_day = forms.BooleanField(required=False, widget=SwitchInput(), help_text=_("Use this instead of time fields if available all day"))
+    wednesday_earliest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    wednesday_latest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    thursday_all_day = forms.BooleanField(required=False, widget=SwitchInput(), help_text=_("Use this instead of time fields if available all day"))
+    thursday_earliest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    thursday_latest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    friday_all_day = forms.BooleanField(required=False, widget=SwitchInput(), help_text=_("Use this instead of time fields if available all day"))
+    friday_earliest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    friday_latest = forms.TimeField(required=False, widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    saturday_all_day = forms.BooleanField(required=False, widget=SwitchInput(), help_text=_("Use this instead of time fields if available all day"))
+    saturday_earliest = forms.TimeField(required=False,widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    saturday_latest = forms.TimeField(required=False,widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    sunday_all_day = forms.BooleanField(required=False, widget=SwitchInput(), help_text=_("Use this instead of time fields if available all day"))
+    sunday_earliest = forms.TimeField(required=False,widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
+    sunday_latest = forms.TimeField(required=False,widget=forms.widgets.TimeInput(attrs={"pattern": "time"}), help_text=_("Leave blank if not available."))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -128,11 +137,3 @@ class GamerAvailabilityForm(forms.Form):
                     self.add_error("{}_earliest".format(day), forms.ValidationError(_("Earliest time must be before latest time.")))
             except KeyError:
                 pass  # Field did not validate to begin with.
-
-    class Meta:
-        widget_dict = {}
-        for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
-            widget_dict["{}_earliest".format(day)] = forms.widgets.TimeInput(attrs={"pattern": "time"})
-            widget_dict["{}_latest".format(day)] = forms.widgets.TimeInput(attrs={"pattern": "time"})
-            widget_dict["{}_all_day".format(day)] = SwitchInput()
-        widgets = widget_dict

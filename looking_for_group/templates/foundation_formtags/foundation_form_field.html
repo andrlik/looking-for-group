@@ -2,12 +2,10 @@
 
 {% if field.is_hidden %}
 {{ field }}
-{% elif field|is_checkbox and "switch" in field.widget.attrs.class %}
-{{ field }}
 {% else %}
 
     {% if field.label %}
-        <label for="{{ field.auto_id }}" class={% if field.errors %}"is-invalid-label"{% endif %}>
+        <label for="{{ field.auto_id }}" class="{% if field.errors %}is-invalid-label{% endif %}">
             {{ field.label|safe }}
             {% if not field.field.required and use_optional %}
                     <span class="optional">(optional)</span>
@@ -16,10 +14,15 @@
             {% endif %}
         </label>
     {% endif %}
-        {% if field|is_checkbox and "switch" not in field.widget.attrs.class %}
+        {% if field|is_checkbox %}
+        {% if "switch" not in field.attrs.class %}
         {{ field|add_error_class:"is-invalid-input" }}
         {% if field.help_text %}
         <small>{{ field.help_text|safe }}</small>
+        {% endif %}
+        {% else %}
+        Yo quero
+        {{ field }}
         {% endif %}
         {% for error in field.errors %}
         <small class="form-error is-visible chk">{{ error }}</small>

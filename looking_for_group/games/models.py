@@ -145,13 +145,18 @@ class AvailableCalendarManager(CalendarManager):
         for gamer in gamer_list:
             logger.debug("Evaluating for gamer {}".format(gamer))
             cal = self.get_or_create_availability_calendar_for_gamer(gamer)
-            result = cal.check_proposed_time(start, end, minimum_overlap)
-            if result:
-                logger.debug("Received {} conflicts".format(len(result)))
-                conflict_list.append({"gamer": gamer, "conflicts": result})
-            else:
+            if cal.events.filter(end_recurring_period__isnull=True, rule__isnull=False):
+                # Gamer has nothing set, which means ambiguous results. Include in matches.
+                logger.debug("Gamer has specified no availability. Treat like an ambiguous match.")
                 matches += 1
-                logger.debug("No conflicts for this gamer. Currently {} matching gamers".format(matches))
+            else:
+                result = cal.check_proposed_time(start, end, minimum_overlap)
+                if result:
+                    logger.debug("Received {} conflicts".format(len(result)))
+                    conflict_list.append({"gamer": gamer, "conflicts": result})
+                else:
+                    matches += 1
+                    logger.debug("No conflicts for this gamer. Currently {} matching gamers".format(matches))
         logger.debug("Returning list of {} conflicts".format(len(conflict_list)))
         return conflict_list
 

@@ -15,7 +15,7 @@
 
 
 <form class="inline-form" action="" method="get">
-  <div class="grid-x grid-margin-x"><input type="hidden" id="id_filter_present" name="filter_present" value="1" /> <div class="cell medium-auto"> {% render_field filter_form.game_status %}</div><div class="cell medium-auto"> {% render_field filter_form.edition %}</div><div class="cell medium-auto"> {% render_field filter_form.system %}</div><div class="cell medium-auto"> {% render_field filter_form.module %}</div><div class="cell medium-auto"> <label for="id_submit_filter">&nbsp;</label> <input id="id_submit_filter" type="submit" class="button secondary" value="{% trans 'Filter results' %}" /></div></div></form>
+  <div class="grid-x grid-margin-x"><input type="hidden" id="id_filter_present" name="filter_present" value="1" /> <div class="cell medium-auto"> {% render_field filter_form.game_status %}</div><div class="cell medium-auto"> {% render_field filter_form.edition %}</div><div class="cell medium-auto"> {% render_field filter_form.system %}</div><div class="cell medium-auto"> {% render_field filter_form.module %}</div> <div class="cell medium-auto">{% render_field filter_form.similar_availability %}</div> <div class="cell medium-auto"><label for="id_submit_filter">&nbsp;</label> <input id="id_submit_filter" type="submit" class="button secondary" value="{% trans 'Filter results' %}" /></div></div></form>
 {% endif %}
 <table class="scroll hover">
   <thead>
