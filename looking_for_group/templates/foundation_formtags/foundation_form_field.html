@@ -2,7 +2,7 @@
 
 {% if field.is_hidden %}
 {{ field }}
-{% elif field|is_checkbox and "switch" in field.attrs.class %}
+{% elif field|is_checkbox and "switch" in field.widget.attrs.class %}
 {{ field }}
 {% else %}
 
@@ -16,7 +16,7 @@
             {% endif %}
         </label>
     {% endif %}
-        {% if field|is_checkbox and "switch" not in field.attrs.class %}
+        {% if field|is_checkbox and "switch" not in field.widget.attrs.class %}
         {{ field|add_error_class:"is-invalid-input" }}
         {% if field.help_text %}
         <small>{{ field.help_text|safe }}</small>
