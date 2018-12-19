@@ -23,7 +23,7 @@ from notifications.signals import notify
 from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar, Occurrence
-from schedule.periods import Month
+from schedule.periods import Day, Month
 
 from . import forms, models, serializers
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
@@ -2017,5 +2017,125 @@ class ExportGameDataView(
         )
         response["Content-Disposition"] = 'attachment; filename="game_{}.json"'.format(
             context["game"].slug
+        )
+        return response
+
+
+class GameSessionRescheduleCheckConflicts(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    JSONResponseMixin,
+    generic.edit.UpdateView,
+):
+    """
+    Provide a JSON reponse of potential conflicts if provided a given date.
+    """
+
+    model = models.GameSession
+    context_object_name = "session"
+    slug_url_kwarg = "session"
+    permission_required = "game.can_edit_details"
+    # fields = ["scheduled_time"]
+    avail_conflicts = None
+    occurrence_conflicts = None
+    form_class = forms.GameSessionRescheduleForm
+    game = None
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() not in ["post"]:
+            return HttpResponseNotAllowed(["POST"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def fetch_player_calendars(self, obj):
+        """
+        Get all the player calendars.
+        """
+        pass
+
+    def get_permission_object(self):
+        return self.get_object().game
+
+    def get_occurrences_that_overlap(self, gamer_list, start_time, end_time):
+        gamer_conflicts = []
+        for gamer in gamer_list:
+            cal, created = Calendar.objects.get_or_create(
+                slug=gamer.username,
+                defaults={"name": "{}'s calendar".format(gamer.username)},
+            )
+            if not created:
+                day_period = Day(cal.events.all(), start_time)
+                occs = day_period.get_occurrences()
+                for occ in occs:
+                    gep = models.GameEvent.objects.get(id=occ.event.id)
+                    if (
+                        not occ.cancelled
+                        and occ.start < end_time
+                        and occ.end > start_time
+                        and gamer not in gamer_conflicts
+                        and gep.get_related_game != self.game
+                    ):
+                        # Here there be conflict
+                        gamer_conflicts.append(gamer)
+        return gamer_conflicts
+
+    def avail_compare(self, gamer_list, start, end):
+        conflicts = []
+        for gamer in gamer_list:
+            acal = models.AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(
+                gamer
+            )
+            if (
+                acal.events.filter(
+                    end_recurring_period__isnull=True, rule__isnull=False
+                ).count()
+                > 0
+            ):
+                results = acal.check_proposed_time(start, end)
+                if results:
+                    conflicts.append(gamer)
+        return conflicts
+
+    def get_data(self):
+        result = {"avail_issues": [], "conflict_issues": []}
+        if self.avail_conflicts:
+            for conflict in self.avail_conflicts:
+                result["avail_issues"].append(str(conflict))
+        logger.debug(
+            "Found {} availability conflicts".format(len(result["avail_issues"]))
+        )
+        if self.occurrence_conflicts:
+            for conflict in self.occurrence_conflicts:
+                result["conflict_issues"].append(str(conflict))
+        logger.debug("Found {} game conflicts".format(len(result["conflict_issues"])))
+        return result
+
+    def form_invalid(self, form):
+        logger.debug(self.request.POST)
+        return HttpResponse(
+            JSONRenderer().render({"error": "you suck", "form_errors": form.errors}),
+            content_type="application/json",
+            status=400,
+        )
+
+    def form_valid(self, form):
+        session = self.get_object()
+        self.game = session.game
+        start_time = form.cleaned_data["scheduled_time"]
+        logger.debug("Received {} for new time".format(start_time))
+        end_time = start_time + datetime.timedelta(
+            minutes=int(60 * self.game.session_length)
+        )
+        gamer_list = self.game.players.all()
+
+        self.avail_conflicts = self.avail_compare(gamer_list, start_time, end_time)
+        self.occurrence_conflicts = self.get_occurrences_that_overlap(
+            gamer_list, start_time, end_time
+        )
+        return self.render_to_response(self.get_context_data())
+
+    def render_to_response(self, context, **response_kwargs):
+        response_data = self.get_data()
+        response = HttpResponse(
+            JSONRenderer().render(response_data), content_type="application/json"
         )
         return response

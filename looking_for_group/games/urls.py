@@ -207,5 +207,6 @@ urlpatterns = [
         name="player_kick",
     ),
     path("create/", views.GamePostingCreateView.as_view(), name="game_create"),
+    path("sessions/<slug:session>/checkconflicts/", view=views.GameSessionRescheduleCheckConflicts.as_view(), name='check_existing_session_conflict'),
     path("", views.GamePostingListView.as_view(), name="game_list"),
 ]

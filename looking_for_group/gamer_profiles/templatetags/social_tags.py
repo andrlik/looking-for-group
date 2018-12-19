@@ -69,8 +69,9 @@ def get_conflicts(gamer, game):
     """
     end_recur_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
     end_recur_future_q = Q(rule__isnull=False, end_recurring_period__gt=timezone.now())
+    one_shot_q = Q(rule__isnull=True, start__gt=timezone.now())
     cal, created = Calendar.objects.get_or_create(slug=gamer.username, defaults={"name": "{}'s calendar".format(gamer.username)})
-    cal_events = cal.events.filter(end_recur_future_q | end_recur_empty_q)
+    cal_events = cal.events.filter(end_recur_future_q | end_recur_empty_q | one_shot_q)
     player_result = {
         "Monday": [],
         "Tuesday": [],

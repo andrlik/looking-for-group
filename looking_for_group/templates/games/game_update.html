@@ -16,7 +16,8 @@
 {% if game.players.all|length > 0 %}
 
 <div class="reveal" id="scheduling_modal" data-reveal>
-  <h1>{% trans "Player availability and schedule" %}</h1>
+  <h1>{% trans "Player availability" %}</h1>
+  <p>{% trans "NOTE: While this represents players' general schedule, it doesn't show rescheduled sessions, but does show one-shots." %}</p>
   {% get_gamer_scheduling_dict game as gamer_cal %}
   <table class="hover scroll">
     <thead>
@@ -46,7 +47,7 @@
 
             {% for conflict in conflicts.Monday %}
 
-            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
             {% empty %}
             <li>{% trans "None found" %}</li>
             {% endfor %}
@@ -59,7 +60,7 @@
           <p><strong>{% trans "Potential conflicts" %}</strong></p>
           <ul>
             {% for conflict in conflicts.Tuesday %}
-            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
             {% empty %}
             <li>{% trans "None found" %}</li>
             {% endfor %}
@@ -72,7 +73,7 @@
           <p><strong>{% trans "Potential conflicts" %}</strong></p>
           <ul>
             {% for conflict in conflicts.Wednesday %}
-            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
             {% empty %}
             <li>{% trans "None found" %}</li>
             {% endfor %}
@@ -85,7 +86,7 @@
           <p><strong>{% trans "Potential conflicts" %}</strong></p>
           <ul>
             {% for conflict in conflicts.Thursday %}
-            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
             {% empty %}
             <li>{% trans "None found" %}</li>
             {% endfor %}
@@ -98,7 +99,7 @@
           <p><strong>{% trans "Potential conflicts" %}</strong></p>
           <ul>
             {% for conflict in conflicts.Friday %}
-            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
             {% empty %}
             <li>{% trans "None found" %}</li>
             {% endfor %}
@@ -111,7 +112,7 @@
           <p><strong>{% trans "Potential conflicts" %}</strong></p>
           <ul>
             {% for conflict in conflicts.Saturday %}
-            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
             {% empty %}
             <li>{% trans "None found" %}</li>
             {% endfor %}
@@ -124,7 +125,7 @@
           <p><strong>{% trans "Potential conflicts" %}</strong></p>
           <ul>
             {% for conflict in conflicts.Sunday %}
-            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
             {% empty %}
             <li>{% trans "None found" %}</li>
             {% endfor %}
