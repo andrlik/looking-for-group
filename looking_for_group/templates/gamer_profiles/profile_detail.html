@@ -43,7 +43,54 @@
     <tr><td>{% trans "Local games?" %}</td><td>{{ gamer.local_games|yesno:_('Yes,No') }}</td></tr>
   </tbody>
 </table>
+{% has_perm "profile.see_detailed_availability" request.user gamer as see_avail_calendar %}
+{% if see_avail_calendar %}
+<h3>{% trans "Generally available to play at these times" %}</h3>
+{% if week_availability %}
+<table class="hover scroll">
+  <thead>
+    <tr>
+      <th>{% trans "Monday" %}</th>
+      <th>{% trans "Tuesday" %}</th>
+      <th>{% trans "Wednesday" %}</th>
+      <th>{% trans "Thursday" %}</th>
+      <th>{% trans "Friday" %}</th>
+      <th>{% trans "Saturday" %}</th>
+      <th>{% trans "Sunday" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      {% for avail in week_availability.weekdays %}
+      <td>
 
+          {% if avail %}
+          {% if avail.seconds > 86000 %}
+        <span class="label success">{% trans "Whenever" %}</span>
+          {% else %}
+        <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
+          {% endif %}
+          {% else %}
+        <span class="label secondary">{% trans "Not available" %}</span>
+          {% endif %}
+
+      </td>
+      {% empty %}
+      {% endfor %}
+    </tr>
+  </tbody>
+</table>
+{% else %}
+{% if request.user == gamer.user %}
+<p>{% trans "None set yet." %}</p>
+{% else %}
+<p>{% trans "Not known" %}</p>
+{% endif %}
+{% endif %}
+{% if request.user == gamer.user %}
+<a href="{% url 'gamer_profiles:set-available' %}" class="button primary"><i class="fas fa-edit"></i> {% trans "Set available times" %}</a>
+{% endif %}
+{% endif %}
 <h2>{% trans "Favorites" %}</h2>
 
 <h3>{% trans "Preferred Games" %}</h3>

@@ -1,6 +1,8 @@
 import logging
 import urllib
+from datetime import datetime, timedelta
 
+import pytz
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.conf import settings
 from django.contrib import messages
@@ -10,6 +12,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models.query_utils import Q
 from django.forms import modelform_factory
 from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -21,9 +24,11 @@ from django.views import generic
 from notifications.signals import notify
 from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
+from schedule.models import Event, Rule
 
 from .. import models, serializers
-from ..forms import BlankDistructiveForm, GamerProfileForm, KickUserForm, OwnershipTransferForm
+from ...games.models import AvailableCalendar
+from ..forms import BlankDistructiveForm, GamerAvailabilityForm, GamerProfileForm, KickUserForm, OwnershipTransferForm
 
 logger = logging.getLogger("gamer_profiles")
 
@@ -1186,7 +1191,9 @@ class GamerProfileDetailView(
     template_name = "gamer_profiles/profile_detail.html"
 
     def get_object(self, queryset=None):
-        obj = cache.get_or_set("profile_{}".format(self.kwargs['gamer']), super().get_object(queryset))
+        obj = cache.get_or_set(
+            "profile_{}".format(self.kwargs["gamer"]), super().get_object(queryset)
+        )
         return obj
 
     def get_context_data(self, **kwargs):
@@ -1194,6 +1201,10 @@ class GamerProfileDetailView(
         context["gamer_notes"] = models.GamerNote.objects.filter(
             author=self.request.user.gamerprofile, gamer=self.get_object()
         )
+        avail_calendar = AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(
+            context["gamer"]
+        )
+        context["week_availability"] = avail_calendar.get_weekly_availability()
         return context
 
     def handle_no_permission(self):
@@ -1216,6 +1227,166 @@ class GamerProfileDetailView(
                     )
                 )
         return super().handle_no_permission()
+
+
+class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
+    """
+    View for a user to update their playtime availability.
+    """
+
+    form_class = GamerAvailabilityForm
+    template_name = "gamer_profiles/profile_set_avail.html"
+    weekday_map = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    scratch_mode = False
+    rule_to_use = None
+
+    def get_success_url(self):
+        return self.request.user.gamerprofile.get_absolute_url()
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            no_end_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
+            end_future_q = Q(end_recurring_period__gt=timezone.now())
+            self.avail_calendar = AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(
+                request.user.gamerprofile
+            )
+            if self.avail_calendar.events.filter(no_end_q | end_future_q).count() == 0:
+                self.scratch_mode = True
+            self.rule_to_use, created = Rule.objects.get_or_create(
+                name="weekly",
+                defaults={"description": _("Weekly"), "frequency": "WEEKLY"},
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["gamer"] = self.request.user.gamerprofile
+        return context
+
+    def get_initial(self):
+        try:
+            self.weekday_avail = self.avail_calendar.get_weekly_availability()
+        except ValueError:
+            self.weekday_avail = None
+            return None
+        if not self.weekday_avail:
+            return None
+        initial = {}
+        for occ in self.weekday_avail.weekdays:
+            earliest_time = None
+            latest_time = None
+            all_day = False
+            if occ:
+                if occ.seconds >= 86000:
+                    initial[
+                        "{}_all_day".format(self.weekday_map[occ.start.weekday()])
+                    ] = occ.start.weekday()
+                    all_day = True
+                else:
+                    if not earliest_time or occ.start < earliest_time:
+                        earliest_time = occ.start
+                    if not latest_time or occ.end > latest_time:
+                        latest_time = occ.end
+                if earliest_time and latest_time and not all_day:
+                    initial[
+                        "{}_earliest".format(self.weekday_map[earliest_time.weekday()])
+                    ] = earliest_time.strftime("%H:%M")
+                    initial[
+                        "{}_latest".format(self.weekday_map[latest_time.weekday()])
+                    ] = latest_time.strftime("%H:%M")
+        return initial
+
+    def form_valid(self, form):
+        cdata = form.cleaned_data
+        new_rules = []
+        index_num = 0
+        events_cancelled = 0
+        events_created = 0
+        user_timezone = pytz.timezone(self.request.user.timezone)
+        for wday in self.weekday_map:
+            day_start = None
+            day_end = None
+            today = timezone.now()
+            if today.weekday() != index_num and today.weekday() > index_num:
+                today = today - timedelta(days=today.weekday() - index_num)
+            if today.weekday() != index_num and today.weekday() < index_num:
+                today = today + timedelta(days=index_num - today.weekday())
+            if cdata["{}_all_day".format(wday)]:
+                logger.debug("Setting for all-day for {}".format(wday))
+                today = timezone.now()
+                if today.weekday() != index_num and today.weekday() > index_num:
+                    today = today - timedelta(days=today.weekday() - index_num)
+                if today.weekday() != index_num and today.weekday() < index_num:
+                    today = today + timedelta(days=index_num - today.weekday())
+                day_start = user_timezone.localize(
+                    datetime.strptime(
+                        "{} {}".format(today.strftime("%Y-%m-%d"), "00:00"),
+                        "%Y-%m-%d %H:%M",
+                    )
+                )
+                day_end = user_timezone.localize(
+                    datetime.strptime(
+                        "{} {}".format(today.strftime("%Y-%m-%d"), "23:59"),
+                        "%Y-%m-%d %H:%M",
+                    )
+                )
+            else:
+                if cdata[
+                    "{}_earliest".format(wday)
+                ]:  # No need to check for both as form validation does that for us.
+                    day_start = user_timezone.localize(
+                        datetime.strptime(
+                            "{} {}".format(
+                                today.strftime("%Y-%m-%d"),
+                                cdata["{}_earliest".format(wday)].strftime("%H:%M"),
+                            ),
+                            "%Y-%m-%d %H:%M",
+                        )
+                    )
+                    logger.debug("Set earliest time for {} to {}".format(wday, day_start))
+                    day_end = user_timezone.localize(
+                        datetime.strptime(
+                            "{} {}".format(
+                                today.strftime("%Y-%m-%d"),
+                                cdata["{}_latest".format(wday)].strftime("%H:%M"),
+                            ),
+                            "%Y-%m-%d %H:%M",
+                        )
+                    )
+                    logger.debug("Set latest time for {} to {}".format(wday, day_end))
+            # Check for an existing rule and cancel it.
+            if not self.scratch_mode and self.weekday_avail.weekdays[index_num]:
+                occ = self.weekday_avail.weekdays[index_num]
+                occ.event.end_recurring_period = timezone.now() - timedelta(days=1)
+                occ.event.save()
+                events_cancelled += 1
+            if day_start and day_end:
+                e = Event.objects.create(
+                    calendar=self.avail_calendar,
+                    start=day_start,
+                    end=day_end,
+                    rule=self.rule_to_use,
+                    creator=self.request.user,
+                    title=_("Availability for {}".format(wday)),
+                )
+                events_created += 1
+                logger.debug("New event created with start of {} and end of {}".format(e.start, e.end))
+            index_num += 1
+        logger.debug(
+            "Cancelled {} pre-existing availability events and created {} new ones.".format(
+                events_cancelled, events_created
+            )
+        )
+        messages.success(self.request, _("Available times successfully updated."))
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class GamerFriendRequestView(

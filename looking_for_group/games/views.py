@@ -27,6 +27,7 @@ from schedule.periods import Month
 
 from . import forms, models, serializers
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
+from ..gamer_profiles.models import GamerProfile
 from .mixins import JSONResponseMixin
 from .utils import mkfirstOfmonth, mkLastOfMonth
 
@@ -54,6 +55,7 @@ class GamePostingListView(
     filter_edition = None
     filter_system = None
     filter_module = None
+    filter_availability = None
     filter_querystring = None
 
     def get_context_data(self, **kwargs):
@@ -67,6 +69,7 @@ class GamePostingListView(
                     "edition": self.filter_edition,
                     "system": self.filter_system,
                     "module": self.filter_module,
+                    "similar_availability": self.filter_availability
                 }
             )
         else:
@@ -98,6 +101,7 @@ class GamePostingListView(
             system = get_dict.pop("system", None)
             print(system)
             module = get_dict.pop("module", None)
+            avail = get_dict.pop("similar_availability", None)
             if self.filter_game_status and self.filter_game_status[0] != "":
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
@@ -131,6 +135,14 @@ class GamePostingListView(
                     self.filter_module = mod_obj.pk
                 except ObjectDoesNotExist:
                     pass
+            if avail and avail[0] != "":
+                query_string_data["similar_availability"] = avail[0]
+                self.is_filtered = True
+                self.filter_availability = True
+                acal = models.AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(self.request.user.gamerprofile)
+                if acal.events.filter(rule__isnull=False, end_recurring_period__isnull=True).count() > 0:
+                    similar_gms = models.AvailableCalendar.objects.find_compatible_schedules(acal, GamerProfile.objects.filter(id__in=[g.gm.id for g in models.GamePosting.objects.select_related("gm").exclude(status__in=['closed', 'cancel'])]))
+                    queryset = queryset.filter(gm__in=similar_gms)
             if query_string_data:
                 self.filter_querystring = urllib.parse.urlencode(query_string_data)
         else:

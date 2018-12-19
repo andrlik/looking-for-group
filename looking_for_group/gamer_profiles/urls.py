@@ -236,4 +236,9 @@ urlpatterns = [
         view=views.WithdrawApplication.as_view(),
         name="delete-application",
     ),
+    path(
+        "me/available/",
+        view=views.GamerAvailabilityUpdate.as_view(),
+        name="set-available",
+    ),
 ]

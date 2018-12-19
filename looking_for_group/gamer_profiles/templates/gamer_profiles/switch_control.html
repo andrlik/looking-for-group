@@ -1,0 +1,3 @@
+{% load i18n %}<div class="switch">
+  <input type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% for name, value in widget.attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}><label{% if widget.attrs.id %} for="{{ widget.attrs.id }}"{% endif %} class="switch-paddle"><span class="show-for-sr">{{ widget.label }}</span><span class="switch-active" aria-hidden="true">{% trans "Yes" %}</span><span class="switch-inactive" aria-hidden="true">{% trans "No" %}</span></label>
+</div>
