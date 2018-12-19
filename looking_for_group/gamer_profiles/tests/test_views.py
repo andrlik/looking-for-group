@@ -141,8 +141,8 @@ class TestCommunityList(AbstractViewTest):
         with self.login(username=self.gamer3.username):
             self.assertGoodView("gamer_profiles:community-list")
             self.assertResponseNotContains("<span class='membership'>")
-            self.assertResponseContains("class='button'>Apply", html=False)
-            self.assertResponseContains("class='button'>Join", html=False)
+            self.assertResponseContains("class='button small'>Apply", html=False)
+            self.assertResponseContains("class='button small'>Join", html=False)
 
 
 class MyCommunityListView(AbstractViewTest):

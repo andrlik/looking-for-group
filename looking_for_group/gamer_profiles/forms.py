@@ -37,6 +37,18 @@ class SwitchInput(forms.widgets.CheckboxInput):
         return context
 
 
+class BooleanSwitchPaddleFormMixin(object):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for key, value in self.fields.items():
+            if isinstance(value, forms.BooleanField):
+                value.widget = SwitchInput()
+
+
+class ModelFormWithSwitchPaddles(BooleanSwitchPaddleFormMixin, forms.ModelForm):
+    pass
+
+
 class BlankDistructiveForm(forms.ModelForm):
     """
     Used for post-only submissions.
@@ -57,7 +69,7 @@ class KickUserForm(forms.ModelForm):
         widgets = {'end_date': forms.widgets.DateInput(attrs={'class': 'dp'})}
 
 
-class GamerProfileForm(forms.ModelForm):
+class GamerProfileForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
     """
     A profile form that will typically be populated with the userform.
     Note: Default profiles are created automatically, so this can only

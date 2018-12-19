@@ -28,9 +28,49 @@ from schedule.models import Event, Rule
 
 from .. import models, serializers
 from ...games.models import AvailableCalendar
-from ..forms import BlankDistructiveForm, GamerAvailabilityForm, GamerProfileForm, KickUserForm, OwnershipTransferForm
+from ..forms import (
+    BlankDistructiveForm,
+    GamerAvailabilityForm,
+    GamerProfileForm,
+    KickUserForm,
+    ModelFormWithSwitchPaddles,
+    OwnershipTransferForm
+)
 
 logger = logging.getLogger("gamer_profiles")
+
+
+class ModelFormWithSwitcViewhMixin(object):
+    """
+    We simply override the standard form class with the appropriate model form factory
+    """
+    def get_form_class(self):
+        if self.fields is not None and self.form_class:
+            raise ImproperlyConfigured(
+                "Specifying both 'fields' and 'form_class' is not permitted."
+            )
+        if self.form_class:
+            return self.form_class
+        else:
+            if self.model is not None:
+                # If a model has been explicitly provided, use it
+                model = self.model
+            elif getattr(self, 'object', None) is not None:
+                # If this view is operating on a single object, use
+                # the class of that object
+                model = self.object.__class__
+            else:
+                # Try to get a queryset and extract the model class
+                # from that
+                model = self.get_queryset().model
+
+            if self.fields is None:
+                raise ImproperlyConfigured(
+                    "Using ModelFormMixin (base class of %s) without "
+                    "the 'fields' attribute is prohibited." % self.__class__.__name__
+                )
+        return modelform_factory(model, form=ModelFormWithSwitchPaddles, fields=self.fields)
+
 
 
 # Create your views here.
@@ -254,7 +294,7 @@ class ChangeCommunityRole(
         )
 
 
-class CommunityCreateView(LoginRequiredMixin, generic.CreateView):
+class CommunityCreateView(LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.CreateView):
     """
     Creating a community.
     """
@@ -351,7 +391,7 @@ class CommunityDetailView(
 
 
 class CommunityUpdateView(
-    LoginRequiredMixin, PermissionRequiredMixin, generic.UpdateView
+        LoginRequiredMixin, PermissionRequiredMixin, ModelFormWithSwitcViewhMixin, generic.UpdateView
 ):
     """
     Update view for basic fields in community.

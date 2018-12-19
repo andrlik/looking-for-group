@@ -14,6 +14,8 @@
   <dd><a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a></dd>
   <dt>{% trans "Games editions associated" %}</dt>
   <dd>{{ system.game_editions.count }}</dd>
+  <dt>{% trans "OGL Licensed?" %}</dt>
+  <dd>{{ system.ogl_license|yesno:"Yes,No" }}</dd>
   <dt>{% trans "Release Date" %}</dt>
   <dd>{{ system.release_date|date:"F Y"|default_if_none:"?" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>

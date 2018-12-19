@@ -69,7 +69,7 @@ class GamePostingListView(
                     "edition": self.filter_edition,
                     "system": self.filter_system,
                     "module": self.filter_module,
-                    "similar_availability": self.filter_availability
+                    "similar_availability": self.filter_availability,
                 }
             )
         else:
@@ -139,9 +139,26 @@ class GamePostingListView(
                 query_string_data["similar_availability"] = avail[0]
                 self.is_filtered = True
                 self.filter_availability = True
-                acal = models.AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(self.request.user.gamerprofile)
-                if acal.events.filter(rule__isnull=False, end_recurring_period__isnull=True).count() > 0:
-                    similar_gms = models.AvailableCalendar.objects.find_compatible_schedules(acal, GamerProfile.objects.filter(id__in=[g.gm.id for g in models.GamePosting.objects.select_related("gm").exclude(status__in=['closed', 'cancel'])]))
+                acal = models.AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(
+                    self.request.user.gamerprofile
+                )
+                if (
+                    acal.events.filter(
+                        rule__isnull=False, end_recurring_period__isnull=True
+                    ).count()
+                    > 0
+                ):
+                    similar_gms = models.AvailableCalendar.objects.find_compatible_schedules(
+                        acal,
+                        GamerProfile.objects.filter(
+                            id__in=[
+                                g.gm.id
+                                for g in models.GamePosting.objects.select_related(
+                                    "gm"
+                                ).exclude(status__in=["closed", "cancel"])
+                            ]
+                        ),
+                    )
                     queryset = queryset.filter(gm__in=similar_gms)
             if query_string_data:
                 self.filter_querystring = urllib.parse.urlencode(query_string_data)

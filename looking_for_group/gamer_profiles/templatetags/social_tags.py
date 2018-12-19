@@ -30,14 +30,14 @@ def community_role_flag(context, community):
     else:
         if community.private:
             return format_html(
-                "<a href='{}' class='button'>Apply</a>",
+                "<a href='{}' class='button small'>Apply</a>",
                 reverse(
                     "gamer_profiles:community-apply", kwargs={"community": community.pk}
                 ),
             )
         else:
             return format_html(
-                "<a href='{}' class='button'>Join</a>",
+                "<a href='{}' class='button small'>Join</a>",
                 reverse(
                     "gamer_profiles:community-join", kwargs={"community": community.pk}
                 ),

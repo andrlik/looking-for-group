@@ -1,9 +1,10 @@
 from django import forms
 
 from . import models
+from ..gamer_profiles.forms import BooleanSwitchPaddleFormMixin
 
 
-class GameForm(forms.ModelForm):
+class GameForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
     """
     Game form
     """
@@ -14,7 +15,7 @@ class GameForm(forms.ModelForm):
         widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
-class SystemForm(forms.ModelForm):
+class SystemForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
     """
     Game system form
     """
@@ -34,7 +35,7 @@ class SystemForm(forms.ModelForm):
         widgets = {"publication_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
-class EditionForm(forms.ModelForm):
+class EditionForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
     """
     Game edition form.
     """
@@ -55,7 +56,7 @@ class EditionForm(forms.ModelForm):
         widgets = {"release_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
-class SourceBookForm(forms.ModelForm):
+class SourceBookForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
     """
     Form for sourcebook.
     """
@@ -66,7 +67,7 @@ class SourceBookForm(forms.ModelForm):
         widgets = {"release_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 
-class ModuleForm(forms.ModelForm):
+class ModuleForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
     """
     Form for modules
     """
