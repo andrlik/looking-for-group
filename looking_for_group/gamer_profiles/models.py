@@ -468,6 +468,11 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     def get_sessions_run(self):
         return self.gmed_games.aggregate(models.Sum('sessions'))['sessions__sum']
 
+    def get_availability(self):
+        from ..games.models import AvailableCalendar
+        acal = AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(self)
+        return acal.get_weekly_availability()
+
     def get_absolute_url(self):
         return reverse("gamer_profiles:profile-detail", kwargs={"gamer": self.username})
 

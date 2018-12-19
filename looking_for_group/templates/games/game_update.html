@@ -1,5 +1,5 @@
 {% extends "games/game_base_form.html" %}
-{% load i18n foundation_formtags %}
+{% load i18n avatar_tags foundation_formtags social_tags %}
 {% block subtitle %}{% trans "Edit game" %} - {% endblock %}
 {% block editactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{% trans "Edit game" %}{% endblock %}
@@ -13,7 +13,137 @@
     <a class="button float-left secondary" href="{% url 'games:game_detail' gameid=game.slug %}">{% trans "Cancel and return to game detail" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}">
   </div>
 </form>
+{% if game.players.all|length > 0 %}
 
+<div class="reveal" id="scheduling_modal" data-reveal>
+  <h1>{% trans "Player availability and schedule" %}</h1>
+  {% get_gamer_scheduling_dict game as gamer_cal %}
+  <table class="hover scroll">
+    <thead>
+      {% get_weekday_list as weekday_list %}
+      <tr>
+        <th>{% trans "Weekday" %}</th>
+        {% for key, player in gamer_cal.items %}
+        <th>{% avatar player.gamer.user 30 class="avatar" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+
+      {% for weekday in weekday_list %}
+      <tr>
+        <th>{{ weekday }}</th>
+      {% for key, player in gamer_cal.items %}
+        <td>
+          {% with avail=player.avail conflicts=player.conflicts %}
+          {% if forloop.parentloop.counter0 == 0 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.0 %}{% if avail.weekdays.0.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.0.start|date:"H:i" }} - {{ avail.weekdays.0.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+
+            {% for conflict in conflicts.Monday %}
+
+            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 1 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.1 %}{% if avail.weekdays.1.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.1.start|date:"H:i" }} - {{ avail.weekdays.1.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Tuesday %}
+            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 2 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.2 %}{% if avail.weekdays.2.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.2.start|date:"H:i" }} - {{ avail.weekdays.2.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Wednesday %}
+            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 3 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.3 %}{% if avail.weekdays.3.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.3.start|date:"H:i" }} - {{ avail.weekdays.3.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Thursday %}
+            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 4 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.4 %}{% if avail.weekdays.4.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.4.start|date:"H:i" }} - {{ avail.weekdays.4.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Friday %}
+            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 5 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.5 %}{% if avail.weekdays.5.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.5.start|date:"H:i" }} - {{ avail.weekdays.5.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Saturday %}
+            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.6 %}{% if avail.weekdays.6.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.6.start|date:"H:i" }} - {{ avail.weekdays.6.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Sunday %}
+            <li><span class="label alert">{{ conflict.event.rule.description }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+
+
+          {% endwith %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% empty %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <button class="close-button" data-close aria-label="{% trans 'Close schedule window' %}" type="button"><span area-hidden="true">&times;</span></button>
+</div>
+{% endif %}
 {% endblock %}
 {% block simplemde %}
 <script type="text/javascript">
@@ -27,5 +157,10 @@
     indentWithTabs: false,
     forceSync: true,
   });
+  {% if game.players.count > 0 %}
+  var $schedule_reveal_button = $("<a />").text("{% trans 'View Player Schedules' %}").attr("class", "button float-right small").attr("data-open", "scheduling_modal").attr("href", "#");
+  var starttimelabel = $("label[for='id_start_time']");
+  $schedule_reveal_button.appendTo(starttimelabel);
+{% endif %}
 </script>
 {% endblock %}
