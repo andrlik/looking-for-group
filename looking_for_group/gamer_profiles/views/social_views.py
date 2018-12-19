@@ -1320,6 +1320,7 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
             if today.weekday() != index_num and today.weekday() < index_num:
                 today = today + timedelta(days=index_num - today.weekday())
             if cdata["{}_all_day".format(wday)]:
+                logger.debug("Setting for all-day for {}".format(wday))
                 today = timezone.now()
                 if today.weekday() != index_num and today.weekday() > index_num:
                     today = today - timedelta(days=today.weekday() - index_num)
@@ -1350,6 +1351,7 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
                             "%Y-%m-%d %H:%M",
                         )
                     )
+                    logger.debug("Set earliest time for {} to {}".format(wday, day_start))
                     day_end = user_timezone.localize(
                         datetime.strptime(
                             "{} {}".format(
@@ -1359,6 +1361,7 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
                             "%Y-%m-%d %H:%M",
                         )
                     )
+                    logger.debug("Set latest time for {} to {}".format(wday, day_end))
             # Check for an existing rule and cancel it.
             if not self.scratch_mode and self.weekday_avail.weekdays[index_num]:
                 occ = self.weekday_avail.weekdays[index_num]
