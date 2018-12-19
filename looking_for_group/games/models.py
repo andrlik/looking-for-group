@@ -145,7 +145,7 @@ class AvailableCalendarManager(CalendarManager):
         for gamer in gamer_list:
             logger.debug("Evaluating for gamer {}".format(gamer))
             cal = self.get_or_create_availability_calendar_for_gamer(gamer)
-            if cal.events.filter(end_recurring_period__isnull=True, rule__isnull=False):
+            if cal.events.filter(end_recurring_period__isnull=True, rule__isnull=False).count() == 0:
                 # Gamer has nothing set, which means ambiguous results. Include in matches.
                 logger.debug("Gamer has specified no availability. Treat like an ambiguous match.")
                 matches += 1

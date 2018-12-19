@@ -1369,7 +1369,7 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
                 occ.event.save()
                 events_cancelled += 1
             if day_start and day_end:
-                Event.objects.create(
+                e = Event.objects.create(
                     calendar=self.avail_calendar,
                     start=day_start,
                     end=day_end,
@@ -1378,6 +1378,7 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
                     title=_("Availability for {}".format(wday)),
                 )
                 events_created += 1
+                logger.debug("New event created with start of {} and end of {}".format(e.start, e.end))
             index_num += 1
         logger.debug(
             "Cancelled {} pre-existing availability events and created {} new ones.".format(

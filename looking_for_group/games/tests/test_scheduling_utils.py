@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import pytz
 from django.utils import timezone
 from schedule.models import Event, Rule
 
@@ -238,6 +239,7 @@ class TestUpdateAvailView(AbstractAvailTestCase):
             assert len(error_list) == 2
 
     def test_successful_post(self):
+        eastern = pytz.timezone("America/New_York")
         with self.login(username=self.gamer1.username):
             self.post(self.view_name, data=self.new_avail_data)
             if self.last_response.status_code == 200:
@@ -245,16 +247,22 @@ class TestUpdateAvailView(AbstractAvailTestCase):
             self.response_302()
             occs = self.cal1.get_next_week_occurrences()
             for occ in occs:
+                print("testing for weekday num {}".format(occ.start.weekday()))
                 if occ.start.weekday() == 0:
-                    assert occ.start.strftime("%H:%M") == "00:00"
-                    assert occ.end.strftime("%H:%M") == "23:59"
+                    print("Mon start:"+occ.start.strftime("%H:%M%z"))
+                    assert occ.start.astimezone(eastern).strftime("%H:%M") == "00:00"
+                    assert occ.end.astimezone(eastern).strftime("%H:%M") == "23:59"
                 assert occ.start.weekday() not in [1, 2, 3]
+                assert occ.start.weekday() in [0, 4, 5, 6]
                 if occ.start.weekday() == 4:
-                    assert occ.start.strftime("%H:%M") == "00:00"
-                    assert occ.end.strftime("%H:%M") == "23:59"
+                    print("Friday start:"+occ.start.strftime("%H:%M%z"))
+                    assert occ.start.astimezone(eastern).strftime("%H:%M") == "00:00"
+                    assert occ.end.astimezone(eastern).strftime("%H:%M") == "23:59"
                 if occ.start.weekday() == 5:
-                    assert occ.start.strftime("%H:%M") == "10:00"
-                    assert occ.end.strftime("%H:%M") == "15:00"
+                    print("Sat start:"+occ.start.strftime("%H:%M%z"))
+                    assert occ.start.astimezone(eastern).strftime("%H:%M") == "10:00"
+                    assert occ.end.astimezone(eastern).strftime("%H:%M") == "15:00"
                 if occ.start.weekday() == 6:
-                    assert occ.start.strftime("%H:%M") == "10:00"
-                    assert occ.end.strftime("%H:%M") == "17:00"
+                    print("Sun start:"+occ.start.strftime("%H:%M%z"))
+                    assert occ.start.astimezone(eastern).strftime("%H:%M") == "10:00"
+                    assert occ.end.astimezone(eastern).strftime("%H:%M") == "17:00"
