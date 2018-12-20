@@ -151,7 +151,7 @@
 </div>
 {% endblock %}
 {% block simplemde %}
-{% compress js %}
+
 <script type="text/javascript">
   var simplemde = new SimpleMDE({
     element: $('#id_gm_notes')[0],
@@ -216,6 +216,6 @@
         $("#conflict_lists").show();
       }})});
 </script>
-{% endcompress %}
+
 
 {% endblock %}
