@@ -1,18 +1,20 @@
 {% extends "gamer_profiles/community_base.html" %}
 {% load i18n humanize foundation_formtags %}
 {% block subtitle %}{% trans "Apply to join" %} {{ community.name }} - {% endblock %}
-{% block commdetailactive %} class="is-active"{% endblock %}
+{% block applyactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% blocktrans with cname=community.name %}Apply to join {{ cname }}?{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with cname=community.name %}Apply to join {{ cname }}?{% endblocktrans %}{% endblock %}
 {% block content %}
 <span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.display_name }}</a></span>
-<p>{{ community.description_rendered|safe }}</p>
+<p>{{ community.description_rendered|default_if_none:""|safe }}</p>
 <h2>{% trans "Are you sure?" %}</h2>
 <p>{% blocktrans %}If your application is approved, joining this community means that your profile will be visible to all the other members of this group.{% endblocktrans %}</p>
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
-  <button type="submit">{% trans "Save Application" %}</button> <button type='submit' id='id_submit_app' name='submit_app'>{% trans "Save and Submit Application" %}</button>
+  <div class="clearfix grid-x grid-margin-x">
+    <div class="cell medium-auto"><a href="{{ community.get_absolute_url }}" class="button secondary">{% trans "Back to community details" %}</a></div><div class="cell medium-auto"> <button type="submit" class="button">{% trans "Save Application" %}</button></div><div class="cell medium-auto"> <button type='submit' id='id_submit_app' class="button success" name='submit_app'>{% trans "Save and Submit Application" %}</button></div>
+  </div>
 </form>
 
 {% endblock %}

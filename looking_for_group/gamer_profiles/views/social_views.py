@@ -192,22 +192,53 @@ class LeaveCommunity(
     """
 
     model = models.CommunityMembership
-    pk_url_kwarg = "membership"
     permission_required = "community.leave"
     select_related = ["community", "gamer"]
     template_name = "gamer_profiles/community_leave.html"
+    gamer = None
+    community = None
+    pk_url_kwarg = "community"
 
-    def form_valid(self, form):
-        community = self.get_object().community
-        if community.owner == self.request.user.gamerprofile:
+    def dispatch(self, request, *args, **kwargs):
+        comm_slug = kwargs.pop("community", None)
+        self.community = get_object_or_404(models.GamerCommunity, slug=comm_slug)
+        logger.debug("Community found")
+        if request.user.is_authenticated:
+            self.gamer = request.user.gamerprofile
+            logger.debug("Found gamer.")
+        membership = self.get_object()
+        kwargs['community'] = membership.pk
+        logger.debug("Replacing kwarg for community")
+        if request.POST:
+            return self.post(request, *args, **kwargs)
+        return self.get(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        if not queryset:
+            queryset = self.get_queryset()
+        try:
+            obj = queryset.get(gamer=self.gamer, community=self.community)
+        except ObjectDoesNotExist:
+            raise Http404
+        return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = self.community
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        community = self.community
+        if community.owner == self.gamer:
             messages.error(
                 _(
                     "You are the owner of this community. To leave it, you must transfer ownership first"
                 )
             )
-            return super().form_invalid(form)
-        messages.success(_("You have left {0}".format(self.get_object.community.name)))
-        return super().form_valid(form)
+            return HttpResponseRedirect(reverse_lazy('gamer_profiles:community-leave', kwargs={'community': community.slug}))
+        messages.success(request, _("You have left {0}".format(self.community.name)))
+        community.remove_member(self.gamer)
+        return HttpResponseRedirect(reverse_lazy('gamer_profiles:community-list'))
 
 
 class TransferCommunityOwnership(
@@ -754,7 +785,7 @@ class ApproveApplication(
     def get_success_url(self):
         return reverse_lazy(
             "gamer_profiles:community-applicant-list",
-            kwargs={"community": self.community.pk},
+            kwargs={"community": self.community.slug},
         )
 
     def form_valid(self, form):
@@ -912,7 +943,7 @@ class CommunityDeleteBan(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-ban-list", kwargs={"community": self.community.pk}
+            "gamer_profiles:community-ban-list", kwargs={"community": self.community.slug}
         )
 
     def get_permission_object(self):
@@ -952,7 +983,7 @@ class CommunityUpdateBan(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-ban-list", kwargs={"community": self.community.pk}
+            "gamer_profiles:community-ban-list", kwargs={"community": self.community.slug}
         )
 
     def get_permission_object(self):
@@ -995,7 +1026,7 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-ban-list", kwargs={"community": self.community.pk}
+            "gamer_profiles:community-ban-list", kwargs={"community": self.community.slug}
         )
 
     def has_permission(self):
