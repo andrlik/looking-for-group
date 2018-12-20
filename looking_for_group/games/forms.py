@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from . import models
 from ..game_catalog import models as cat_models
+from ..gamer_profiles.forms import BooleanSwitchPaddleFormMixin, SwitchInput
 
 DUMMY_CHOICES = [("", "")]
 
@@ -19,7 +20,7 @@ def get_module_choices():
     return [("", "")] + [(m.pk, m.title) for m in cat_models.PublishedModule.objects.all().order_by('title')]
 
 
-class GamePostingForm(forms.ModelForm):
+class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
     """
     A form representing the GamePosting. Essentially just to
     limit community posting choices.
@@ -78,6 +79,7 @@ class GameFilterForm(forms.Form):
     edition = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
     system = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
     module = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
+    similar_availability = forms.BooleanField(label="Filter by GM availability?", widget=SwitchInput(), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

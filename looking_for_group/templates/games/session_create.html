@@ -1,5 +1,5 @@
 {% extends "games/game_base_form.html" %}
-{% load i18n foundation_formtags %}
+{% load i18n avatar_tags foundation_formtags social_tags %}
 {% block sectiontitle %}{% trans "Create session" %}{% endblock %}
 
 {% block subtitle %}{% trans "Create session" %} - {% endblock %}
@@ -11,11 +11,147 @@
 <form data-abide novalidate action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
-  <div class="clearfix">
-    <a class="button secondary float-left" href="{{ game.get_absolute_url }}">Back to game details</a> <input type="submit" class="button success float-right" value="Create" />
+  <div class="clearfix grid-x grid-margin-x">
+    <div class="cell medium-auto"><a class="button secondary" href="{{ game.get_absolute_url }}">Back to game details</a></div><div class="cell medium-auto"><a href="#" id="conflict_checker" class="button">{% trans "Check for conflicts" %}</a> </div><div class="cell medium-auto"> <input type="submit" class="button success" value="Create" /></div>
   </div>
 </form>
 
+<div id="conflict_lists" class="alert">
+  <p>{% trans "Players whose available times don't match session." %}</p>
+  <ul id="avail_issue_list" class="alert"></ul>
+  <p>{% trans "Players with conflicting game appointments." %}</p>
+  <ul id="conflict_list" class="alert"></ul>
+</div>
+<div class="reveal" id="scheduling_modal" data-reveal>
+  <h1>{% trans "Player availability" %}</h1>
+  <p>{% trans "NOTE: While this represents players' general schedule, it doesn't show rescheduled sessions, but does show one-shots." %}</p>
+  {% get_gamer_scheduling_dict game as gamer_cal %}
+  <table class="hover scroll">
+    <thead>
+      {% get_weekday_list as weekday_list %}
+      <tr>
+        <th>{% trans "Weekday" %}</th>
+        {% for key, player in gamer_cal.items %}
+        <th>{% avatar player.gamer.user 30 class="avatar" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+
+      {% for weekday in weekday_list %}
+      <tr>
+        <th>{{ weekday }}</th>
+        {% for key, player in gamer_cal.items %}
+        <td>
+          {% with avail=player.avail conflicts=player.conflicts %}
+          {% if forloop.parentloop.counter0 == 0 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.0 %}{% if avail.weekdays.0.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.0.start|date:"H:i" }} - {{ avail.weekdays.0.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+
+            {% for conflict in conflicts.Monday %}
+
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 1 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.1 %}{% if avail.weekdays.1.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.1.start|date:"H:i" }} - {{ avail.weekdays.1.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Tuesday %}
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 2 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.2 %}{% if avail.weekdays.2.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.2.start|date:"H:i" }} - {{ avail.weekdays.2.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Wednesday %}
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 3 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.3 %}{% if avail.weekdays.3.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.3.start|date:"H:i" }} - {{ avail.weekdays.3.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Thursday %}
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 4 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.4 %}{% if avail.weekdays.4.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.4.start|date:"H:i" }} - {{ avail.weekdays.4.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Friday %}
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% elif forloop.parentloop.counter0 == 5 %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.5 %}{% if avail.weekdays.5.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.5.start|date:"H:i" }} - {{ avail.weekdays.5.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Saturday %}
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p><strong>{% trans "Available times" %}</strong></p>
+          <ul>
+            <li>{% if avail %}{% if avail.weekdays.6 %}{% if avail.weekdays.6.seconds > 86000 %}<span class="label success">{% trans "Whenever" %}</span>{% else %}<span class="label primary">{{ avail.weekdays.6.start|date:"H:i" }} - {{ avail.weekdays.6.end|date:"H:i" }}</span>{% endif %}{% else %}<span class="label secondary">{% trans "Not available" %}</span>{% endif %}{% else %}<span class="label warning">{% trans "Unknown" %}</span>{% endif %}</li>
+          </ul>
+          <p><strong>{% trans "Potential conflicts" %}</strong></p>
+          <ul>
+            {% for conflict in conflicts.Sunday %}
+            <li><span class="label alert">{{ conflict.event.rule.description|default_if_none:"Oneshot" }}: {{ conflict.event.start|date:"H:i" }} - {{ conflict.event.end|date:"H:i" }} ({% trans "Next:" %} {{ conflict.next.start|date:"Y-m-d" }})</span></li>
+            {% empty %}
+            <li>{% trans "None found" %}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+
+
+          {% endwith %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% empty %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <button class="close-button" data-close aria-label="{% trans 'Close schedule window' %}" type="button"><span area-hidden="true">&times;</span></button>
+
+</div>
 
 {% endblock %}
 
@@ -31,5 +167,57 @@
     indentWithTabs: false,
     forceSync: true,
   });
+  var $schedule_reveal_button = $("<a />").text("{% trans 'View Player Schedules' %}").attr("class", "button float-right small").attr("data-open", "scheduling_modal").attr("href", "#");
+  var starttimelabel = $("label[for='id_scheduled_time']");
+  $schedule_reveal_button.appendTo(starttimelabel);
+  var getCookie = function (name) {
+    // From https://docs.djangoproject.com/en/1.7/ref/contrib/csrf/
+    var cookieValue = null, cookies, i, cookie;
+    if (document.cookie && document.cookie !== '') {
+      cookies = document.cookie.split(';');
+      for (i = 0; i < cookies.length; i += 1) {
+        cookie = cookies[i].trim(); // Doesn't work in all browsers
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  };
+
+  $("#conflict_checker").click(function(){
+    $("#conflict_lists").hide();
+    var time_value = $("#id_scheduled_time").value;
+    fd = new
+    $.post({
+      type: 'POST',
+      url: "{% url 'games:adhoc_check_conflicts' game=game.slug %}",
+      data: { scheduled_time: $("input#id_scheduled_time")[0].value},
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": 'application/x-www-form-urlencoded',
+        "X-CSRFToken": getCookie('csrftoken')
+      },
+      success: function(result){
+        $("ul#avail_issue_list").empty();
+        $("ul#conflict_list").empty();
+        if(result['avail_issues'].length > 0){
+          for (i=0; i< result['avail_issues'].length; i++){
+            var availli = $('<li></li>').text(result['avail_issues'][i]).attr("class","alert");
+            availli.appendTo($('#avail_issue_list'));
+          }}
+        else {
+          $("<li>{% trans 'None' %}</li>").attr("class", "success").appendTo($('#avail_issue_list'));
+        }
+        if(result["conflict_issues"].length > 0){
+          for (i=0; i < result['conflict_issues'].length; i++){
+            $("<li></li>").text(result['conflict_issues'][i]).appendTo($('#conflict_list'));
+          }} else {
+            $("<li>{% trans 'None' %}</li>").appendTo($("#conflict_list"));
+          }
+        $("#conflict_lists").show();
+      }})});
 </script>
 {% endblock %}

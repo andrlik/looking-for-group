@@ -141,8 +141,8 @@ class TestCommunityList(AbstractViewTest):
         with self.login(username=self.gamer3.username):
             self.assertGoodView("gamer_profiles:community-list")
             self.assertResponseNotContains("<span class='membership'>")
-            self.assertResponseContains("class='button'>Apply", html=False)
-            self.assertResponseContains("class='button'>Join", html=False)
+            self.assertResponseContains("class='button small'>Apply", html=False)
+            self.assertResponseContains("class='button small'>Join", html=False)
 
 
 class MyCommunityListView(AbstractViewTest):
@@ -1239,7 +1239,9 @@ class GamerProfileDetailTest(AbstractViewTest):
         If profile is private, but user is a friend, show the profile.
         """
         with self.login(username=self.gamer_friend.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
+            with self.assertNumQueriesLessThan(80):
+                self.get(self.view_str, **self.url_kwargs)
+                self.response_200()
 
     def test_private_but_same_comm(self):
         """
@@ -1247,7 +1249,9 @@ class GamerProfileDetailTest(AbstractViewTest):
         """
         self.community1.add_member(self.gamer3)
         with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
+            with self.assertNumQueriesLessThan(80):
+                self.get(self.view_str, **self.url_kwargs)
+                self.response_200()
 
 
 class GamerProfileUpdateTest(AbstractViewTest):

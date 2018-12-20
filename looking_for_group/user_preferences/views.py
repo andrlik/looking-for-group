@@ -24,6 +24,7 @@ from . import forms, models
 from ..discord import models as discord_models
 from ..game_catalog import models as catalog_models
 from ..gamer_profiles import models as social_models
+from ..gamer_profiles.views import ModelFormWithSwitcViewhMixin
 from ..games import models as game_models
 
 # Create your views here.
@@ -120,7 +121,7 @@ class SettingsView(LoginRequiredMixin, SelectRelatedMixin, generic.DetailView):
             return None
 
 
-class SettingsEdit(LoginRequiredMixin, generic.edit.UpdateView):
+class SettingsEdit(LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.edit.UpdateView):
     """
     Settings edit view.
     """

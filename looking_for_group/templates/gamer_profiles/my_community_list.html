@@ -30,7 +30,7 @@
       <td>{{ membership.community.description_rendered|truncatewords_html:100|safe }}</td>
       <td class="text-right">{{ membercommunity.gameposting_set.count }}</td>
       <td>{% community_role_flag membership.community %}</td>
-      <td><a href="{% url 'gamer_profiles:community-leave' community=membership.community.slug %}" class="button alert">{% trans "Leave" %}</a></td>
+      <td><a href="{% url 'gamer_profiles:community-leave' community=membership.community.slug %}" class="button small alert">{% trans "Leave" %}</a></td>
     </tr>
   {% empty %}
   {% endfor %}
