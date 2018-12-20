@@ -371,7 +371,6 @@ class GameEvent(Event):
             masterevent = GameEventRelation.objects.get(
                 event=self, content_type=ct, distinction="playerevent"
             )
-            print(type(masterevent))
         except ObjectDoesNotExist:
             return False
         return masterevent.content_object
@@ -386,7 +385,7 @@ class GameEvent(Event):
         return GamePosting.objects.get(event=self.get_master_event())
 
     def is_master_event(self):
-        if not self.master_event:
+        if not self.get_master_event():
             return True
         return False
 
