@@ -172,6 +172,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
 
                 temp_slug = "{}-{}".format(temp_slug[: max_length - len(str(x)) - 1], x)
             self.slug = temp_slug
+        self.member_count = self.get_member_count()
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
@@ -241,6 +242,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
                     community=self, gamer=gamer
                 )
                 membership.delete()
+                comm_games = gamer.gmed_games.filter(communities__in=[self])
+                for game in comm_games:
+                    game.communities.remove(self)
                 self.member_count = F("member_count") - 1
                 self.save()
         except ObjectDoesNotExist:
@@ -783,12 +787,12 @@ class BannedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
     community = models.ForeignKey(GamerCommunity, on_delete=models.CASCADE)
     banner = models.ForeignKey(
         GamerProfile,
-        related_name="banned_by_users",
+        related_name="banned_users",
         help_text=_("User who initated ban."),
         on_delete=models.CASCADE,
     )
     banned_user = models.ForeignKey(
-        GamerProfile, help_text=_("User who was banned."), on_delete=models.CASCADE
+        GamerProfile, help_text=_("User who was banned."), related_name="bans", on_delete=models.CASCADE
     )
     reason = models.TextField(help_text=_("Why is this user being banned?"))
 

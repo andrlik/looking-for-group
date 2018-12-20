@@ -1,0 +1,19 @@
+{% extends "gamer_profiles/community_base.html" %}
+{% load i18n %}
+{% block leaveactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block subtitle %}{% trans "Leave community" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Leave community" %}{% endblock %}
+{% block mobileheader %}{% trans "Leave community" %}{% endblock %}
+{% block content %}
+<div class="callout alert">
+  <h5>{% trans "Are you sure?" %}</h5>
+  <p>{% trans "If you leave this community, it cannot be undone." %} {% if community.private %}{% trans "You will need to reapply if you wish to rejoin." %}{% else %}{% trans "You will need to rejoin to regain access to it." %}{% endif %}</p>
+</div>
+  <form method="post" action="">
+    {% csrf_token %}
+    <div class="clearfix">
+      <a href="{{ community.get_absolute_url }}" class="button secondary float-left">{% trans "Nevermind, take me back to the community details" %}</a> <button class="button alert float-right" type="submit"><i class="fas fa-sign-out-alt"></i> {% trans "Leave community" %}</button>
+    </div>
+  </form>
+
+{% endblock %}

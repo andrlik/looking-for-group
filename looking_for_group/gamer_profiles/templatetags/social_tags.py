@@ -39,14 +39,14 @@ def community_role_flag(context, community):
             return format_html(
                 "<a href='{}' class='button small'>Apply</a>",
                 reverse(
-                    "gamer_profiles:community-apply", kwargs={"community": community.pk}
+                    "gamer_profiles:community-apply", kwargs={"community": community.slug}
                 ),
             )
         else:
             return format_html(
                 "<a href='{}' class='button small'>Join</a>",
                 reverse(
-                    "gamer_profiles:community-join", kwargs={"community": community.pk}
+                    "gamer_profiles:community-join", kwargs={"community": community.slug}
                 ),
             )
 

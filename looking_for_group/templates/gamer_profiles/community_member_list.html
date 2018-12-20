@@ -44,6 +44,7 @@
       {% if is_banner %}
       <th></th>
       {% endif %}
+
     </tr>
   </thead>
   <tbody>
@@ -79,6 +80,7 @@
       <td><a href="{% url 'gamer_profiles:community-ban-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert"><i class="fas fa-ban"></i> {% trans "Ban from community" %}</a></td>
       {% endif %}
       {% endif %}
+
     </tr>
     {% empty %}
     {% endfor %}
