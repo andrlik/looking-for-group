@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 
+import pytz
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
@@ -64,7 +65,7 @@ class WeekdayAvailable(object):
     An object for representing and holding weekday availability in a consistent format.
     """
 
-    def __init__(self, availability_calendar, base_date=None):
+    def __init__(self, availability_calendar, user_timezone, base_date=None):
         end_date_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
         if not base_date:
             base_date = timezone.now()
@@ -73,7 +74,7 @@ class WeekdayAvailable(object):
             raise ValueError(_("This is not a valid calendar for representation as nothing is defined."))
         self.weekdays = [[]] * 7
         for occurrence in availability_calendar.get_next_week_occurrences(base_date):
-            weekday_key = occurrence.start.weekday()
+            weekday_key = occurrence.start.astimezone(user_timezone).weekday()
             self.weekdays[weekday_key] = occurrence
 
 
@@ -178,13 +179,13 @@ class AvailableCalendar(Calendar):
         date_range = Week(self.events.filter(end_recurring_period__isnull=True, rule__isnull=False), date=date_base).next_week()
         return date_range.get_occurrences()
 
-    def get_weekly_availability(self, date_base=None):
+    def get_weekly_availability(self, user_timezone=pytz.timezone('UTC'), date_base=None):
         """
         For the given date_base retrieve weekly schedule in a friendly
         format.
         """
         try:
-            result = WeekdayAvailable(self, date_base)
+            result = WeekdayAvailable(self, user_timezone, date_base)
         except ValueError:
             return None
         return result

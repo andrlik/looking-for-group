@@ -1244,7 +1244,8 @@ class GamerProfileDetailView(
         avail_calendar = AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(
             context["gamer"]
         )
-        context["week_availability"] = avail_calendar.get_weekly_availability()
+        user_timezone = pytz.timezone(self.request.user.timezone)
+        context["week_availability"] = avail_calendar.get_weekly_availability(user_timezone)
         return context
 
     def handle_no_permission(self):
@@ -1312,6 +1313,7 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
         return context
 
     def get_initial(self):
+        user_timezone = pytz.timezone(self.request.user.timezone)
         try:
             self.weekday_avail = self.avail_calendar.get_weekly_availability()
         except ValueError:
@@ -1327,21 +1329,26 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
             if occ:
                 if occ.seconds >= 86000:
                     initial[
-                        "{}_all_day".format(self.weekday_map[occ.start.weekday()])
+                        "{}_all_day".format(self.weekday_map[occ.start.astimezone(user_timezone).weekday()])
                     ] = occ.start.weekday()
                     all_day = True
                 else:
                     if not earliest_time or occ.start < earliest_time:
+                        logger.debug("Setting earliest time to {}".format(occ.start.astimezone(user_timezone)))
                         earliest_time = occ.start
                     if not latest_time or occ.end > latest_time:
                         latest_time = occ.end
                 if earliest_time and latest_time and not all_day:
                     initial[
-                        "{}_earliest".format(self.weekday_map[earliest_time.weekday()])
-                    ] = earliest_time.strftime("%H:%M")
+                        "{}_earliest".format(self.weekday_map[earliest_time.astimezone(user_timezone).weekday()])
+                    ] = earliest_time.astimezone(user_timezone).strftime("%H:%M")
+                    logger.debug("using {} as earliest time".format(earliest_time.astimezone(user_timezone).strftime("%H:%M")))
                     initial[
-                        "{}_latest".format(self.weekday_map[latest_time.weekday()])
-                    ] = latest_time.strftime("%H:%M")
+                        "{}_latest".format(self.weekday_map[earliest_time.astimezone(user_timezone).weekday()])
+                    ] = latest_time.astimezone(user_timezone).strftime("%H:%M")
+                else:
+                    if not all_day:
+                        logger.debug("nothing happened for {}".format(occ))
         return initial
 
     def form_valid(self, form):
@@ -1415,7 +1422,7 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
                     end=day_end,
                     rule=self.rule_to_use,
                     creator=self.request.user,
-                    title=_("Availability for {}".format(wday)),
+                    title=_("{}'s availability for {}".format(self.request.user.username, wday)),
                 )
                 events_created += 1
                 logger.debug("New event created with start of {} and end of {}".format(e.start, e.end))
@@ -1426,6 +1433,8 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
             )
         )
         messages.success(self.request, _("Available times successfully updated."))
+        if cache.get('profile_{}'.format(self.request.user.username)):
+            cache.incr_version('profile_{}'.format(self.request.user.username))
         return HttpResponseRedirect(self.get_success_url())
 
 
