@@ -30,7 +30,7 @@ def send(users, label, extra_context):
         verb = _("sent a reply to your message:")
     for user in users:
         notify.send(msg.sender, recipient=user, verb=verb, target=msg)
-        if user.gamerprofile.preferences.email_messages:
+        if user.gamerprofile.preferences.email_messages == True:
             async_task(send_email_notification, user, msg)
 
 
