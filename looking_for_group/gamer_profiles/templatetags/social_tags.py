@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+import pytz
 from django.db.models.query_utils import Q
 from django.template import Library
 from django.urls import reverse
@@ -63,7 +64,7 @@ def is_blocked_by_user(context, gamer):
 
 
 @register.simple_tag()
-def get_conflicts(gamer, game):
+def get_conflicts(gamer, game, user_timezone=pytz.timezone('UTC')):
     """
     For a given gamer and game, retrieve events excluding the game events.
     """
@@ -95,7 +96,7 @@ def get_conflicts(gamer, game):
                     occ = next(occ_future)
             except StopIteration:
                 pass
-            player_result[event.start.strftime("%A")].append({'event': event, 'next': occ})
+            player_result[event.start.astimezone(user_timezone).strftime("%A")].append({'event': event, 'next': occ})
         return player_result
 
 
@@ -104,13 +105,14 @@ def get_weekday_list():
     return [_("Monday"), _("Tuesday"), _("Wednesday"), _("Thursday"), _("Friday"), _("Saturday"), _("Sunday")]
 
 
-@register.simple_tag()
-def get_gamer_scheduling_dict(game):
+@register.simple_tag(takes_context=True)
+def get_gamer_scheduling_dict(context, game):
+    user_timezone = pytz.timezone(context['request'].user.timezone)
     result = OrderedDict()
     for gamer in game.players.all():
         result[gamer.username] = {
             "gamer": gamer,
             "avail": gamer.get_availability(),
-            "conflicts": get_conflicts(gamer, game),
+            "conflicts": get_conflicts(gamer, game, user_timezone),
         }
     return result
