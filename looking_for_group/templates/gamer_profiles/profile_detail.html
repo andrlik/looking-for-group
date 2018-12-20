@@ -56,9 +56,9 @@
         </ul>
         <h5>{% trans "Communities" %}</h5>
         <ul class="stats-list">
-          <li>{{ gamer.communities.count }} <span class="stats-list-label">{% trans "Memberships" %}</span></li>
+          <li>{{ gamer.communities.count }} <span class="stats-list-label">{% trans "Member" %}</span></li>
           <li>{{ gamer.get_owned_communities.count }} <span class="stats-list-label">{% trans "Owner" %}</span></li>
-          <li>{{ gamer.get_admined_communities.count }} <span class="stats-list-label">{% trans "Admin roles" %}</span></li>
+          <li>{{ gamer.get_admined_communities.count }} <span class="stats-list-label">{% trans "Admin" %}</span></li>
         </ul>
       </div>
     </div>
@@ -70,7 +70,7 @@
       <div class="card-divider"><h5>{% trans "Status" %}</h5></div>
       <div class="card-section">
 
-<table>
+<table class="hover scroll">
   <thead><th>{% trans "Preference" %}</th><th>{% trans "Response" %}</th></thead>
   <tbody>
     <tr><td>{% trans "Current Status" %}</td><td>{{ gamer.get_player_status_display }}</td></tr>

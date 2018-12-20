@@ -10,8 +10,10 @@
 <li{% block blockactive %}{% endblock %}><a href="{% url 'gamer_profiles:my-block-list' %}"><i class="fas fa-ban"></i> {% trans "Blocked users" %}</a></li>
 <li{% block settingsactive %}{% endblock %}><a href="{% url 'user_preferences:setting-view' %}"><i class="fas fa-cogs"></i> {% trans "Settings" %}</a></li>
 {% else %}
-<li>{% if gamer not in request.user.gamerprofile.friends.all %}<a href="{% url 'gamer_profiles:gamer-friend' gamer=gamer.username %}"><i class="fas fa-user-friends"></i> {% trans "Send friend request" %}</a>{% else %}<form action="" method="post">{% csrf_token %}<input type="submit" class="button" value="{% trans 'Remove friend' %}" /></form>{% endif %}</li>
+{% if not blocked %}
+<li>{% if gamer not in request.user.gamerprofile.friends.all %}<a href="{% url 'gamer_profiles:gamer-friend' gamer=gamer.username %}"><i class="fas fa-user-friends"></i> {% trans "Send friend request" %}</a>{% else %}<form action="" method="post">{% csrf_token %}<button type="submit" class="button"><i class="fas fa-user-slash"></i> {% trans 'Remove friend' %}</button></form>{% endif %}</li>
+{% endif %}
 
-<li>{% if blocked %}<a href="{% url 'gamer_profiles:my-block-list' %}">{% trans "Blocked" %}</a>{% else %}<form method="post" action="{% url 'gamer_profiles:block-gamer' gamer=gamer.username %}">{% csrf_token %}<input type="submit" class="button" value="{% trans 'Block user' %}" /></form>{% endif %}</li>
+<li>{% if blocked %}<a href="{% url 'gamer_profiles:my-block-list' %}"><i class="fas fa-ban"></i> {% trans "Blocked" %}</a>{% else %}<form method="post" action="{% url 'gamer_profiles:block-gamer' gamer=gamer.username %}">{% csrf_token %}<button type="submit" class="button"><i class="fas fa-ban"></i> {% trans 'Block user' %}</button></form>{% endif %}</li>
 {% endif %}
 {% endblock %}
