@@ -1,6 +1,12 @@
+from collections import OrderedDict
+
+from django.db.models.query_utils import Q
 from django.template import Library
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.translation import ugettext_lazy as _
+from schedule.models import Calendar
 
 from .. import models
 
@@ -54,3 +60,57 @@ def is_blocked_by_user(context, gamer):
     if block_record.count() > 0:
         return True
     return False
+
+
+@register.simple_tag()
+def get_conflicts(gamer, game):
+    """
+    For a given gamer and game, retrieve events excluding the game events.
+    """
+    end_recur_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
+    end_recur_future_q = Q(rule__isnull=False, end_recurring_period__gt=timezone.now())
+    one_shot_q = Q(rule__isnull=True, start__gt=timezone.now())
+    cal, created = Calendar.objects.get_or_create(slug=gamer.username, defaults={"name": "{}'s calendar".format(gamer.username)})
+    cal_events = cal.events.filter(end_recur_future_q | end_recur_empty_q | one_shot_q)
+    player_result = {
+        "Monday": [],
+        "Tuesday": [],
+        "Wednesday": [],
+        "Thursday": [],
+        "Friday": [],
+        "Saturday": [],
+        "Sunday": [],
+    }
+    if game.event:
+        cal_events = cal_events.exclude(id__in=[e.id for e in game.event.get_child_events()])
+    if cal_events.count() == 0:
+        return player_result
+    else:
+        occ = None
+        for event in cal_events:
+            occ_future = event.occurrences_after()
+            try:
+                occ = next(occ_future)
+                while occ.cancelled:
+                    occ = next(occ_future)
+            except StopIteration:
+                pass
+            player_result[event.start.strftime("%A")].append({'event': event, 'next': occ})
+        return player_result
+
+
+@register.simple_tag()
+def get_weekday_list():
+    return [_("Monday"), _("Tuesday"), _("Wednesday"), _("Thursday"), _("Friday"), _("Saturday"), _("Sunday")]
+
+
+@register.simple_tag()
+def get_gamer_scheduling_dict(game):
+    result = OrderedDict()
+    for gamer in game.players.all():
+        result[gamer.username] = {
+            "gamer": gamer,
+            "avail": gamer.get_availability(),
+            "conflicts": get_conflicts(gamer, game),
+        }
+    return result
