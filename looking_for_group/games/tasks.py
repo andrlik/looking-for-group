@@ -204,3 +204,12 @@ def update_player_calendars_for_adhoc_session(gamesession):
                         deleted += 1
     logger.debug("Created {} new child events and deleted {} child events".format(created, deleted))
     return created, deleted
+
+
+def clean_expired_availability_events():
+    avail_calls = models.AvailableCalendar.objects.all()
+    deleted_count = 0
+    for acal in avail_calls:
+        deleted_info = acal.events.filter(end_recurring_period__lt=timezone.now()).delete()
+        deleted_count += deleted_info[0]
+    logger.info("Deleted {} expired availability events".format(deleted_count))
