@@ -1,11 +1,16 @@
 {% extends "gamer_profiles/profile_base.html" %}
-{% load avatar_tags i18n humanize ratings rules %}
+{% load avatar_tags i18n humanize social_tags ratings dash_tags rules %}
 {% block subtitle %}{{ gamer }} - {% endblock %}
 {% block sectiontitle %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block mobileheader %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block detailactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 {% has_perm "postman.can_message_user" request.user gamer.user as can_message %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-section">
 <dl>
   <dt>{% trans "Display Name" %}</dt>
   <dd>{{ gamer.display_name }}</dd>
@@ -27,8 +32,43 @@
 {% if request.user != gamer.user and can_message %}
 <a href="{% url 'postman:write' gamer.username %}" class="button primary"><i class="fas fa-envelope"></i> {% trans "Message" %}</a>
 {% endif %}
-
-<h2>{% trans "Status" %}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Gamer stats" %}</h5></div>
+      <div class="card-section">
+        <h5>{% trans "GM Stats" %}</h5>
+        {% if gamer.gmed_games.count == 0 %}
+        <p>{% trans "No games GMed on LFG yet." %}</p>
+        {% else %}
+        <ul class="stats-list">
+          <li{% stat_class_data gamer.gmed_games.count %}>{{ gamer.gmed_games.count }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+          <li{% stat_class_data gamer.get_sessions_run 50 -1 %}>{{ gamer.get_sessions_run|default_if_none:"0" }} <span class="stats-list-label">{% trans "Sessions run" %}</span></li>
+        </ul>
+        {% endif %}
+        <h5>{% trans "Player Stats" %}</h5>
+        <ul class="stats-list">
+          <li{% stat_class_data gamer.games_joined 10 -1 %}>{{ gamer.games_joined|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games joined" %}</span></li>
+          <li{% if gamer.games_left > gamer.games_finished %} class="stats-list-negative"{% endif %}>{{ gamer.games_left|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games left" %}</span></li>
+          <li{% stat_class_data gamer.games_finished 10 -1 %}>{{ gamer.games_finished|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
+        </ul>
+        <h5>{% trans "Communities" %}</h5>
+        <ul class="stats-list">
+          <li>{{ gamer.communities.count }} <span class="stats-list-label">{% trans "Memberships" %}</span></li>
+          <li>{{ gamer.get_owned_communities.count }} <span class="stats-list-label">{% trans "Owner" %}</span></li>
+          <li>{{ gamer.get_admined_communities.count }} <span class="stats-list-label">{% trans "Admin roles" %}</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Status" %}</h5></div>
+      <div class="card-section">
 
 <table>
   <thead><th>{% trans "Preference" %}</th><th>{% trans "Response" %}</th></thead>
@@ -43,41 +83,128 @@
     <tr><td>{% trans "Local games?" %}</td><td>{{ gamer.local_games|yesno:_('Yes,No') }}</td></tr>
   </tbody>
 </table>
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Generally available to play at" %}</h5></div>
+      <div class="card-section">
 {% has_perm "profile.see_detailed_availability" request.user gamer as see_avail_calendar %}
 {% if see_avail_calendar %}
-<h3>{% trans "Generally available to play at these times" %}</h3>
 {% if week_availability %}
-<table class="hover scroll">
+        <table class="hover scroll">
+
   <thead>
     <tr>
-      <th>{% trans "Monday" %}</th>
-      <th>{% trans "Tuesday" %}</th>
-      <th>{% trans "Wednesday" %}</th>
-      <th>{% trans "Thursday" %}</th>
-      <th>{% trans "Friday" %}</th>
-      <th>{% trans "Saturday" %}</th>
-      <th>{% trans "Sunday" %}</th>
+      <th width="200">{% trans "Weekday" %}</th>
+      <th width="200" class="text-right">{% trans "Available times" %}</th>
+
     </tr>
   </thead>
   <tbody>
+    {% get_weekday_list as weekday_list %}
+    {% for wday in weekday_list %}
     <tr>
-      {% for avail in week_availability.weekdays %}
-      <td>
-
-          {% if avail %}
-          {% if avail.seconds > 86000 %}
+      <td>{{ wday }}</td>
+      <td class="text-right">
+        {% if forloop.counter0 == 0 %}
+        {% with avail=week_availability.weekdays.0 %}
+        {% if avail %}
+        {% if avail.seconds > 86000 %}
         <span class="label success">{% trans "Whenever" %}</span>
           {% else %}
         <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
           {% endif %}
           {% else %}
         <span class="label secondary">{% trans "Not available" %}</span>
-          {% endif %}
+        {% endif %}
+        {% endwith %}
 
+        {% elif forloop.counter0 == 1 %}
+        {% with avail=week_availability.weekdays.1 %}
+        {% if avail %}
+        {% if avail.seconds > 86000 %}
+        <span class="label success">{% trans "Whenever" %}</span>
+        {% else %}
+        <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
+        {% endif %}
+        {% else %}
+        <span class="label secondary">{% trans "Not available" %}</span>
+        {% endif %}
+        {% endwith %}
+
+
+        {% elif forloop.counter0 == 2 %}
+        {% with avail=week_availability.weekdays.2 %}
+        {% if avail %}
+        {% if avail.seconds > 86000 %}
+        <span class="label success">{% trans "Whenever" %}</span>
+        {% else %}
+        <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
+        {% endif %}
+        {% else %}
+        <span class="label secondary">{% trans "Not available" %}</span>
+        {% endif %}
+        {% endwith %}
+
+        {% elif forloop.counter0 == 3 %}
+        {% with avail=week_availability.weekdays.3 %}
+        {% if avail %}
+        {% if avail.seconds > 86000 %}
+        <span class="label success">{% trans "Whenever" %}</span>
+        {% else %}
+        <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
+        {% endif %}
+        {% else %}
+        <span class="label secondary">{% trans "Not available" %}</span>
+        {% endif %}
+        {% endwith %}
+
+        {% elif forloop.counter0 == 4 %}
+        {% with avail=week_availability.weekdays.4 %}
+        {% if avail %}
+        {% if avail.seconds > 86000 %}
+        <span class="label success">{% trans "Whenever" %}</span>
+        {% else %}
+        <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
+        {% endif %}
+        {% else %}
+        <span class="label secondary">{% trans "Not available" %}</span>
+        {% endif %}
+        {% endwith %}
+
+        {% elif forloop.counter0 == 5 %}
+        {% with avail=week_availability.weekdays.5 %}
+        {% if avail %}
+        {% if avail.seconds > 86000 %}
+        <span class="label success">{% trans "Whenever" %}</span>
+        {% else %}
+        <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
+        {% endif %}
+        {% else %}
+        <span class="label secondary">{% trans "Not available" %}</span>
+        {% endif %}
+        {% endwith %}
+
+        {% else %}
+        {% with avail=week_availability.weekdays.6 %}
+        {% if avail %}
+        {% if avail.seconds > 86000 %}
+        <span class="label success">{% trans "Whenever" %}</span>
+        {% else %}
+        <span class="label primary">{{ avail.start|date:"H:i" }} - {{ avail.end|date:"H:i" }}</span>
+        {% endif %}
+        {% else %}
+        <span class="label secondary">{% trans "Not available" %}</span>
+        {% endif %}
+        {% endwith %}
+
+        {% endif %}
       </td>
+    </tr>
       {% empty %}
       {% endfor %}
-    </tr>
   </tbody>
 </table>
 {% else %}
@@ -90,10 +217,20 @@
 {% if request.user == gamer.user %}
 <a href="{% url 'gamer_profiles:set-available' %}" class="button primary"><i class="fas fa-edit"></i> {% trans "Set available times" %}</a>
 {% endif %}
+{% else %}
+<p>{% trans "Hidden" %}</p>
 {% endif %}
-<h2>{% trans "Favorites" %}</h2>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Favorites" %}</h5></div>
+      <div class="card-section">
 
-<h3>{% trans "Preferred Games" %}</h3>
+<h6>{% trans "Preferred Games" %}</h6>
 
 <ul>
   {% for game in gamer.preferred_games.all %}
@@ -102,7 +239,7 @@
   <p>{% blocktrans with gname=gamer.display_name %}{{ gname }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
-<h3>{% trans "Preferred Systems" %}</h3>
+<h6>{% trans "Preferred Systems" %}</h6>
 <ul>
   {% for system in gamer.preferred_systems.all %}
   <li><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></li>
@@ -110,7 +247,14 @@
   <p>{% blocktrans with gname=gamer.display_name %}{{ gname }} hasn't listed any preferred systems yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
-{% if request.user.is_authenticated %}
+    </div>
+    </div>
+  </div>
+  {% if request.user.is_authenticated %}
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Gamer Metadata" %}</h5></div>
+      <div class="card-section">
 <div id="user-gamer-meta-data">
   <dl>
     <dt>{% trans "Average Rating" %}</dt>
@@ -157,10 +301,14 @@
         <a href="{% url 'gamer_profiles:add-gamer-note' gamer=gamer.username %}"><button class="button primary">{% trans "Add a note" %}</button></a>
       </ol>
     </dd>
+  </dl>
     {% endif %}
 </div>
 {% endif %}
-
+      </div>
+    </div>
+  </div>
+</div>
 {% if gamer.user == request.user %}
 <a href="{% url 'gamer_profiles:profile_export' gamer=gamer.username %}" class="button primary">{% trans "Export your profile data" %}</a>
 {% endif %}

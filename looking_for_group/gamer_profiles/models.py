@@ -511,6 +511,12 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
             raise NotInCommunity
         return role_obj.get_community_role_display()
 
+    def get_owned_communities(self):
+        return GamerCommunity.objects.filter(owner=self)
+
+    def get_admined_communities(self):
+        return GamerCommunity.objects.filter(id__in=[m.community.id for m in CommunityMembership.objects.filter(gamer=self, community_role='admin')])
+
 
 class MyRating(AbstractBaseRating):
     object_id = models.CharField(max_length=50)
