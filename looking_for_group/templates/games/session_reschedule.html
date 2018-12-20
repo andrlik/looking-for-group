@@ -153,7 +153,7 @@
 {% endblock %}
 
 {% block simplemde %}
-{% compress js %}
+
   <script type="text/javascript">
   var $schedule_reveal_button = $("<a />").text("{% trans 'View Player Schedules' %}").attr("class", "button float-right small").attr("data-open", "scheduling_modal").attr("href", "#");
   var starttimelabel = $("label[for='id_scheduled_time']");
@@ -208,5 +208,5 @@
       $("#conflict_lists").show();
       }})});
 </script>
-{% endcompress %}
+
 {% endblock %}
