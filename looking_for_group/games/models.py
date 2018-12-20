@@ -367,12 +367,13 @@ class GameEvent(Event):
     def get_master_event(self):
         ct = ContentType.objects.get_for_model(self)
         try:
-            masterevent = EventRelation.objects.get(
+            masterevent = GameEventRelation.objects.get(
                 event=self, content_type=ct, distinction="playerevent"
             )
+            print(type(masterevent))
         except ObjectDoesNotExist:
             return False
-        return masterevent
+        return masterevent.content_object
 
     @property
     def master_event(self):

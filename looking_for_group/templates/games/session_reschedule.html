@@ -1,5 +1,5 @@
 {% extends "games/base_form.html" %}
-{% load i18n static avatar_tags foundation_formtags social_tags %}
+{% load i18n compress avatar_tags foundation_formtags social_tags %}
 {% block subtitle %}{% blocktrans with gametitle=session.game.title %}Reschedule session for {{ gametitle }}{% endblocktrans %} - {% endblock %}
 {% block sessionactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% blocktrans with gametitle=session.game.title %}Reschedule session for {{ gametitle }}{% endblocktrans %}{% endblock %}
@@ -14,10 +14,10 @@
     <div class="cell medium-auto"><a href="{{ session.get_absolute_url }}" class="button secondary">{% trans "Return to session details" %}</a></div> <div class="cell medium-auto"> <a href="#" id="conflict_checker" class="button">{% trans "Check for conflicts" %}</a></div> <div class="cell medium-auto"> <input type="submit" class="button success" value="{% trans 'Reschedule' %}" /></div>
   </div>
 </form>
-<div id="conflict_lists" class="alert">
-  <p>{% trans "Players whose available times don't match session." %}</p>
+<div id="conflict_lists" class="callout warning">
+  <h5>{% trans "Players whose available times don't match session." %}</h5>
   <ul id="avail_issue_list" class="alert"></ul>
-  <p>{% trans "Players with conflicting game appointments." %}</p>
+  <h5>{% trans "Players with conflicting game appointments." %}</h5>
   <ul id="conflict_list" class="alert"></ul>
 </div>
 <div class="reveal" id="scheduling_modal" data-reveal>
@@ -153,7 +153,7 @@
 {% endblock %}
 
 {% block simplemde %}
-
+{% compress js %}
   <script type="text/javascript">
   var $schedule_reveal_button = $("<a />").text("{% trans 'View Player Schedules' %}").attr("class", "button float-right small").attr("data-open", "scheduling_modal").attr("href", "#");
   var starttimelabel = $("label[for='id_scheduled_time']");
@@ -208,5 +208,5 @@
       $("#conflict_lists").show();
       }})});
 </script>
-
+{% endcompress %}
 {% endblock %}
