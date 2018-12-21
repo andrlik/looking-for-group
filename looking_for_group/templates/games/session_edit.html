@@ -1,9 +1,16 @@
 {% extends "games/game_base_form.html" %}
 {% load i18n foundation_formtags %}
 {% block subtitle %}{% blocktrans with gametitle=session.game.title %}Edit session for {{ gametitle }}{% endblocktrans %} - {% endblock %}
-{% block sessionactive %}{% blocktrans with gametitle=session.game.title sesdate=session.scheduled_time %}Edit session of {{ gametitle }} scheduled for {{ sesdate }}.{% endblocktrans %}{% endblock %}
+{% block sessionactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block sectiontitle %}{% trans "Edit session details" %}{% endblock %}
 {% block mobileheader %}{% blocktrans with gametitle=session.game.title sesdate=session.scheduled_time %}Edit session of {{ gametitle }} scheduled for {{ sesdate }}.{% endblocktrans %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Details" %}</h5></div>
+      <div class="card-section">
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
@@ -11,7 +18,10 @@
     <a href="{{ session.get_absolute_url }}" class="button float-left secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}"/>
   </div>
 </form>
-
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
 {% block simplemde %}
@@ -25,6 +35,7 @@
     tabSize: 4,
     indentWithTabs: false,
     forceSync: true,
+    spellChecker: false
   });
 </script>
 {% endblock %}

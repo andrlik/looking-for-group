@@ -11,7 +11,11 @@
 {% endblock %}
 {% block content %}
 <p>{% trans "Edit the report below. For your convenience, we are displaying the message that was reported as well." %}</p>
-<h3>{% trans "Report details" %}</h3>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Report details" %}</h5></div>
+      <div class="card-section">
 <dl>
   <dt>{% trans "Reported by" %}</dt>
   <dd>{% avatar report.reporter 30 class='avatar' %} <a href="{{ report.reporter.gamerprofile.get_absolute_url }}">{{ report.reporter.gamerprofile }}</a></dd>
@@ -22,7 +26,13 @@
   <dt>{% trans "Details provided" %}</dt>
   <dd>{{ report.details|markdownify|linebreaksbr }}</dd>
 </dl>
-<h3>{% trans "Message details" %}</h3>
+      </div>
+    </div>
+  </div>
+    <div class="cell medium-auto">
+      <div class="card">
+        <div class="card-divider"><h5>{% trans "Message details" %}</h5></div>
+        <div class="card-section">
 <dl>
   <dt>{% trans "From" %}</dt>
   <dd>{% avatar report.message.sender 30 class='avatar' %} <a href="{{ report.message.sender.gamerprofile.get_absolute_url }}">{{ report.message.sender.gamerprofile }}</a></dd>
@@ -31,9 +41,15 @@
   <dt>{% trans "Subject" %}</dt>
   <dd>{{ report.message.subject }}</dd>
   <dt>{% trans "Message body" %}</dt>
-  <dd>{{ report.message.body|markdownify|linebreaksbr }}
+  <dd>{{ report.message.body|markdownify|linebreaksbr }}</dd>
 </dl>
-
+        </div>
+      </div>
+    </div>
+</div>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
 <form method="post" action="">
   {% csrf_token %}
   {{ form|as_foundation }}
@@ -41,6 +57,8 @@
     <a href="{{ report.get_absolute_url }}" class="button secondary float-left">{% trans "Return to report details" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Update report' %}" />
   </div>
 </form>
+  </div>
+</div>
 {% endblock %}
 {% block simplemde %}
 <script type="text/javascript">

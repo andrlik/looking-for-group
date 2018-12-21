@@ -7,6 +7,12 @@
 {% block mobileheader %}{% trans "Create session" %}{% endblock %}
 
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Details" %}</h5></div>
+      <div class="card-section">
 <p>You may adjust your session details below before creating.</p>
 <form data-abide novalidate action="" method="post">
   {% csrf_token %}
@@ -15,7 +21,10 @@
     <div class="cell medium-auto"><a class="button secondary" href="{{ game.get_absolute_url }}">Back to game details</a></div><div class="cell medium-auto"><a href="#" id="conflict_checker" class="button">{% trans "Check for conflicts" %}</a> </div><div class="cell medium-auto"> <input type="submit" class="button success" value="Create" /></div>
   </div>
 </form>
-
+      </div>
+    </div>
+  </div>
+</div>
 <div id="conflict_lists" class="alert">
   <p>{% trans "Players whose available times don't match session." %}</p>
   <ul id="avail_issue_list" class="alert"></ul>
@@ -166,6 +175,7 @@
     tabSize: 4,
     indentWithTabs: false,
     forceSync: true,
+    spellChecker: false,
   });
   var $schedule_reveal_button = $("<a />").text("{% trans 'View Player Schedules' %}").attr("class", "button float-right small").attr("data-open", "scheduling_modal").attr("href", "#");
   var starttimelabel = $("label[for='id_scheduled_time']");

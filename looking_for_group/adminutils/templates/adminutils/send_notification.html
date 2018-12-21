@@ -5,6 +5,12 @@
 {% block mobileheader %}{% trans "Send mass notification" %}{% endblock %}
 {% block notifyactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Send notification" %}</h5></div>
+      <div class="card-section">
 <p>{% blocktrans %}Send a mass notification using the form below:{% endblocktrans %}</p>
 
 <form method="post" action="">
@@ -14,5 +20,9 @@
     <a href="{% url 'dashboard' %}" class="button secondary float-left">{% trans "Nevermind, take me somewhere else" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Send' %}" />
   </div>
 </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
