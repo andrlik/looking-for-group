@@ -1,11 +1,16 @@
-{% extends "socialaccount/base.html" %}
-
+{% extends "gamer_profiles/base.html" %}
 {% load i18n discord_tags %}
+{% block sectiontitle %}{% trans "Manage Discord" %}{% endblock %}
+{% block mobileheader %}{% trans "Manage Discord" %}{% endblock %}
+{% block subtitle %}{% trans "Manage Discord" %}{% endblock %}
 
-{% block head_title %}{% trans "Account Connections" %}{% endblock %}
 
 {% block content %}
-<h1>{% trans "Account Connections" %}</h1>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Your current Discord connection status" %}</h5></div>
+      <div class="card-section">
 
 {% gamer_discord_link user as gdl %}
 {% if gdl %}
@@ -16,12 +21,18 @@
   <dt>{% trans "Last successful sync" %}</dt>
   <dd>{{ gdl.last_successful_sync }}</dd>
 </dl>
+{% else %}
+<p>{% trans "Not linked to Discord yet." %} 😢</p>
 {% endif %}
-
-{% if form.accounts %}
-<p>{% blocktrans %}You can sign in to your account using any of the following third party accounts:{% endblocktrans %}</p>
-
-
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Manage Discord links" %}</h5></div>
+      <div class="card-section">
+        {% if form.accounts %}
+<p>{% blocktrans %}You can sign in to your account using any of the following Discord accounts:{% endblocktrans %}</p>
 
 <form method="post" action="{% url 'socialaccount_connections' %}">
   {% csrf_token %}
@@ -50,17 +61,17 @@
   </fieldset>
 
 </form>
-
-{% else %}
-<p>{% trans 'You currently have no social network accounts connected to this account.' %}</p>
 {% endif %}
 
-<h2>{% trans 'Add a 3rd Party Account' %}</h2>
-
+<p>{% trans "Link a Discord account using the controls below. You will be redirected to Discord for login." %}</p>
 <ul class="socialaccount_providers">
   {% include "socialaccount/snippets/provider_list.html" with process="connect" %}
 </ul>
 
 {% include "socialaccount/snippets/login_extra.html" %}
+        </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
