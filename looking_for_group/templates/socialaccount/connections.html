@@ -3,18 +3,17 @@
 {% block sectiontitle %}{% trans "Manage Discord" %}{% endblock %}
 {% block mobileheader %}{% trans "Manage Discord" %}{% endblock %}
 {% block subtitle %}{% trans "Manage Discord" %}{% endblock %}
-
+{% block innernavmenu %}{% endblock %}
 
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-6">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Your current Discord connection status" %}</h5></div>
+      <div class="card-divider"><h5><i class="fab fa-discord"></i> {% trans "Your current Discord connection status" %}</h5></div>
       <div class="card-section">
 
 {% gamer_discord_link user as gdl %}
 {% if gdl %}
-<h2><i class="fab fa-discord"></i> {% trans "Current Discord Status" %}</h2>
 <dl>
   <dt>{% trans "Sync status" %}</dt>
   <dd>{{ gdl.get_sync_status_display }}</dd>
@@ -55,7 +54,7 @@
     {% endfor %}
 
     <div>
-      <button type="submit">{% trans 'Remove' %}</button>
+      <button type="submit" class="button alert">{% trans 'Remove' %}</button>
     </div>
 
   </fieldset>
