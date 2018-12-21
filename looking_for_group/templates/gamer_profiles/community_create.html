@@ -5,6 +5,10 @@
 {% block sectiontitle %}{% trans "Create new community" %}{% endblock %}
 {% block mobileheader %}{% trans "Create new community" %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2">
+  </div>
+  <div class="cell medium-7">
 <p>{% blocktrans %}Fill out the form below to create your brand new community.{% endblocktrans %}</p>
 <form data-abide enctype="multipart/form-data" method="post" action="">
   {% csrf_token %}
@@ -13,6 +17,8 @@
     <a href="{% url 'gamer_profiles:community-list' %}" class="button float-left secondary">{% trans "Return to community list" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Create' %}" />
   </div>
 </form>
+  </div>
+</div>
 {% endblock %}
 {% block simplemde %}
 <script type="text/javascript">
@@ -23,6 +29,7 @@
       uniqueId: "community_description",
     },
     tabSize: 4,
+    spellChecker: false,
     indentWithTabs: false,
     forceSync: true,
   });

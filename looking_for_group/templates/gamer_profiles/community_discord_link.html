@@ -6,7 +6,11 @@
 {% block discordactive %} class="is-active"{% endblock %}
 {% block content %}
 <p>{% blocktrans %}You may link your community with any discord server where you are an administrator. Upon linking, any member of that server that joins this site and links their Discord account will automatically be added to this community. NOTE: You can only unlink a Discord account if you have admin rights to that as well.{% endblocktrans %}</p>
-<h2>{% trans "Current Servers" %}</h2>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Current Servers" %}</h5></div>
+      <div class="card-section">
 <p>{% blocktrans count counter=community_discord_link.servers.all|length %}This community is currently linked to {{ counter }} server.{% plural %}This community is currently linked to {{ counter }} servers.{% endblocktrans %}</p>
 <ul>
   {% for server in community_discord_link.servers.all %}
@@ -14,8 +18,13 @@
   {% empty %}
   {% endfor %}
 </ul>
-
-
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Edit servers" %}</h5></div>
+      <div class="card-section">
 <form method="post" action="">
   {% csrf_token %}
   {{ form|as_foundation }}
@@ -23,5 +32,8 @@
     <a href="{{ community.get_absolute_url }}" class="button float-left secondary">{% trans "Discard changes and return to community detail" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Save changes' %}" />
   </div>
 </form>
-
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends "games/game_base.html" %}
-{% load i18n avatar_tags humanize social_tags %}
+{% load i18n avatar_tags humanize markdownify social_tags %}
 {% block subtitle %}{% trans "Applications for" %} {{ game.title }} - {% endblock %}
 {% block sectiontitle %}{% trans "Player applications for" %} {{ game.title }}{% endblock %}
 {% block mobileheader %}{% trans "Player applications for" %} {{ game.title }}{% endblock %}
@@ -31,12 +31,12 @@
         {% for application in applicants %}
         <tr>
           <td>{% avatar application.gamer.user 30 class="avatar" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></td>
-          <td>{{ application.message }}</td>
+          <td>{{ application.message|markdownify|safe }}</td>
           <td><span class="label primary">{{ application.get_status_display }}</span></td>
           <td>{{ application.created }}</td>
           <td>{{ application.modified }}</td>
           <td><form action="{% url 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="approve" /> <input type="submit" class="button success" value="{% trans 'Approve' %}"/> </form></td>
-          <td><form action="{% url 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="deny" /> <input type="submit" class="button success" value="{% trans 'Reject' %}"/> </form></td>
+          <td><form action="{% url 'games:game_application_approve_reject' application=application.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="deny" /> <input type="submit" class="button alert" value="{% trans 'Reject' %}"/> </form></td>
         </tr>
         {% endfor %}
       </tbody>

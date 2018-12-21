@@ -5,6 +5,12 @@
 {% block sectiontitle %}{% blocktrans with gametitle=session.game.title %}Reschedule session for {{ gametitle }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with gametitle=session.game.title %}Reschedule session for {{ gametitle }}{% endblocktrans %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Reschedule" %}</h5></div>
+      <div class="card-section">
 <p>{% trans "Current scheduled time is:" %} <strong>{{ session.scheduled_time }}</strong></p>
 <p>{% trans "Select a new time below." %}</p>
 <form action="" id="reschedule_form" method="post">
@@ -19,6 +25,10 @@
   <ul id="avail_issue_list" class="alert"></ul>
   <h5>{% trans "Players with conflicting game appointments." %}</h5>
   <ul id="conflict_list" class="alert"></ul>
+</div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="reveal" id="scheduling_modal" data-reveal>
   <h1>{% trans "Player availability" %}</h1>

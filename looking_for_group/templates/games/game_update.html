@@ -5,14 +5,21 @@
 {% block sectiontitle %}{% trans "Edit game" %}{% endblock %}
 {% block mobileheader %}{% trans "Edit game" %}{% endblock %}
 {% block content %}
-<p>{% trans "You can edit the details of your game below." %}</p>
-<form enctype="multipart/form-data" action="" method="post">
+
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
+    <p>{% trans "You can edit the details of your game below." %}</p>
+  <form enctype="multipart/form-data" action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
   <div class="clearfix">
     <a class="button float-left secondary" href="{% url 'games:game_detail' gameid=game.slug %}">{% trans "Cancel and return to game detail" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}">
   </div>
-</form>
+  </form>
+  </div>
+  <!-- -<div class="medium-auto"></div> -->
+</div>
 {% if game.players.all|length > 0 %}
 
 <div class="reveal" id="scheduling_modal" data-reveal>

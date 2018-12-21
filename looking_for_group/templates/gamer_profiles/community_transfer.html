@@ -5,10 +5,18 @@
 {% block sectiontitle %}{% trans "Transfer Ownership" %}{% endblock %}
 {% block mobileheader %}{% trans "Transfer Ownership" %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
 <div class="callout alert">
   <h5>{% trans "Are you sure?" %}</h5>
   <p>{% blocktrans with cname=community.cname %}Once you transfer ownership of {{ cname }} to another user, this cannot be undone except by the new owner.{% endblocktrans %}</p>
 </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+    <div class="cell medium-6">
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
@@ -16,4 +24,6 @@
     <a href="{{ community.get_absolute_url }}" class="button secondary float-left">{% trans "Discard changes and return to community details" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Complete transfer' %}" />
   </div>
 </form>
+    </div>
+</div>
 {% endblock %}

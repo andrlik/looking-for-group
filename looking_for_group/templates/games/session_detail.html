@@ -5,6 +5,11 @@
 {% block sectiontitle %}{{ session.scheduled_time|date:"M d, Y" }} - {{ session.game.title }}{% endblock %}
 {% block mobileheader %}{{ session.scheduled_time|date:"M d, Y" }} - {{ session.game.title }}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Session info" %}</h5></div>
+      <div class="card-section">
 <dl>
   <dt>{% trans "Scheduled Time" %}</dt>
   <dd>{{ session.scheduled_time }}</dd>
@@ -13,9 +18,16 @@
   <dt>{% trans "Status" %}</dt>
   <dd><span class="label {% if session.status == 'complete' %}success{% elif session.status == 'cancel' %}alert{% else %}primary{% endif %}">{{ session.get_status_display }}</span></dd>
 </dl>
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Players" %}</h5></div>
+      <div class="card-section">
 
-<h2>{% trans "Players" %}</h2>
-{% if session.status != "complete" and session.status == "cancel" %}
+
+{% if session.status != "complete" or session.status == "cancel" %}
 <p>This session has not been completed yet or was cancelled, so no attendence records are available. However, the players that were expected to attend are below.</p>
 {% endif %}
 <table class="scroll hover">
@@ -43,14 +55,45 @@
       {% endif %}
       {% endif %}
       {% empty %}
-      </tr>
-      {% endfor %}
+    </tr>
+    {% endfor %}
 
   </tbody>
 </table>
-{% if request.user.gamerprofile == session.game.gm %}
-<h2>{% trans "GM Notes" %}</h2>
-{{ session.gm_notes_rendered|safe }}<br /><br />
+      </div>
+    </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Adventure Log" %}</h5></div>
+      <div class="card-section">
+
+        {% if session.adventurelog %}
+        <h3>{{ session.adventurelog.title }}</h3>
+        <p class="meta">{% blocktrans with create=session.adventurelog.created author=session.adventurelog.initial_author %}Posted by {{ author }} at {{ create }}. {% endblocktrans %}{% if session.adventurelog.last_edited_by %}{% blocktrans with mod=session.adventurelog.modified editor=session.adventurelog.last_edited_by %}Last edited by {{ editor }} at {{ mod }}.{% endblocktrans %}{% endif %}</p>
+        {{ session.adventurelog.body_rendered|safe }}
+        <div class="clearfix">
+          <a href="{% url 'games:log_edit' log=session.adventurelog.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit Log Entry" %}</a> {% if request.user.gamerprofile == session.game.gm %} <a href="{% url 'games:log_delete' log=session.adventurelog.slug %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete Log Entry" %}</a>{% endif %}
+        </div>
+        {% else %}
+        <p>{% trans "The log entry for this session hasn't been created yet." %}</p>
+        <a href="{% url 'games:log_create' session=session.slug %}" class="button"><i class="fas fa-plus-circle"></i> {% trans "Create Log Entry" %}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% if request.user.gamerprofile == session.game.gm %}
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "GM Tools" %}</h5></div>
+      <div class="card-section">
+  <dl>
+    <dt><h5>{% trans "GM Notes" %}</h5></dt>
+    <dd>
+      {{ session.gm_notes_rendered|safe }}</dd>
+  </dl>
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <a href="{% url 'games:session_edit' session=session.slug %}" class="button"><i class="fas fa-edit"></i> {% trans "Edit session details" %}</a>
@@ -60,34 +103,27 @@
   </div>
   <div class="cell medium-auto">
     {% if session.status == "complete" %}
-    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="pending" /><input type="submit" class="button primary" value="{% trans 'Undo completion' %}" /></form>
+    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="pending" /><button type="submit" class="button primary"><i class="fas fa-undo-alt"></i> {% trans 'Undo completion' %}</button></form>
     {% elif session.status == "cancel" %}
-    <button class="button disabled">{% trans "Mark complete" %}</button>
+    <button class="button disabled"><i class="fas fa-check"></i> {% trans "Mark complete" %}</button>
     {% else %}
-    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="complete" /><input type="submit" class="button primary" value="{% trans 'Mark complete' %}" /></form>
+    <form action="{% url 'games:session_complete_toggle' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="complete" /><button type="submit" class="button primary"><i class="fas fa-check"></i> {% trans 'Mark complete' %}</button></form>
     {% endif %}
   </div>
   <div class="cell medium-auto">
     {% if session.status == "cancel" %}
-    <form action="{% url 'games:session_uncancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="pending" /> <input type="submit" class="button" value="{% trans 'Undo cancellation' %}" /></form>
+    <form action="{% url 'games:session_uncancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="pending" /> <button type="submit" class="button"><i class="fas fa-calendar-plus"></i> {% trans 'Undo cancellation' %}</button></form>
     {% elif session.status == "complete" %}
-    <button class="button alert disabled">{% trans "Cancel session" %}</button>
+    <button class="button alert disabled"><i class="fas fa-calendar-minus"></i> {% trans "Cancel session" %}</button>
     {% else %}
-    <form action="{% url 'games:session_cancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="cancel" /> <input type="submit" class="button alert" value="{% trans 'Cancel session' %}" /></form>
+    <form action="{% url 'games:session_cancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="cancel" /> <button type="submit" class="button alert"><i class="fas fa-calendar-minus"></i> {% trans 'Cancel session' %}</button></form>
     {% endif %}
   </div>
 </div>
-{% endif %}
-<h2>{% trans "Adventure Log" %}</h2>
-{% if session.adventurelog %}
-<h3>{{ session.adventurelog.title }}</h3>
-<p class="meta">{% blocktrans with create=session.adventurelog.created author=session.adventurelog.initial_author %}Posted by {{ author }} at {{ create }}. {% endblocktrans %}{% if session.adventurelog.last_edited_by %}{% blocktrans with mod=session.adventurelog.modified editor=session.adventurelog.last_edited_by %}Last edited by {{ editor }} at {{ mod }}.{% endblocktrans %}{% endif %}</p>
-{{ session.adventurelog.body_rendered|safe }}
-<div class="clearfix">
-  <a href="{% url 'games:log_edit' log=session.adventurelog.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit Log Entry" %}</a> {% if request.user.gamerprofile == session.game.gm %} <a href="{% url 'games:log_delete' log=session.adventurelog.slug %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete Log Entry" %}</a>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
-{% else %}
-<p>{% trans "The log entry for this session hasn't been created yet." %}</p>
-<a href="{% url 'games:log_create' session=session.slug %}" class="button"><i class="fas fa-plus-circle"></i> {% trans "Create Log Entry" %}</a>
-{% endif %}
 {% endblock %}

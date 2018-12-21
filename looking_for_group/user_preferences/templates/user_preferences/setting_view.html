@@ -4,6 +4,12 @@
 {% block sectiontitle %}{% trans "Settings" %}{% endblock %}
 {% block mobileheader %}{% trans "Settings" %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+  <div class="card">
+    <div class="card-divider"><h5>{% trans "Current settings" %}</h5></div>
+    <div class="card-section">
 <p>{% trans "You can view your current settings below." %}</p>
 <dl>
   <dt>{% trans "Receive news via email:" %}</dt>
@@ -15,5 +21,9 @@
   <dt>{% trans "Receive email copies of messages?" %}</dt>
   <dd>{{ preferences.email_messages|yesno:"Yes,No" }}</dd>
 </dl>
+    </div>
+  </div>
+  </div>
+</div>
 
 {% endblock %}

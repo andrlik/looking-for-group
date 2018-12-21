@@ -1,8 +1,13 @@
 {% extends "gamer_profiles/base.html" %}
 {% load i18n foundation_formtags avatar_tags %}
 {% block subtitle %}{% blocktrans with gname=gamer.username %}Editing community role for {{ gname }}{% endblocktrans %}{% endblock %}
+{% block sectiontitle %}{% trans "Edit member role" %}{% endblock %}
+{% block mobileheader %}{% trans "Edit member role" %}{% endblock %}
 {% block content %}
-<h1>{% blocktrans with cname=community.name gname=gamer.username %}Editing role for {{ gname }} in community {{ cname }}{% endblocktrans %}</h1>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+<p>{% blocktrans with cname=community.name gname=gamer.username %}Editing role for {{ gname }} in community {{ cname }}{% endblocktrans %}</p>
 <form action="" method="post">
   {% csrf_token %}
   <p>{% avatar gamer.user 30 %} {{ gamer }}</p>
@@ -11,5 +16,6 @@
     <a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}" class="button float-left secondary">{% trans "Back to community member list" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Save changes' %}" />
   </div>
 </form>
-
+  </div>
+</div>
 {% endblock %}
