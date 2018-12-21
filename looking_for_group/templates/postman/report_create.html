@@ -11,6 +11,12 @@
 {% endblock %}
 {% block content %}
 <p>{% trans "Report the message using the form below. For your convenience, we are displaying the message you are reporting as well." %}</p>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Message details" %}</h5></div>
+      <div class="card-section">
+
 <dl>
   <dt>{% trans "From" %}</dt>
   <dd>{% avatar message.sender 30 class='avatar' %} <a href="{{ message.sender.gamerprofile.get_absolute_url }}">{{ message.sender.gamerprofile }}</a></dd>
@@ -19,9 +25,15 @@
   <dt>{% trans "Subject" %}</dt>
   <dd>{{ message.subject }}</dd>
   <dt>{% trans "Message body" %}</dt>
-  <dd>{{ message.body|markdownify|linebreaksbr }}
+  <dd>{{ message.body|markdownify|linebreaksbr }}</dd>
 </dl>
-
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Your report" %}</h5></div>
+      <div class="card-section">
 <form method="post" action="">
   {% csrf_token %}
   {{ form|as_foundation }}
@@ -29,6 +41,10 @@
     <a href="{{ message.get_absolute_url }}" class="button secondary float-left">{% trans "Nevermind, take me back to the message" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Submit report' %}" />
   </div>
 </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 {% block simplemde %}
 <script type="text/javascript">

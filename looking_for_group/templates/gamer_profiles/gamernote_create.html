@@ -1,13 +1,17 @@
-{% extends "gamer_profiles/base.html" %}
+{% extends "gamer_profiles/profile_base.html" %}
 {% load avatar_tags i18n humanize foundation_formtags %}
 {% block subtitle %}{% trans "Add note to" %} {{ gamer.display_name }} - {% endblock %}
+{% block sectiontitle %}{% blocktrans with gname=gamer.display_name %}Add note to {{ gname }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with gname=gamer.display_name %}Add note to {{ gname }}{% endblocktrans %}{% endblock %}
 {% block content %}
-<h1>{% blocktrans with gname=gamer.display_name %}Add note to {{ gname }}{% endblocktrans %}</h1>
-
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
   <p><a href="{{ gamer.get_absolute_url }}"><button class="primary button">{% trans "Go Back" %}</button></a>    <button type="submit" class="button success">{% trans "Save Note" %}</button></p>
 </form>
-
+  </div>
+</div>
 {% endblock %}

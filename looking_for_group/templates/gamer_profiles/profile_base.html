@@ -2,7 +2,7 @@
 {% load i18n social_tags %}
 {% block innernavmenu %}
 {% is_blocked_by_user gamer as blocked %}
-<li{% block detailactive %}{% endblock %}><a href="{{ request.user.gamerprofile.get_absolute_url }}"><i class="fas fa-user"></i> {% trans "Profile details" %}</a></li>
+<li{% block detailactive %}{% endblock %}><a href="{{ gamer.get_absolute_url }}"><i class="fas fa-user"></i> {% trans "Profile details" %}</a></li>
 {% if gamer and gamer.user == request.user %}
 <li{% block editactive %}{% endblock %}><a href="{% url 'gamer_profiles:profile-edit' %}"><i class="fas fa-edit"></i> {% trans "Edit profile" %}</a></li>
 <li{% block friendactive %}{% endblock %}><a href="{% url 'gamer_profiles:my-gamer-friend-requests' %}"><i class="fas fa-user-friends"></i> {% trans "Your friend requests" %}</a></li>

@@ -1,12 +1,18 @@
 {% extends "games/game_detail.html" %}
-{% load i18n foundation_formtags avatar_tags %}
+{% load i18n foundation_formtags markdownify avatar_tags %}
 {% block subtitle %}{% trans "Application detail" %} - {% endblock %}
 {% block details_and_controls %}
-<h2>{% trans "Current Application" %}</h2>
+<div class="cell medium-6">
+  <div class="card">
+    <div class="card-divider"><h5>{% trans "Current Application" %}</h5>
+    </div>
+    <div class="card-section">
 <p>{% blocktrans with title=application.title %}Application to game {{ title }}:{% endblocktrans %}</p>
 <dl>
   <dt>{% trans "Applicant" %}</dt>
-  <dd>{% avatar 20 application.gamer.user %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer.username }}</a></dd>
+  <dd>{% avatar application.gamer.user 30 class="avatar" %} <a href="{{ application.gamer.get_absolute_url }}">{{ application.gamer }}</a></dd>
+  <dt>{% trans "Message" %}</dt>
+  <dd>{{ application.message|markdownify|safe }}</dd>
   <dt>{% trans "Updated" %}</dt>
   <dd>{{ application.modified }}</dd>
   <dt>{% trans "Status" %}</dt>
@@ -16,11 +22,14 @@
   {% endif %}
 </dl>
 {% if application.gamer.user == request.user %}
-<p>
-  <a href="{% url 'games:game_apply_update' application=application.slug %}" class="button">{% trans "Edit Application" %}</a> <a href="{% url 'games:game_apply_delete' application=application.slug %}" class="button alert">{% trans "Withdraw Application" %}</a>
-</p>
+<div class="clearfix">
+  <a href="{% url 'games:game_apply_update' application=application.slug %}" class="button float-left">{% trans "Edit Application" %}</a> <a href="{% url 'games:game_apply_delete' application=application.slug %}" class="button float-right alert">{% trans "Withdraw Application" %}</a>
+</div>
 {% endif %}
 {% if application.game.gm.user == request.user %}
 {# Add approve and deny controls here. #}
 {% endif %}
+    </div>
+  </div>
+</div>
 {% endblock %}

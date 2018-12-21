@@ -1,9 +1,28 @@
 {% extends "games/game_base_form.html" %}
 {% load i18n avatar_tags foundation_formtags %}
 {% block subtitle %}{% blocktrans with gametitle=log.session.game.title %}Editing log entry for {{ gametitle }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}{% trans "Editing adventure log" %}{% endblock %}
+{% block mobileheader %}{% trans "Editing adventure log" %}{% endblock %}
 {% block content %}
-<h1>{% blocktrans with gametitle=log.session.game.title sessiontime=log.session.scheduled_time %}Adding log entry for {{ gametitle }} session on {{ sessiontime }}{% endblocktrans %}:</h1>
-<h2>{% trans "Session info:" %}</h2>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Edit your log entry below" %}</h5></div>
+      <div class="card-section">
+        <form action="" method="post">
+          {% csrf_token %}
+          {{ form|as_foundation }}
+          <div class="clearfix">
+            <a href="{{ log.session.get_absolute_url }}" class="button float-left secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save' %}" />
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Session info:" %}</h5></div>
+      <div class="card-section">
 <dl>
   <dt>{% trans "Game Title" %}</dt>
   <dd>{{ log.session.game.title }}</dd>
@@ -30,14 +49,11 @@
     </table>
   </dd>
 </dl>
-<h2>{% trans "Edit your log entry below:" %}</h2>
-<form action="" method="post">
-  {% csrf_token %}
-  {{ form|as_foundation }}
-  <div class="clearfix">
-    <a href="{{ log.session.get_absolute_url }}" class="button float-left secondary">{% trans "Return to session details without saving" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save' %}" />
+      </div>
+    </div>
   </div>
-</form>
+</div>
+
 {% endblock %}
 {% block simplemde %}
 <script type="text/javascript">
@@ -50,6 +66,7 @@
     tabSize: 4,
     indentWithTabs: false,
     forceSync: true,
+    spellCheck: false,
   });
 </script>
 {% endblock %}

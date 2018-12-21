@@ -9,12 +9,12 @@
 {% if is_inviter %}
 <li{% block inviteactive %}{% endblock %}><a href="{% url 'gamer_profiles:community_invite_list' slug=community.slug %}"><i class="fas fa-key"></i> {% trans "Invites" %}</a></li>
 {% endif %}
-{% if request.user != community.owner.user and request.user.is_authenticated and community in request.user.gamerprofile.communities %}
+{% if request.user != community.owner.user and request.user.is_authenticated and community in request.user.gamerprofile.communities.all %}
 <li{% block leaveactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-leave' community=community.slug  %}"><i class="fas fa-sign-out-alt"></i> {% trans "Leave community" %}</a></li>
-{% elif request.user.is_authenticated %}
+{% elif request.user.is_authenticated and community not in request.user.gamerprofile.communities.all %}
 {% if community.private %}<li{% block applyactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-apply' community=community.slug %}"><i class="fas fa-clipboard"></i> {% trans "Apply" %}</a></li>
 {% else %}
-<li{% block joinactive %}{% endblock %}<a href="{% url 'gamer_profiles:community-join' community=community.slug %}">{% trans "Join" %}</a></li>
+<li{% block joinactive %}{% endblock %}><a href="{% url 'gamer_profiles:community-join' community=community.slug %}"><i class="fas fa-user-plus"></i> {% trans "Join" %}</a></li>
 {% endif %}
 {% else %}
 {% endif %}
