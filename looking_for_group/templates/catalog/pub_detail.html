@@ -1,25 +1,51 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize rules cache %}
+{% load i18n humanize rules markdownify cache %}
 {% block subtitle %}{{ publisher.name }} - {% endblock %}
 {% block sectiontitle %}{{ publisher.name }}{% endblock %}
 {% block mobileheader %}{{ publisher.name }}{% endblock %}
 {% block pubactive %} class="is-active"{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user publisher as is_editor %}
-{% if publisher.logo %}<img class="thumbnail" alt="Logo for {{ publisher.name }}" src="{{ publisher.logo.url }}" />{% endif %}
-{% if publisher.url %}<p><a href="{{ publisher.url }}">{% trans "Publisher Website" %}</a></p>{% endif %}
-<span class="meta">{% blocktrans with humcount=publisher.gameedition_set.count|intcomma|apnumber count counter=publisher.gameedition_set.count %}One Game{% plural %} {{ counter }} Games{% endblocktrans %}, {% blocktrans with humcount=publisher.gamesystem_set.count|intcomma|apnumber count counter=publisher.gamesystem_set.count %}one Game System{% plural %}{{ counter }} Game Systems{% endblocktrans %}, {% blocktrans with humcount=publisher.publishedmodule_set.count|intcomma|apnumber count counter=publisher.publishedmodule_set.count %}and one Game Module{% plural %}and {{ counter }} Game Modules.{% endblocktrans %}</span>
-<p>{{ publisher.description }}</p>
+<div class="grid-x grid-margin-x">
+  <div class="cell">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-section">
+        {% if publisher.logo %}<img class="thumbnail" alt="Logo for {{ publisher.name }}" src="{{ publisher.logo.url }}" />{% endif %}
+        <dl>
+          <dt>{% trans "Name" %}</dt>
+          <dd>{{ publisher.name }}</dd>
+          <dt>{% trans "Website" %}</dt>
+
+          <dd>{% if publisher.url %}<a href="{{ publisher.url }}">{{ publisher.url }}</a>{% else %}{% trans "Not known" %}{% endif %}</dd>
+          <dt>{% trans "Description" %}</dt>
+          <dd>{{ publisher.description|default_if_none:""|markdownify|safe }}</dd>
+          <dt>{% trans "The numbers" %}</dt>
+          <dd>
+        <ul class="stats-list">
+          <li>{{ publisher.gameedition_set.count|intcomma }} <span class="stats-list-label">{% trans "Game Editions" %}</span></li>
+          <li>{{ publisher.gamesystem_set.count|intcomma }} <span class="stats-list-label">{% trans "Game Systems" %}</span></li>
+          <li>{{ publisher.publishedmodule_set.count|intcomma }} <span class="stats-list-label">{% trans "Game modules" %}</span></li>
+        </ul>
+          </dd>
+        </dl>
+
+
 
 {% if is_editor %}
 <div class="clearfix">
   <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right"><i class="fas fa-trash-alt"></i> {% trans "Delete publisher" %}</a>
 </div>
 {% endif %}
-
+      </div>
+    </div>
+  </div>
+  <div class="cell">
+    <div class="card">
+      <div class="card-divider" ><h5>{% trans "Publications" %}</h5></div>
+      <div class="card-section">
 {% cache 900 publisher_publications publisher.pk %}
 
-<h2>{% trans "Publications" %}</h2>
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="publisher-tabs">
   <li class="tabs-title is-active"><a href="#games_panel" data-tabs-target="games_panel" aria-selected="true">{% trans "Games" %} ({{ publisher.gameedition_set.all|length }})</a></li>
@@ -116,6 +142,11 @@
     {% endif %}
   </div>
 </div>
+
 {% endcache %}
+      </div>
+    </div>
+  </div>
+</div>
 <span class='disclaimer'>{% blocktrans with pubname=publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span>
 {% endblock %}

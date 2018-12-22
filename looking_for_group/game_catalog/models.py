@@ -6,11 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
 
-from .utils import (
-    AbstractTaggedLinkedModel,
-    AbstractUUIDModel,
-    AbstractUUIDWithSlugModel,
-)
+from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel, AbstractUUIDWithSlugModel
 
 # Create your models here.
 logger = logging.getLogger("catalog")
@@ -24,6 +20,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
     name = models.CharField(max_length=255, db_index=True, help_text=_("Company Name"))
     logo = models.ImageField(null=True, blank=True)
     url = models.URLField(null=True, blank=True, help_text=_("Company URL"))
+    description = models.TextField(null=True, blank=True, help_text=_("Description of the publisher."))
 
     def __str__(self):
         return self.name  # pragma: no cover
