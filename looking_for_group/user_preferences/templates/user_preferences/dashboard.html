@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n dash_tags cache %}
+{% load i18n dash_tags markdownify cache %}
 {% block subtitle %}{% trans "Dashboard" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Dashboard" %}{% endblock %}
 {% block mobileheader %}{% trans "Dashboard" %}{% endblock %}
@@ -11,7 +11,7 @@
       <h5>{% blocktrans with dname=request.user.display_name|default_if_none:"friend" %}Hi, {{ dname }}!{% endblocktrans %}</h5>
       <ul class="motd">
         {% for m in motd %}
-        <li>{% if m.monospace %}<pre class="motd-mono">{% endif %}{{ m|default_if_none:""|urlize }}{% if m.monospace %}</pre>{% endif %}</li>
+        <li>{% if m.monospace %}<pre class="motd-mono">{{ m|default_if_none:"" }}</pre>{% else %}{{ m|default_if_none:""|markdownify|safe }}{% endif %}</li>
         {% empty %}
         {% endfor %}
       </ul>
