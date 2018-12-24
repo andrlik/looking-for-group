@@ -7,7 +7,7 @@
 {% block content %}
 {% has_perm 'catalog.can_edit' user publisher as is_editor %}
 <div class="grid-x grid-margin-x">
-  <div class="cell">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
       <div class="card-section">
@@ -20,6 +20,20 @@
           <dd>{% if publisher.url %}<a href="{{ publisher.url }}">{{ publisher.url }}</a>{% else %}{% trans "Not known" %}{% endif %}</dd>
           <dt>{% trans "Description" %}</dt>
           <dd>{{ publisher.description|default_if_none:""|markdownify|safe }}</dd>
+        </dl>
+        {% if is_editor %}
+        <div class="clearfix">
+          <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right"><i class="fas fa-trash-alt"></i> {% trans "Delete publisher" %}</a>
+        </div>
+        {% endif %}
+      </div>
+      </div>
+    </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-section">
+        <dl>
           <dt>{% trans "The numbers" %}</dt>
           <dd>
         <ul class="stats-list">
@@ -29,14 +43,6 @@
         </ul>
           </dd>
         </dl>
-
-
-
-{% if is_editor %}
-<div class="clearfix">
-  <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right"><i class="fas fa-trash-alt"></i> {% trans "Delete publisher" %}</a>
-</div>
-{% endif %}
       </div>
     </div>
   </div>

@@ -254,9 +254,7 @@ class PublishedModule(
     )
 
     def __str__(self):
-        return "{0} ({1})".format(
-            self.title, self.parent_game_edition
-        )  # pragma: no cover
+        return self.title  # pragma: no cover
 
     def get_absolute_url(self):
         return reverse("game_catalog:module-detail", kwargs={"module": self.id})

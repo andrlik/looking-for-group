@@ -5,6 +5,12 @@
 {% block sectiontitle %}{% trans "Edit" %} {{ module.title }}{% endblock %}
 {% block mobileheader %}{% trans "Edit" %} {{ module.title }}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Edit module" %}</h5></div>
+      <div class="card-section">
 <p>{% blocktrans %}Enter your changes below.{% endblocktrans %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">
   {% csrf_token %}
@@ -13,5 +19,8 @@
     <a href="{{ module.get_absolute_url }}" class="button float-left secondary">{% trans "Discard changes and return to module details" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save changes' %}" />
   </div>
 </form>
-
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

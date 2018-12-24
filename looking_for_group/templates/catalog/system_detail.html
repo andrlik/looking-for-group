@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize rules %}
+{% load i18n humanize game_tags catalog_tags cache rules %}
 {% load ratings %}
 {% block subtitle %}{{ system.name }} - {% endblock %}
 {% block sectiontitle %}{{ system.name }}{% endblock %}
@@ -47,21 +47,30 @@
       <div class="card-section">
         <dl>
           <dt>{% trans "DB Stats" %}</dt>
-         <dd> <ul class="stats-list">
+          <dd> <ul class="stats-list">
+            {% get_modules_for_system system as sysmodules %}
             <li>{{ system.game_editions.count|intcomma }} <span class="stats-list-label">{% trans "Game editions" %}</span></li>
-            <li>{{ system.game_editions.publishedmodule_set.count|intcomma }} <span class="stats-list-label">{% trans "Modules" %}</span></li>
+            <li>{{ sysmodules.count|intcomma }} <span class="stats-list-label">{% trans "Modules" %}</span></li>
           </ul>
          </dd>
          <dt>{% trans "Social stats" %}</dt>
+         {% cache 500 "system_social_stats" system.pk %}
         <dd>
-        <ul class="stats-list">
-          <li>{{ system.gameposting_set.count|intcomma }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+          <ul class="stats-list">
+            {% get_games_for_system system as all_games %}
+            {% get_games_for_system system True as active_games %}
+            <li>{{ all_games.count|intcomma }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+            <li>{{ active_games.count|intcomma }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
           <li>{{ system.gamerprofile_set.count|intcomma }} <span class="stats-list-label">{% trans "User favorites" %}</span></li>
-        </ul></dd>
+          </ul></dd>
+        {% endcache %}
         </dl>
         <hr />
-
-{% ratings system %}
+        <div class="grid-x grid-margin-x">
+          <div class="cell medium-auto"></div>
+          <div class="cell medium-auto"> {% ratings system %}</div>
+          <div class="cell medium-auto"></div>
+        </div>
       </div>
     </div>
   </div>

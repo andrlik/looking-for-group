@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize rules %}
+{% load i18n humanize catalog_tags game_tags rules %}
 {% load ratings %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
@@ -37,10 +37,34 @@
   </div>
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Current rating on LFG" %}</h5></div>
+      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
       <div class="card-section">
-
-        {% ratings game %}
+        <dl>
+          <dt>{% trans "DB Stats" %}</dt>
+          <dd>
+            <ul class="stats-list">
+              {% get_modules_for_pubgame game as modules %}
+              <li>{{ game.editions.count }} <span class="stats-list-label">{% trans "Editions" %}</span></li>
+              <li>{{ modules.count }} <span class="stats-list-label">{% trans "Modules" %}</span></li>
+            </ul>
+          </dd>
+          <dt>{% trans "Social stats" %}</dt>
+          <dd>
+            <ul class="stats-list">
+              {% get_games_for_published_game game as allgames %}
+              {% get_games_for_published_game game True as activegames %}
+              <li>{{ allgames.count }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+              <li>{{ activegames.count }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
+              <li>{{ game.gamerprofile_set.count }} <span class="stats-list-label">{% trans "User favorites" %}</span></li>
+            </ul>
+          </dd>
+        </dl>
+        <hr />
+        <div class="grid-x grid-margin-x">
+          <div class="cell auto"></div>
+          <div class="cell auto">{% ratings game %}</div>
+          <div class="cell auto"></div>
+        </div>
       </div>
     </div>
   </div>
