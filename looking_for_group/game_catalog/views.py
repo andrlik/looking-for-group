@@ -48,7 +48,7 @@ class GamePublisherUpdateView(
     pk_url_kwarg = "publisher"
     context_object_name = "publisher"
     template_name = "catalog/pub_edit.html"
-    fields = ["name", "logo", "url"]
+    fields = ["name", "logo", "url", "description"]
     permission_required = "catalog.can_edit"
 
     def get_success_url(self):
@@ -63,7 +63,7 @@ class GamePublisherCreateView(
     """
 
     model = GamePublisher
-    fields = ["name", "logo", "url"]
+    fields = ["name", "logo", "url", "description"]
     permission_required = "catalog.can_edit"
     template_name = "catalog/pub_create.html"
 

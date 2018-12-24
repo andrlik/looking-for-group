@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n rules %}
+{% load i18n game_tags rules %}
 {% load ratings %}
 {% block subtitle %}{{ edition }} - {% endblock %}
 {% block sectiontitle %}{{ edition }}{% endblock %}
@@ -7,6 +7,11 @@
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user edition as is_editor %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-section">
 {% if edition.image %}<img class="thumbnail" src="{{ edition.image.url }}" />{% endif %}
 {% if edition.url %}<h5><a href="{{ edition.url }}">{% trans "Official site" %}</a></h5>{% endif %}
 <dl>
@@ -22,18 +27,54 @@
   <dd>{{ edition.release_date|date:"F Y" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ edition.inherited_tag_names|join:', ' }}</dd>
+  <dt>{% trans "Description" %}</dt>
+  <dd>{{ edition.description_rendered|safe }}</dd>
 </dl>
-{{ edition.description_rendered|safe }}
 
 {% if is_editor %}
 <div class="clearfix">
   <a href="{% url 'game_catalog:edition_edit' edition=edition.slug %}" class="float-left button"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:edition_delete' edition=edition.slug %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete edition" %}</a>
 </div>
 {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-section">
+        <dl>
+          <dt>{% trans "DB Stats" %}</dt>
+          <dd>
+            <ul class="stats-list">
+              <li>{{ edition.publishedmodule_set.count }} <span class="stats-list-label">{% trans "Modules" %}</span></li>
+              <li>{{ edition.sourcebooks.count }} <span class="stats-list-label">{% trans "Sourcebooks" %}</span></li>
+            </ul>
+          </dd>
+          <dt>{% trans "Social stats" %}</dt>
+          <dd>
+            <ul class="stats-list">
+              {% get_games_for_edition edition as allgames %}
+              {% get_games_for_edition edition True as activegames %}
+              <li>{{ allgames.count }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+              <li>{{ activegames.count }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
+            </ul>
+          </dd>
+        </dl>
 
-{% ratings edition %}
-
-<h2>{% trans "Sourcebooks and Modules" %}</h2>
+        <hr />
+        <div class="grid-x grid-margin-x">
+          <div class="cell auto"></div>
+          <div class="cell auto">{% ratings edition %}</div>
+          <div class="cell auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cell">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Sourcebooks and Modules" %}</h5></div>
+      <div class="card-section">
 
 <ul class="tabs" data-tabs data-deep-links="true" data-deep-links-smudge="true" id="book-tabs">
   <li class="is-active tabs-title"><a href="#sourcebook_panel" data-tabs-target="sourcebook_panel" aria-selected="true">{% trans "Sourcebooks" %}</a></li>
@@ -76,7 +117,7 @@
   <div class="tabs-panel" id="module_panel">
     {% if is_editor %}
     <div class="clearfix">
-      <a href="{% url 'game_catalog:module-create' edition=edition.slug %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Create new module for this edition." %}</a>
+      <a href="{% url 'game_catalog:module-create' edition=edition.slug %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Create new module for this edition" %}</a>
     </div>
     {% endif %}
     {% if edition.publishedmodule_set.count == 0 %}
@@ -104,6 +145,10 @@
       </tbody>
     </table>
     {% endif %}
+  </div>
+</div>
+      </div>
+    </div>
   </div>
 </div>
 

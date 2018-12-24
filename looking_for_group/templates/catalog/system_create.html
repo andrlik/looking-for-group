@@ -5,6 +5,12 @@
 {% block sectiontitle %}{% trans "Create system" %}{% endblock %}
 {% block mobileheader %}{% trans "Create system" %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Create game system" %}</h5></div>
+      <div class="card-section">
 <p>{% blocktrans %}Enter the game system details below.{% endblocktrans %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">
   {% csrf_token %}
@@ -13,7 +19,17 @@
     <a href="{% url 'game_catalog:system-list' %}" class="button float-left secondary">{% trans "Discard changes and return to game system list" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save new system' %}" />
   </div>
 </form>
-
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% include "datepicker_logic.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
 {% endblock %}
 {% block simplemde %}
 <script type="text/javascript">
