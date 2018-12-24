@@ -5,6 +5,12 @@
 {% block sectiontitle %}{% trans "Edit" %} {{ publisher.name }}{% endblock %}
 {% block mobileheader %}{% trans "Edit" %} {{ publisher.name }}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Edit publisher" %}</h5></div>
+      <div class="card-section">
 <p>{% blocktrans %}Enter your changes below.{% endblocktrans %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">
   {% csrf_token %}
@@ -13,5 +19,26 @@
     <a href="{{ publisher.get_absolute_url }}" class="button float-left secondary">{% trans "Discard changes and return to publisher details" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save changes' %}" />
   </div>
 </form>
-
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% include "datepicker_logic.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $("#id_description")[0],
+    tabSize: 4,
+    indentWithTabs: false,
+    spellChecker: false,
+    forceSync: true,
+  });
+</script>
 {% endblock %}

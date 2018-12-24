@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize rules %}
+{% load i18n humanize game_tags catalog_tags cache rules %}
 {% load ratings %}
 {% block subtitle %}{{ system.name }} - {% endblock %}
 {% block sectiontitle %}{{ system.name }}{% endblock %}
@@ -7,32 +7,77 @@
 {% block mobileheader %}{{ system.name }}{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user system as is_editor %}
-{% if system.image %}<img class="thumbnail" src="{{ system.image.url }}" />{% endif %}
-{% if system.url %}<p><a href="{{ system.url }}">{% trans "Offical site" %}</a></p>{% endif %}
-<dl>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-section">
+        {% if system.image %}<img class="thumbnail" src="{{ system.image.url }}" />{% endif %}
+        <dl>
+          <dt>{% trans "Title" %}</dt>
+          <dd>{{ system.name }}</dd>
+          <dt>{% trans "Website" %}</dt>
+          <dd>{% if system.url %}<a href="{{ system.url }}">{{ system.url }}</a>{% else %}{% trans "Not known" %}{% endif %}</dd>
   <dt>{% trans "Published by" %}</dt>
   <dd><a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a></dd>
-  <dt>{% trans "Games editions associated" %}</dt>
-  <dd>{{ system.game_editions.count }}</dd>
   <dt>{% trans "OGL Licensed?" %}</dt>
   <dd>{{ system.ogl_license|yesno:"Yes,No" }}</dd>
   <dt>{% trans "Release Date" %}</dt>
-  <dd>{{ system.release_date|date:"F Y"|default_if_none:"?" }}</dd>
+  <dd>{{ system.release_date|date:"F Y"|default:"?" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>
-  <dd>{{ system.inherited_tag_names|join:", " }}</dd>
+  <dd>{{ system.inherited_tag_names|join:", "|default:"None" }}</dd>
+  <dt>{% trans "Description" %}</dt>
+  <dd>{{ system.description_rendered|safe }}</dd>
+
 </dl>
 
-{{ system.description_rendered|safe }}
+
 
 {% if is_editor %}
 <div class="clearfix">
   <a href="{% url 'game_catalog:system-edit' system=system.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:system-delete' system=system.pk %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete system" %}</a>
 </div>
 {% endif %}
-
-{% ratings system %}
-
-<h2>{% trans "Game Editions" %}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-section">
+        <dl>
+          <dt>{% trans "DB Stats" %}</dt>
+          <dd> <ul class="stats-list">
+            {% get_modules_for_system system as sysmodules %}
+            <li>{{ system.game_editions.count|intcomma }} <span class="stats-list-label">{% trans "Game editions" %}</span></li>
+            <li>{{ sysmodules.count|intcomma }} <span class="stats-list-label">{% trans "Modules" %}</span></li>
+          </ul>
+         </dd>
+         <dt>{% trans "Social stats" %}</dt>
+         {% cache 500 "system_social_stats" system.pk %}
+        <dd>
+          <ul class="stats-list">
+            {% get_games_for_system system as all_games %}
+            {% get_games_for_system system True as active_games %}
+            <li>{{ all_games.count|intcomma }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+            <li>{{ active_games.count|intcomma }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
+          <li>{{ system.gamerprofile_set.count|intcomma }} <span class="stats-list-label">{% trans "User favorites" %}</span></li>
+          </ul></dd>
+        {% endcache %}
+        </dl>
+        <hr />
+        <div class="grid-x grid-margin-x">
+          <div class="cell medium-auto"></div>
+          <div class="cell medium-auto"> {% ratings system %}</div>
+          <div class="cell medium-auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cell">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Game Editions" %}</h5></div>
+      <div class="card-section">
 {% if system.game_editions.count == 0 %}
 <p>{% blocktrans with sname=system.name %}We don't have any game information for {{ sname }} yet.{% endblocktrans %}</p>
 {% else %}
@@ -58,6 +103,10 @@
   </tbody>
 </table>
 {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
 <span class='disclaimer'>{% blocktrans with pubname=system.original_publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span>
 
 {% endblock %}

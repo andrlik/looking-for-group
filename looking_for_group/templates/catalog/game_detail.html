@@ -1,30 +1,80 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize rules %}
+{% load i18n humanize catalog_tags game_tags rules %}
 {% load ratings %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
 {% block mobileheader %}{{ game.title }}{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user game as is_editor %}
-{% if game.image %}<img class="thumbnail" src="{{ game.image.url }}" />{% endif %}
-{% if game.url %}<h5><a href="{{ game.url }}">{% trans "Offical site" %}</a></h5>{% endif %}
-<dl>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-section">
+        {% if game.image %}<img class="thumbnail" src="{{ game.image.url }}" />{% endif %}
+        <dl>
+          <dt>{% trans "Website" %}</dt>
+          <dd>
+{% if game.url %}<a href="{{ game.url }}">{{ game.url }}</a>{% else %}{% trans "Not known" %}{% endif %}
+          </dd>
+
   <dt>{% trans "Released" %}</dt>
   <dd>{{ game.publication_date|date:"F Y" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ game.inherited_tag_names|join:", " }}</dd>
-</dl>
-{{ game.description_rendered|safe }}
+  <dt>{% trans "Description" %}</dt>
+  <dd>{{ game.description_rendered|safe }}</dd>
+        </dl>
+
 
 {% if is_editor %}
 <div class="clearfix">
   <a href="{% url 'game_catalog:game-edit' game=game.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit game record" %}</a> <a href="{% url 'game_catalog:game-delete' game=game.pk %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete game" %}</a>
 </div>
 {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-section">
+        <dl>
+          <dt>{% trans "DB Stats" %}</dt>
+          <dd>
+            <ul class="stats-list">
+              {% get_modules_for_pubgame game as modules %}
+              <li>{{ game.editions.count }} <span class="stats-list-label">{% trans "Editions" %}</span></li>
+              <li>{{ modules.count }} <span class="stats-list-label">{% trans "Modules" %}</span></li>
+            </ul>
+          </dd>
+          <dt>{% trans "Social stats" %}</dt>
+          <dd>
+            <ul class="stats-list">
+              {% get_games_for_published_game game as allgames %}
+              {% get_games_for_published_game game True as activegames %}
+              <li>{{ allgames.count }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
+              <li>{{ activegames.count }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
+              <li>{{ game.gamerprofile_set.count }} <span class="stats-list-label">{% trans "User favorites" %}</span></li>
+            </ul>
+          </dd>
+        </dl>
+        <hr />
+        <div class="grid-x grid-margin-x">
+          <div class="cell auto"></div>
+          <div class="cell auto">{% ratings game %}</div>
+          <div class="cell auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
+  <div class="cell">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Editions" %}</h5></div>
+      <div class="card-section">
 
-{% ratings game %}
-
-<h2>{% trans "Editions" %}</h2>
 {% if request.user.is_authenticated and is_editor %}<a href="{% url 'game_catalog:edition_create' game=game.pk %}" class="button"><i class="fas fa-plus-circle"></i> {% trans "Add new edition" %}</a><br />{% endif %}
 {% if not game.editions.count %}
 <p>{% blocktrans %}There is no edition details in our database for this game yet.{% endblocktrans %}</p>
@@ -48,7 +98,10 @@
     {% endfor %}
   </tbody>
 </table>
-
+      </div>
+    </div>
+  </div>
+</div>
 {% endif %}
 <span class='disclaimer'>{% blocktrans %}Looking for Group is not affiliated with or endorsed by game publishers. Images are copyright their original creators, and logos are trademarked by the publisher. This information only appears here in an editorial capacity.{% endblocktrans %}</span>
 
