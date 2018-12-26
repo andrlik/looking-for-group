@@ -83,6 +83,7 @@
   <thead>
     <tr>
       <th>{% trans "Edition" %}</th>
+      <th>{% trans "Description" %}</th>
       <th>{% trans "Publisher" %}</th>
       <th class="text-right">{% trans "Release Date" %}</th>
     </tr>
@@ -91,6 +92,7 @@
     {% for edition in game.editions.all %}
     <tr>
       <td><a href="{{ edition.get_absolute_url }}">{{ edition.name }}</a></td>
+      <td>{{ edition.description_rendered|truncatewords_html:25 }}</td>
       <td><a href="{{ edition.publisher.get_absolute_url }}">{{ edition.publisher.name }}</a></td>
       <td class="text-right">{{ edition.release_date|date:"Y" }}</td>
     </tr>
