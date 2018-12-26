@@ -30,7 +30,7 @@
     <tr>
       <td><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></td>
       <td><a href="{{ system.original_publisher.get_absolute_url }}">{{ system.original_publisher.name }}</a></td>
-      <td>{{ system.description_rendered|truncatewords_html:25 }}</td>
+      <td>{{ system.description_rendered|safe|truncatewords_html:25 }}</td>
       <td class="text-right">{{ system.publication_date|date:"Y" }}</td>
       <td class="text-right">{{ system.game_editions.count }}</td>
     </tr>
