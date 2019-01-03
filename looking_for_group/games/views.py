@@ -853,10 +853,10 @@ class GameSessionCreate(
                     return HttpResponseRedirect(self.game.get_absolute_url())
                 unfinished_sessions = models.GameSession.objects.filter(
                     game=self.game
-                ).exclude(status="complete")
+                ).exclude(status__in=["complete", "cancel"])
                 if (
                     models.GameSession.objects.filter(game=self.game)
-                    .exclude(status="complete")
+                    .exclude(status__in=["complete", "cancel"])
                     .count()
                     > 0
                 ):
