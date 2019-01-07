@@ -228,10 +228,11 @@ LOGGING = {
 
 
 def filter_out_host_errors(event, hint):
-    if "exc_info" in hint:
-        if not isinstance(hint["exc_info"], DisallowedHost):
-            return event
-    return None
+    if "tags" in event.keys():
+        for tag in event['tags']:
+            if tag['key'] == "logger" and "DisallowedHost" in tag['value']:
+                return None
+    return event
 
 SENTRY_CELERY_LOGLEVEL = env.int('DJANGO_SENTRY_LOG_LEVEL', logging.INFO)
 RAVEN_CONFIG = {
