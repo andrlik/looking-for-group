@@ -2,6 +2,10 @@ import logging
 import os
 from urllib.parse import urlparse
 
+from django.http.request import DisallowedHost
+
+import looking_for_group
+
 from .base import *  # noqa
 from .base import env
 
@@ -222,9 +226,18 @@ LOGGING = {
     },
 }
 
+
+def filter_out_host_errors(event, hint):
+    if "exc_info" in hint:
+        if not isinstance(hint["exc_info"], DisallowedHost):
+            return event
+    return None
+
 SENTRY_CELERY_LOGLEVEL = env.int('DJANGO_SENTRY_LOG_LEVEL', logging.INFO)
 RAVEN_CONFIG = {
-    'dsn': SENTRY_DSN
+    'dsn': SENTRY_DSN,
+    'release': looking_for_group.__version__,
+    'before_send': filter_out_host_errors,
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
