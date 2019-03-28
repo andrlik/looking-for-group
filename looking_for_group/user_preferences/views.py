@@ -242,6 +242,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
                 status__in=["cancel", "closed"]
             ).count(),
         )
+        context["site_total_completed_sessions"] = cache.get_or_set("site_total_completed_sessions", game_models.GameSession.objects.filter(status="complete").count(), 600)
         context["site_total_systems"] = cache.get_or_set(
             "site_total_systems", catalog_models.GameSystem.objects.count(), 600
         )
