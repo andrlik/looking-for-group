@@ -1193,7 +1193,9 @@ class GamerProfileDetailTest(AbstractViewTest):
 
     def test_public_profile(self):
         with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_str, gamer=self.gamer_public.username)
+            with self.assertNumQueriesLessThan(70):
+                self.get(self.view_str, gamer=self.gamer_public.username)
+                self.response_200()
 
     def test_private_but_stranger(self):
         """
