@@ -293,7 +293,7 @@ class GamePostingApplyViewTest(AbstractViewTestCaseNoSignals):
         with self.login(username=self.gamer4.username):
             post_data = {
                 "message": "Thanks for your consideration!",
-                "submit_app": None,
+                "submit_app": "",
             }
             previous_apps = models.GamePostingApplication.objects.count()
             self.post(self.view_name, data=post_data, gameid=self.gp2.slug)
@@ -392,7 +392,7 @@ class GamePostingApplyUpdateViewTest(AbstractViewTestCaseNoSignals):
 
     def test_post_with_submit(self):
         with self.login(username=self.gamer4.username):
-            post_data = {"message": "I would like to play", "submit_app": None}
+            post_data = {"message": "I would like to play", "submit_app": ""}
             self.post(self.view_name, data=post_data, **self.url_kwargs)
             self.response_302()
             assert (
