@@ -472,6 +472,9 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     def get_sessions_run(self):
         return self.gmed_games.aggregate(models.Sum('sessions'))['sessions__sum']
 
+    def get_active_games(self):
+        return self.gmed_games.filter(status__in=['started', 'replace'])
+
     def get_availability(self):
         from ..games.models import AvailableCalendar
         acal = AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(self)
