@@ -294,6 +294,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             self.remove_member(gamer)
         return ban_file
 
+    def get_pending_applications(self):
+        return CommunityApplication.objects.filter(community=self, status__in=["review", "hold"])
+
     class Meta:
         ordering = ["name"]
         verbose_name_plural = "Communities"

@@ -20,12 +20,12 @@ from django_q import humanhash
 from notifications.models import Notification
 from schedule.models import Calendar
 
-from . import forms, models
 from ..discord import models as discord_models
 from ..game_catalog import models as catalog_models
 from ..gamer_profiles import models as social_models
 from ..gamer_profiles.views import ModelFormWithSwitcViewhMixin
 from ..games import models as game_models
+from . import forms, models
 
 # Create your views here.
 
@@ -121,7 +121,9 @@ class SettingsView(LoginRequiredMixin, SelectRelatedMixin, generic.DetailView):
             return None
 
 
-class SettingsEdit(LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.edit.UpdateView):
+class SettingsEdit(
+    LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.edit.UpdateView
+):
     """
     Settings edit view.
     """
@@ -129,7 +131,12 @@ class SettingsEdit(LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.edi
     model = models.Preferences
     context_object_name = "preferences"
     template_name = "user_preferences/setting_edit.html"
-    fields = ["news_emails", "notification_digest", "feedback_volunteer", "email_messages"]
+    fields = [
+        "news_emails",
+        "notification_digest",
+        "feedback_volunteer",
+        "email_messages",
+    ]
     success_url = reverse_lazy("user_preferences:setting-view")
 
     def get_object(self):
@@ -169,7 +176,10 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         )
         gm_q = Q(gm=gamer)
         context["gamer_active_games"] = (
-            game_models.GamePosting.objects.filter(status__in=['open', 'started', 'replace']).filter(player_q | gm_q)
+            game_models.GamePosting.objects.filter(
+                status__in=["open", "started", "replace"]
+            )
+            .filter(player_q | gm_q)
             .select_related("event")
             .prefetch_related("gamesession_set")
         )
@@ -199,15 +209,17 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         ] = game_models.GamePostingApplication.objects.filter(
             gamer=gamer, status="pending"
         )
-        context["games_applicants"] = game_models.GamePosting.objects.exclude(
-            status__in=["closed", "cancel"]
-        ).filter(
-            id__in=[
-                g.game.id
-                for g in game_models.GamePostingApplication.objects.filter(
-                    game__in=game_models.GamePosting.objects.filter(gm=gamer)
-                ).filter(status="pending")
-            ]
+        context["game_applicants"] = (
+            game_models.GamePostingApplication.objects.filter(status="pending")
+            .filter(
+                game__pk__in=[
+                    g.id
+                    for g in game_models.GamePosting.objects.filter(gm=gamer).exclude(
+                        status__in=["closed", "cancel"]
+                    )
+                ]
+            )
+            .select_related("game")
         )
         comm_admin = (
             social_models.CommunityMembership.objects.filter(
@@ -216,17 +228,12 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
             .select_related("community")
             .prefetch_related("community__communityapplication_set")
         )
-        communities_and_applicant_count = []
+        comms_with_apps = []
         if comm_admin.count() > 0:
             for comm in comm_admin:
-                if (
-                    comm.community.communityapplication_set.filter(
-                        status="pending"
-                    ).count()
-                    > 0
-                ):
-                    communities_and_applicant_count.append(comm.community)
-        context["community_applicant_counts"] = communities_and_applicant_count
+                if comm.community.get_pending_applications().count() > 0:
+                    comms_with_apps.append(comm)
+        context["comms_with_apps"] = comms_with_apps
         context["site_total_communities"] = cache.get_or_set(
             "site_total_communities", social_models.GamerCommunity.objects.count()
         )
@@ -242,7 +249,11 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
                 status__in=["cancel", "closed"]
             ).count(),
         )
-        context["site_total_completed_sessions"] = cache.get_or_set("site_total_completed_sessions", game_models.GameSession.objects.filter(status="complete").count(), 600)
+        context["site_total_completed_sessions"] = cache.get_or_set(
+            "site_total_completed_sessions",
+            game_models.GameSession.objects.filter(status="complete").count(),
+            600,
+        )
         context["site_total_systems"] = cache.get_or_set(
             "site_total_systems", catalog_models.GameSystem.objects.count(), 600
         )
