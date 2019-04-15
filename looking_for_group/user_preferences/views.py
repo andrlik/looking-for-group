@@ -159,7 +159,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
     timezone = pytz.timezone('UTC')
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.timezone and self.timezone != pytz.timezone(request.user.timezone):
+        if request.user.is_authenticated and request.user.timezone and self.timezone != pytz.timezone(request.user.timezone):
             self.timezone = pytz.timezone(request.user.timezone)
         return super().dispatch(request, *args, **kwargs)
 
