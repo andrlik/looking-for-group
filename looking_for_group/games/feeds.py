@@ -1,15 +1,17 @@
+from datetime import timedelta
+
+import icalendar
+import pytz
 from django.contrib.syndication.views import FeedDoesNotExist
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.http import HttpResponse
+from django.utils import timezone
 from schedule.feeds import CalendarICalendar, UpcomingEventsFeed
 from schedule.feeds.ical import EVENT_ITEMS
-from django.utils import timezone
-from datetime import timedelta
-import icalendar
 
 from ..gamer_profiles.models import GamerProfile
-from .models import Calendar, Occurrence, GamePosting, GameEvent
+from .models import Calendar, GameEvent, GamePosting, Occurrence
 
 
 class UpcomingGamesFeed(UpcomingEventsFeed):
@@ -33,10 +35,13 @@ class GamesICalFeed(CalendarICalendar):
     i = 1
 
     def items(self):
+        tz = pytz.timezone("UTC")
         gamer_id = self.kwargs['gamer']
         gamer = get_object_or_404(GamerProfile, pk=gamer_id)
         cal, created = Calendar.objects.get_or_create(slug=gamer.username, defaults={'name': "{}'s Calendar".format(gamer.username)})
-        return cal.occurrences_after(timezone.now() - timedelta(days=30))
+        if gamer.user.timezone:
+            tz = pytz.timezone(gamer.user.timezone)
+        return cal.occurrences_after(timezone.now().astimezone(tz) - timedelta(days=30))
 
     def __call__(self, *args, **kwargs):
         self.args = args

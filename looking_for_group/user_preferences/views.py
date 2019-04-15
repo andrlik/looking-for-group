@@ -2,6 +2,7 @@ import hashlib
 import logging
 
 import factory.django
+import pytz
 from braces.views import SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -147,7 +148,6 @@ class SettingsEdit(
             logger.debug("Created new record.")
         return self.object
 
-
 class Dashboard(LoginRequiredMixin, generic.ListView):
     """
     A dashboard view that encapsulates may different data elements.
@@ -156,6 +156,12 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
     model = Notification
     template_name = "user_preferences/dashboard.html"
     context_object_name = "notifications"
+    timezone = pytz.timezone('UTC')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.timezone and self.timezone != pytz.timezone(request.user.timezone):
+            self.timezone = pytz.timezone(request.user.timezone)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return Notification.objects.filter(unread=True, recipient=self.request.user)
@@ -190,7 +196,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         if context["gamer_active_games"].count() > 0:
             for game in context["gamer_active_games"]:
                 if game.event:
-                    next_occurences = game.event.occurrences_after(timezone.now())
+                    next_occurences = game.event.occurrences_after(timezone.now().astimezone(self.timezone))
                     try:
                         occ = next(next_occurences)
                         while occ.cancelled or occ.start < timezone.now():
