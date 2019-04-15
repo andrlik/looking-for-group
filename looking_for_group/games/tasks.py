@@ -27,6 +27,7 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
         # This is a game and we need to make sure the players have the event.
         # First, we retrive any existing links.
         logger.debug("This is an master event occurrence linked to a game.")
+        child_occurences_to_update = None
         with transaction.atomic():
             if not created:
                 logger.debug(
