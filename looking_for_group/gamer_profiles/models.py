@@ -294,6 +294,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
             self.remove_member(gamer)
         return ban_file
 
+    def get_pending_applications(self):
+        return CommunityApplication.objects.filter(community=self, status__in=["review", "hold"])
+
     class Meta:
         ordering = ["name"]
         verbose_name_plural = "Communities"
@@ -471,6 +474,9 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     def get_sessions_run(self):
         return self.gmed_games.aggregate(models.Sum('sessions'))['sessions__sum']
+
+    def get_active_games(self):
+        return self.gmed_games.filter(status__in=['started', 'replace'])
 
     def get_availability(self):
         from ..games.models import AvailableCalendar

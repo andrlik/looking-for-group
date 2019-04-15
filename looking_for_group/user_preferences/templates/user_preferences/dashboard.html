@@ -106,8 +106,8 @@
         <tbody>
           {% for game in game_applicants %}
           <tr>
-            <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
-            <td class="text-right"><a href="{% url 'games:game_applicant_list' gameid=game.slug %}">{{ game.get_pending_applicant_count }}</a></td>
+            <td><a href="{{ game.game.get_absolute_url }}">{{ game.game.title }}</a></td>
+            <td class="text-right"><a href="{% url 'games:game_applicant_list' gameid=game.game.slug %}">{{ game.game.get_pending_applicant_count }}</a></td>
           </tr>
           {% empty %}
           {% endfor %}
@@ -123,7 +123,7 @@
       <h5>{% trans "Commmunity Applicants" %}</h5>
     </div>
     <div class="card-section">
-      {% if not community_applicant_counts %}
+      {% if not comms_with_apps %}
       <p>{% trans "No pending community applications." %}</p>
       {% endif %}
       <table class="scroll hover">
@@ -134,10 +134,10 @@
           </tr>
         </thead>
         <tbody>
-          {% for comm in community_applicant_counts %}
+          {% for comm in comms_with_apps %}
           <tr>
-            <td><a href="{{ comm.get_absolute_url }}">{{ comm.name }}</a></td>
-            <td class="text-right"><a href="{% url 'gamer_profiles:community-applicant-list' community=comm.slug %}">{{ comm.get_pending_applicant_count }}</a></td>
+            <td><a href="{{ comm.community.get_absolute_url }}">{{ comm.community.name }}</a></td>
+            <td class="text-right"><a href="{% url 'gamer_profiles:community-applicant-list' community=comm.community.slug %}">{{ comm.community.get_pending_applications.count }}</a></td>
           </tr>
           {% empty %}
           {% endfor %}
