@@ -669,13 +669,14 @@ class GamePosting(
         Retrieves the next session time (if available)
         """
         if self.event:
-            date_cutoff = self.start_time - timedelta(days=1)
+            tz = pytz.timezone(self.gm.user.timezone)
+            date_cutoff = self.start_time.astimezone(tz) - timedelta(days=1)
             if self.sessions > 0:
                 logger.debug("Completed sessions: {}.".format(self.sessions))
                 latest_session = self.gamesession_set.filter(
                     status__in=["complete", "cancel"]
                 ).latest("scheduled_time")
-                date_cutoff = latest_session.scheduled_time + timedelta(days=1)
+                date_cutoff = latest_session.scheduled_time.astimezone(tz) + timedelta(days=1)
                 logger.debug("Set new date cutoff of {}".format(date_cutoff))
             logger.debug("Checking for occurrences after {}".format(date_cutoff))
             occurrences = self.event.occurrences_after(after=date_cutoff)
