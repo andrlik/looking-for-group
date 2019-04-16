@@ -1,8 +1,9 @@
+from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.conf import settings
+
 from ..game_catalog.models import AbstractUUIDWithSlugModel
 
 
@@ -37,6 +38,23 @@ class Book(AbstractUUIDWithSlugModel):
         max_length=70, help_text=_("ID of the related object.")
     )
     content_object = GenericForeignKey("content_type", "object_id")
+
+    @property
+    def title(self):
+        return self.get_title()
+
+    def get_title(self):
+        if hasattr(self.content_object, 'title'):
+            return self.content_object.title
+        return self.content_object.name
+
+    @property
+    def cover(self):
+        return self.get_cover()
+
+    def get_cover(self):
+        if hasattr(self.content_object, "image"):
+            return self.content_object.image
 
     def __str__(self):
         typestr = ""
