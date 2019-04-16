@@ -12,6 +12,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models import Sum
 from django.db.models.query_utils import Q
 from django.forms import modelform_factory
 from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
@@ -44,6 +45,7 @@ class ModelFormWithSwitcViewhMixin(object):
     """
     We simply override the standard form class with the appropriate model form factory
     """
+
     def get_form_class(self):
         if self.fields is not None and self.form_class:
             raise ImproperlyConfigured(
@@ -55,7 +57,7 @@ class ModelFormWithSwitcViewhMixin(object):
             if self.model is not None:
                 # If a model has been explicitly provided, use it
                 model = self.model
-            elif getattr(self, 'object', None) is not None:
+            elif getattr(self, "object", None) is not None:
                 # If this view is operating on a single object, use
                 # the class of that object
                 model = self.object.__class__
@@ -69,8 +71,9 @@ class ModelFormWithSwitcViewhMixin(object):
                     "Using ModelFormMixin (base class of %s) without "
                     "the 'fields' attribute is prohibited." % self.__class__.__name__
                 )
-        return modelform_factory(model, form=ModelFormWithSwitchPaddles, fields=self.fields)
-
+        return modelform_factory(
+            model, form=ModelFormWithSwitchPaddles, fields=self.fields
+        )
 
 
 # Create your views here.
@@ -207,7 +210,7 @@ class LeaveCommunity(
             self.gamer = request.user.gamerprofile
             logger.debug("Found gamer.")
         membership = self.get_object()
-        kwargs['community'] = membership.pk
+        kwargs["community"] = membership.pk
         logger.debug("Replacing kwarg for community")
         if request.POST:
             return self.post(request, *args, **kwargs)
@@ -224,7 +227,7 @@ class LeaveCommunity(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['community'] = self.community
+        context["community"] = self.community
         return context
 
     def delete(self, request, *args, **kwargs):
@@ -235,10 +238,15 @@ class LeaveCommunity(
                     "You are the owner of this community. To leave it, you must transfer ownership first"
                 )
             )
-            return HttpResponseRedirect(reverse_lazy('gamer_profiles:community-leave', kwargs={'community': community.slug}))
+            return HttpResponseRedirect(
+                reverse_lazy(
+                    "gamer_profiles:community-leave",
+                    kwargs={"community": community.slug},
+                )
+            )
         messages.success(request, _("You have left {0}".format(self.community.name)))
         community.remove_member(self.gamer)
-        return HttpResponseRedirect(reverse_lazy('gamer_profiles:community-list'))
+        return HttpResponseRedirect(reverse_lazy("gamer_profiles:community-list"))
 
 
 class TransferCommunityOwnership(
@@ -325,7 +333,9 @@ class ChangeCommunityRole(
         )
 
 
-class CommunityCreateView(LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.CreateView):
+class CommunityCreateView(
+    LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.CreateView
+):
     """
     Creating a community.
     """
@@ -418,11 +428,19 @@ class CommunityDetailView(
         context["active_games"] = context["community"].gameposting_set.exclude(
             status__in=["closed", "cancel"]
         )
+        context["comm_sessions"] = (
+            context["community"]
+            .gameposting_set.all()
+            .aggregate(Sum("sessions"))["sessions__sum"]
+        )
         return context
 
 
 class CommunityUpdateView(
-        LoginRequiredMixin, PermissionRequiredMixin, ModelFormWithSwitcViewhMixin, generic.UpdateView
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    ModelFormWithSwitcViewhMixin,
+    generic.UpdateView,
 ):
     """
     Update view for basic fields in community.
@@ -943,7 +961,8 @@ class CommunityDeleteBan(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-ban-list", kwargs={"community": self.community.slug}
+            "gamer_profiles:community-ban-list",
+            kwargs={"community": self.community.slug},
         )
 
     def get_permission_object(self):
@@ -983,7 +1002,8 @@ class CommunityUpdateBan(
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-ban-list", kwargs={"community": self.community.slug}
+            "gamer_profiles:community-ban-list",
+            kwargs={"community": self.community.slug},
         )
 
     def get_permission_object(self):
@@ -1026,7 +1046,8 @@ class CommunityBanUser(LoginRequiredMixin, PermissionRequiredMixin, generic.Crea
 
     def get_success_url(self):
         return reverse_lazy(
-            "gamer_profiles:community-ban-list", kwargs={"community": self.community.slug}
+            "gamer_profiles:community-ban-list",
+            kwargs={"community": self.community.slug},
         )
 
     def has_permission(self):
@@ -1276,7 +1297,9 @@ class GamerProfileDetailView(
             context["gamer"]
         )
         user_timezone = pytz.timezone(self.request.user.timezone)
-        context["week_availability"] = avail_calendar.get_weekly_availability(user_timezone)
+        context["week_availability"] = avail_calendar.get_weekly_availability(
+            user_timezone
+        )
         return context
 
     def handle_no_permission(self):
@@ -1360,22 +1383,42 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
             if occ:
                 if occ.seconds >= 86000:
                     initial[
-                        "{}_all_day".format(self.weekday_map[occ.start.astimezone(user_timezone).weekday()])
+                        "{}_all_day".format(
+                            self.weekday_map[
+                                occ.start.astimezone(user_timezone).weekday()
+                            ]
+                        )
                     ] = occ.start.weekday()
                     all_day = True
                 else:
                     if not earliest_time or occ.start < earliest_time:
-                        logger.debug("Setting earliest time to {}".format(occ.start.astimezone(user_timezone)))
+                        logger.debug(
+                            "Setting earliest time to {}".format(
+                                occ.start.astimezone(user_timezone)
+                            )
+                        )
                         earliest_time = occ.start
                     if not latest_time or occ.end > latest_time:
                         latest_time = occ.end
                 if earliest_time and latest_time and not all_day:
                     initial[
-                        "{}_earliest".format(self.weekday_map[earliest_time.astimezone(user_timezone).weekday()])
+                        "{}_earliest".format(
+                            self.weekday_map[
+                                earliest_time.astimezone(user_timezone).weekday()
+                            ]
+                        )
                     ] = earliest_time.astimezone(user_timezone).strftime("%H:%M")
-                    logger.debug("using {} as earliest time".format(earliest_time.astimezone(user_timezone).strftime("%H:%M")))
+                    logger.debug(
+                        "using {} as earliest time".format(
+                            earliest_time.astimezone(user_timezone).strftime("%H:%M")
+                        )
+                    )
                     initial[
-                        "{}_latest".format(self.weekday_map[earliest_time.astimezone(user_timezone).weekday()])
+                        "{}_latest".format(
+                            self.weekday_map[
+                                earliest_time.astimezone(user_timezone).weekday()
+                            ]
+                        )
                     ] = latest_time.astimezone(user_timezone).strftime("%H:%M")
                 else:
                     if not all_day:
@@ -1429,7 +1472,9 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
                             "%Y-%m-%d %H:%M",
                         )
                     )
-                    logger.debug("Set earliest time for {} to {}".format(wday, day_start))
+                    logger.debug(
+                        "Set earliest time for {} to {}".format(wday, day_start)
+                    )
                     day_end = user_timezone.localize(
                         datetime.strptime(
                             "{} {}".format(
@@ -1453,10 +1498,18 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
                     end=day_end,
                     rule=self.rule_to_use,
                     creator=self.request.user,
-                    title=_("{}'s availability for {}".format(self.request.user.username, wday)),
+                    title=_(
+                        "{}'s availability for {}".format(
+                            self.request.user.username, wday
+                        )
+                    ),
                 )
                 events_created += 1
-                logger.debug("New event created with start of {} and end of {}".format(e.start, e.end))
+                logger.debug(
+                    "New event created with start of {} and end of {}".format(
+                        e.start, e.end
+                    )
+                )
             index_num += 1
         logger.debug(
             "Cancelled {} pre-existing availability events and created {} new ones.".format(
@@ -1464,8 +1517,8 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
             )
         )
         messages.success(self.request, _("Available times successfully updated."))
-        if cache.get('profile_{}'.format(self.request.user.username)):
-            cache.incr_version('profile_{}'.format(self.request.user.username))
+        if cache.get("profile_{}".format(self.request.user.username)):
+            cache.incr_version("profile_{}".format(self.request.user.username))
         return HttpResponseRedirect(self.get_success_url())
 
 

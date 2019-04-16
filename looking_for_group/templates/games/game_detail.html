@@ -55,7 +55,7 @@
                 <ul class="stats-list">
                   <li>{{ game.gm.gmed_games.count|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
                   <li>{{ game.gm.get_active_games.count|default_if_none:"0" }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
-                  <li>{{ game.gm.games_finished|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
+                  <li>{{ game.gm.get_gm_finished_games.count|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
                   <li>{{ game.gm.get_sessions_run|default_if_none:"0" }} <span class="stats-list-label">{% trans "Sessions run" %}</span></li>
                 </ul>
               </td>
