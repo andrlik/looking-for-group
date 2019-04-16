@@ -5,7 +5,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
-from django.db.models import F
+from django.db.models import F, Sum
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
@@ -295,7 +295,9 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         return ban_file
 
     def get_pending_applications(self):
-        return CommunityApplication.objects.filter(community=self, status__in=["review", "hold"])
+        return CommunityApplication.objects.filter(
+            community=self, status__in=["review", "hold"]
+        )
 
     class Meta:
         ordering = ["name"]
@@ -473,14 +475,33 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         return self.username
 
     def get_sessions_run(self):
-        return self.gmed_games.aggregate(models.Sum('sessions'))['sessions__sum']
+        return self.gmed_games.aggregate(models.Sum("sessions"))["sessions__sum"]
+
+    def get_sessions_played(self):
+        players = self.player_set.all()
+        expected = players.aggregate(Sum("sessions_expected"))["sessions_expected__sum"]
+        missed = players.aggregate(Sum("sessions_missed"))["sessions_missed__sum"]
+        if expected and not missed:
+            return expected
+        if expected and missed:
+            return expected - missed
+        return 0
 
     def get_active_games(self):
-        return self.gmed_games.filter(status__in=['started', 'replace'])
+        return self.gmed_games.filter(status__in=["started", "replace"])
+
+    def get_gm_finished_games(self):
+        return self.gmed_games.filter(status__in=["closed"])
+
+    def get_player_active_games(self):
+        return self.player_set.filter(game__status__in=["started", "replace"])
 
     def get_availability(self):
         from ..games.models import AvailableCalendar
-        acal = AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(self)
+
+        acal = AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(
+            self
+        )
         return acal.get_weekly_availability()
 
     def get_absolute_url(self):
@@ -521,7 +542,14 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         return GamerCommunity.objects.filter(owner=self)
 
     def get_admined_communities(self):
-        return GamerCommunity.objects.filter(id__in=[m.community.id for m in CommunityMembership.objects.filter(gamer=self, community_role='admin')])
+        return GamerCommunity.objects.filter(
+            id__in=[
+                m.community.id
+                for m in CommunityMembership.objects.filter(
+                    gamer=self, community_role="admin"
+                )
+            ]
+        )
 
 
 class MyRating(AbstractBaseRating):
@@ -804,7 +832,10 @@ class BannedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
         on_delete=models.CASCADE,
     )
     banned_user = models.ForeignKey(
-        GamerProfile, help_text=_("User who was banned."), related_name="bans", on_delete=models.CASCADE
+        GamerProfile,
+        help_text=_("User who was banned."),
+        related_name="bans",
+        on_delete=models.CASCADE,
     )
     reason = models.TextField(help_text=_("Why is this user being banned?"))
 

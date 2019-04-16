@@ -35,6 +35,7 @@
           <th><abbr title="{% trans 'Content Warning' %}">{% trans "CW" %}</abbr></th>
           <th class="text-right">{% trans 'Privacy' %}</th>
           <th class="text-right">{% trans "Players" %}</th>
+          <th class="text-right"><abbr title="{% trans 'Sessions completed' %}">{% trans "Sessions" %}</abbr></th>
           <th width="500">{% trans "Description" %}</th>
           <th>{% trans "Game" %}</th>
           <th>{% trans "System" %}</th>
@@ -56,6 +57,7 @@
           <td>{{ game.content_warning }}</td>
           <td class="text-right">{% if game.privacy_level == 'private' %}<abbr title="{{ game.get_privacy_level_display }}"><i class="fas fa-lock"></i></abbr>{% elif game.privacy_level == "community" %}<abbr title="{{ game.get_privacy_level_display }}"><i class="fas fa-users"></i></abbr>{% else %}<abbr title="{{ game.get_privacy_level_display }}"><i class="fas fa-lock-open"></i> </abbr> {% endif %}</td>
           <td class="text-right"><abbr title="{% trans 'Current players' %}"><strong>{{ game.players.count }}</strong></abbr> / <abbr title="{% trans 'Minimum players' %}">{{ game.min_players }}</abbr> / <abbr title="{% trans 'Maximum players' %}">{{ game.max_players }}</abbr></td>
+          <td class="text-right"><abbr title="{% trans 'Sessions completed' %}"><strong>{{ game.sessions }}</strong></abbr></td>
           <td width="500">{{ game.game_description_rendered|truncatewords_html:20|safe }}</td>
           <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.game.title }} ({{ game.published_game.name }})</a>{% else %}{% if game.published_module %}<a href="{{ game.published_module.parent_game_edition.get_absolute_url }}">{{ game.published_module.parent_game_edition }}</a>{% else %}{% trans "Homebrew" %}{% endif %}{% endif %}</td>
           <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}{% if not game.published_game and not game.published_module %}{% trans 'Homebrew' %}{% else %}{% if game.published_game.game_system %}<a href="{{ game.published_game.game_system.get_absolute_url }}">{{ game.published_game.game_system.name }}</a>{% elif game.published_module and game.published_module.parent_game_edition.game_system %}<a href="{{ game.published_module.parent_game_edition.game_system.get_absolute_url }}">{{ game.published_module.parent_game_edition.game_system.name }}</a>{% endif %}{% endif %}{% endif %}</td>
