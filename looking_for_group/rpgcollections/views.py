@@ -1,6 +1,9 @@
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
@@ -29,11 +32,12 @@ class BookListView(
     template_name = "rpgcollections/book_list.html"
 
     def dispatch(self, request, *args, **kwargs):
-        gamerslug = kwargs.pop("gamer", None)
-        self.gamer = get_object_or_404(GamerProfile, username=gamerslug)
-        self.library, created = models.GameLibrary.objects.get_or_create(
-            user=self.gamer.user
-        )
+        if request.user.is_authenticated:
+            gamerslug = kwargs.pop("gamer", None)
+            self.gamer = get_object_or_404(GamerProfile, username=gamerslug)
+            self.library, created = models.GameLibrary.objects.get_or_create(
+                user=self.gamer.user
+            )
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -47,3 +51,21 @@ class BookListView(
         context["gamer"] = self.gamer
         context["library"] = self.library
         return context
+
+
+class BookCreateView(LoginRequiredMixin, generic.CreateView):
+    """
+    Add a book to a collection.
+    """
+    model = models.Book
+
+    def dispatch(self, request, *args, **kwargs):
+        self.success_url = request.GET.copy().pop("next", "/")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("You have tried to do an invalid addition to the library. Naughty!"))
+        return HttpResponseRedirect(self.success_url)
+
+    def form_valid(self, form):
+        library = self

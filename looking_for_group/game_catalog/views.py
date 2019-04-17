@@ -1,5 +1,6 @@
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
@@ -8,6 +9,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
+from ..rpgcollections.models import Book, GameLibrary
 from . import forms
 from .models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
 from .utils import combined_recent

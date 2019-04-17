@@ -141,6 +141,11 @@ urlpatterns = [
         view=coll_views.BookListView.as_view(),
         name="book-list",
     ),
+    path(
+        "profiles/<slug:gamer>/collection/<int:page>/",
+        view=coll_views.BookListView.as_view(),
+        name="book-list",
+    ),
     path("me/edit/", view=views.GamerProfileUpdateView.as_view(), name="profile-edit"),
     path(
         "profiles/<slug:gamer>/add_note/",
