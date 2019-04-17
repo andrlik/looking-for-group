@@ -61,6 +61,11 @@ urlpatterns = [
         name="community-member-list",
     ),
     path(
+        "communities/<slug:community>/members/<int:page>/",
+        view=views.CommunityMemberList.as_view(),
+        name="community-member-list",
+    ),
+    path(
         "communities/<slug:community>/applicants/",
         view=views.CommunityApplicantList.as_view(),
         name="community-applicant-list",

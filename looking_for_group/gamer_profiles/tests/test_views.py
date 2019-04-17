@@ -7,9 +7,9 @@ from django.urls import reverse
 from django.utils import timezone
 from test_plus import TestCase
 
-from . import factories
-from .. import models
 from ...invites.models import Invite
+from .. import models
+from . import factories
 
 
 class AbstractViewTest(TestCase):
@@ -215,6 +215,30 @@ class CommunityMemberListTest(AbstractViewTest):
     def test_authorized_user(self):
         with self.login(username=self.gamer1.username):
             self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class CommunityMemberListPaginated(AbstractViewTest):
+    """
+    Test for memberlist when paginated.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-member-list"
+        self.url_kwargs = {"community": self.community1.slug, "page": 2}
+
+    def test_404_result(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_404()
+
+    def test_with_more_members(self):
+        for x in range(40):
+            tempgamer = factories.GamerProfileFactory()
+            self.community1.add_member(tempgamer)
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_200()
 
 
 class CommunityDeleteTest(AbstractViewTest):
