@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
-from ..game_catalog import models as db_models
+# from ..game_catalog import models as db_models
 from ..gamer_profiles.models import GamerProfile
 from . import models
 
@@ -67,5 +67,5 @@ class BookCreateView(LoginRequiredMixin, generic.CreateView):
         messages.error(self.request, _("You have tried to do an invalid addition to the library. Naughty!"))
         return HttpResponseRedirect(self.success_url)
 
-    def form_valid(self, form):
-        library = self
+    # def form_valid(self, form):
+    #   library = self
