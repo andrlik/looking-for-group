@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -69,6 +70,7 @@ class GameSystem(
     system_url = models.URLField(
         null=True, blank=True, help_text=_("More info can be found here.")
     )
+    collected_copies = GenericRelation("rpgcollections.Book")
 
     def __str__(self):
         return self.name  # pragma: no cover
@@ -204,6 +206,7 @@ class SourceBook(
     isbn = ISBNField(
         null=True, blank=True, help_text=_("ISBN for this book, if available.")
     )
+    collected_copies = GenericRelation("rpgcollections.Book")
 
     def __str__(self):
         return self.title
@@ -252,6 +255,7 @@ class PublishedModule(
     url = models.URLField(
         blank=True, null=True, help_text=_("More info can be found here.")
     )
+    collected_copies = GenericRelation("rpgcollections.Book")
 
     def __str__(self):
         return self.title  # pragma: no cover

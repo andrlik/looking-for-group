@@ -1,5 +1,6 @@
 from django.urls import path
 
+from ..rpgcollections import views as coll_views
 from . import views
 
 app_name = "gamer_profiles"
@@ -57,6 +58,11 @@ urlpatterns = [
     ),
     path(
         "communities/<slug:community>/members/",
+        view=views.CommunityMemberList.as_view(),
+        name="community-member-list",
+    ),
+    path(
+        "communities/<slug:community>/members/<int:page>/",
         view=views.CommunityMemberList.as_view(),
         name="community-member-list",
     ),
@@ -129,6 +135,16 @@ urlpatterns = [
         "profiles/<slug:gamer>/",
         view=views.GamerProfileDetailView.as_view(),
         name="profile-detail",
+    ),
+    path(
+        "profiles/<slug:gamer>/collection/",
+        view=coll_views.BookListView.as_view(),
+        name="book-list",
+    ),
+    path(
+        "profiles/<slug:gamer>/collection/<int:page>/",
+        view=coll_views.BookListView.as_view(),
+        name="book-list",
     ),
     path("me/edit/", view=views.GamerProfileUpdateView.as_view(), name="profile-edit"),
     path(

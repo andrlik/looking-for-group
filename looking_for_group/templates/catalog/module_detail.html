@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize game_tags markdownify rules %}
+{% load i18n humanize game_tags markdownify rules collection_tags foundation_formtags %}
 {% load ratings %}
 {% block subtitle %}{{ module.title }} - {% endblock %}
 {% block sectiontitle %}{{ module.title }}{% endblock %}
@@ -18,19 +18,33 @@
           <dd>{{ module.title }}</dd>
           <dt>{% trans "Website" %}</dt>
           <dd>{% if module.url %}<a href="{{ module.url }}">{{ module.url }}</a>{% else %}{% trans "Not known" %}{% endif %}</dd>
-
-  <dt>{% trans "For game edition" %}</dt>
-  <dd><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition }}</a></dd>
-  <dt>{% trans "Published by" %}</dt>
-  <dd><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></dd>
-  <dt>{% trans "Release Date" %}</dt>
-  <dd>{{ module.publication_date|date:"F Y" }}</dd>
-  <dt>{% trans "Tagged with" %}</dt>
-  <dd>{{ module.inherited_tag_names|join:", " }}</dd>
-  <dt>{% trans "Description" %}</dt>
-
-  <dd>{{ module.description|default:"No description yet."|safe }}</dd>
-        </dl>
+          <dt>{% trans "For game edition" %}</dt>
+          <dd><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition }}</a></dd>
+          <dt>{% trans "Published by" %}</dt>
+          <dd><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></dd>
+          <dt>{% trans "Release Date" %}</dt>
+          <dd>{{ module.publication_date|date:"F Y" }}</dd>
+          <dt>{% trans "Tagged with" %}</dt>
+          <dd>{{ module.inherited_tag_names|join:", " }}</dd>
+          <dt>{% trans "Description" %}</dt>
+          <dd>{{ module.description|default:"No description yet."|safe }}</dd>
+      </dl>
+        {% if request.user.is_authenticated %}
+        {% is_in_collection module request.user.gamerprofile as in_collection %}
+        {% get_content_type module as obj_ct %}
+        {% if not in_collection %}
+        <form method="post" action="{% url 'rpgcollections:add-book' booktype='module' %}?next={{ module.get_absolute_url }}">
+          {% csrf_token %}
+          {{ collect_form|as_foundation }}
+          <input type="submit" class="button" value="{% trans 'Add to my collection' %}" />
+        </form>
+        {% else %}
+        <form method="post" action="{% url 'rpgcollections:remove-book' book=in_collection.slug %}?next={{ module.get_absolute_url }}">
+          {% csrf_token %}
+          <input type="submit" class="button alert" value="{% trans 'Remove from collection' %}" />
+        </form>
+        {% endif %}
+        {% endif %}
 
 {% if is_editor %}
 <div class="clearfix">

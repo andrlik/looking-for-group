@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n rules %}
+{% load i18n rules collection_tags foundation_formtags %}
 {% load ratings %}
 {% block subtitle %}{{ book.title }} - {{ book.edition }} - {% endblock %}
 {% block sectiontitle %}{{ book.title }}{% endblock %}
@@ -21,7 +21,22 @@
   <dt>{% trans "Tagged with" %}</dt>
   <dd>{{ book.inherited_tag_names|join:", " }}
 </dl>
-
+{% if request.user.is_authenticated %}
+{% is_in_collection book request.user.gamerprofile as in_collection %}
+{% get_content_type book as obj_ct %}
+{% if not in_collection %}
+<form method="post" action="{% url 'rpgcollections:add-book' booktype='sourcebook' %}?next={{ book.get_absolute_url }}">
+  {% csrf_token %}
+  {{ collect_form|as_foundation }}
+  <input type="submit" class="button" value="{% trans 'Add to my collection' %}" />
+</form>
+{% else %}
+<form method="post" action="{% url 'rpgcollections:remove-book' book=in_collection.slug %}?next={{ book.get_absolute_url }}">
+  {% csrf_token %}
+  <input type="submit" class="button alert" value="{% trans 'Remove from collection' %}" />
+</form>
+{% endif %}
+{% endif %}
 {% if is_editor %}
 <div class="clearfix">
   <a href="{% url 'game_catalog:sourcebook_edit' book=book.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:sourcebook_delete' book=book.slug %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete sourcebook" %}</a>

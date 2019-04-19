@@ -103,6 +103,7 @@ LOCAL_APPS = [
     "looking_for_group.motd.apps.MotdConfig",
     "looking_for_group.adminutils.apps.AdminutilsConfig",
     "looking_for_group.mailnotify.apps.MailnotifyConfig",
+    "looking_for_group.rpgcollections.apps.RpgcollectionsConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

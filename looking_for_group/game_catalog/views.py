@@ -8,6 +8,8 @@ from django.urls import reverse_lazy
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
+from ..rpgcollections.models import Book, GameLibrary
+from ..rpgcollections.forms import BookForm
 from . import forms
 from .models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
 from .utils import combined_recent
@@ -139,6 +141,11 @@ class GameSystemDetailView(
     pk_url_kwarg = "system"
     context_object_name = "system"
     template_name = "catalog/system_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['collect_form'] = BookForm(initial={"object_id": context['system'].pk})
+        return context
 
 
 class GameSystemUpdateView(
@@ -411,6 +418,11 @@ class SourceBookDetailView(SelectRelatedMixin, generic.DetailView):
     slug_url_kwarg = "book"
     slug_field = "slug"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['collect_form'] = BookForm(initial={"object_id": context['book'].pk})
+        return context
+
 
 class SourceBookUpdateView(
     LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView
@@ -544,6 +556,11 @@ class PublishedModuleDetailView(SelectRelatedMixin, generic.DetailView):
     pk_url_kwarg = "module"
     context_object_name = "module"
     template_name = "catalog/module_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['collect_form'] = BookForm(initial={"object_id": context['module'].pk})
+        return context
 
 
 class PublishedModuleDeleteView(
