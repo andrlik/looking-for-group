@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n rules collection_tags %}
+{% load i18n rules collection_tags foundation_formtags %}
 {% load ratings %}
 {% block subtitle %}{{ book.title }} - {{ book.edition }} - {% endblock %}
 {% block sectiontitle %}{{ book.title }}{% endblock %}
@@ -25,21 +25,14 @@
 {% is_in_collection book request.user.gamerprofile as in_collection %}
 {% get_content_type book as obj_ct %}
 {% if not in_collection %}
-<form method="post" action="{% url 'rpgcollections:add_book' %}?next={{ book.get_absolute_url }}">
+<form method="post" action="{% url 'rpgcollections:add-book' booktype='sourcebook' %}?next={{ book.get_absolute_url }}">
   {% csrf_token %}
-  <input type="hidden" name="content_type" value="{{ obj_ct }}" />
-  <input type="hidden" name="bookid" value="{{ book.pk }}" />
-  <select name="media_type">
-    <option value="pdf">{% trans "PDF" %}</option>
-    <option value="print">{% trans "Print" %}</option>
-    <option value="both">{% trans "Print and PDF" %}</option>
-  </select>
+  {{ collect_form|as_foundation }}
   <input type="submit" class="button" value="{% trans 'Add to my collection' %}" />
 </form>
 {% else %}
-<form method="post" action="{% url 'rpgcollections:remove_book' %}?next={{ book.get_absolute_url }}">
+<form method="post" action="{% url 'rpgcollections:remove-book' book=in_collection.slug %}?next={{ book.get_absolute_url }}">
   {% csrf_token %}
-  <input type="hidden" name="id" value="{{ in_collection.pk }}" />
   <input type="submit" class="button alert" value="{% trans 'Remove from collection' %}" />
 </form>
 {% endif %}

@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
 
 from ..game_catalog.models import AbstractUUIDWithSlugModel
 
@@ -23,6 +24,9 @@ class GameLibrary(AbstractUUIDWithSlugModel):
 
     def __str__(self):
         return "{0}'s library".format(self.user.username)
+
+    def get_absolute_url(self):
+        return reverse('gamer_profiles:book-list', kwargs={"gamer": self.user.username})
 
 
 class Book(AbstractUUIDWithSlugModel):
@@ -67,3 +71,6 @@ class Book(AbstractUUIDWithSlugModel):
         else:
             typestr = "Unknown"
         return "{0} ({1})".format(self.content_object.title, typestr)
+
+    def get_absolute_url(self):
+        return reverse("rpgcollections:book-detail", kwargs={"book": self.slug})

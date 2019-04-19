@@ -1,0 +1,26 @@
+{% extends "rpgcollections/base.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% trans "Update copy details" %}{% endblock %}
+{% block sectiontitle %}{% trans "Update copy details" %}{% endblock %}
+{% block mobileheader %}{% trans "Update copy details" %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
+    <p>{% trans "You can edit the details of your copy below." %}</p>
+    <dl>
+      <dt>{% trans "Title" %}</dt>
+      <dd>{{ book.title }}</dd>
+      {% if book.cover %}
+      <dt>{% trans "Cover" %}</dt>
+      <dd><img src="{{ book.cover.url }}" alt="Cover of {{ book.title }}" /></dd>
+      {% endif %}
+      <form action="" method="post">
+        {% csrf_token %}
+        {{ form|as_foundation }}
+        <a href="{% url 'rpgcollections:book-detail' book=book.slug %}" class="button secondary float-left">{% trans "Discard changes and return to copy details" %}</a> <input type="submit" class="button success float-right" value="{% trans 'Save changes' %}" />
+      </form>
+    </dl>
+  </div>
+</div>
+{% endblock %}

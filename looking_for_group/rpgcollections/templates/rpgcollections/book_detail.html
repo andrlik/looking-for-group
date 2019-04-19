@@ -1,0 +1,31 @@
+{% extends "rpgcollections/base.html" %}
+{% load i18n %}
+{% block subtitle %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% blocktrans %}{% endblock %}
+{% block sectiontitle %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% blocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% blocktrans %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Copy details" %}</h5></div>
+      <div class="card-section">
+        {% if book.cover %}
+        <img src="{{ book.cover.url }}" alt="{% trans 'Cover of' %} {{ book.title }}" />
+        {% endif %}
+        <dl>
+          <dt>{% "Title" %}</dt>
+          <dd>{{ book.title }}</dd>
+          <dt>{% trans "More info" %}</dt>
+          <dd><a href="{{ book.content_object.get_absolute_url }}" class="button">{% trans "View in RPG DB" %}</a></dd>
+          <dt>{% trans "Has print copy?" %}</dt>
+          <dd>{{ book.in_print|yesno:"Yes,No" }}</dd>
+          <dt>{% trans "Has PDF copy?" %}</dt>
+          <dd>{{ book.in_pdf|yesno:"Yes,No" }}</dd>
+        </dl>
+        <a href="{{ book.library.get_absolute_url }}" class="button float-left secondary">{% trans "Back to collection" %}</a> {% if book.library.user == request.user %}<a href="{% url 'rpgcollections:edit-book' book=book.slug %}" class="button float-right">{% trans "Edit copy details" %}</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

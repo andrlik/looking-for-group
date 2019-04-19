@@ -1,0 +1,21 @@
+{% extends "rpgcollections/base.html" %}
+{% load i18n %}
+{% block sectiontitle %}{% trans "Remove from your collection" %}{% endblock %}
+{% block mobileheader %}{% trans "Remove from your collection" %}{% endblock %}
+{% block subtitle %}{% trans "Remove from your collection" %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
+    <div class="callout alert">
+      <h5>{% trans "Are you sure?" %}</h5>
+      <p>{% trans "Removing this will permanently delete it from your collection. You will need to add it again to have it included." %}</p>
+    </div>
+
+    <form action="" method="post">
+      {% csrf_token %}
+      <a href="{{ book.get_absolute_url }}" class="button secondary float-left">{% trans "Return to copy details" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Remove' %}" />
+    </form>
+  </div>
+</div>
+{% endblock %}
