@@ -69,7 +69,7 @@ class BookCreate(LoginRequiredMixin, generic.CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.method not in ["post"]:
-            return HttpResponseNotAllowed(["POST"])
+            return HttpResponseNotAllowed(["POST"])  # Post only
         self.success_url = request.GET.copy().pop("next", None)
         self.book_type = kwargs.pop("booktype", None)
         if self.book_type not in ["sourcebook", "module", "system"]:
