@@ -1,6 +1,8 @@
 {% extends "gamer_profiles/profile_detail.html" %}
-{% load i18n %}
-{% block profdetails %}
+{% block detailactive %}{% endblock %}
+{% block collectactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% load i18n static %}
+{% block content %}
 <div class="grid-x grid-margin-x">
     <div class="cell medium-auto">
       <div class="card">
@@ -9,17 +11,42 @@
           {% if not book_list %}
           <p>{{ gamer }} {% trans "doesn't have any game books in their collection." %}</p>
           {% endif %}
-          <div class="grid-x grid-margin-x">
+          <div class="grid-x grid-margin-x small-up-2 medium-up-4">
             {% for book in book_list %}
+            <div class="cell medium-auto">
             <div class="card">
-              <div class="card-section">{% if book.cover %}<a href="{{ book.content_object.get_absolute_url }}"><img class="coll_thumb" src="{{ book.cover.url }}" alt="Cover of {{ book.title }}" /></a>{% endif %}</div>
               <div class="card-section">
-                <a href="{{ book.content_object.get_absolute_url }}">{{ book.title }}</a>
+                <div class="grid-x grid-margin-x">
+                  <div class="cell auto">
+                    <a href="{{ book.content_object.get_absolute_url }}"><img class="thumbnail smallthumb" src="{% if book.cover %}{{ book.cover.url }}{% else %}{% static 'images/placeholder_thumb.png' %}{% endif%}" alt="Cover of {{ book.title }}" /></a>
+                  </div>
+                  <div class="cell auto">
+
+                <dl>
+                  <dt>{% trans "Title" %}</dt>
+                  <dd><a href="{{ book.content_object.get_absolute_url }}">{{ book.title }}</a></dd>
+                  <dt>{% trans "Has Print" %}</dt>
+                  <dd><span class="label {% if book.in_print %}success{% else %}secondary{% endif %}">{{ book.in_print|yesno:"Yes,No" }}</span></dd>
+                  <dt>{% trans "Has PDF" %}</dt>
+                  <dd><span class="label {% if book.in_pdf %}success{% else %}secondary{% endif %}"><strong>{{ book.in_pdf|yesno:"Yes,No" }}</strong></span></dd>
+                </dl>
+                  </div>
+                </div>
+              </div>
+              {% if request.user == gamer.user %}
+              <div class="card-section">
+                <a href="{% url 'rpgcollections:book-detail' book=book.slug %}" class="button float-left">{% trans "View/edit copy details" %}</a> <a href="{% url 'rpgcollections:remove-book' book=book.slug %}" class="float-right button alert">{% trans "Remove from collection" %}</a>
+              </div>
+                {% endif %}
               </div>
             </div>
           {% empty %}
             {% endfor %}
           </div>
+        </div>
+        <div class="card-section">
+          <div class="grid-x grid-margin-x">
+            <div class="cell auto">
           {% if is_paginated %}
           <nav aria-label="Pagination">
             <ul class="pagination">
@@ -44,6 +71,8 @@
           </nav>
           {% endif %}
         </div>
+      </div>
+    </div>
       </div>
     </div>
 </div>

@@ -1,25 +1,25 @@
+import urllib
+import logging
+
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import (
-    HttpResponseRedirect,
-    HttpResponseBadRequest,
-    HttpResponseNotAllowed,
-)
-from django.urls import reverse_lazy
+from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
+from . import forms, models
+from ..game_catalog import models as catalog_model
 # from ..game_catalog import models as db_models
 from ..gamer_profiles.models import GamerProfile
-from ..game_catalog import models as catalog_model
-from . import models, forms
 
 # Views from here on out assume you are specifying a specific user to view. In site architechture it is a subset of the gamer profile.
 # You will also need to be authenticated to view anyone's collection, and collections are only visible to people with whom you have a connection.
 
+logger = logging.getLogger("gamer_profiles")
 
 class BookListView(
     LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.ListView
@@ -36,6 +36,7 @@ class BookListView(
     paginate_orphans = 2
     context_object_name = "book_list"
     template_name = "rpgcollections/book_list.html"
+    ordering = ["created"]
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -47,7 +48,7 @@ class BookListView(
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self.model.objects.filter(self.library)
+        return self.model.objects.filter(library=self.library)
 
     def get_permission_object(self):
         return self.gamer
@@ -68,9 +69,9 @@ class BookCreate(LoginRequiredMixin, generic.CreateView):
     form_class = forms.BookForm
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.method not in ["post"]:
+        if request.user.is_authenticated and request.method not in ["POST", "post"]:
             return HttpResponseNotAllowed(["POST"])  # Post only
-        self.success_url = request.GET.copy().pop("next", None)
+        self.success_url = urllib.parse.quote(request.GET.copy().pop("next", None)[0].encode("utf-8"))
         self.book_type = kwargs.pop("booktype", None)
         if self.book_type not in ["sourcebook", "module", "system"]:
             return HttpResponseBadRequest()
@@ -95,7 +96,7 @@ class BookCreate(LoginRequiredMixin, generic.CreateView):
             source_obj = get_object_or_404(catalog_model.GameSystem, pk=obj_id)
         else:
             source_obj = get_object_or_404(catalog_model.PublishedModule, pk=obj_id)
-        if source_obj.collected_copies.filter(library=self.library).count > 0:
+        if source_obj.collected_copies.filter(library=self.library).count() > 0:
             messages.error(self.request, _("This book is already in your collection."))
             return self.form_invalid(form)
         new_book = models.Book.objects.create(
@@ -112,8 +113,8 @@ class BookCreate(LoginRequiredMixin, generic.CreateView):
 
 class BookDetail(
     LoginRequiredMixin,
-    SelectRelatedMixin,
-    PrefetchRelatedMixin,
+    # SelectRelatedMixin,
+    # PrefetchRelatedMixin
     PermissionRequiredMixin,
     generic.DetailView,
 ):
@@ -124,23 +125,31 @@ class BookDetail(
     model = models.Book
     permission_required = "profile.view_detail"
     template_name = "rpgcollections/book_detail.html"
-    prefetch_related = [
-        "content_type",
-        "content_object",
-        "library__user",
-        "library__user__gamerprofile",
-    ]
-    select_related = ["library"]
+    # prefetch_related = ["content_object"]
+    # select_related = ["library"]
     slug_url_kwarg = "book"
+    slug_field = "slug"
+    context_object_name = "book"
 
     def get_permission_object(self):
-        return self.get_object().library.user.gamerprofile
+        self.object = self.get_object()
+        logger.debug("Copy with slug: {}".format(self.object.slug))
+        logger.debug("From library: {}".format(self.object.library))
+        logger.debug("Object id is: {}".format(self.object.object_id))
+        logger.debug("Object grabbed: {}".format(self.object))
+        logger.debug("Retrieved object successfully for title {}".format(self.object.title))
+        return self.object.library.user.gamerprofile
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['gamer'] = self.object.library.user.gamerprofile
+        return context
 
 
 class BookUpdate(
     LoginRequiredMixin,
-    SelectRelatedMixin,
-    PrefetchRelatedMixin,
+    # SelectRelatedMixin,
+    # PrefetchRelatedMixin,
     PermissionRequiredMixin,
     generic.edit.UpdateView,
 ):
@@ -152,15 +161,21 @@ class BookUpdate(
     form_class = forms.BookForm
     permission_required = "collection.can_delete_book"
     template_name = "rpgcollections/book_update.html"
-    select_related = ["library"]
-    prefetch_related = ["content_type", "content_object", "library__user__gamerprofile"]
+    # select_related = ["library"]
+    # prefetch_related = ["content_type", "content_object", "library__user__gamerprofile"]
     slug_url_kwarg = "book"
+    context_object_name = "book"
 
     def form_valid(self, form):
         if form.cleaned_data["object_id"] != str(self.get_object().content_object.pk):
             messages.error(self.request, _("You tried to do something naughty!"))
             return self.form_invalid(form)
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['gamer'] = self.get_object().library.user.gamerprofile
+        return context
 
 
 class BookDelete(
@@ -180,6 +195,7 @@ class BookDelete(
     select_related = ["library"]
     prefetch_related = ["content_type", "content_object", "library__user__gamerprofile"]
     slug_url_kwarg = "book"
+    context_object_name = "book"
 
     def dispatch(self, request, *args, **kwargs):
         self.success_url = request.GET.get("next", None)
@@ -198,3 +214,8 @@ class BookDelete(
                 "gamer_profiles:book-list", kwargs={"gamer": self.request.user.username}
             )
         return self.success_url
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["gamer"] = self.get_object().library.user.gamerprofile
+        return context

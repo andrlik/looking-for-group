@@ -1,5 +1,6 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
+from ..gamer_profiles.forms import SwitchInput
 from . import models
 
 
@@ -21,4 +22,6 @@ class BookForm(forms.ModelForm):
         fields = ["object_id", "in_print", "in_pdf"]
         widgets = {
             "object_id": forms.HiddenInput,
+            "in_print": SwitchInput,
+            "in_pdf": SwitchInput,
         }

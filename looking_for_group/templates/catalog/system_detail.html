@@ -30,25 +30,39 @@
   <dd>{{ system.description_rendered|safe }}</dd>
 
         </dl>
-        {% if request.user.is_authenticated %}
-        {% is_in_collection system request.user.gamerprofile as in_collection %}
+      </div>
+
+      {% if request.user.is_authenticated %}
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Collection status" %}</strong></p>
+      {% is_in_collection system request.user.gamerprofile as in_collection %}
         {% get_content_type system as obj_ct %}
         {% if not in_collection %}
+        <p>{% trans "This game system is not in your personal collection. If you have a copy, you may add it using the form below." %}</p>
         <form method="post" action="{% url 'rpgcollections:add-book' booktype='system' %}?next={{ system.get_absolute_url }}">
           {% csrf_token %}
           {{ collect_form|as_foundation }}
-          <input type="submit" class="button" value="{% trans 'Add to my collection' %}" />
+          <div class="clearfix">
+            <input type="submit" class="button" value="{% trans 'Add to my collection' %}" />
+          </div>
         </form>
         {% else %}
+        <p>{% trans "This system is in your personal collection." %}</p>
         <form method="post" action="{% url 'rpgcollections:remove-book' book=in_collection.slug %}?next={{ system.get_absolute_url }}">
           {% csrf_token %}
-          <input type="submit" class="button alert" value="{% trans 'Remove from collection' %}" />
+          <div class="clearfix">
+            <a href="{{ in_collection.get_absolute_url }}" class="button float-left">{% trans "View your copy" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Remove from collection' %}" />
+          </div>
         </form>
         {% endif %}
         {% endif %}
+      </div>
 
-
-{% if is_editor %}
+      {% if is_editor %}
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Admin tools" %}</strong></p>
 <div class="clearfix">
   <a href="{% url 'game_catalog:system-edit' system=system.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:system-delete' system=system.pk %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete system" %}</a>
 </div>
@@ -76,7 +90,8 @@
             {% get_games_for_system system True as active_games %}
             <li>{{ all_games.count|intcomma }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
             <li>{{ active_games.count|intcomma }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
-          <li>{{ system.gamerprofile_set.count|intcomma }} <span class="stats-list-label">{% trans "User favorites" %}</span></li>
+            <li>{{ system.gamerprofile_set.count|intcomma }} <span class="stats-list-label">{% trans "User favorites" %}</span></li>
+            <li>{{ system.collected_copies.count|intcomma }} <span class="stats-list-label">{% trans "Copies owned by users" %}</span></li>
           </ul></dd>
         {% endcache %}
         </dl>

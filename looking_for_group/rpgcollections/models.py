@@ -5,6 +5,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
+from model_utils.models import TimeStampedModel
+
 from ..game_catalog.models import AbstractUUIDWithSlugModel
 
 
@@ -29,14 +31,14 @@ class GameLibrary(AbstractUUIDWithSlugModel):
         return reverse('gamer_profiles:book-list', kwargs={"gamer": self.user.username})
 
 
-class Book(AbstractUUIDWithSlugModel):
+class Book(TimeStampedModel, AbstractUUIDWithSlugModel):
     """
     A library entry for a user.
     """
 
     library = models.ForeignKey(GameLibrary, on_delete=models.CASCADE)
-    in_print = models.BooleanField(default=False, help_text=_("In print?"))
-    in_pdf = models.BooleanField(default=False, help_text=_("In PDF?"))
+    in_print = models.BooleanField(default=False, help_text=_("Do you have a print copy of this book?"))
+    in_pdf = models.BooleanField(default=False, help_text=_("Do you have a PDF/Ebook copy of this book?"))
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.CharField(
         max_length=70, help_text=_("ID of the related object.")
@@ -48,9 +50,11 @@ class Book(AbstractUUIDWithSlugModel):
         return self.get_title()
 
     def get_title(self):
-        if hasattr(self.content_object, 'title'):
-            return self.content_object.title
-        return self.content_object.name
+        if self.content_object:
+            if hasattr(self.content_object, 'title'):
+                return self.content_object.title
+            return self.content_object.name
+        return None
 
     @property
     def cover(self):
@@ -70,7 +74,7 @@ class Book(AbstractUUIDWithSlugModel):
             typestr = "PDF"
         else:
             typestr = "Unknown"
-        return "{0} ({1})".format(self.content_object.title, typestr)
+        return "{0} ({1})".format(self.title, typestr)
 
     def get_absolute_url(self):
         return reverse("rpgcollections:book-detail", kwargs={"book": self.slug})
