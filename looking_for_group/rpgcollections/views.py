@@ -284,9 +284,10 @@ class BookCreate(LoginRequiredMixin, generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.method not in ["POST", "post"]:
             return HttpResponseNotAllowed(["POST"])  # Post only
-        self.success_url = urllib.parse.quote(
-            request.GET.copy().pop("next", None)[0].encode("utf-8")
-        )
+        if request.GET.get("next", None):
+            self.success_url = urllib.parse.quote(
+                request.GET.copy().pop("next", None)[0].encode("utf-8")
+            )
         self.book_type = kwargs.pop("booktype", None)
         if self.book_type not in ["sourcebook", "module", "system"]:
             return HttpResponseBadRequest()
@@ -376,7 +377,7 @@ class BookUpdate(
 
     model = models.Book
     form_class = forms.BookForm
-    permission_required = "collection.can_delete_book"
+    permission_required = "collections.can_delete_book"
     template_name = "rpgcollections/book_update.html"
     # select_related = ["library"]
     # prefetch_related = ["content_type", "content_object", "library__user__gamerprofile"]
@@ -407,7 +408,7 @@ class BookDelete(
     """
 
     model = models.Book
-    permission_required = "collection.can_delete_book"
+    permission_required = "collections.can_delete_book"
     template_name = "rpgcollections/book_delete.html"
     select_related = ["library"]
     prefetch_related = ["content_type", "content_object", "library__user__gamerprofile"]
@@ -415,7 +416,8 @@ class BookDelete(
     context_object_name = "book"
 
     def dispatch(self, request, *args, **kwargs):
-        self.success_url = request.GET.get("next", None)
+        if request.GET.get("next", None):
+            self.success_url = request.GET.get("next", None)
         if request.user.is_authenticated:
             self.library, created = models.GameLibrary.objects.get_or_create(
                 user=request.user

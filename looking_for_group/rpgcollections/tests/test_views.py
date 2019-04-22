@@ -1,8 +1,10 @@
 import pytest
+from factory.django import mute_signals
+from django.db.models.signals import post_save
 from django.core.exceptions import ObjectDoesNotExist
-from ...gamer_profiles.tests import factories
-from ...game_catalog.tests.test_views import AbstractViewTest
-from .. import models
+from looking_for_group.gamer_profiles.tests import factories
+from looking_for_group.game_catalog.tests.test_views import AbstractViewTest
+from looking_for_group.rpgcollections import models
 
 
 class AbstractCollectionsTest(AbstractViewTest):
@@ -12,15 +14,17 @@ class AbstractCollectionsTest(AbstractViewTest):
 
     def setUp(self):
         super().setUp()
-        self.gamer1 = factories.GamerProfileFactory()
-        self.gamer2 = factories.GamerProfileFactory()
-        self.comm1 = factories.GamerCommunityFactory(owner=self.gamer1)
-        self.gamer3 = factories.GamerProfileFactory()
-        self.comm1.add_member(self.gamer2)
-        self.game_lib1 = models.GameLibrary.objects.create(user=self.gamer1.user)
-        self.cypher_collect_1 = models.Book.objects.create(library=self.game_lib1, content_object=self.cypher, in_print=True)
-        self.game_lib2 = models.GameLibrary.objects.create(user=self.gamer2.user)
-        self.game_lib3 = models.GameLibrary.objects.create(user=self.gamer3.user)
+        with mute_signals(post_save):
+            self.gamer1 = factories.GamerProfileFactory()
+            self.gamer2 = factories.GamerProfileFactory()
+            self.comm1 = factories.GamerCommunityFactory(owner=self.gamer1)
+            self.comm1.add_member(self.gamer1, role="admin")
+            self.gamer3 = factories.GamerProfileFactory()
+            self.comm1.add_member(self.gamer2)
+            self.game_lib1 = models.GameLibrary.objects.create(user=self.gamer1.user)
+            self.cypher_collect_1 = models.Book.objects.create(library=self.game_lib1, content_object=self.cypher, in_print=True)
+            self.game_lib2 = models.GameLibrary.objects.create(user=self.gamer2.user)
+            self.game_lib3 = models.GameLibrary.objects.create(user=self.gamer3.user)
 
 
 class TestViewDetail(AbstractCollectionsTest):
@@ -57,7 +61,7 @@ class TestEditbook(AbstractCollectionsTest):
 
     def setUp(self):
         super().setUp()
-        self.view_name = "rpgcollections:add-book"
+        self.view_name = "rpgcollections:edit-book"
         self.url_kwargs = {"book": self.cypher_collect_1.slug}
         self.post_data = {"object_id": self.cypher_collect_1.content_object.pk, "in_print": 1, "in_pdf": 1}
 
@@ -88,7 +92,7 @@ class TestDeleteBook(AbstractCollectionsTest):
 
     def setUp(self):
         super().setUp()
-        self.view_name = "rpgcollections:delete-book"
+        self.view_name = "rpgcollections:remove-book"
         self.url_kwargs = {"book": self.cypher_collect_1.slug}
 
     def test_login_required(self):
@@ -136,7 +140,7 @@ class TestAddBook(AbstractCollectionsTest):
         with self.login(username=self.gamer1.username):
             self.post(self.view_name, data=self.post_data, **self.url_kwargs)
             self.response_302()
-            assert self.cypher.collected_copies.filter(library=self.game_lib2).count() == 1
+            assert self.cypher.collected_copies.filter(library=self.game_lib1).count() == 1
 
     def test_bad_data(self):
         with self.login(username=self.gamer3.username):
