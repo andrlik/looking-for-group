@@ -1,0 +1,40 @@
+{% extends "rpgcollections/base.html" %}
+{% load i18n static %}
+{% block subtitle %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% endblocktrans %}{% endblock %}
+{% block sectiontitle %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% endblocktrans %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-1"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Copy details" %}</h5></div>
+      <div class="card-section">
+        {% if book.cover %}
+        <img src="{{ book.cover.url }}" class="thumbnail" alt="{% trans 'Cover of' %} {{ book.title }}" />
+        {% else %}
+        <img src="{% static 'images/placeholder_thumb.png' %}" alt="{% trans 'Cover of' %} {{ book.title }}" />
+        {% endif %}
+        <dl>
+          <dt>{% trans "Title" %}</dt>
+          <dd>{{ book.title }}</dd>
+          <dt>{% trans "More info" %}</dt>
+          <dd><a href="{{ book.content_object.get_absolute_url }}" class="button">{% trans "View in RPG DB" %}</a></dd>
+          <dt>{% trans "Has print copy?" %}</dt>
+          <dd><span class="label {% if book.in_print %}success{% else %}secondary{% endif %}">{{ book.in_print|yesno:"Yes,No" }}</span></dd>
+          <dt>{% trans "Has PDF copy?" %}</dt>
+          <dd><span class="label {% if book.in_pdf %}success{% else %}secondary{% endif %}">{{ book.in_pdf|yesno:"Yes,No" }}</span></dd>
+          <dt>{% trans "Added" %}</dt>
+          <dd>{{ book.created }}</dd>
+          <dt>{% trans "Last modified" %}</dt>
+          <dd>{{ book.modified }}</dd>
+        </dl>
+        {% if book.library.user == request.user %}<div class="clearfix"><a href="{% url 'rpgcollections:edit-book' book=book.slug %}" class="button float-left">{% trans "Edit copy details" %}</a><a href="{% url 'rpgcollections:remove-book' book=book.slug %}" class="button float-right alert">{% trans "Remove from collection" %}</a></div>{% endif %}
+
+      <a href="{{ book.library.get_absolute_url }}" class="button secondary">{% trans "Back to collection" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

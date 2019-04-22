@@ -13,7 +13,7 @@
   $(document).ready(function() {
     // initialize calendar view
     $('#calendar').fullCalendar({
-      events: '{% url "games:api_occurrences" %}?calendar_slug={{ calendar_slug }}',
+      events: '{% url "games:api_occurrences" %}?calendar_slug={{ calendar_slug }}', //&timezone={{ TIME_ZONE|urlencode }}',
       header: {
         left: 'prev,next today',
         center: 'title',

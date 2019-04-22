@@ -1,5 +1,5 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize game_tags markdownify rules %}
+{% load i18n humanize game_tags markdownify rules collection_tags foundation_formtags %}
 {% load ratings %}
 {% block subtitle %}{{ module.title }} - {% endblock %}
 {% block sectiontitle %}{{ module.title }}{% endblock %}
@@ -18,28 +18,55 @@
           <dd>{{ module.title }}</dd>
           <dt>{% trans "Website" %}</dt>
           <dd>{% if module.url %}<a href="{{ module.url }}">{{ module.url }}</a>{% else %}{% trans "Not known" %}{% endif %}</dd>
+          <dt>{% trans "For game edition" %}</dt>
+          <dd><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition }}</a></dd>
+          <dt>{% trans "Published by" %}</dt>
+          <dd><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></dd>
+          <dt>{% trans "Release Date" %}</dt>
+          <dd>{{ module.publication_date|date:"F Y" }}</dd>
+          <dt>{% trans "Tagged with" %}</dt>
+          <dd>{{ module.inherited_tag_names|join:", " }}</dd>
+          <dt>{% trans "Description" %}</dt>
+          <dd>{{ module.description|default:"No description yet."|safe }}</dd>
+      </dl>
+      </div>
+      {% if request.user.is_authenticated %}
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Collection Status" %}</strong></p>
+        {% is_in_collection module request.user.gamerprofile as in_collection %}
+        {% get_content_type module as obj_ct %}
+        {% if not in_collection %}
+        <p>{% trans "This module is not in your personal collection. If you have a copy, you may add it using the form below." %}</p>
+        <form method="post" action="{% url 'rpgcollections:add-book' booktype='module' %}?next={{ module.get_absolute_url|urlencode }}">
+          {% csrf_token %}
+          {{ collect_form|as_foundation }}
+          <input type="submit" class="button" value="{% trans 'Add to my collection' %}" />
+        </form>
+        {% else %}
+        <p>{% trans "This module is in your personal collection." %}</p>
+        <form method="post" action="{% url 'rpgcollections:remove-book' book=in_collection.slug %}?next={{ module.get_absolute_url|urlencode }}">
+          {% csrf_token %}
+          <div class="clearfix">
+            <a href="{{ in_collection.get_absolute_url }}" class="button float-left">{% trans "View your copy" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Remove from collection' %}" />
+          </div>
+        </form>
+        {% endif %}
+      </div>
+        {% endif %}
 
-  <dt>{% trans "For game edition" %}</dt>
-  <dd><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition }}</a></dd>
-  <dt>{% trans "Published by" %}</dt>
-  <dd><a href="{{ module.publisher.get_absolute_url }}">{{ module.publisher.name }}</a></dd>
-  <dt>{% trans "Release Date" %}</dt>
-  <dd>{{ module.publication_date|date:"F Y" }}</dd>
-  <dt>{% trans "Tagged with" %}</dt>
-  <dd>{{ module.inherited_tag_names|join:", " }}</dd>
-  <dt>{% trans "Description" %}</dt>
-
-  <dd>{{ module.description|default:"No description yet."|safe }}</dd>
-        </dl>
-
-{% if is_editor %}
+      {% if is_editor %}
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Admin tools" %}</strong></p>
 <div class="clearfix">
   <a href="{% url 'game_catalog:module-edit' module=module.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:module-delete' module=module.pk %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete module" %}</a>
 </div>
-{% endif %}
+      </div>
+      {% endif %}
+      <div class="card-section"><hr /><span class='disclaimer'>{% blocktrans with pubname=module.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span></div>
       </div>
     </div>
-  </div>
   <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
@@ -51,6 +78,7 @@
               {% get_games_for_module module True as activegames %}
               <li>{{ module.gameposting_set.count }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
               <li>{{ activegames.count }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
+              <li>{{ module.collected_copies.count }} <span class="stats-list-label">{% trans "Copies owned by users" %}</span></li>
             </ul>
           </dd>
         </dl>
@@ -59,12 +87,11 @@
           <div class="cell auto"></div>
           <div class="cell auto">{% ratings module %}</div>
           <div class="cell auto"></div>
+          <p></p>
         </div>
       </div>
     </div>
   </div>
 </div>
-<span class='disclaimer'>{% blocktrans with pubname=module.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span>
-
 
 {% endblock %}

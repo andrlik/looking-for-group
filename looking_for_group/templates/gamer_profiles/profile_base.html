@@ -13,7 +13,9 @@
 {% if not blocked %}
 <li>{% if gamer not in request.user.gamerprofile.friends.all %}<a href="{% url 'gamer_profiles:gamer-friend' gamer=gamer.username %}"><i class="fas fa-user-friends"></i> {% trans "Send friend request" %}</a>{% else %}<form action="" method="post">{% csrf_token %}<button type="submit" class="button"><i class="fas fa-user-slash"></i> {% trans 'Remove friend' %}</button></form>{% endif %}</li>
 {% endif %}
-
 <li>{% if blocked %}<a href="{% url 'gamer_profiles:my-block-list' %}"><i class="fas fa-ban"></i> {% trans "Blocked" %}</a>{% else %}<form method="post" action="{% url 'gamer_profiles:block-gamer' gamer=gamer.username %}">{% csrf_token %}<button type="submit" class="button"><i class="fas fa-ban"></i> {% trans 'Block user' %}</button></form>{% endif %}</li>
+{% endif %}
+{% if not blocked %}
+<li{% block collectactive %}{% endblock %}><a href="{% url 'gamer_profiles:book-list' gamer=gamer.username %}"><i class="fas fa-scroll"></i> {% if gamer and gamer.user == request.user %}{% trans "Manage collection" %}{% else %}{% trans "View collection" %}{% endif %}</a></li>
 {% endif %}
 {% endblock %}

@@ -12,9 +12,9 @@ from markdown import markdown
 from notifications.signals import notify
 from schedule.models import Calendar, Occurrence, Rule
 
-from . import models
 from ..invites.models import Invite
 from ..invites.signals import invite_accepted
+from . import models
 from .tasks import (
     calculate_player_attendance,
     clear_calendar_for_departing_player,
@@ -198,7 +198,7 @@ def create_player_events_as_needed(sender, instance, created, *args, **kwargs):
 
 @receiver(post_save, sender=Occurrence)
 def create_or_update_player_occurence(sender, instance, created, *args, **kwargs):
-    async_task(create_or_update_linked_occurences_on_edit, instance, created)
+    async_task('looking_for_group.games.tasks.create_or_update_linked_occurences_on_edit', instance, created)
 
 
 @receiver(m2m_changed, sender=models.GamePosting.players.through)

@@ -1,11 +1,16 @@
 {% extends "catalog/base.html" %}
-{% load i18n rules %}
+{% load i18n rules collection_tags foundation_formtags %}
 {% load ratings %}
 {% block subtitle %}{{ book.title }} - {{ book.edition }} - {% endblock %}
 {% block sectiontitle %}{{ book.title }}{% endblock %}
 {% block mobileheader %}{{ book.title }}{% endblock %}
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Sourcebook details" %}</h5></div>
+      <div class="card-section">
 {% has_perm 'catalog.can_edit' user book as is_editor %}
 {% if book.image %}<img class="thumbnail" src="{{ book.image.url }}" />{% endif %}
 {% if book.url %}<h5><a href="{{ book.url }}">{% trans "More info can be found here." %}</a></h5>{% endif %}
@@ -19,18 +24,57 @@
   <dt>ISBN</dt>
   <dd>{{ book.isbn|default_if_none:"N/A" }}</dd>
   <dt>{% trans "Tagged with" %}</dt>
-  <dd>{{ book.inherited_tag_names|join:", " }}
+  <dd>{{ book.inherited_tag_names|join:", " }}</dd>
 </dl>
-
-{% if is_editor %}
-<div class="clearfix">
-  <a href="{% url 'game_catalog:sourcebook_edit' book=book.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:sourcebook_delete' book=book.slug %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete sourcebook" %}</a>
+      </div>
+      {% if request.user.is_authenticated %}
+      <div class="card-section">
+      <hr />
+      <p><strong>{% trans "Collection status" %}</strong></p>
+        {% is_in_collection book request.user.gamerprofile as in_collection %}
+        {% get_content_type book as obj_ct %}
+      {% if not in_collection %}
+      <p>{% trans "This book is not in your personal collection. If you have a copy, you may add it using the form below." %}</p>
+        <form method="post" action="{% url 'rpgcollections:add-book' booktype='sourcebook' %}?next={{ book.get_absolute_url }}">
+          {% csrf_token %}
+          {{ collect_form|as_foundation }}
+          <input type="submit" class="button" value="{% trans 'Add to my collection' %}" />
+        </form>
+        {% else %}
+        <p>{% trans "This book is in your personal collection." %}</p>
+        <form method="post" action="{% url 'rpgcollections:remove-book' book=in_collection.slug %}?next={{ book.get_absolute_url }}">
+          {% csrf_token %}
+          <div class="clearfix"><a href="{{ in_collection.get_absolute_url }}" class="button float-left">{% trans "View your copy" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Remove from collection' %}" /></div>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if is_editor %}
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Admin tools" %}</strong></p>
+        <div class="clearfix">
+          <a href="{% url 'game_catalog:sourcebook_edit' book=book.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:sourcebook_delete' book=book.slug %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete sourcebook" %}</a>
+        </div>
+      </div>
+      {% endif %}
+      <div class="card-section">
+        <hr />
+        <span class="disclaimer">{% blocktrans with pname=book.edition.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pname }}. Images are copyright {{ pname }}, and logos are trademarked by {{ pname }}. This information only appears here in an editorial capacity.{% endblocktrans %}</span>
+      </div>
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-section">
+        <ul class="stats-list">
+          <li>{{ book.collected_copies.count }} <span class="stats-list-label">{% trans "Copies owned by users" %}</span></li>
+        </ul>
+      <hr />
+      {% ratings book %}
+      </div>
+    </div>
+  </div>
 </div>
-{% endif %}
-
-{% ratings book %}
-<p></p>
-<span class="disclaimer">{% blocktrans with pname=book.edition.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pname }}. Images are copyright {{ pname }}, and logos are trademarked by {{ pname }}. This information only appears here in an editorial capacity.{% endblocktrans %}</span>
-
-
 {% endblock %}

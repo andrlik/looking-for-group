@@ -10,7 +10,8 @@ class ServerAdmin(admin.ModelAdmin):
 
 
 class GamerLinkAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['gamer', 'sync_status', 'last_successful_sync']
+    ordering = ['gamer__username']
 
 
 class CommLinkAdmin(admin.ModelAdmin):
