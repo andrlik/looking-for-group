@@ -132,7 +132,8 @@ def get_system_choices(library):
                     for b in models.Book.objects.filter(
                         library=library, content_type=sb_ct
                     )
-                ]
+                ],
+                edition__game_system__notnull=True,
             ).select_related("edition", "edition__game_system")
         ]
     ).order_by("name", "publication_date")
@@ -145,7 +146,8 @@ def get_system_choices(library):
                     for b in models.Book.objects.filter(
                         library=library, content_type=md_ct
                     )
-                ]
+                ],
+                parent_game_edition__game_system__notnull=True,
             ).select_related("parent_game_edition", "parent_game_edition__game_system")
         ]
     ).order_by("name", "publication_date")
