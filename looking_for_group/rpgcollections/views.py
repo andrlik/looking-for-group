@@ -4,7 +4,13 @@ import logging
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseNotAllowed,
+    HttpResponseRedirect,
+)
+from django.db.models.query_utils import Q
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
@@ -13,6 +19,7 @@ from rules.contrib.views import PermissionRequiredMixin
 
 from . import forms, models
 from ..game_catalog import models as catalog_model
+
 # from ..game_catalog import models as db_models
 from ..gamer_profiles.models import GamerProfile
 
@@ -20,6 +27,7 @@ from ..gamer_profiles.models import GamerProfile
 # You will also need to be authenticated to view anyone's collection, and collections are only visible to people with whom you have a connection.
 
 logger = logging.getLogger("gamer_profiles")
+
 
 class BookListView(
     LoginRequiredMixin, SelectRelatedMixin, PermissionRequiredMixin, generic.ListView
@@ -37,6 +45,14 @@ class BookListView(
     context_object_name = "book_list"
     template_name = "rpgcollections/book_list.html"
     ordering = ["created"]
+    filter_present = False
+    game_filter = None
+    edition_filter = None
+    system_filter = None
+    publisher_filter = None
+    copy_type_filter = None
+    filter_querystring = None
+    filter_form = None
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -45,10 +61,84 @@ class BookListView(
             self.library, created = models.GameLibrary.objects.get_or_create(
                 user=self.gamer.user
             )
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self.model.objects.filter(library=self.library)
+        queryset = self.model.objects.filter(library=self.library)
+        sb_ct = ContentType.objects.get_for_model(catalog_model.SourceBook)
+        md_ct = ContentType.objects.get_for_model(catalog_model.PublishedModule)
+        sys_ct = ContentType.objects.get_for_model(catalog_model.GameSystem)
+        get_dict = self.request.GET.copy()
+        query_string_data = {}
+        if get_dict.pop("filter_present", None):
+            self.game_filter = get_dict.pop("game", None)
+            self.edition_filter = get_dict.pop("edition", None)
+            self.system_filter = get_dict.pop("system", None)
+            self.publisher_filter = get_dict.pop("publisher", None)
+            self.copy_type_filter = get_dict.pop("copy_type", None)
+            if self.game_filter and self.game_filter[0] != "":
+                query_string_data["game"] = self.game_filter[0]
+                q_game_sb = Q(
+                    content_type=sb_ct,
+                    content_object__edition__game__pk=self.game_filter[0],
+                )
+                q_game_md = Q(
+                    content_type=md_ct,
+                    content_object__parent_game_edition__game__pk=self.game_filter[0],
+                )
+                queryset = queryset.filter(q_game_md | q_game_sb)
+            if self.edition_filter and self.edition_filter[0] != "":
+                query_string_data["edition"] = self.edition_filter[0]
+                q_edition_sb = Q(
+                    content_type=sb_ct,
+                    content_object__edition__pk=self.edition_filter[0],
+                )
+                q_edition_md = Q(
+                    content_type=md_ct,
+                    content_object__parent_game_edition__pk=self.edition_filter[0],
+                )
+                queryset = queryset.filter(q_edition_md | q_edition_sb)
+            if self.system_filter and self.system_filter[0] != "":
+                query_string_data["system"] = self.system_filter[0]
+                q_sys_sb = Q(
+                    content_type=sb_ct,
+                    content_object__edition__game_system__pk=self.system_filter[0],
+                )
+                q_sys_md = Q(
+                    content_type=md_ct,
+                    content_object__parent_game_edition__game_system__pk=self.system_filter[
+                        0
+                    ],
+                )
+                q_sys = Q(content_type=sys_ct, content_object__pk=self.system_filter[0])
+                queryset = queryset.filter(q_sys | q_sys_md | q_sys_sb)
+            if self.publisher_filter and self.publisher_filter[0] != 0:
+                query_string_data["publisher"] = self.publisher_filter[0]
+                q_pub_sb = Q(
+                    content_type=sb_ct,
+                    content_object__edition__publisher__pk=self.publisher_filter[0],
+                )
+                q_pub_md = Q(
+                    content_type=md_ct,
+                    content_object__parent_game_edition__publisher__pk=self.publisher_filter[
+                        0
+                    ],
+                )
+                q_pub_sys = Q(
+                    content_type=sys_ct,
+                    content_object__original_publisher__pk=self.publisher_filter[0],
+                )
+                queryset = queryset.filter(q_pub_sys | q_pub_md | q_pub_sb)
+            if self.copy_type_filter and self.copy_type_filter[0] != "":
+                query_string_data["copy_type"] = self.copy_type_filter[0]
+                if self.copy_type_filter[0] == "pdf":
+                    queryset = queryset.filter(in_pdf=True)
+                else:
+                    queryset = queryset.filter(in_print=True)
+            if query_string_data:
+                self.filter_querystring = urllib.parse.urlencode(query_string_data)
+        return queryset
 
     def get_permission_object(self):
         return self.gamer
@@ -56,6 +146,20 @@ class BookListView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["gamer"] = self.gamer
+        if self.filter_present:
+            context["filter_form"] = forms.CollectionFilterForm(
+                initial={
+                    "game": self.game_filter,
+                    "edition": self.edition_filter,
+                    "system": self.system_filter,
+                    "publisher": self.publisher_filter,
+                    "copy_type": self.copy_type_filter,
+                },
+                library=self.library,
+            )
+            context["querystring"] = self.filter_querystring
+        else:
+            context["filter_form"] = forms.CollectionFilterForm(library=self.library)
         context["library"] = self.library
         return context
 
@@ -71,7 +175,9 @@ class BookCreate(LoginRequiredMixin, generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.method not in ["POST", "post"]:
             return HttpResponseNotAllowed(["POST"])  # Post only
-        self.success_url = urllib.parse.quote(request.GET.copy().pop("next", None)[0].encode("utf-8"))
+        self.success_url = urllib.parse.quote(
+            request.GET.copy().pop("next", None)[0].encode("utf-8")
+        )
         self.book_type = kwargs.pop("booktype", None)
         if self.book_type not in ["sourcebook", "module", "system"]:
             return HttpResponseBadRequest()
@@ -137,12 +243,14 @@ class BookDetail(
         logger.debug("From library: {}".format(self.object.library))
         logger.debug("Object id is: {}".format(self.object.object_id))
         logger.debug("Object grabbed: {}".format(self.object))
-        logger.debug("Retrieved object successfully for title {}".format(self.object.title))
+        logger.debug(
+            "Retrieved object successfully for title {}".format(self.object.title)
+        )
         return self.object.library.user.gamerprofile
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['gamer'] = self.object.library.user.gamerprofile
+        context["gamer"] = self.object.library.user.gamerprofile
         return context
 
 
@@ -174,7 +282,7 @@ class BookUpdate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['gamer'] = self.get_object().library.user.gamerprofile
+        context["gamer"] = self.get_object().library.user.gamerprofile
         return context
 
 

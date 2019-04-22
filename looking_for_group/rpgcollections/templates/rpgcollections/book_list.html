@@ -11,6 +11,11 @@
           {% if not book_list %}
           <p>{{ gamer }} {% trans "doesn't have any game books in their collection." %}</p>
           {% endif %}
+          {% if filter_form %}
+          <form class="inline-form" action="" method="get">
+
+          </form>
+          {% endif %}
           <div class="grid-x grid-margin-x small-up-2 medium-up-4">
             {% for book in book_list %}
             <div class="cell medium-auto">
