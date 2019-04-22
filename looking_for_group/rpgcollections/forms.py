@@ -92,7 +92,7 @@ def get_edition_choices(library):
             ]
         )
         .select_related("game")
-        .order_by("game__title", "publication_date")
+        .order_by("game__title", "release_date")
     )
     module_editions = (
         catalog_models.GameEdition.objects.filter(
@@ -109,10 +109,10 @@ def get_edition_choices(library):
             ]
         )
         .select_related("game")
-        .order_by("game__title", "publication_date")
+        .order_by("game__title", "release_date")
     )
     editions = sourcebook_editions.union(module_editions).order_by(
-        "game_title", "publication_date"
+        "game__title", "release_date"
     )
     return [("", "")] + [
         (e.pk, "{} ({})".format(e.game.title, e.name)) for e in editions

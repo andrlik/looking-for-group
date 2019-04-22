@@ -44,12 +44,11 @@
         <p>{% trans "This book is in your personal collection." %}</p>
         <form method="post" action="{% url 'rpgcollections:remove-book' book=in_collection.slug %}?next={{ book.get_absolute_url }}">
           {% csrf_token %}
-          <div class="clearfix"><a href="{{ in_collection.get_absolute_url }}" class="button float-left">{% trans "View your copy" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Remove from collection' %}" />
+          <div class="clearfix"><a href="{{ in_collection.get_absolute_url }}" class="button float-left">{% trans "View your copy" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Remove from collection' %}" /></div>
         </form>
         {% endif %}
       </div>
       {% endif %}
-      </div>
       {% if is_editor %}
       <div class="card-section">
         <hr />
@@ -65,7 +64,7 @@
       </div>
     </div>
   </div>
-  <div class="cell auto">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
       <div class="card-section">

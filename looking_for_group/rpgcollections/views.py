@@ -16,6 +16,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
+import itertools
 
 from . import forms, models
 from ..game_catalog import models as catalog_model
@@ -40,7 +41,7 @@ class BookListView(
     permission_required = "profile.view_detail"
     select_related = ["library"]
     prefetch_related = ["content_object"]
-    paginate_by = 15
+    paginate_by = 10
     paginate_orphans = 2
     context_object_name = "book_list"
     template_name = "rpgcollections/book_list.html"
@@ -66,9 +67,6 @@ class BookListView(
 
     def get_queryset(self):
         queryset = self.model.objects.filter(library=self.library)
-        sb_ct = ContentType.objects.get_for_model(catalog_model.SourceBook)
-        md_ct = ContentType.objects.get_for_model(catalog_model.PublishedModule)
-        sys_ct = ContentType.objects.get_for_model(catalog_model.GameSystem)
         get_dict = self.request.GET.copy()
         query_string_data = {}
         if get_dict.pop("filter_present", None):
@@ -78,59 +76,170 @@ class BookListView(
             self.publisher_filter = get_dict.pop("publisher", None)
             self.copy_type_filter = get_dict.pop("copy_type", None)
             if self.game_filter and self.game_filter[0] != "":
+                self.filter_present = True
+                query_string_data["filter_present"] = 1
                 query_string_data["game"] = self.game_filter[0]
                 q_game_sb = Q(
-                    content_type=sb_ct,
-                    content_object__edition__game__pk=self.game_filter[0],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.SourceBook.objects.filter(
+                                    edition__game__pk=self.game_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 q_game_md = Q(
-                    content_type=md_ct,
-                    content_object__parent_game_edition__game__pk=self.game_filter[0],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.PublishedModule.objects.filter(
+                                    parent_game_edition__game__pk=self.game_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 queryset = queryset.filter(q_game_md | q_game_sb)
             if self.edition_filter and self.edition_filter[0] != "":
+                self.filter_present = True
+                query_string_data["filter_present"] = 1
                 query_string_data["edition"] = self.edition_filter[0]
                 q_edition_sb = Q(
-                    content_type=sb_ct,
-                    content_object__edition__pk=self.edition_filter[0],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.SourceBook.objects.filter(
+                                    edition__pk=self.edition_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 q_edition_md = Q(
-                    content_type=md_ct,
-                    content_object__parent_game_edition__pk=self.edition_filter[0],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.PublishedModule.objects.filter(
+                                    parent_game_edition__pk=self.edition_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 queryset = queryset.filter(q_edition_md | q_edition_sb)
             if self.system_filter and self.system_filter[0] != "":
+                self.filter_present = True
+                query_string_data["filter_present"] = 1
                 query_string_data["system"] = self.system_filter[0]
                 q_sys_sb = Q(
-                    content_type=sb_ct,
-                    content_object__edition__game_system__pk=self.system_filter[0],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.SourceBook.objects.filter(
+                                    edition__game_system__pk=self.system_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 q_sys_md = Q(
-                    content_type=md_ct,
-                    content_object__parent_game_edition__game_system__pk=self.system_filter[
-                        0
-                    ],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.PublishedModule.objects.filter(
+                                    parent_game_edition__game_system__pk=self.system_filter[
+                                        0
+                                    ]
+                                )
+                            ]
+                        )
+                    )
                 )
-                q_sys = Q(content_type=sys_ct, content_object__pk=self.system_filter[0])
+                q_sys = Q(
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.GameSystem.objects.filter(
+                                    id=self.system_filter[0]
+                                )
+                            ]
+                        )
+                    )
+                )
                 queryset = queryset.filter(q_sys | q_sys_md | q_sys_sb)
-            if self.publisher_filter and self.publisher_filter[0] != 0:
+            if self.publisher_filter and self.publisher_filter[0] != "":
+                self.filter_present = True
+                query_string_data["filter_present"] = 1
                 query_string_data["publisher"] = self.publisher_filter[0]
                 q_pub_sb = Q(
-                    content_type=sb_ct,
-                    content_object__edition__publisher__pk=self.publisher_filter[0],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.SourceBook.objects.filter(
+                                    edition__publisher__pk=self.publisher_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 q_pub_md = Q(
-                    content_type=md_ct,
-                    content_object__parent_game_edition__publisher__pk=self.publisher_filter[
-                        0
-                    ],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.PublishedModule.objects.filter(
+                                    publisher__pk=self.publisher_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 q_pub_sys = Q(
-                    content_type=sys_ct,
-                    content_object__original_publisher__pk=self.publisher_filter[0],
+                    id__in=list(
+                        itertools.chain.from_iterable(
+                            [
+                                sbc.collected_copies.filter(
+                                    library=self.library
+                                ).values_list("id", flat=True)
+                                for sbc in catalog_model.GameSystem.objects.filter(
+                                    original_publisher__pk=self.publisher_filter[0]
+                                )
+                            ]
+                        )
+                    )
                 )
                 queryset = queryset.filter(q_pub_sys | q_pub_md | q_pub_sb)
             if self.copy_type_filter and self.copy_type_filter[0] != "":
+                self.filter_present = True
+                query_string_data["filter_present"] = 1
                 query_string_data["copy_type"] = self.copy_type_filter[0]
                 if self.copy_type_filter[0] == "pdf":
                     queryset = queryset.filter(in_pdf=True)

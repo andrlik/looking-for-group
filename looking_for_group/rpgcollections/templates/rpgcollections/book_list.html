@@ -1,7 +1,7 @@
 {% extends "gamer_profiles/profile_detail.html" %}
 {% block detailactive %}{% endblock %}
 {% block collectactive %}{% include "is_active_definition.html" %}{% endblock %}
-{% load i18n static %}
+{% load i18n static foundation_formtags %}
 {% block content %}
 <div class="grid-x grid-margin-x">
     <div class="cell medium-auto">
@@ -9,16 +9,18 @@
         <div class="card-divider"><h5>{% trans "Collection" %}</h5></div>
         <div class="card-section">
           {% if not book_list %}
-          <p>{{ gamer }} {% trans "doesn't have any game books in their collection." %}</p>
+          <p>{{ gamer }} {% trans "doesn't have matching game books in their collection." %}</p>
           {% endif %}
           {% if filter_form %}
           <form class="inline-form" action="" method="get">
-
+            <div class="grid-x grid-margin-x">
+              <input type="hidden" id="id_filter_present" name="filter_present" value="1" /> <div class="cell medium-auto"> {% render_field filter_form.game %}</div><div class="cell medium-auto"> {% render_field filter_form.edition %}</div><div class="cell medium-auto">{% render_field filter_form.system %}</div><div class="cell medium-auto">{% render_field filter_form.publisher %}</div><div class="cell medium-auto">{% render_field filter_form.copy_type %}</div><div class="cell medium-auto"><label for="id_submit_filter">&nbsp;</label><input type="submit" id="id_submit_filter" class="button secondary" value="{% trans 'Filter results' %}" /></div>
+            </div>
           </form>
           {% endif %}
-          <div class="grid-x grid-margin-x small-up-2 medium-up-4">
+          <div class="grid-x grid-margin-x small-up-2 medium-up-4 large-up-6">
             {% for book in book_list %}
-            <div class="cell medium-auto">
+            <div class="cell">
             <div class="card">
               <div class="card-section">
                 <div class="grid-x grid-margin-x">
