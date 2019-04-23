@@ -41,7 +41,7 @@ class BookListView(
     permission_required = "profile.view_detail"
     select_related = ["library"]
     prefetch_related = ["content_object"]
-    paginate_by = 10
+    paginate_by = 15
     paginate_orphans = 2
     context_object_name = "book_list"
     template_name = "rpgcollections/book_list.html"

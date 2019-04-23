@@ -18,11 +18,11 @@
             </div>
           </form>
           {% endif %}
-          <div class="grid-x grid-margin-x small-up-2 medium-up-4 large-up-6">
+          <div class="grid-x grid-margin-x small-up-2 medium-up-3 large-up-5" data-equalizer="collection" data-equalize-on="medium">
             {% for book in book_list %}
             <div class="cell">
-            <div class="card">
-              <div class="card-section">
+              <div class="card" data-equalize-watch="collection">
+              <div class="card-section" >
                 <div class="grid-x grid-margin-x">
                   <div class="cell auto">
                     <a href="{{ book.content_object.get_absolute_url }}"><img class="thumbnail smallthumb" src="{% if book.cover %}{{ book.cover.url }}{% else %}{% static 'images/placeholder_thumb.png' %}{% endif%}" alt="Cover of {{ book.title }}" /></a>
@@ -42,7 +42,7 @@
               </div>
               {% if request.user == gamer.user %}
               <div class="card-section">
-                <a href="{% url 'rpgcollections:book-detail' book=book.slug %}" class="button float-left">{% trans "View/edit copy details" %}</a> <a href="{% url 'rpgcollections:remove-book' book=book.slug %}" class="float-right button alert">{% trans "Remove from collection" %}</a>
+                <a href="{% url 'rpgcollections:book-detail' book=book.slug %}" class="button float-left" title="View/Edit copy details">{% trans "View/edit" %}</a> <a href="{% url 'rpgcollections:remove-book' book=book.slug %}" class="float-right button alert" title="Remove from collection">{% trans "Remove" %}</a>
               </div>
                 {% endif %}
               </div>
