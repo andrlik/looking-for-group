@@ -518,6 +518,7 @@ class GamePosting(
         ),
         null=True,
         blank=True,
+        upload_to='games/game_feature_images/%Y/%m/%d',
     )
     featured_image_cw = models.CharField(
         max_length=50,

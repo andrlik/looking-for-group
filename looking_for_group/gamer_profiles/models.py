@@ -111,6 +111,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         verbose_name=_("Community Logo"),
         null=True,
         blank=True,
+        upload_to="social/community_logos/%Y/%m/%d",
         help_text=_("Optional featured logo for your community."),
     )
     community_logo_cw = models.CharField(
