@@ -19,7 +19,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     name = models.CharField(max_length=255, db_index=True, help_text=_("Company Name"))
-    logo = models.ImageField(null=True, blank=True)
+    logo = models.ImageField(null=True, blank=True, upload_to="catalog/publisher_logos/%Y/%m/%d")
     url = models.URLField(null=True, blank=True, help_text=_("Company URL"))
     description = models.TextField(null=True, blank=True, help_text=_("Description of the publisher."))
 
@@ -54,7 +54,7 @@ class GameSystem(
         help_text=_("Publisher who originally released the rules system."),
         on_delete=models.CASCADE,
     )
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True, upload_to="catalog/game_system_covers/%Y/%m/%d")
     isbn = ISBNField(
         null=True,
         blank=True,
@@ -92,7 +92,7 @@ class PublishedGame(
     title = models.CharField(
         max_length=150, db_index=True, help_text=_("Title of the game")
     )
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True, upload_to='catalog/base_game_covers/%Y/%m/%d')
     description = models.TextField(
         null=True, blank=True, help_text=_("Description of the game.")
     )
@@ -141,7 +141,7 @@ class GameEdition(
         on_delete=models.CASCADE,
         help_text=_("Who published this edition?"),
     )
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True, upload_to='catalog/game_edition_covers/%Y/%m/%d')
     description = models.TextField(
         null=True, blank=True, help_text=_("Description of the edition if applicable.")
     )
@@ -194,7 +194,7 @@ class SourceBook(
         related_name="sourcebooks",
     )
     image = models.ImageField(
-        null=True, blank=True, help_text=_("Image of book cover, if available.")
+        null=True, blank=True, upload_to="catalog/sourcebook_covers/%Y/%m/%d", help_text=_("Image of book cover, if available.")
     )
     corebook = models.BooleanField(
         default=False,
@@ -251,7 +251,7 @@ class PublishedModule(
         on_delete=models.CASCADE,
         help_text=_("Edition that this module uses for play."),
     )
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True, upload_to="catalog/module_covers/%Y/%m/%d")
     url = models.URLField(
         blank=True, null=True, help_text=_("More info can be found here.")
     )
