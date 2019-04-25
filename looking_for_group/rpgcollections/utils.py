@@ -129,7 +129,7 @@ def get_distinct_publishers(library):
     sys_ct = ContentType.objects.get_for_model(catalog_models.GameSystem)
     sourcebook_publishers = catalog_models.GamePublisher.objects.filter(
         id__in=[
-            sb.edition.publisher.pk
+            sb.publisher.pk
             for sb in catalog_models.SourceBook.objects.filter(
                 id__in=[
                     b.content_object.pk
@@ -137,7 +137,7 @@ def get_distinct_publishers(library):
                         library=library, content_type=sb_ct
                     )
                 ]
-            ).select_related("edition", "edition__publisher")
+            )
         ]
     ).order_by("name")
     module_publishers = catalog_models.GamePublisher.objects.filter(

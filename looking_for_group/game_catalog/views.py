@@ -8,8 +8,8 @@ from django.urls import reverse_lazy
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
-from ..rpgcollections.models import Book, GameLibrary
 from ..rpgcollections.forms import BookForm
+from ..rpgcollections.models import Book, GameLibrary
 from . import forms
 from .models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
 from .utils import combined_recent
@@ -390,6 +390,7 @@ class SourceBookCreateView(
     permission_required = "catalog.can_edit"
     template_name = "catalog/sourcebook_create.html"
 
+
     def dispatch(self, request, *args, **kwargs):
         edition_slug = kwargs.pop("edition", None)
         self.edition = get_object_or_404(GameEdition, slug=edition_slug)
@@ -403,9 +404,16 @@ class SourceBookCreateView(
         context["edition"] = self.edition
         return context
 
+    def get_form_kwargs(self):
+        form_kwargs = super().get_form_kwargs()
+        form_kwargs['initial']['publisher'] = self.edition.publisher.pk
+        return form_kwargs
+
     def form_valid(self, form):
         self.book = form.save(commit=False)
         self.book.edition = self.edition
+        if not self.book.publisher:
+            self.book.publisher = self.edition.publisher
         self.book.save()
         return HttpResponseRedirect(self.book.get_absolute_url())
 

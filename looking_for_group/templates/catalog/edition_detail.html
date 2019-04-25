@@ -95,6 +95,7 @@
       <thead>
         <tr>
           <th>{% trans "Title" %}</th>
+          <th>{% trans "Publisher" %}</th>
           <th>{% trans "Is corebook?" %}</th>
           <th>{% trans "Released" %}</th>
           <th class="text-right">ISBN</th>
@@ -104,6 +105,7 @@
         {% for book in edition.sourcebooks.all %}
         <tr>
           <td><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></td>
+          <td><a href="{{ book.publisher.get_absolute_url }}">{{ book.publisher.name }}</a></td>
           <td>{{ book.corebook|yesno:"Yes,No" }}</td>
           <td class="text-right">{{ book.release_date|date:"F Y" }}</td>
           <td class="text-right">{{ book.isbn|default_if_none:"N/A" }}</td>

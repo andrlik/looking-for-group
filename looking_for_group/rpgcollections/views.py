@@ -1,28 +1,23 @@
-import urllib
+import itertools
 import logging
+import urllib
 
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import (
-    HttpResponseBadRequest,
-    HttpResponseNotAllowed,
-    HttpResponseRedirect,
-)
-from django.db.models.query_utils import Q
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.query_utils import Q
+from django.http import HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
-import itertools
 
-from . import forms, models
 from ..game_catalog import models as catalog_model
-
 # from ..game_catalog import models as db_models
 from ..gamer_profiles.models import GamerProfile
+from . import forms, models
 
 # Views from here on out assume you are specifying a specific user to view. In site architechture it is a subset of the gamer profile.
 # You will also need to be authenticated to view anyone's collection, and collections are only visible to people with whom you have a connection.
@@ -202,7 +197,7 @@ class BookListView(
                                     library=self.library
                                 ).values_list("id", flat=True)
                                 for sbc in catalog_model.SourceBook.objects.filter(
-                                    edition__publisher__pk=self.publisher_filter[0]
+                                    publisher__pk=self.publisher_filter[0]
                                 )
                             ]
                         )
@@ -247,7 +242,7 @@ class BookListView(
                     queryset = queryset.filter(in_print=True)
             if query_string_data:
                 self.filter_querystring = urllib.parse.urlencode(query_string_data)
-        return queryset
+        return queryset.order_by('created')
 
     def get_permission_object(self):
         return self.gamer

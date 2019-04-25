@@ -200,6 +200,7 @@ class SourceBook(
         default=False,
         help_text=_("Is this volume considered a corebook for the edition?"),
     )
+    publisher = models.ForeignKey(GamePublisher, on_delete=models.CASCADE, null=False, blank=False, help_text=_("Publisher of this sourcebook."))
     release_date = models.DateField(
         null=True, blank=True, help_text=_("When was this book published?")
     )
@@ -210,6 +211,11 @@ class SourceBook(
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.publisher and self.edition:
+            self.publisher = self.edition.publisher
+        return super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("game_catalog:sourcebook_detail", kwargs={"book": self.slug})

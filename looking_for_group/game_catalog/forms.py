@@ -1,7 +1,7 @@
 from django import forms
 
-from . import models
 from ..gamer_profiles.forms import BooleanSwitchPaddleFormMixin
+from . import models
 
 
 class GameForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
@@ -63,7 +63,7 @@ class SourceBookForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
 
     class Meta:
         model = models.SourceBook
-        fields = ["title", "image", "corebook", "release_date", "isbn", "tags"]
+        fields = ["title", "image", "corebook", "publisher", "release_date", "isbn", "tags"]
         widgets = {"release_date": forms.widgets.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")}
 
 

@@ -6,8 +6,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from test_plus import TestCase
 
-from .. import models
 from ...gamer_profiles.tests import factories
+from .. import models
 
 
 class AbstractViewTest(TestCase):
@@ -42,7 +42,7 @@ class AbstractViewTest(TestCase):
         )
         self.numen.tags.add("weird", "future", "science fantasy")
         self.numenbook = models.SourceBook.objects.create(
-            edition=self.numen, title="Numenera", corebook=True
+            edition=self.numen, publisher=self.mcg, title="Numenera", corebook=True
         )
         self.cos = models.PublishedModule(
             title="Curse of Strahd",
@@ -363,6 +363,7 @@ class SourcebookCreateTest(AbstractEditingViewTest):
         self.url_kwargs = {"edition": self.numen.slug}
         self.post_data = {
             "title": "Numenera",
+            "publisher": self.mcg.pk,
             "corebook": 1,
             "release_date": "2012-07-01",
             "tags": "artwork",
@@ -389,12 +390,14 @@ class SourcebookEditTest(AbstractEditingViewTest):
         self.sb = models.SourceBook.objects.create(
             title="Numenera",
             edition=self.numen,
+            publisher=self.mcg,
             release_date=datetime.strptime("2012-07-01", "%Y-%m-%d"),
         )
         self.view_name = "game_catalog:sourcebook_edit"
         self.url_kwargs = {"book": self.sb.slug}
         self.post_data = {
             "title": "Numenera OG",
+            "publisher": self.mcg.pk,
             "corebook": 1,
             "release_date": "2012-07-01",
             "tags": "artwork",
