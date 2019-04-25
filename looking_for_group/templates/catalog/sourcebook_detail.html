@@ -19,6 +19,8 @@
   <dd><a href="{{ book.edition.get_absolute_url }}">{{ book.edition }}</a></dd>
   <dt>{% trans "Corebook?" %}</dt>
   <dd>{{ book.corebook|yesno:"Yes,No" }}</dd>
+  <dt>{% trans "Publisher" %}</dt>
+  <dd><a href="{{ book.publisher.get_absolute_url }}">{{ book.publisher.name }}</a></dd>
   <dt>{% trans "Released" %}</dt>
   <dd>{{ book.release_date|date:"F Y" }}</dd>
   <dt>ISBN</dt>
