@@ -1,6 +1,7 @@
 {% extends "gamer_profiles/profile_detail.html" %}
+{% load i18n %}
 {% block subtitle %}{% trans "RPG collection for" %} {{ gamer }}{% endblock %}
-{% block mobileheader %}{% trans "RPG collection for" %} {{ gamer }}{% endif %}
+{% block mobileheader %}{% trans "RPG collection for" %} {{ gamer }}{% endblock %}
 {% block detailactive %}{% endblock %}
 {% block collectactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% load i18n static foundation_formtags %}
