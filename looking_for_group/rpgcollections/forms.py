@@ -1,9 +1,11 @@
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
+
 from ..game_catalog import models as catalog_models
 from ..gamer_profiles.forms import SwitchInput
 from . import models
+from .utils import get_distinct_editions, get_distinct_games, get_distinct_publishers, get_distinct_systems
 
 DUMMY_CHOICES = [("", "")]
 
@@ -13,7 +15,7 @@ BOOK_CHOICES = [
     ("module", _("Published module/adventure")),
 ]
 
-COPY_TYPES = [("", ""), ("print", _("Print")), ("pdf", _("PDF/Ebook"))]
+COPY_TYPES = [("print", _("Print")), ("pdf", _("PDF/Ebook"))]
 
 
 class BookForm(forms.ModelForm):
@@ -42,171 +44,24 @@ class BookForm(forms.ModelForm):
 
 
 def get_game_choices(library):
-    sb_ct = ContentType.objects.get_for_model(catalog_models.SourceBook)
-    md_ct = ContentType.objects.get_for_model(catalog_models.PublishedModule)
-    sourcebook_games = catalog_models.PublishedGame.objects.filter(
-        id__in=[
-            sb.edition.game.pk
-            for sb in catalog_models.SourceBook.objects.filter(
-                id__in=[
-                    b.content_object.pk
-                    for b in models.Book.objects.filter(
-                        library=library, content_type=sb_ct
-                    )
-                ]
-            ).select_related("edition", "edition__game")
-        ]
-    ).order_by("title")
-    module_games = catalog_models.PublishedGame.objects.filter(
-        id__in=[
-            md.parent_game_edition.game.pk
-            for md in catalog_models.PublishedModule.objects.filter(
-                id__in=[
-                    b.content_object.pk
-                    for b in models.Book.objects.filter(
-                        library=library, content_type=md_ct
-                    )
-                ]
-            ).select_related("parent_game_edition", "parent_game_edition__game")
-        ]
-    ).order_by("title")
-    games = sourcebook_games.union(module_games).order_by("title")
+    games = get_distinct_games(library)
     return [("", "")] + [(g.pk, "{}".format(g.title)) for g in games]
 
 
 def get_edition_choices(library):
-    sb_ct = ContentType.objects.get_for_model(catalog_models.SourceBook)
-    md_ct = ContentType.objects.get_for_model(catalog_models.PublishedModule)
-    sourcebook_editions = (
-        catalog_models.GameEdition.objects.filter(
-            id__in=[
-                sb.edition.pk
-                for sb in catalog_models.SourceBook.objects.filter(
-                    id__in=[
-                        b.content_object.pk
-                        for b in models.Book.objects.filter(
-                            library=library, content_type=sb_ct
-                        )
-                    ]
-                ).select_related("edition")
-            ]
-        )
-        .select_related("game")
-        .order_by("game__title", "release_date")
-    )
-    module_editions = (
-        catalog_models.GameEdition.objects.filter(
-            id__in=[
-                md.parent_game_edition.pk
-                for md in catalog_models.PublishedModule.objects.filter(
-                    id__in=[
-                        b.content_object.pk
-                        for b in models.Book.objects.filter(
-                            library=library, content_type=md_ct
-                        )
-                    ]
-                ).select_related("parent_game_edition")
-            ]
-        )
-        .select_related("game")
-        .order_by("game__title", "release_date")
-    )
-    editions = sourcebook_editions.union(module_editions).order_by(
-        "game__title", "release_date"
-    )
+    editions = get_distinct_editions(library)
     return [("", "")] + [
         (e.pk, "{} ({})".format(e.game.title, e.name)) for e in editions
     ]
 
 
 def get_system_choices(library):
-    sb_ct = ContentType.objects.get_for_model(catalog_models.SourceBook)
-    md_ct = ContentType.objects.get_for_model(catalog_models.PublishedModule)
-    sys_ct = ContentType.objects.get_for_model(catalog_models.GameSystem)
-    sourcebook_systems = catalog_models.GameSystem.objects.filter(
-        id__in=[
-            sb.edition.game_system.pk
-            for sb in catalog_models.SourceBook.objects.filter(
-                id__in=[
-                    b.content_object.pk
-                    for b in models.Book.objects.filter(
-                        library=library, content_type=sb_ct
-                    )
-                ],
-                edition__game_system__isnull=False,
-            ).select_related("edition", "edition__game_system")
-        ]
-    ).order_by("name", "publication_date")
-    module_systems = catalog_models.GameSystem.objects.filter(
-        id__in=[
-            md.parent_game_edition.game_system.pk
-            for md in catalog_models.PublishedModule.objects.filter(
-                id__in=[
-                    b.content_object.pk
-                    for b in models.Book.objects.filter(
-                        library=library, content_type=md_ct
-                    )
-                ],
-                parent_game_edition__game_system__isnull=False,
-            ).select_related("parent_game_edition", "parent_game_edition__game_system")
-        ]
-    ).order_by("name", "publication_date")
-    system_systems = catalog_models.GameSystem.objects.filter(
-        id__in=[
-            b.content_object.pk
-            for b in models.Book.objects.filter(library=library, content_type=sys_ct)
-        ]
-    ).order_by("name", "publication_date")
-    sb_and_md = sourcebook_systems.union(module_systems)
-    systems = sb_and_md.union(system_systems).order_by("name", "publication_date")
+    systems = get_distinct_systems(library)
     return [("", "")] + [(s.pk, s.name) for s in systems]
 
 
 def get_publisher_choices(library):
-    sb_ct = ContentType.objects.get_for_model(catalog_models.SourceBook)
-    md_ct = ContentType.objects.get_for_model(catalog_models.PublishedModule)
-    sys_ct = ContentType.objects.get_for_model(catalog_models.GameSystem)
-    sourcebook_publishers = catalog_models.GamePublisher.objects.filter(
-        id__in=[
-            sb.edition.publisher.pk
-            for sb in catalog_models.SourceBook.objects.filter(
-                id__in=[
-                    b.content_object.pk
-                    for b in models.Book.objects.filter(
-                        library=library, content_type=sb_ct
-                    )
-                ]
-            ).select_related("edition", "edition__publisher")
-        ]
-    ).order_by("name")
-    module_publishers = catalog_models.GamePublisher.objects.filter(
-        id__in=[
-            md.publisher.pk
-            for md in catalog_models.PublishedModule.objects.filter(
-                id__in=[
-                    b.content_object.pk
-                    for b in models.Book.objects.filter(
-                        library=library, content_type=md_ct
-                    )
-                ]
-            ).select_related("publisher")
-        ]
-    ).order_by("name")
-    system_publishers = catalog_models.GamePublisher.objects.filter(
-        id__in=[
-            sys.original_publisher.pk
-            for sys in catalog_models.GameSystem.objects.filter(
-                id__in=[
-                    b.content_object.pk
-                    for b in models.Book.objects.filter(
-                        library=library, content_type=sys_ct
-                    )
-                ]
-            ).select_related("original_publisher")
-        ]
-    ).order_by("name")
-    sb_and_md = sourcebook_publishers.union(module_publishers)
-    publishers = sb_and_md.union(system_publishers).order_by("name")
+    publishers = get_distinct_publishers(library)
     return [("", "")] + [(p.pk, p.name) for p in publishers]
 
 

@@ -1,11 +1,12 @@
 {% extends "gamer_profiles/profile_base.html" %}
-{% load avatar_tags i18n humanize social_tags ratings dash_tags rules %}
+{% load avatar_tags i18n humanize social_tags ratings dash_tags rules collection_tags %}
 {% block subtitle %}{{ gamer }} - {% endblock %}
 {% block sectiontitle %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block mobileheader %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block detailactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 {% has_perm "postman.can_message_user" request.user gamer.user as can_message %}
+{% get_collection_stats gamer as rpgcollection %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">
@@ -255,6 +256,27 @@
     </div>
     </div>
   </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Game library" %}</h5></div>
+      <div class="card-section">
+        <h5>{% trans "Collection stats" %}</h5>
+        <ul class="stats-list">
+
+          <li>{{ rpgcollection.sourcebooks }} <span class="stats-list-label">{% trans "Sourcebooks" %}</span></li>
+          <li>{{ rpgcollection.system_references }} <span class="stats-list-label">{% trans "System References" %}</span></li>
+          <li>{{ rpgcollection.modules }} <span class="stats-list-label">{% trans "Modules" %}</span></li>
+          <li>{{ rpgcollection.num_games }} <span class="stats-list-label">{% trans "Distinct Games" %}</span></li>
+          <li>{{ rpgcollection.num_editions }} <span class="stats-list-label">{% trans "Distinct Editions" %}</span></li>
+          <li>{{ rpgcollection.num_systems }} <span class="stats-list-label">{% trans "Distinct Systems" %}</span></li>
+          <li>{{ rpgcollection.num_publishers }} <span class="stats-list-label">{% trans "Distinct Publishers" %}</span></li>
+        </ul>
+        <a href="{{ rpgcollection.source_library.get_absolute_url }}" class="button">{% trans "View collection" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
   {% if request.user.is_authenticated %}
   <div class="cell medium-auto">
     <div class="card">
