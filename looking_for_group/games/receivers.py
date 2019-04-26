@@ -21,6 +21,7 @@ from .tasks import (
     create_game_player_events,
     create_or_update_linked_occurences_on_edit,
     sync_calendar_for_arriving_player,
+    undo_player_attendence_for_incomplete_session,
     update_child_events_for_master,
     update_player_calendars_for_adhoc_session
 )
@@ -48,6 +49,12 @@ def render_markdown_notes(sender, instance, *args, **kwargs):
         instance.gm_notes_rendered = markdown(instance.gm_notes)
     else:
         instance.gm_notes_rendered = None
+    try:
+        old_copy = models.GameSession.objects.get(id=instance.pk)
+        if instance.status != "complete" and old_copy.status == "complete":
+            undo_player_attendence_for_incomplete_session(old_copy)
+    except ObjectDoesNotExist:
+        pass  # This is a new session so no need to worry.
 
 
 @receiver(pre_save, sender=models.AdventureLog)

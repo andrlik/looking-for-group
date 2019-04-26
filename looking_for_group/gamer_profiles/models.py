@@ -448,8 +448,9 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
             "How many times has this user left a game before it was completed?"
         ),
     )
+    gm_games_finished = models.PositiveIntegerField(default=0, help_text=_("How many games has this GM completed?"))
     games_finished = models.PositiveIntegerField(
-        default=0, help_text=_("How many finished games has this user participated in?")
+        default=0, help_text=_("How many finished games has this user participated in as a player?")
     )
     # preferred_genres = models.ManyToManyField(GameGenres, null=True, blank=True)
     # preferred_playstyles = models.ManyToManyField(PlayStyles, null=True, blank=True)

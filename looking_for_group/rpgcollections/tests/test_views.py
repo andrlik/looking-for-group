@@ -1,9 +1,11 @@
 import pytest
-from factory.django import mute_signals
-from django.db.models.signals import post_save
 from django.core.exceptions import ObjectDoesNotExist
-from looking_for_group.gamer_profiles.tests import factories
+from django.db import transaction
+from django.db.models.signals import post_delete, post_save
+from factory.django import mute_signals
+
 from looking_for_group.game_catalog.tests.test_views import AbstractViewTest
+from looking_for_group.gamer_profiles.tests import factories
 from looking_for_group.rpgcollections import models
 
 
@@ -79,10 +81,11 @@ class TestEditbook(AbstractCollectionsTest):
             self.assertGoodView(self.view_name, **self.url_kwargs)
 
     def test_update_data(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            tmpcheck = models.Book.objects.get(pk=self.cypher_collect_1.pk)
-            assert tmpcheck.in_print and tmpcheck.in_pdf
+        with mute_signals(post_save):
+            with self.login(username=self.gamer1.username):
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+                tmpcheck = models.Book.objects.get(pk=self.cypher_collect_1.pk)
+                assert tmpcheck.in_print and tmpcheck.in_pdf
 
 
 class TestDeleteBook(AbstractCollectionsTest):
@@ -108,12 +111,14 @@ class TestDeleteBook(AbstractCollectionsTest):
                 assert models.Book.objects.get(pk=self.cypher_collect_1.pk)
 
     def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.Book.objects.get(pk=self.cypher_collect_1.pk)
+        with mute_signals(post_save, post_delete):
+            with self.login(username=self.gamer1.username):
+                self.assertGoodView(self.view_name, **self.url_kwargs)
+                self.post(self.view_name, data={}, **self.url_kwargs)
+                self.response_302()
+                with transaction.atomic():
+                    with pytest.raises(ObjectDoesNotExist):
+                        models.Book.objects.get(pk=self.cypher_collect_1.pk)
 
 
 class TestAddBook(AbstractCollectionsTest):
@@ -127,22 +132,27 @@ class TestAddBook(AbstractCollectionsTest):
         self.url_kwargs = {"booktype": "system"}
         self.post_data = {"object_id": self.cypher.pk, "in_pdf": 1}
 
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+    def test_post_required(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_405()
 
     def test_logged_in_user(self):
         with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            self.response_302()
-            assert self.cypher.collected_copies.filter(library=self.game_lib2).count() > 0
+            with mute_signals(post_save):
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+                self.response_302()
+                assert self.cypher.collected_copies.filter(library=self.game_lib2).count() > 0
 
     def test_add_when_aready_there(self):
         with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            self.response_302()
-            assert self.cypher.collected_copies.filter(library=self.game_lib1).count() == 1
+            with mute_signals(post_save):
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+                self.response_302()
+                assert self.cypher.collected_copies.filter(library=self.game_lib1).count() == 1
 
     def test_bad_data(self):
+        book_count = models.Book.objects.filter(library=self.game_lib3).count()
         with self.login(username=self.gamer3.username):
             self.post(self.view_name, data={"object_id": self.cypher.pk}, **self.url_kwargs)
-            assert len(self.get_context("collect_form").errors) > 0
+            assert models.Book.objects.filter(library=self.game_lib3).count() == book_count
