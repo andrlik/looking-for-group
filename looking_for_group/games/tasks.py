@@ -2,6 +2,7 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 from schedule.models import Calendar, Occurrence
 
@@ -160,6 +161,25 @@ def calculate_player_attendance(gamesession):
         for player in game_players:
             player.sessions_expected = player.gamesession_set.filter(status='complete').count()
             player.sessions_missed = player.missed_sessions.filter(status='complete').count()
+            player.save()
+
+
+def undo_player_attendence_for_incomplete_session(gamesession):
+    """
+    For all the players in a game, reduce their attendance by one since they shouldn't have received
+    scores for this session.
+
+    Only used when undoing a session completion.
+
+    Note, you should send the old copy not the new instance here.
+    """
+    game_players = gamesession.players_expected.all()
+    if game_players:
+        for player in game_players:
+            if player.sessions_expected > 0:
+                player.sessions_expected = F("sessions_expected") - 1
+            if player in gamesession.players_missing.all() and player.sessions_missed > 0:
+                player.sessions_missed = F("sessions_missed") - 1
             player.save()
 
 

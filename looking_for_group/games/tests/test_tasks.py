@@ -6,8 +6,8 @@ from factory.django import mute_signals
 from schedule.models import Calendar, Rule
 from test_plus import TestCase
 
-from .. import models, tasks
 from ...gamer_profiles.tests import factories
+from .. import models, tasks
 
 
 class AbstractTaskTestCase(TestCase):
