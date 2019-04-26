@@ -324,6 +324,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
                     )
                     return self.form_invalid(form)
         self.game_posting.save()
+        self.game_posting.gm.games_created = F("gamed_created") + 1
         return HttpResponseRedirect(reverse_lazy("games:game_list"))
 
 
@@ -735,7 +736,7 @@ class GamePostingUpdateView(
                         )
             with transaction.atomic():
                 obj_to_save.save()
-                obj_to_save.gm.games_finished = F("games_finished") + value_to_add
+                obj_to_save.gm.gm_games_finished = F("gm_games_finished") + value_to_add
                 obj_to_save.gm.save()
                 for gamer in obj_to_save.players.all():
                     gamer.games_finished = F("games_finished") + value_to_add
@@ -1606,6 +1607,7 @@ class PlayerLeaveGameView(
         messages.success(
             self.request, _("You have left game {}".format(self.game.title))
         )
+        self.get_object().gamer.games_left = F("games_left") + 1
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):

@@ -48,7 +48,7 @@
           <li{% stat_class_data gamer.gmed_games.count %}>{{ gamer.gmed_games.count }} <span class="stats-list-label">{% trans "Games created" %}</span></li>
           <li{% stat_class_data gamer.get_active_games.count %}>{{ gamer.get_active_games.count }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
           <li{% stat_class_data gamer.get_sessions_run 50 -1 %}>{{ gamer.get_sessions_run|default_if_none:"0" }} <span class="stats-list-label">{% trans "Sessions run" %}</span></li>
-          <li>{{ gamer.get_gm_finished_games.count }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
+          <li>{{ gamer.gm_games_finished }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
         </ul>
         {% endif %}
         <h5>{% trans "Player Stats" %}</h5>
