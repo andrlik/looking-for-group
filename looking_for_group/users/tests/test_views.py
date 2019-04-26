@@ -17,6 +17,7 @@ class BaseUserTestCase(TestCase):
         time.sleep(2)  # Wait a bit since the async can cause delay releasing db
         super().tearDown()
 
+
 class TestUserRedirectView(BaseUserTestCase):
     def test_get_redirect_url(self):
         # Instantiate the view directly. Never do this outside a test!
