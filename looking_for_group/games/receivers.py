@@ -19,7 +19,6 @@ from .tasks import (
     calculate_player_attendance,
     clear_calendar_for_departing_player,
     create_game_player_events,
-    create_or_update_linked_occurences_on_edit,
     sync_calendar_for_arriving_player,
     undo_player_attendence_for_incomplete_session,
     update_child_events_for_master,
@@ -77,8 +76,7 @@ def notify_on_log_create_edit(sender, instance, created, *args, **kwargs):
 
 @receiver(post_save, sender=models.GameSession)
 def update_complete_session_count(sender, instance, *args, **kwargs):
-    if instance.status == "complete":
-        instance.game.update_completed_session_count()
+    instance.game.update_completed_session_count()
 
 
 @receiver(post_save, sender=models.GameSession)

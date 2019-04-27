@@ -709,12 +709,13 @@ class GameSessionAdHocCreateTest(AbstractGameSessionTest):
 
     def test_valid_update(self):
         session_count = models.GameSession.objects.filter(game=self.gp2).count()
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.GameSession.objects.count() - session_count == 1
+        with mute_signals(post_save):
+            with self.login(username=self.gamer1.username):
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+                if self.last_response.status_code == 200:
+                    self.print_form_errors()
+                self.response_302()
+                assert models.GameSession.objects.count() - session_count == 1
 
 
 class GameSessionCreateTest(AbstractGameSessionTest):
@@ -858,16 +859,17 @@ class GameSessionUpdateTest(AbstractGameSessionTest):
             self.assertGoodView(self.view_name, **self.url_kwargs)
 
     def test_update(self):
-        with self.login(username=self.gamer1.username):
-            print(self.post_data)
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors(self.last_response)
-            self.response_302()
-            assert (
-                models.GameSession.objects.get(pk=self.session2.pk).gm_notes
-                == "This will be wild and **wacky**!"
-            )
+        with mute_signals(post_save):
+            with self.login(username=self.gamer1.username):
+                print(self.post_data)
+                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+                if self.last_response.status_code == 200:
+                    self.print_form_errors(self.last_response)
+                self.response_302()
+                assert (
+                    models.GameSession.objects.get(pk=self.session2.pk).gm_notes
+                    == "This will be wild and **wacky**!"
+                )
 
 
 class GameSessionCompleteTest(AbstractGameSessionTest):
