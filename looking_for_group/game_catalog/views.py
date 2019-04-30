@@ -1,21 +1,42 @@
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
 from ..rpgcollections.forms import BookForm
-from ..rpgcollections.models import Book, GameLibrary
+from ..rpgcollections.models import Book
 from . import forms
-from .models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
+from .models import (
+    GameEdition,
+    GamePublisher,
+    GameSystem,
+    PublishedGame,
+    PublishedModule,
+    SourceBook,
+    SuggestedAddition,
+    SuggestedCorrection
+)
 from .utils import combined_recent
 
 # Create your views here.
 # Note, we don't provide create, edit, or delete views for these now as we'll handle those via the admin.
+
+
+type_matching = {
+    "publisher": GamePublisher,
+    "game": PublishedGame,
+    "system": GameSystem,
+    "edition": GameEdition,
+    "module": PublishedModule,
+    "sourcebook": SourceBook,
+}
 
 
 class GamePublisherListView(PrefetchRelatedMixin, generic.ListView):
@@ -110,7 +131,9 @@ class GameSystemCreateView(
         return self.model
 
     def get_success_url(self):
-        pub_key = make_template_fragment_key('publisher_publications', [self.object.original_publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.object.original_publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -144,7 +167,7 @@ class GameSystemDetailView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['collect_form'] = BookForm(initial={"object_id": context['system'].pk})
+        context["collect_form"] = BookForm(initial={"object_id": context["system"].pk})
         return context
 
 
@@ -163,7 +186,9 @@ class GameSystemUpdateView(
     template_name = "catalog/system_edit.html"
 
     def get_success_url(self):
-        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().original_publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.get_object().original_publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -192,7 +217,9 @@ class GameSystemDeleteView(
     success_url = reverse_lazy("game_catalog:system-list")
 
     def delete(self, request, *args, **kwargs):
-        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().original_publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.get_object().original_publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -304,7 +331,9 @@ class EditionCreateView(
         edition.save()
         try:
             # Now attempt to invalidate the publisher cache.
-            pub_key = make_template_fragment_key('publisher_publications', [edition.publisher.pk])
+            pub_key = make_template_fragment_key(
+                "publisher_publications", [edition.publisher.pk]
+            )
             cache.incr_version(pub_key)
         except ValueError:
             # pub_key is not active
@@ -327,7 +356,9 @@ class EditionUpdateView(
     template_name = "catalog/edition_edit.html"
 
     def form_valid(self, form):
-        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.get_object().publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -370,7 +401,9 @@ class EditionDeleteView(
     def delete(self, request, *args, **kwargs):
         self.game = self.get_object().game
         self.success_url = self.game.get_absolute_url()
-        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.get_object().publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -390,7 +423,6 @@ class SourceBookCreateView(
     permission_required = "catalog.can_edit"
     template_name = "catalog/sourcebook_create.html"
 
-
     def dispatch(self, request, *args, **kwargs):
         edition_slug = kwargs.pop("edition", None)
         self.edition = get_object_or_404(GameEdition, slug=edition_slug)
@@ -406,7 +438,7 @@ class SourceBookCreateView(
 
     def get_form_kwargs(self):
         form_kwargs = super().get_form_kwargs()
-        form_kwargs['initial']['publisher'] = self.edition.publisher.pk
+        form_kwargs["initial"]["publisher"] = self.edition.publisher.pk
         return form_kwargs
 
     def form_valid(self, form):
@@ -428,7 +460,7 @@ class SourceBookDetailView(SelectRelatedMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['collect_form'] = BookForm(initial={"object_id": context['book'].pk})
+        context["collect_form"] = BookForm(initial={"object_id": context["book"].pk})
         return context
 
 
@@ -506,7 +538,9 @@ class PublishedModuleCreateView(
         self.module = form.save(commit=False)
         self.module.parent_game_edition = self.edition
         self.module.save()
-        pub_key = make_template_fragment_key('publisher_publications', [self.module.publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.module.publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -546,7 +580,9 @@ class PublishedModuleUpdateView(
     template_name = "catalog/module_edit.html"
 
     def get_success_url(self):
-        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.get_object().publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -567,7 +603,7 @@ class PublishedModuleDetailView(SelectRelatedMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['collect_form'] = BookForm(initial={"object_id": context['module'].pk})
+        context["collect_form"] = BookForm(initial={"object_id": context["module"].pk})
         return context
 
 
@@ -591,7 +627,9 @@ class PublishedModuleDeleteView(
     prefetch_related = ["gameposting_set"]
 
     def delete(self, request, *args, **kwargs):
-        pub_key = make_template_fragment_key('publisher_publications', [self.get_object().publisher.pk])
+        pub_key = make_template_fragment_key(
+            "publisher_publications", [self.get_object().publisher.pk]
+        )
         try:
             cache.incr_version(pub_key)
         except ValueError:
@@ -600,7 +638,9 @@ class PublishedModuleDeleteView(
         return super().delete(request, *args, **kwargs)
 
 
-class RecentAdditionsView(generic.ListView):
+class RecentAdditionsView(
+    LoginRequiredMixin, PermissionRequiredMixin, PrefetchRelatedMixin, generic.ListView
+):
     """
     Retrieve a list of recently added objects to the catalog and display as a list.
     """
@@ -627,3 +667,308 @@ class RecentAdditionsView(generic.ListView):
                 ),
             ),
         )
+
+
+class SuggestedCorrectionListView(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SelectRelatedMixin,
+    PrefetchRelatedMixin,
+    generic.ListView,
+):
+    """
+    List of pending corrections for editors to view.
+    """
+
+    model = SuggestedCorrection
+    permission_required = "catalog.can_edit"
+    template_name = "catalog/correction_list.html"
+    prefetch_related = ["content_object"]
+    select_related = ["submitter", "approver"]
+    paginate_by = 15
+    paginate_orphans = 2
+    context_object_name = "correction_list"
+
+    def queryset(self):
+        return self.model.objects.filter(status="new")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["approved_corrections"] = self.model.objects.filter(
+            status="approved"
+        ).select_related("submitter__gamerprofile", "reviewer__gamerprofile")
+        context["denied_corrections"] = self.model.objects.filter(
+            status="rejected"
+        ).select_related("submitter__gamerprofile", "reviewer__gamerprofile")
+        return context
+
+
+class SuggestedCorrectionCreateView(LoginRequiredMixin, generic.CreateView):
+    """
+    Create view for suggested corrections.
+    """
+
+    model = SuggestedCorrection
+    template_name = "catalog/correction_create.html"
+    fields = ["new_title", "new_url", "new_image"]
+
+    def dispatch(self, request, *args, **kwargs):
+        create_type = kwargs.pop("objtype", None)
+        obj_id = kwargs.pop("object_id", None)
+        if not create_type and obj_id:
+            raise Http404
+        if create_type not in type_matching.keys():
+            raise Http404
+        self.source_object = get_object_or_404(type_matching[create_type], obj_id)
+        if create_type == "publisher":
+            self.fields = self.fields + ["new_description"]
+        else:
+            self.fields = self.fields + ["new_release_date"]
+            if create_type not in ["module", "sourcebook"]:
+                self.fields = self.fields + ["new_description"]
+            else:
+                self.fields = self.fields + ["new_isbn"]
+            self.fields = self.fields + ["new_tags"]
+        self.fields = self.fields + ["other_notes"]
+        self.submitter = request.user
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        new_correct = form.save(commit=False)
+        new_correct.submitter = self.submitter
+        new_correct.status = "new"
+        new_correct.content_object = self.source_object
+        new_correct.save()
+        messages.success(
+            self.request,
+            _(
+                "Thank you for your submitted correction! You will receive a notification when we make the changes."
+            ),
+        )
+        return HttpResponseRedirect(new_correct.content_objects.get_absolute_url())
+
+
+class SuggestedCorrectionUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView
+):
+    """
+    Update view for a suggested correction.
+    """
+
+    model = SuggestedCorrection
+    permission_required = "catalog.can_edit"
+    slug_url_kwarg = "correction"
+    fields = ["new_title", "new_url", "new_image"]
+    template_name = "catalog/correction_update.html"
+    context_object_name = "correction"
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object().content_object
+        if isinstance(obj, GamePublisher):
+            self.fields = self.fields + ["new_description"]
+        else:
+            self.fields = self.fields + ["new_release_date"]
+            if not isinstance(obj, SourceBook) and not isinstance(obj, PublishedModule):
+                self.fields = self.fields + ["new_description"]
+            else:
+                self.fields = self.fields + ["new_isbn"]
+            self.fields = self.fields + ["new_tags"]
+        self.fields = self.fields + ["other_notes"]
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SuggestedCorrectionDetailView(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    PrefetchRelatedMixin,
+    SelectRelatedMixin,
+    generic.DetailView,
+):
+    """
+    Detail view for suggested correction, only available to editors.
+    """
+
+    model = SuggestedCorrection
+    template_name = "catalog/correction_detail.html"
+    select_related = ["submitter__gamerprofile", "reviewer__gamerprofile"]
+    prefetch_related = ["content_object"]
+    permission_required = "catalog.can_edit"
+    slug_url_kwarg = "correction"
+    context_object_name = "correction"
+
+
+class SuggestedCorrectionDeleteView(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.DeleteView
+):
+    """
+    Delete a suggested correction.
+    """
+
+    model = SuggestedCorrection
+    template_name = "catalog/correction_delete.html"
+    permission_required = "catalog.can_edit"
+    slug_url_kwarg = "correction"
+    context_object_name = "correction"
+
+
+class SuggestedCorrectionApproveDenyView(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView
+):
+    """
+    Approve or deny view for Suggested Corrections.
+    """
+
+    model = SuggestedCorrection
+    permission_required = "catalog.can_edit"
+    slug_url_kwarg = "correction"
+    context_object_name = "correction"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.method not in ["post", "POST"]:
+            return HttpResponseNotAllowed(["POST"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            _(
+                "There was an issue with your submitted form and so your change has not been processed."
+            ),
+        )
+        return HttpResponseRedirect(self.get_object().get_absolute_url())
+
+    def form_valid(self, form):
+        obj = self.get_object()
+        source_obj = obj.content_object
+        obj.reviewer = self.request.user
+        if "approve" in self.request.POST:
+            obj.transfer_image()
+            if obj.new_url:
+                source_obj.url = obj.url
+            if isinstance(source_obj, GamePublisher) or isinstance(
+                source_obj, GameSystem
+            ):
+                if obj.new_title:
+                    source_obj.name = obj.new_title
+            else:
+                if obj.new_title:
+                    source_obj.title = obj.new_title
+            if not isinstance(source_obj, GamePublisher):
+                if isinstance(source_obj, GameEdition) or isinstance(
+                    source_obj, SourceBook
+                ):
+                    if obj.new_release_date:
+                        source_obj.release_date = obj.new_release_date
+                if not isinstance(source_obj, PublishedGame):
+                    if obj.new_release_date:
+                        source_obj.publication_date = obj.new_release_date
+                if not isinstance(source_obj, SourceBook) and not isinstance(
+                    source_obj, PublishedModule
+                ):
+                    if obj.new_description:
+                        source_obj.description = obj.new_description
+                else:
+                    if obj.new_isbn:
+                        source_obj.isbn = obj.new_isbn
+                if obj.new_tags:
+                    tag_list = None
+                    if "," in obj.new_tags:
+                        tag_list = obj.new_tags.split(",")
+                    else:
+                        tag_list = obj.new_tags
+                    source_obj.tags.add(*tag_list)
+            source_obj.save()
+            obj.status = "approved"
+            obj.save()
+            messages.success(
+                self.request,
+                _(
+                    "You have successfully approved this correction and the source object has been updated."
+                ),
+            )
+        else:
+            obj.status = "rejected"
+            obj.save()
+            messages.success(
+                self.request, _("You have successfully rejected this correction.")
+            )
+        return HttpResponseRedirect(obj.get_absolute_url())
+
+
+class SuggestedAdditionListView(
+    LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.ListView
+):
+    """
+    List for Suggested Addition list
+    """
+
+    model = SuggestedAddition
+    template_name = "catalog/addition_list.html"
+    select_related = ["submitter__gamerprofile", "reviewer__gamerprofile"]
+    permission_required = "catalog.can_edit"
+    context_object_name = "addition_list"
+
+    def get_queryset(self):
+        return self.model.objects.filter(status="new")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["approved_additions"] = self.model.objects.filter(
+            status="approved"
+        ).select_related("submitter__gamerprofile", "reviewer__gamerprofile")
+        context["rejected_additions"] = self.model.objects.filter(
+            status="rejected"
+        ).select_related("submitter__gamerprofile", "reviewer__gamerprofile")
+        return context
+
+
+class SuggestedAdditionCreateView(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    PrefetchRelatedMixin,
+    generic.CreateView,
+):
+    pass
+
+
+class SuggestedAdditionUpdateView(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    PrefetchRelatedMixin,
+    generic.edit.UpdateView,
+):
+    pass
+
+
+class SuggestedAdditionDetailView(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SelectRelatedMixin,
+    generic.edit.UpdateView,
+):
+    model = SuggestedAddition
+    permission_required = "catalog.can_edit"
+    slug_url_kwarg = "addition"
+    context_object_name = "addition"
+    template_name = "catalog/addition_detail.html"
+    select_related = ["submitter__gamerprofile", "reviewer__gamerprofile"]
+
+
+class SuggestedAdditionDeleteView(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SelectRelatedMixin,
+    generic.edit.DeleteView,
+):
+    model = SuggestedAddition
+    permission_required = "catalog.can_edit"
+    slug_url_kwarg = "addition"
+    context_object_name = "addition"
+    template_name = "catalog/addition_delete.html"
+    select_related = ["submitter__gamerprofile", "reviewer__gamerprofile"]
+
+
+class SuggestedAdditionApproveDenyView(
+    LoginRequiredMixin, PermissionRequiredMixin, generic.edit.UpdateView
+):
+    pass

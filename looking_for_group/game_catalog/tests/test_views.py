@@ -612,3 +612,51 @@ class RecentAdditionViewTest(AbstractViewTest):
         with self.assertNumQueriesLessThan(150):
             self.get(self.view_name)
             self.response_200()
+
+
+class SuggestedCorrectionCreateTest(AbstractViewTest):
+    pass
+
+
+class SuggestedCorrectionUpdateTest(AbstractViewTest):
+    pass
+
+
+class SuggestedCorrectionDetailTest(AbstractViewTest):
+    pass
+
+
+class SuggestedCorrectionDeleteTest(AbstractViewTest):
+    pass
+
+
+class SuggestedCorrectionApproveDenyTest(AbstractViewTest):
+    pass
+
+
+class SuggestedCorrectionListView(AbstractViewTest):
+    pass
+
+
+class SuggestedAdditionCreateTest(AbstractViewTest):
+    pass
+
+
+class SuggestedAdditionUpdateTest(AbstractViewTest):
+    pass
+
+
+class SuggestedAdditionDetailTest(AbstractViewTest):
+    pass
+
+
+class SuggestedAdditionDeleteTest(AbstractViewTest):
+    pass
+
+
+class SuggestedAdditionApproveDenyTest(AbstractViewTest):
+    pass
+
+
+class SuggestedAdditionListView(AbstractViewTest):
+    pass
