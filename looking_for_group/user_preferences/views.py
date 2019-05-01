@@ -21,12 +21,12 @@ from django_q import humanhash
 from notifications.models import Notification
 from schedule.models import Calendar
 
-from ..discord import models as discord_models
 from ..game_catalog import models as catalog_models
 from ..gamer_profiles import models as social_models
 from ..gamer_profiles.views import ModelFormWithSwitcViewhMixin
 from ..games import models as game_models
 from . import forms, models
+from .utils import fetch_or_set_discord_comm_links
 
 # Create your views here.
 
@@ -148,6 +148,7 @@ class SettingsEdit(
             logger.debug("Created new record.")
         return self.object
 
+
 class Dashboard(LoginRequiredMixin, generic.ListView):
     """
     A dashboard view that encapsulates may different data elements.
@@ -156,10 +157,14 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
     model = Notification
     template_name = "user_preferences/dashboard.html"
     context_object_name = "notifications"
-    timezone = pytz.timezone('UTC')
+    timezone = pytz.timezone("UTC")
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.timezone and self.timezone != pytz.timezone(request.user.timezone):
+        if (
+            request.user.is_authenticated
+            and request.user.timezone
+            and self.timezone != pytz.timezone(request.user.timezone)
+        ):
             self.timezone = pytz.timezone(request.user.timezone)
         return super().dispatch(request, *args, **kwargs)
 
@@ -196,7 +201,9 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         if context["gamer_active_games"].count() > 0:
             for game in context["gamer_active_games"]:
                 if game.event:
-                    next_occurences = game.event.occurrences_after(timezone.now().astimezone(self.timezone))
+                    next_occurences = game.event.occurrences_after(
+                        timezone.now().astimezone(self.timezone)
+                    )
                     try:
                         occ = next(next_occurences)
                         while occ.cancelled or occ.start < timezone.now():
@@ -277,23 +284,7 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
         context["site_total_sourcebooks"] = cache.get_or_set(
             "site_total_sourcebooks", catalog_models.SourceBook.objects.count(), 600
         )
-        discord_comm_links = cache.get("site_total_discord_communities")
-        if not discord_comm_links:
-            discord_comm_links = 0
-            dis_servers = discord_models.DiscordServer.objects.all()
-            if dis_servers.count() > 0:
-                comm_qs = None
-                for server in dis_servers:
-                    if not comm_qs:
-                        comm_qs = server.communities.all()
-                    else:
-                        comm_qs = comm_qs.union(server.communities.all())
-                if comm_qs:
-                    discord_comm_links = len(comm_qs)
-                else:
-                    discord_comm_links = 0
-            cache.set("site_total_discord_communities", discord_comm_links)
-        context["site_total_discord_communities"] = discord_comm_links
+        context["site_total_discord_communities"] = fetch_or_set_discord_comm_links()
         return context
 
 

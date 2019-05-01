@@ -1,57 +1,57 @@
-import pytest
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import InterfaceError
-from psycopg2 import InterfaceError as PGInterfaceError
-from schedule.models import Calendar
 from test_plus import TestCase
 
 from ...gamer_profiles import models as social_models
-from ...games.models import GamePosting
 from ...games.tests.test_views import AbstractGameSessionTest
-from ...users.models import User
 from ..models import Preferences
+from ..utils import fetch_or_set_discord_comm_links, prime_site_stats_cache
 
 
 class SettingsViewTest(TestCase):
     """
     Test settings view and editing.
     """
+
     def setUp(self):
-        self.user = self.make_user(username='booga')
+        self.user = self.make_user(username="booga")
         self.gamer = self.user.gamerprofile
 
     def test_login_required(self):
         assert Preferences.objects.get(gamer=self.gamer)
-        self.assertLoginRequired('user_preferences:setting-view')
-        self.assertLoginRequired('user_preferences:setting-edit')
+        self.assertLoginRequired("user_preferences:setting-view")
+        self.assertLoginRequired("user_preferences:setting-edit")
 
     def test_view_load(self):
         with self.login(username=self.gamer.username):
-            self.assertGoodView('user_preferences:setting-view')
-            self.assertGoodView('user_preferences:setting-edit')
+            self.assertGoodView("user_preferences:setting-view")
+            self.assertGoodView("user_preferences:setting-edit")
 
     def test_update_settings(self):
         self.post_data = {
-            'news_emails': '1',
-            'notification_digest': '1',
-            'feedback_volunteer': '1',
+            "news_emails": "1",
+            "notification_digest": "1",
+            "feedback_volunteer": "1",
         }
         with self.login(username=self.gamer.username):
-            self.post('user_preferences:setting-edit', data=self.post_data)
+            self.post("user_preferences:setting-edit", data=self.post_data)
             if self.last_response.status_code == 200:
                 self.print_form_errors()
             self.response_302()
             new_version = Preferences.objects.get(gamer=self.gamer)
-            assert new_version.news_emails and new_version.notification_digest and new_version.feedback_volunteer
+            assert (
+                new_version.news_emails
+                and new_version.notification_digest
+                and new_version.feedback_volunteer
+            )
 
 
 class DashboardTest(AbstractGameSessionTest):
     """
     Test the dashboard.
     """
+
     def setUp(self):
         super().setUp()
-        self.view_name = 'dashboard'
+        self.view_name = "dashboard"
 
     def test_login_required(self):
         self.assertLoginRequired(self.view_name)
@@ -66,6 +66,7 @@ class DeleteAccountTest(AbstractGameSessionTest):
     Test deleting a user using an async task. Ensure all connected
     data items are removed.
     """
+
     def setUp(self):
         super().setUp()
         self.view_name = "user_preferences:account_delete"
@@ -102,3 +103,15 @@ class DeleteAccountTest(AbstractGameSessionTest):
     #             GamePosting.objects.get(pk=self.gp2.id)
     #         with pytest.raises(ObjectDoesNotExist):
     #             Calendar.objects.get(slug=self.gamer1.username)
+
+
+class TestCachePriming(AbstractGameSessionTest):
+    """
+    Simply testing to ensure that our cache priming scripts don't trigger exceptions.
+    """
+
+    def test_discord_fetch(self):
+        fetch_or_set_discord_comm_links()
+
+    def test_stats_priming(self):
+        prime_site_stats_cache()
