@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -318,9 +319,17 @@ class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mo
     A suggested change to an existing listing.
     """
 
-    submitter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    submitter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="submitted_corrections",
+    )
     reviewer = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="reviewed_corrections",
     )
     status = models.CharField(
         max_length=30, choices=SUGGESTION_STATUS_CHOICES, default="new", db_index=True
@@ -341,7 +350,7 @@ class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mo
     new_release_date = models.DateField(
         null=True, blank=True, help_text=_("Suggested change to the release date.")
     )
-    new_url = models.DateField(null=True, blank=True, help_text=_("New suggested url"))
+    new_url = models.URLField(null=True, blank=True, help_text=_("New suggested url"))
     new_image = models.ImageField(
         null=True, blank=True, upload_to="catalog/corrections/%Y/%m/%d"
     )
@@ -373,14 +382,28 @@ class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mo
             self.new_image.delete(save=True)
         return super().delete(*args, **kwargs)
 
-    def transfer_image(self):
+    def transfer_image(self, attribute_name="image"):
         """
         Transfer image file to new location and then delete from this record.
         """
-        pass
+        if not self.new_image.name:
+            raise ValueError("There isn't an image in this object to tranfer.")
+        if not hasattr(self.content_object, attribute_name):
+            raise KeyError(
+                "Target object doesn't have an attribute named {}".format(
+                    attribute_name
+                )
+            )
+        new_name = self.new_image.name.split("/")[-1]
+        getattr(self.content_object, attribute_name).save(
+            new_name, self.new_image.open(), save=True
+        )
+        self.new_image.delete(save=True)
 
     def get_absolute_url(self):
-        return reverse("game_catalogs:correction_detail", kwargs={"slug": self.slug})
+        return reverse(
+            "game_catalog:correction_detail", kwargs={"correction": self.slug}
+        )
 
     def __str__(self):
         return "Suggested Correction for {}: {}".format(self.content_type, self.title)
@@ -395,9 +418,17 @@ class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mode
     A suggested new entry to the catalog.
     """
 
-    submitter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    submitter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="submitted_additions",
+    )
     reviewer = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="reviewed_additions",
     )
     status = models.CharField(
         max_length=30, choices=SUGGESTION_STATUS_CHOICES, default="new", db_index=True
@@ -419,7 +450,7 @@ class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mode
     )
     url = models.URLField(null=True, blank=True, help_text=_("Suggested url field"))
     ogl_license = models.BooleanField(
-        help_text=_("Is this released under an OGL license?")
+        default=False, help_text=_("Is this released under an OGL license?")
     )
     publisher = models.ForeignKey(
         GamePublisher,
@@ -442,6 +473,13 @@ class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mode
         on_delete=models.SET_NULL,
         help_text=_("For which edition?"),
     )
+    system = models.ForeignKey(
+        GameSystem,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        help_text=_("System this edition is based upon?"),
+    )
     release_date = models.DateField(
         null=True,
         blank=True,
@@ -459,10 +497,23 @@ class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mode
         return "Suggested {}: {}".format(self.content_type, self.title)
 
     def get_absolute_url(self):
-        return reverse("game_catalog:addition", kwargs={"slug": self.slug})
+        return reverse("game_catalog:addition_detail", kwargs={"addition": self.slug})
 
-    def transfer_image(self):
-        pass
+    def transfer_image(self, target_object, attribute_name="image"):
+        if not self.image.name:
+            raise ValueError("There isn't a valid file here to transfer!")
+        new_name = self.image.name.split("/")[-1]
+        if not hasattr(target_object, attribute_name):
+            raise KeyError(
+                "Target object does not have an attribute by the name of {}".format(
+                    attribute_name
+                )
+            )
+        getattr(target_object, attribute_name).save(
+            new_name, self.image.open(), save=True
+        )
+        self.image.close()
+        self.image.delete(save=True)
 
     class Meta:
         ordering = ["-created", "status"]

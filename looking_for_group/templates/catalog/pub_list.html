@@ -11,6 +11,10 @@
 <div class="clearfix">
   <a href="{% url 'game_catalog:pub-create' %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Create new publisher" %}</a>
 </div>
+{% else %}
+<div class="clearfix">
+  <a href="{% url 'game_catalog:addition_create' obj_type='publisher' %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Suggest new publisher" %}</a>
+</div>
 {% endif %}
 {% if not object_list.exists %}
 <p>{% trans "No publishers found" %}</p>

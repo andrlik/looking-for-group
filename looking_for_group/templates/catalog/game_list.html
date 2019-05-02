@@ -11,6 +11,10 @@
 <div class="clearfix">
   <a href="{% url 'game_catalog:game-create' %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Create new game" %}</a>
 </div>
+{% else %}
+<div class="clearfix">
+  <a href="{% url 'game_catalog:addition_create' obj_type='game' %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Suggest a new game to add" %}</a>
+</div>
 {% endif %}
 {% if not object_list %}
 <p>{% trans "No published games found." %}</p>

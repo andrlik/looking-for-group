@@ -5,7 +5,6 @@
 {% block mobileheader %}{% trans "Published Game Modules" %}{% endblock %}
 {% block moduleactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
-
 {% if not object_list.exists %}
 <p>{% trans "No published modules found" %}</p>
 {% endif %}

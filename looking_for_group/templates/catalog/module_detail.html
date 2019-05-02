@@ -63,6 +63,13 @@
   <a href="{% url 'game_catalog:module-edit' module=module.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:module-delete' module=module.pk %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete module" %}</a>
 </div>
       </div>
+      {% else %}
+      <div class="card-section">
+        <hr />
+        <div class="clearfix">
+          <a href="{% url 'game_catalog:correction_create' obj_type='module' object_id=module.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Suggest correction" %}</a>
+        </div>
+      </div>
       {% endif %}
       <div class="card-section"><hr /><span class='disclaimer'>{% blocktrans with pubname=module.publisher.name %}Looking for Group is not affiliated with or endorsed by {{ pubname }}. Images are copyright {{ pubname }}, and logos are trademarked by {{ pubname }}.{% endblocktrans %}</span></div>
       </div>

@@ -25,6 +25,10 @@
         <div class="clearfix">
           <a href="{% url 'game_catalog:pub-edit' publisher=publisher.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit publisher" %}</a> <a href="{% url 'game_catalog:pub-delete' publisher=publisher.pk %}" class="button alert float-right"><i class="fas fa-trash-alt"></i> {% trans "Delete publisher" %}</a>
         </div>
+        {% else %}
+        <div class="clearfix">
+          <a href="{% url 'game_catalog:correction_create' obj_type='publisher' object_id=publisher.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Suggest correction" %}</a>
+        </div>
         {% endif %}
       </div>
       </div>

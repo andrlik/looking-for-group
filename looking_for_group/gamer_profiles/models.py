@@ -452,6 +452,12 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     games_finished = models.PositiveIntegerField(
         default=0, help_text=_("How many finished games has this user participated in as a player?")
     )
+    submitted_corrections = models.PositiveIntegerField(default=0, help_text=_("How many corrections has this user submitted to the catalog?"))
+    submitted_corrections_approved = models.PositiveIntegerField(default=0, help_text=_("How many corrections has this user submitted that were approved?"))
+    submitted_corrections_rejected = models.PositiveIntegerField(default=0, help_text=_("How many corrections has this user submitted that were rejected?"))
+    submitted_additions = models.PositiveIntegerField(default=0, help_text=_("How may additions has this user submitted to the catalog?"))
+    submitted_additions_approved = models.PositiveIntegerField(default=0, help_text=_("How many additions has this user submitted which were approved?"))
+    submitted_additions_rejected = models.PositiveIntegerField(default=0, help_text=_("How many additions has this user submitted which were rejected?"))
     # preferred_genres = models.ManyToManyField(GameGenres, null=True, blank=True)
     # preferred_playstyles = models.ManyToManyField(PlayStyles, null=True, blank=True)
     communities = models.ManyToManyField(

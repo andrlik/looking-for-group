@@ -1,0 +1,135 @@
+{% extends "catalog/base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% trans "Suggested additions" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Suggested additions" %}{% endblock %}
+{% block mobileheader %}{% trans "Suggested additions" %}{% endblock %}
+{% block additionactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="addition-tabs">
+  <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ addition_list.count }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% trans "Approved" %} ({{ approved_additions.count }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="rejected_panel" href="#rejected_panel">{% trans "Rejected" %} ({{ rejected_additions.count }})</a></li>
+</ul>
+
+<div class="tabs-content" data-tabs-content="addition-tabs">
+  <div class="tabs-panel is-active" id="pending_panel">
+    {% if not addition_list %}
+    <p>{% trans "There are no pending additions to review." %}</p>
+    {% endif %}
+    <table class="scroll hover">
+      <thead>
+        <tr>
+          <th>{% trans "Addition type" %}</th>
+          <th>{% trans "Addition title/name" %}</th>
+          <th>{% trans "Submitter" %}</th>
+          <th>{% trans "Submitted at" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for addition in addition_list %}
+        <tr>
+          <td>{{ addition.content_type.name }}</td>
+          <td><a href="{{ addition.get_absolute_url }}">{{ addition.title }}</a></td>
+          <td>{% avatar addition.submitter class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
+          <td>{{ addition.created }}</td>
+          <td><a href="{{ addition.get_absolute_url" class="button">{% trans "View details" %}</a></td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if is_paginated %}
+    <nav aria-label="Pagination">
+      <ul class="pagination">
+        {% if not page_obj.has_previous %}
+        <li class="pagination-previous-disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+        {% else %}
+        <li class="pagination-previous"><a href="{% url 'game_catalog:addition_list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+        {% endif %}
+        {% for page_num in paginator.page_range %}
+        {% if page_obj.number == page_num %}
+        <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+        {% else %}
+        <li><a href="{% url 'game_catalog:addition_list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if not page_obj.has_next %}
+        <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+        {% else %}
+        <li class="pagination-next"><a href="{% url 'game_catalog:addition_list' page=page_obj.next_page_number %}" aria-label="Next page">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="approved_panel">
+    {% if not approved_additions %}
+    <p>{% trans "There are no approved additions to display within the last 30 days." %}</p>
+    {% else %}
+    <p>{% trans "Showing additions approved within the last 30 days." %}</p>
+    {% endif %}
+    <table class="scroll hover">
+      <thead>
+        <tr>
+          <th>{% trans "Addition type" %}
+          <th>{% trans "Addition title/name" %}</th>
+          <th>{% trans "Submitted by" %}</th>
+          <th>{% trans "Submitted at" %}</th>
+          <th>{% trans "Reviewed by" %}</th>
+          <th>{% trans "Approved at" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for addition in approved_additions %}
+        <tr>
+          <td>{{ addition.content_type.name }}</td>
+          <td><a href="{{ addition.get_absolute_url }}">{{ addition.title }}</a></td>
+          <td>{% avatar addition.submitter class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
+          <td>{{ addition.created }}</td>
+          <td>{% avatar addition.reviewer class="avatar" %} <a href="{{ addition.reviewer.gamerprofile.get_absolute_url }}">{{ addition.reviewer.gamerprofile }}</a></td>
+          <td>{{ addition.modified }}</td>
+          <td><a href="{{ addition.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="tabs-panel" id="rejected_panel">
+    {% if not rejected_additions %}
+    <p>{% trans "There are no rejected additions to display within the last 30 days." %}</p>
+    {% else %}
+    <p>{% trans "Showing additions rejected within the last 30 days." %}</p>
+    {% endif %}
+    <table class="scroll hover">
+      <thead>
+        <tr>
+          <th>{% trans "Addition type" %}</th>
+          <th>{% trans "Addition title/name" %}</th>
+          <th>{% trans "Submitted by" %}</th>
+          <th>{% trans "Submitted at" %}</th>
+          <th>{% trans "Reviewed by" %}</th>
+          <th>{% trans "Rejected at" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for addition in rejected_additions %}
+        <tr>
+          <td>{{ addition.content_type.name }}</td>
+          <td><a href="{{ addition.get_absolute_url }}">{{ addition.title }}</a></td>
+          <td>{% avatar addition.submitter class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
+          <td>{{ addition.created }}</td>
+          <td>{% avatar addition.reviewer class="avatar" %} <a href="{{ addition.reviewer.gamerprofile.get_absolute_url }}">{{ addition.reviewer.gamerprofile }}</a></td>
+          <td>{{ addition.modified }}</td>
+          <td><a href="{{ addition.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
