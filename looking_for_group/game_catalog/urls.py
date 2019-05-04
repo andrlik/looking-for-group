@@ -155,6 +155,66 @@ urlpatterns = [
         view=views.PublishedModuleDeleteView.as_view(),
         name="module-delete",
     ),
+    path(
+        "suggestedcorrections/",
+        view=views.SuggestedCorrectionListView.as_view(),
+        name="correction_list",
+    ),
+    path(
+        "suggestedcorrections/create/<slug:objtype>/<uuid:object_id>/",
+        view=views.SuggestedCorrectionCreateView.as_view(),
+        name="correction_create",
+    ),
+    path(
+        "suggestedcorrections/<slug:correction>/",
+        view=views.SuggestedCorrectionDetailView.as_view(),
+        name="correction_detail",
+    ),
+    path(
+        "suggestedcorrections/<slug:correction>/edit/",
+        view=views.SuggestedCorrectionUpdateView.as_view(),
+        name="correction_update",
+    ),
+    path(
+        "suggestedcorrections/<slug:correction>/review/",
+        view=views.SuggestedCorrectionApproveDenyView.as_view(),
+        name="correction_review",
+    ),
+    path(
+        "suggestedcorrections/<slug:correction>/delete/",
+        view=views.SuggestedCorrectionDeleteView.as_view(),
+        name="correction_delete",
+    ),
+    path(
+        "suggestedadditions/",
+        view=views.SuggestedAdditionListView.as_view(),
+        name="addition_list",
+    ),
+    path(
+        "suggestedadditions/create/<slug:obj_type>/",
+        view=views.SuggestedAdditionCreateView.as_view(),
+        name="addition_create",
+    ),
+    path(
+        "suggestedadditions/<slug:addition>/",
+        view=views.SuggestedAdditionDetailView.as_view(),
+        name="addition_detail",
+    ),
+    path(
+        "suggestedadditions/<slug:addition>/edit/",
+        view=views.SuggestedAdditionUpdateView.as_view(),
+        name="addition_update",
+    ),
+    path(
+        "suggestedadditions/<slug:addition>/review/",
+        view=views.SuggestedAdditionApproveDenyView.as_view(),
+        name="addition_review",
+    ),
+    path(
+        "suggestedadditions/<slug:addition>/delete/",
+        view=views.SuggestedAdditionDeleteView.as_view(),
+        name="addition_delete",
+    ),
     path("recent/", view=views.RecentAdditionsView.as_view(), name="recent_additions"),
 ]
 

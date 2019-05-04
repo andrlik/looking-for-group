@@ -1,0 +1,122 @@
+{% extends "catalog/base.html" %}
+{% load i18n avatar_tags markdownify %}
+{% block subtitle %}{% blocktrans with ctype=correction.title %}Suggested correction for {{ ctype }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}{% blocktrans with ctype=correction.title %}Update suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with ctype=correction.title %}Update suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block correctactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Suggested correction" %}</h5></div>
+      <div class="card-section">
+        <dl>
+          <dt>{% trans "Suggested by" %}</dt>
+          <dd>{% avatar correction.submitter 30 class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></dd>
+          <dt>{% trans "Submitted at" %}</dt>
+          <dd>{{ correction.created }}</dd>
+          {% if correction.reviewer %}
+          <dt>{% trans "Reviewed by" %}</dt>
+          <dd>{% avatar correction.reviewer 30 class="avatar" %} <a href="{{ correction.reviewer.gamerprofile.get_absolute_url }}">{{ correction.reviewer.gamerprofile }}</a></dd>
+          {% endif %}
+          <dt>{% trans "Status" %}</dt>
+          <dd><span class="label{% if correction.status == 'approved' %} success{% elif correction.status == 'rejected' %} alert{% endif %}">{{ correction.get_status_display }}</span></dd>
+          <dt>{% trans "Last modified" %}</dt>
+          <dd>{{ correction.modified }}</dd>
+          <dt>{% trans "Proposed changes" %}</dt>
+          <dd>
+        <table class="scroll hover">
+          <thead>
+            <tr>
+              <th></th>
+              <th>{% trans "Current" %}</th>
+              <th>{% trans "Suggested" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>{% trans "Title/Name" %}</th>
+              <td>{% if source_object.title %}{{ source_object.title }}{% else %}{{ source_object.name }}{% endif %}</td>
+              <td>{{ correction.new_title }}</td>
+            </tr>
+            <tr>
+              <th>{% trans "Url" %}</th>
+              <td>{% if correction.content_type.model == "gamesystem" %}{{ source_object.system_url }}{% else %}{{ source_object.url }}{% endif %}</td>
+              <td><a href="{{ correction.new_url }}">{{ correction.new_url }}</a></td>
+            </tr>
+            {% if correction.content_type.model == "publisher" %}
+            <tr>
+              <th>{% trans "Logo" %}</th>
+              <td>{% if source_object.logo.name %}<img src="{{ source_object.logo.url }}" class="thumbnail" />{% endif %}</td>
+              <td>{% if correction.status == "approved" %}{% trans "Already migrated and deleted." %}{% else %}{% if correction.new_image.name %}<img src="{{ correction.new_image.url }}" class="thumbnail" />{% endif %}{% endif %}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <th>{% trans "Cover image" %}</th>
+              <td>{% if source_object.image.name %}<img src="{{ source_object.image.url }}" class="thumbnail" />{% endif %}</td>
+              <td>{% if correction.status == "approved" %}{% trans "Already migrated and deleted." %}{% else %}{% if correction.new_image.name %}<img src="{{ correction.new_image.url }}" class="thumbnail" />{% endif %}{% endif %}</td>
+            </tr>
+
+            <tr>
+              <th>{% trans "Release date" %}</th>
+              {% if correction.content_type.model == "gameedition" or correction.content_type.model == "sourcebook" %}
+              <td>{{ source_object.release_date }}</td>
+              {% else %}
+              <td>{{ source_object.publication_date }}</td>
+              {% endif %}
+              <td>{{ correction.new_release_date }}</td>
+            </tr>
+            {% endif %}
+            {% if correction.content_type.model != "sourcebook" and correction.content_type.model != "publishedmodule" %}
+            <tr>
+              <th>{% trans "Description" %}</th>
+              <td>{{ source_object.description_rendered|safe }}</td>
+              <td>{{ correction.new_description|default_if_none:""|markdownify|safe }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <th>{% trans "ISBN" %}</th>
+              <td>{{ source_object.isbn }}</td>
+              <td>{{ correction.new_isbn }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <th>{% trans "Current vs new tags to add" %}</th>
+              <td>{{ source_object.inherited_tag_names|join:", " }}</td>
+              <td>{{ correction.new_tags }}</td>
+            </tr>
+          </tbody>
+        </table>
+          </dd>
+          <dt>{% trans "Other notes" %}</dt>
+          <dd>{{ correction.other_notes|markdownify|safe }}</dd>
+        </dl>
+      </div>
+      {% if correction.status == "new" %}
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Edit tools" %}</strong></p>
+        <div class="clearfix grid-x grid-margin-x">
+          <div class="cell medium-auto"><a href="{% url 'game_catalog:correction_list' %}" class="button secondary">{% trans "Return to correction list" %}</a></div><div class="cell medium-auto"><a href="{% url 'game_catalog:correction_update' correction=correction.slug %}" class="button">{% trans "Edit record" %}</a></div><div class="cell medium-auto"><a href="{% url 'game_catalog:correction_delete' correction=correction.slug %}" class="button alert">{% trans "Delete record" %}</a></div>
+        </div>
+      </div>
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Review tools" %}</strong></p>
+        <div class="clearfix grid-x grid-margin-x">
+          <div class="cell medium-auto"><form method="post" action="{% url 'game_catalog:correction_review' correction=correction.slug %}">{% csrf_token %}<input type="submit" name="reject" class="button alert" value="{% trans 'Reject changes' %}" /></form></div><div class="cell medium-auto"><form method="post" action="{% url 'game_catalog:correction_review' correction=correction.slug %}">{% csrf_token %}<input type="submit" name="approve" class="button success" value="{% trans 'Approve changes' %}" /></form></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card-section">
+        <hr />
+        <div class="clearfix">
+          <a href="{% url 'game_catalog:correction_list' %}" class="button float-left secondary">{% trans "Return to correction list" %}</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

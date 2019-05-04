@@ -1,0 +1,96 @@
+{% extends "catalog/base.html" %}
+{% load i18n avatar_tags markdownify %}
+{% block subtitle %}{% blocktrans with ctype=addition.title %}Suggested addition {{ ctype }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}{% blocktrans with ctype=addition.title %}Suggested addition {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with ctype=addition.title %}Suggested addition {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block additionactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{{ addition.title }}</h5></div>
+      <div class="card-section">
+        <dl>
+          <dt>{% trans "Submitter" %}</dt>
+          <dd>{% avatar addition.submitter 30 class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></dd>
+          <dt>{% trans "Submitted at" %}</dt>
+          <dd>{{ addition.created }}</dd>
+          <dt>{% trans "Status" %}</dt>
+          <dd><span class="label{% if addition.status == 'approved' %} success{% elif addition.status == 'rejected' %} alert{% endif %}">{{ addition.get_status_display }}</span></dd>
+          {% if addition.reviewer %}
+          <dt>{% trans "Reviewed by" %}</dt>
+          <dd>{% avatar addition.reviewer 30 class="avatar" %} <a href="{{ addition.reviewer.gamerprofile.get_absolute_url }}">{{ addition.reviewer.gamerprofile }}</a></dd>
+          {% endif %}
+          <dt>{% trans "Last modified at" %}</dt>
+          <dd>{{ addition.modified }}</dd>
+          <dt>{% trans "Record type" %}</dt>
+          <dd>{{ addition.content_type.name }}</dd>
+          <dt>{% trans "Title/Name" %}</dt>
+          <dd>{{ addition.title }}</dd>
+          {% if addition.image.name %}
+          <dt>{% trans "Cover image/logo" %}</dt>
+          <dd><img src="{{ addition.image.url }}" class="thumbnail" /></dd>
+          {% endif %}
+          {% if addition.content_type.model != "sourcebook" and addition.content_type.model != "publishedmodule" %}
+          <dt>{% trans "Description" %}</dt>
+          <dd>{{ addition.description|markdownify|safe }}</dd>
+          {% if addition.content_type.model == "gameedition" %}
+          <dt>{% trans "For game" %}</dt>
+          <dd><a href="{{ addition.game.get_absolute_url }}">{{ addition.game.title }}</a></dd>
+          <dt>{% trans "Game system" %}</dt>
+          <dd>{% if addition.system %}<a href="{{ addition.system.get_absolute_url }}">{{ addition.system.name }}</a>{% else %}N/A{% endif %}</dd>
+          {% endif %}
+          {% if addition.content_type.model == "gamesystem" %}
+          <dt>{% trans "OGL licensed?" %}</dt>
+          <dd>{{ addition.ogl_license|yesno:"Yes,No" }}</dd>
+          {% endif %}
+          {% else %}
+          <dt>{% trans "Edition" %}</dt>
+          <dd><a href="{{ addition.edition.get_absolute_url }}">{{ addition.edition.game.title }} ({{ addition.edition.name }})</a></dd>
+          <dt>{% trans "ISBN" %}</dt>
+          <dd>{{ addition.isbn }}</dd>
+          {% endif %}
+          {% if addition.content_type.model != "gamepublisher" and addition.content_type.model != "publishedgame" %}
+          <dt>{% trans "Release date" %}</dt>
+          <dd>{{ addition.release_date|date:"F Y" }}</dd>
+          <dt>{% trans "Publisher" %}</dt>
+          <dd><a href="{{ addition.publisher.get_absolute_url }}">{{ addition.publisher.name }}</a></dd>
+          {% endif %}
+          {% if addition.content_type.model != "gamepublisher" %}
+          <dt>{% trans "Suggested tags" %}</dt>
+          <dd>{{ addition.suggested_tags }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+      {% if addition.status == "new" %}
+      <div class="card-section">
+        <hr />
+        <p><strong>{% trans "Edit tools" %}</strong></p>
+        <div class="clearfix grid-x grid-margin-x">
+          <div class="cell medium-auto"><a href="{% url 'game_catalog:addition_list' %}" class="button secondary">{% trans "Back to list of additions" %}</a></div>
+          <div class="cell medium-auto"><a href="{% url 'game_catalog:addition_update' addition=addition.slug %}" class="button">{% trans "Edit record" %}</a></div>
+          <div class="cell medium-auto"><a href="{% url 'game_catalog:addition_delete' addition=addition.slug %}" class="button alert">{% trans "Delete record" %}</a></div>
+        </div>
+      </div>
+      <div class="card-section">
+
+        <hr />
+        <p><strong>{% trans "Approval tools" %}</strong></p>
+        <div class="clearfix grid-x grid-margin-x">
+          <div class="cell medium-auto"><form method="post" action="{% url 'game_catalog:addition_review' addition=addition.slug %}">{% csrf_token %}<input type="submit" name="reject" class="button alert" value="{% trans 'Reject addition' %}" /></form></div>
+          <div class="cell medium-auto"><form method="post" action="{% url 'game_catalog:addition_review' addition=addition.slug %}">{% csrf_token %}<input type="submit" name="approve" class="button success" value="{% trans 'Approve addition' %}" /></form></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card-section">
+        <hr />
+      <div class="clearfix">
+        <a href="{% url 'game_catalog:addition_list' %}" class="button secondary float-left">{% trans "Back to suggested addition list" %}</a>
+      </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

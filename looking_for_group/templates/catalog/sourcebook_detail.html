@@ -59,6 +59,13 @@
           <a href="{% url 'game_catalog:sourcebook_edit' book=book.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:sourcebook_delete' book=book.slug %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete sourcebook" %}</a>
         </div>
       </div>
+      {% else %}
+      <div class="card-section">
+        <hr />
+        <div class="clearfix">
+          <a href="{{ book.get_correction_url }}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Suggest correction" %}</a>
+        </div>
+      </div>
       {% endif %}
       <div class="card-section">
         <hr />
