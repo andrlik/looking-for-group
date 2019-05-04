@@ -37,7 +37,7 @@
 </div>
 {% else %}
 <div class="clearfix">
-  <a href="{% url 'game_catalog:correction_create' obj_type='edition', object_id={{ edition.pk }} %}" class="float-left button"><i class="fas fa-edit"></i> {% trans "Suggest correction" %}</a>
+  <a href="{{ edition.get_correction_url }}" class="float-left button"><i class="fas fa-edit"></i> {% trans "Suggest correction" %}</a>
 </div>
 {% endif %}
       </div>

@@ -63,7 +63,7 @@
       <div class="card-section">
         <hr />
         <div class="clearfix">
-          <a href="{% url 'game_catalog:correction_create' obj_type='sourcebook' object_id=book.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Suggest correction" %}</a>
+          <a href="{{ book.get_correction_url }}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Suggest correction" %}</a>
         </div>
       {% endif %}
       <div class="card-section">

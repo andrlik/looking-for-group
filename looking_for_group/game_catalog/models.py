@@ -10,7 +10,11 @@ from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
 
-from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel, AbstractUUIDWithSlugModel
+from .utils import (
+    AbstractTaggedLinkedModel,
+    AbstractUUIDModel,
+    AbstractUUIDWithSlugModel,
+)
 
 # Create your models here.
 logger = logging.getLogger("catalog")
@@ -43,6 +47,12 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     def get_absolute_url(self):
         return reverse("game_catalog:pub-detail", kwargs={"publisher": self.id})
+
+    def get_correction_url(self):
+        return reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "publisher", "object_id": self.id},
+        )
 
     class Meta:
         ordering = ["name"]
@@ -95,6 +105,12 @@ class GameSystem(
     def get_absolute_url(self):
         return reverse("game_catalog:system-detail", kwargs={"system": self.id})
 
+    def get_correction_url(self):
+        return reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "system", "object_id": self.id},
+        )
+
     class Meta:
         ordering = ["name", "-publication_date"]
         verbose_name = _("Game System")
@@ -130,6 +146,12 @@ class PublishedGame(
 
     def get_absolute_url(self):
         return reverse("game_catalog:game-detail", kwargs={"game": self.id})
+
+    def get_correction_url(self):
+        return reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "game", "object_id": self.id},
+        )
 
     class Meta:
         ordering = ["title", "-publication_date"]
@@ -188,6 +210,12 @@ class GameEdition(
 
     def get_absolute_url(self):
         return reverse("game_catalog:edition_detail", kwargs={"edition": self.slug})
+
+    def get_correction_url(self):
+        return reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "edition", "object_id": self.id},
+        )
 
     def get_image_object(self):
         if not self.image:
@@ -256,6 +284,12 @@ class SourceBook(
     def get_absolute_url(self):
         return reverse("game_catalog:sourcebook_detail", kwargs={"book": self.slug})
 
+    def get_correction_url(self):
+        return reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "sourcebook", "object_id": self.id},
+        )
+
     class Meta:
         order_with_respect_to = "edition"
         verbose_name = _("Source Book")
@@ -308,6 +342,12 @@ class PublishedModule(
 
     def get_absolute_url(self):
         return reverse("game_catalog:module-detail", kwargs={"module": self.id})
+
+    def get_correction_url(self):
+        return reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "module", "object_id": self.id},
+        )
 
     class Meta:
         ordering = ["title", "-publication_date"]
