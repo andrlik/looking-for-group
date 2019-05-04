@@ -29,9 +29,9 @@
         {% for correction in correction_list %}
         <tr>
           <td><a href="{{ correction.get_absolute_url }}">{{ correction.title }}</a></td>
-          <td>{% avatar correction.submitter class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
+          <td>{% avatar correction.submitter 30 class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
           <td>{{ correction.created }}</td>
-          <td><a href="{{ correction.get_absolute_url" class="button">{% trans "View details" %}</a></td>
+          <td><a href="{{ correction.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
         </tr>
         {% empty %}
         {% endfor %}
@@ -82,9 +82,9 @@
         {% for correction in approved_corrections %}
         <tr>
           <td><a href="{{ correction.get_absolute_url }}">{{ correction.title }}</a></td>
-          <td>{% avatar correction.submitter class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
+          <td>{% avatar correction.submitter 30 class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
           <td>{{ correction.created }}</td>
-          <td>{% avatar correction.reviewer class="avatar" %} <a href="{{ correction.reviewer.gamerprofile.get_absolute_url }}">{{ correction.reviewer.gamerprofile }}</a></td>
+          <td>{% avatar correction.reviewer 30 class="avatar" %} <a href="{{ correction.reviewer.gamerprofile.get_absolute_url }}">{{ correction.reviewer.gamerprofile }}</a></td>
           <td>{{ correction.modified }}</td>
           <td><a href="{{ correction.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
         </tr>
@@ -114,9 +114,9 @@
         {% for correction in denied_corrections %}
         <tr>
           <td><a href="{{ correction.get_absolute_url }}">{{ correction.title }}</a></td>
-          <td>{% avatar correction.submitter class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
+          <td>{% avatar correction.submitter 30 class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
           <td>{{ correction.created }}</td>
-          <td>{% avatar correction.reviewer class="avatar" %} <a href="{{ correction.reviewer.gamerprofile.get_absolute_url }}">{{ correction.reviewer.gamerprofile }}</a></td>
+          <td>{% avatar correction.reviewer 30 class="avatar" %} <a href="{{ correction.reviewer.gamerprofile.get_absolute_url }}">{{ correction.reviewer.gamerprofile }}</a></td>
           <td>{{ correction.modified }}</td>
           <td><a href="{{ correction.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
         </tr>

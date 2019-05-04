@@ -1,10 +1,17 @@
 {% extends "catalog/base.html" %}
-{% load i18n humanize cache %}
+{% load i18n humanize cache rules %}
 {% block subtitle %}{% trans "Modules" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Published Game Modules" %}{% endblock %}
 {% block mobileheader %}{% trans "Published Game Modules" %}{% endblock %}
 {% block moduleactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
+{% has_perm "catalog.can_edit" user user as is_editor %}
+{% if not is_editor %}
+<br />
+<div class="clearfix">
+  <a href="{% url 'game_catalog:addition_create' obj_type='module' %}" class="button float-right"><i class="fas fa-plus-circle"></i> {% trans "Suggest a new module" %}</a>
+</div>
+{% endif %}
 {% if not object_list.exists %}
 <p>{% trans "No published modules found" %}</p>
 {% endif %}

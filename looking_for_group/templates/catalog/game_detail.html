@@ -34,7 +34,7 @@
 {% else %}
 {% with objtype="game" %}
 <div class="clearfix">
-  <a href="{{ game.get_correction_url }}">{% trans "Suggest correction" %}</a>
+  <a href="{{ game.get_correction_url }}" class="button float-left">{% trans "Suggest correction" %}</a>
 </div>
 {% endwith %}
 {% endif %}

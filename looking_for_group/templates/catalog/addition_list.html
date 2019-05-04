@@ -31,9 +31,9 @@
         <tr>
           <td>{{ addition.content_type.name }}</td>
           <td><a href="{{ addition.get_absolute_url }}">{{ addition.title }}</a></td>
-          <td>{% avatar addition.submitter class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
+          <td>{% avatar addition.submitter 30 class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
           <td>{{ addition.created }}</td>
-          <td><a href="{{ addition.get_absolute_url" class="button">{% trans "View details" %}</a></td>
+          <td><a href="{{ addition.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
         </tr>
         {% empty %}
         {% endfor %}
@@ -86,9 +86,9 @@
         <tr>
           <td>{{ addition.content_type.name }}</td>
           <td><a href="{{ addition.get_absolute_url }}">{{ addition.title }}</a></td>
-          <td>{% avatar addition.submitter class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
+          <td>{% avatar addition.submitter 30 class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
           <td>{{ addition.created }}</td>
-          <td>{% avatar addition.reviewer class="avatar" %} <a href="{{ addition.reviewer.gamerprofile.get_absolute_url }}">{{ addition.reviewer.gamerprofile }}</a></td>
+          <td>{% avatar addition.reviewer 30 class="avatar" %} <a href="{{ addition.reviewer.gamerprofile.get_absolute_url }}">{{ addition.reviewer.gamerprofile }}</a></td>
           <td>{{ addition.modified }}</td>
           <td><a href="{{ addition.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
         </tr>
@@ -120,9 +120,9 @@
         <tr>
           <td>{{ addition.content_type.name }}</td>
           <td><a href="{{ addition.get_absolute_url }}">{{ addition.title }}</a></td>
-          <td>{% avatar addition.submitter class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
+          <td>{% avatar addition.submitter 30 class="avatar" %} <a href="{{ addition.submitter.gamerprofile.get_absolute_url }}">{{ addition.submitter.gamerprofile }}</a></td>
           <td>{{ addition.created }}</td>
-          <td>{% avatar addition.reviewer class="avatar" %} <a href="{{ addition.reviewer.gamerprofile.get_absolute_url }}">{{ addition.reviewer.gamerprofile }}</a></td>
+          <td>{% avatar addition.reviewer 30 class="avatar" %} <a href="{{ addition.reviewer.gamerprofile.get_absolute_url }}">{{ addition.reviewer.gamerprofile }}</a></td>
           <td>{{ addition.modified }}</td>
           <td><a href="{{ addition.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
         </tr>

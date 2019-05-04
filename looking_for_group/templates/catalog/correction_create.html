@@ -15,7 +15,7 @@
   {% csrf_token %}
   {{ form|as_foundation }}
   <div class="clearfix">
-    <a href="{{ source_obj.get_absolute_url }}" class="button float-left secondary">{% trans "Discard corrections and go back" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Submit correction' %}" />
+    <a href="{{ source_object.get_absolute_url }}" class="button float-left secondary">{% trans "Discard corrections and go back" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Submit correction' %}" />
   </div>
 </form>
       </div>

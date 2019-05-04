@@ -25,7 +25,7 @@ from .models import (
     PublishedModule,
     SourceBook,
     SuggestedAddition,
-    SuggestedCorrection
+    SuggestedCorrection,
 )
 from .utils import combined_recent
 
@@ -741,7 +741,23 @@ class SuggestedCorrectionCreateView(LoginRequiredMixin, generic.CreateView):
             or self.create_type == "edition"
         ):
             initial["new_title"] = self.source_object.name
-            # TODO - form initial stuff based on source object
+        else:
+            initial["new_title"] = self.source_object.title
+        if self.create_type == "edition" or self.create_type == "sourcebook":
+            initial["new_release_date"] = self.source_object.release_date
+        else:
+            if self.create_type != "publisher":
+                initial["new_release_date"] = self.source_object.publication_date
+        if self.create_type != "sourcebook" and self.create_type != "module":
+            initial["new_description"] = self.source_object.description
+        else:
+            initial["new_isbn"] = self.source_object.isbn
+        if self.create_type == "system":
+            initial["new_url"] = self.source_object.system_url
+        else:
+            if self.create_type != "sourcebook":
+                initial["new_url"] = self.source_object.url
+        kwargs["initial"] = initial
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -795,11 +811,7 @@ class SuggestedCorrectionUpdateView(
 
 
 class SuggestedCorrectionDetailView(
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    PrefetchRelatedMixin,
-    SelectRelatedMixin,
-    generic.DetailView,
+    LoginRequiredMixin, PermissionRequiredMixin, SelectRelatedMixin, generic.DetailView
 ):
     """
     Detail view for suggested correction, only available to editors.
@@ -808,10 +820,14 @@ class SuggestedCorrectionDetailView(
     model = SuggestedCorrection
     template_name = "catalog/correction_detail.html"
     select_related = ["submitter__gamerprofile", "reviewer__gamerprofile"]
-    prefetch_related = ["content_object"]
     permission_required = "catalog.can_edit"
     slug_url_kwarg = "correction"
     context_object_name = "correction"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["source_object"] = context["correction"].content_object
+        return context
 
 
 class SuggestedCorrectionDeleteView(
@@ -966,7 +982,11 @@ class SuggestedAdditionCreateView(LoginRequiredMixin, generic.CreateView):
         ]
         logger.debug("Found obj_type of {}".format(self.obj_type))
         if not self.obj_type or self.obj_type not in allowed_object_types:
-            logger.debug("Object type of {} is not in {}".format(self.obj_type, allowed_object_types))
+            logger.debug(
+                "Object type of {} is not in {}".format(
+                    self.obj_type, allowed_object_types
+                )
+            )
             raise Http404
         return super().dispatch(request, *args, **kwargs)
 

@@ -66,6 +66,7 @@
 <div class="clearfix">
   <a href="{% url 'game_catalog:system-edit' system=system.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:system-delete' system=system.pk %}" class="button float-right alert"><i class="fas fa-trash-alt"></i> {% trans "Delete system" %}</a>
 </div>
+      </div>
 {% else %}
 <div class="card-section">
   <hr />
@@ -76,7 +77,7 @@
 {% endif %}
       </div>
     </div>
-  </div>
+
   <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
