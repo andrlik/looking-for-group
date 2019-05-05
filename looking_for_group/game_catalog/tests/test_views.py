@@ -1,13 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 from test_plus import TestCase
 
-from ...gamer_profiles.tests import factories
 from .. import models
+from ...gamer_profiles.tests import factories
 
 
 class AbstractViewTest(TestCase):
@@ -17,6 +18,8 @@ class AbstractViewTest(TestCase):
 
     def setUp(self):
         ContentType.objects.clear_cache()
+        self.gamer1 = factories.GamerProfileFactory()
+        self.gamer2 = factories.GamerProfileFactory()
         self.mcg = models.GamePublisher(name="Monte Cook Games")
         self.mcg.save()
         self.wotc = models.GamePublisher(name="Wizards of the Coast")
@@ -604,11 +607,439 @@ class RecentAdditionViewTest(AbstractViewTest):
     """
     Basic test for the recent additions view
     """
+
     def setUp(self):
         super().setUp()
-        self.view_name = 'game_catalog:recent_additions'
+        self.view_name = "game_catalog:recent_additions"
 
     def test_list_retrieval(self):
         with self.assertNumQueriesLessThan(150):
             self.get(self.view_name)
             self.response_200()
+
+
+class AbstractSuggestedCorrectionAdditionTest(AbstractViewTest):
+    """
+    An abstract base class that allows us to prepopulate some needed values.
+    """
+
+    def setUp(self):
+        super().setUp()
+        editor_group, created = Group.objects.get_or_create(name="rpgeditors")
+        self.gamer2.user.groups.add(editor_group)
+        self.correction1 = models.SuggestedCorrection.objects.create(
+            new_title="OG Numenera",
+            new_description="Show em your **bad** cypher self.",
+            new_url="https://www.google.com",
+            new_release_date=timezone.now() - timedelta(days=30),
+            submitter=self.gamer1.user,
+            other_notes="You might want to update the cover...",
+            content_object=self.numen,
+        )
+        self.addition1 = models.SuggestedAddition.objects.create(
+            content_type=ContentType.objects.get_for_model(models.GameEdition),
+            title="Numenera 4",
+            description="The next generation",
+            release_date=timezone.now() + timedelta(days=400),
+            suggested_tags="future, wild",
+            game=self.numensource,
+            publisher=self.mcg,
+            system=self.cypher,
+            submitter=self.gamer1.user,
+        )
+        # TODO: Add more cases here for use.
+
+
+class SuggestedCorrectionListView(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test list view for suggested corrections.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:correction_list"
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name)
+
+
+class SuggestedCorrectionCreateTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test for creating a suggested correction.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:correction_create"
+        self.url_kwargs = {"objtype": "edition", "object_id": self.numen.pk}
+        self.post_data = {
+            "new_title": "Future monkeys are us",
+            "new_url": "https://www.google.com",
+            "new_description": "I ate something and now I feel bad.",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_test_mismatch_type(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, objtype="publisher", object_id=self.numen.pk)
+            self.response_404()
+
+    def test_correct_data(self):
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert (
+                models.SuggestedCorrection.objects.latest('created').new_title
+                == "Future monkeys are us"
+            )
+
+
+class SuggestedCorrectionUpdateTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test for updating a suggested correction
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:correction_update"
+        self.url_kwargs = {"correction": self.correction1.slug}
+        self.post_data = {
+            "new_title": "Future monkeys are us",
+            "new_url": "https://www.google.com",
+            "new_description": "I ate something and now I feel bad.",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert (
+                models.SuggestedCorrection.objects.get(id=self.correction1.pk).new_title
+                == "Future monkeys are us"
+            )
+
+
+class SuggestedCorrectionDetailTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test detail view.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:correction_detail"
+        self.url_kwargs = {"correction": self.correction1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class SuggestedCorrectionDeleteTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test deleting a correction.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:correction_delete"
+        self.url_kwargs = {"correction": self.correction1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data={}, **self.url_kwargs)
+            with pytest.raises(ObjectDoesNotExist):
+                models.SuggestedCorrection.objects.get(id=self.correction1.pk)
+
+
+class SuggestedCorrectionApproveDenyTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test approval and deny modes for corrections.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:correction_review"
+        self.url_kwargs = {"correction": self.correction1.slug}
+        self.approve_data = {"approve": 1}
+        self.deny_data = {"reject": 1}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_post_required(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_405()
+
+    def test_unauthrorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
+            self.response_403()
+            assert (
+                models.SuggestedCorrection.objects.get(id=self.correction1.pk).status
+                == "new"
+            )
+
+    def test_authorized_deny(self):
+        with self.login(username=self.gamer2.username):
+            self.post(self.view_name, data=self.deny_data, **self.url_kwargs)
+            assert (
+                models.SuggestedCorrection.objects.get(id=self.correction1.pk).status
+                == "rejected"
+            )
+
+    def test_authorized_approval(self):
+        tag_count = self.correction1.content_object.tags.count()
+        with self.login(username=self.gamer2.username):
+            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
+            obj = models.SuggestedCorrection.objects.get(id=self.correction1.pk)
+            source_obj = obj.content_object
+            assert source_obj.tags.count() - tag_count == 0
+            assert obj.status == "approved"
+            assert source_obj.name == obj.new_title
+            assert source_obj.description == obj.new_description
+
+    def test_omit_change(self):
+        self.correction1.new_title = None
+        self.correction1.save()
+        with self.login(username=self.gamer2.username):
+            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
+            obj = models.SuggestedCorrection.objects.get(id=self.correction1.pk)
+            source_obj = obj.content_object
+            assert obj.status == "approved"
+            assert source_obj.name and obj.new_title != source_obj.name
+            assert source_obj.description == obj.new_description
+
+
+class SuggestedAdditionListView(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test list view for suggested addition.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:addition_list"
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name)
+
+
+class SuggestedAdditionCreateTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test creating a new addition.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:addition_create"
+        self.url_kwargs = {"obj_type": "publisher"}
+        self.post_data = {
+            "title": "Future monkeys are us",
+            "publisher": self.mcg.pk,
+            "system": self.cypher.pk,
+            "description": "I ate something and now I feel bad.",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_invalid_obj_type(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, obj_type="monkey")
+            self.response_404()
+
+    def test_valid_obj_type(self):
+        current_additions = models.SuggestedAddition.objects.count()
+        with self.login(username=self.gamer1.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert models.SuggestedAddition.objects.count() - current_additions == 1
+
+
+class SuggestedAdditionUpdateTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test for updating a suggested addition.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:addition_update"
+        self.url_kwargs = {"addition": self.addition1.slug}
+        self.post_data = {
+            "title": "Future monkeys are us",
+            "publisher": self.mcg.pk,
+            "system": self.cypher.pk,
+            "game": self.numensource.pk,
+            "description": "I ate something and now I feel bad.",
+        }
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert (
+                models.SuggestedAddition.objects.get(id=self.addition1.pk).title
+                == "Future monkeys are us"
+            )
+
+
+class SuggestedAdditionDetailTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test detail view for suggested addition.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:addition_detail"
+        self.url_kwargs = {"addition": self.addition1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+
+
+class SuggestedAdditionDeleteTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test delete view for suggested addition.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:addition_delete"
+        self.url_kwargs = {"addition": self.addition1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_incorrect_user(self):
+        with self.login(username=self.gamer1.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_403()
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer2.username):
+            self.assertGoodView(self.view_name, **self.url_kwargs)
+            self.post(self.view_name, data={}, **self.url_kwargs)
+            with pytest.raises(ObjectDoesNotExist):
+                models.SuggestedAddition.objects.get(id=self.addition1.pk)
+
+
+class SuggestedAdditionApproveDenyTest(AbstractSuggestedCorrectionAdditionTest):
+    """
+    Test approving and denying additions and that records are updated correctly.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "game_catalog:addition_review"
+        self.url_kwargs = {"addition": self.addition1.slug}
+        self.approve_data = {"approve": 1}
+        self.reject_data = {"reject": 1}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_post_required(self):
+        with self.login(username=self.gamer2.username):
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_405()
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer1.username):
+            self.post(self.view_name, data=self.reject_data, **self.url_kwargs)
+            self.response_403()
+            assert (
+                models.SuggestedAddition.objects.get(id=self.addition1.pk).status
+                == "new"
+            )
+
+    def test_authorized_reject(self):
+        with self.login(username=self.gamer2.username):
+            self.post(self.view_name, data=self.reject_data, **self.url_kwargs)
+            assert (
+                models.SuggestedAddition.objects.get(id=self.addition1.pk).status
+                == "rejected"
+            )
+
+    def test_authorized_approval(self):
+        original_edition_count = models.GameEdition.objects.count()
+        with self.login(username=self.gamer2.username):
+            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
+            assert models.GameEdition.objects.count() - original_edition_count == 1
+            assert (
+                models.SuggestedAddition.objects.get(id=self.addition1.pk).status
+                == "approved"
+            )

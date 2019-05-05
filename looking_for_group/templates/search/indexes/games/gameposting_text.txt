@@ -10,7 +10,7 @@ Game Edition: {{ object.published_game.game.title }} ({{ object.published_game.n
 {% if object.game_system %}
 
 Game System: {{ object.game_system.name }}
-{% end if %}
+{% endif %}
 {% if object.published_module %}
 
 Module: {{ object.published_module.title }}

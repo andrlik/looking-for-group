@@ -1,0 +1,28 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% blocktrans with ctype=correction.title %}Delete suggested correction for {{ ctype }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}{% blocktrans with ctype=correction.title %}Delete suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with ctype=correction.title %}Delete suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block correctactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Delete suggested correction?" %}</h5></div>
+      <div class="card-section">
+        <div class="callout alert">
+          <h5>{% trans "Are you sure?" %}</h5>
+          <p>{% trans "Deleting this suggestion cannot be undone." %}</p>
+        </div>
+        <form action="" method="post">
+          {% csrf_token %}
+          <div class="clearfix">
+            <a href="{{ correction.get_absolute_url }}" class="button secondary float-left">{% trans "Return to suggestion details" %}</a> <input type="submit" class="button float-right alert" value="{% trans 'Delete record' %}" />
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

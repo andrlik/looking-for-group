@@ -1,0 +1,129 @@
+{% extends "catalog/base.html" %}
+{% load i18n avatar_tags %}
+{% block subtitle %}{% trans "Suggested corrections" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Suggested corrections" %}{% endblock %}
+{% block mobileheader %}{% trans "Suggested corrections" %}{% endblock %}
+{% block correctactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="correction-tabs">
+  <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ correction_list.count }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="approved_panel" href="#approved_panel">{% trans "Approved" %} ({{ approved_corrections.count }})</a></li>
+  <li class="tabs-title"><a data-tabs-target="rejected_panel" href="#rejected_panel">{% trans "Rejected" %} ({{ denied_corrections.count }})</a></li>
+</ul>
+
+<div class="tabs-content" data-tabs-content="correction-tabs">
+  <div class="tabs-panel is-active" id="pending_panel">
+    {% if not correction_list %}
+    <p>{% trans "There are no pending corrections to review." %}</p>
+    {% endif %}
+    <table class="scroll hover">
+      <thead>
+        <tr>
+          <th>{% trans "Correction for" %}</th>
+          <th>{% trans "Submitter" %}</th>
+          <th>{% trans "Submitted at" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for correction in correction_list %}
+        <tr>
+          <td><a href="{{ correction.get_absolute_url }}">{{ correction.title }}</a></td>
+          <td>{% avatar correction.submitter 30 class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
+          <td>{{ correction.created }}</td>
+          <td><a href="{{ correction.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if is_paginated %}
+    <nav aria-label="Pagination">
+      <ul class="pagination">
+        {% if not page_obj.has_previous %}
+        <li class="pagination-previous-disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+        {% else %}
+        <li class="pagination-previous"><a href="{% url 'game_catalog:correction_list' page=page_obj.previous_page_number %}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+        {% endif %}
+        {% for page_num in paginator.page_range %}
+        {% if page_obj.number == page_num %}
+        <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+        {% else %}
+        <li><a href="{% url 'game_catalog:correction_list' page=page_num %}" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if not page_obj.has_next %}
+        <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+        {% else %}
+        <li class="pagination-next"><a href="{% url 'game_catalog:correction_list' page=page_obj.next_page_number %}" aria-label="Next page">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+  <div class="tabs-panel" id="approved_panel">
+    {% if not approved_corrections %}
+    <p>{% trans "There are no approved corrections to display within the last 30 days." %}</p>
+    {% else %}
+    <p>{% trans "Showing corrections approved within the last 30 days." %}</p>
+    {% endif %}
+    <table class="scroll hover">
+      <thead>
+        <tr>
+          <th>{% trans "Correction for" %}</th>
+          <th>{% trans "Submitted by" %}</th>
+          <th>{% trans "Submitted at" %}</th>
+          <th>{% trans "Reviewed by" %}</th>
+          <th>{% trans "Approved at" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for correction in approved_corrections %}
+        <tr>
+          <td><a href="{{ correction.get_absolute_url }}">{{ correction.title }}</a></td>
+          <td>{% avatar correction.submitter 30 class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
+          <td>{{ correction.created }}</td>
+          <td>{% avatar correction.reviewer 30 class="avatar" %} <a href="{{ correction.reviewer.gamerprofile.get_absolute_url }}">{{ correction.reviewer.gamerprofile }}</a></td>
+          <td>{{ correction.modified }}</td>
+          <td><a href="{{ correction.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="tabs-panel" id="rejected_panel">
+    {% if not denied_corrections %}
+    <p>{% trans "There are no rejected corrections to display within the last 30 days." %}</p>
+    {% else %}
+    <p>{% trans "Showing corrections rejected within the last 30 days." %}</p>
+    {% endif %}
+    <table class="scroll hover">
+      <thead>
+        <tr>
+          <th>{% trans "Correction for" %}</th>
+          <th>{% trans "Submitted by" %}</th>
+          <th>{% trans "Submitted at" %}</th>
+          <th>{% trans "Reviewed by" %}</th>
+          <th>{% trans "Rejected at" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for correction in denied_corrections %}
+        <tr>
+          <td><a href="{{ correction.get_absolute_url }}">{{ correction.title }}</a></td>
+          <td>{% avatar correction.submitter 30 class="avatar" %} <a href="{{ correction.submitter.gamerprofile.get_absolute_url }}">{{ correction.submitter.gamerprofile }}</a></td>
+          <td>{{ correction.created }}</td>
+          <td>{% avatar correction.reviewer 30 class="avatar" %} <a href="{{ correction.reviewer.gamerprofile.get_absolute_url }}">{{ correction.reviewer.gamerprofile }}</a></td>
+          <td>{{ correction.modified }}</td>
+          <td><a href="{{ correction.get_absolute_url }}" class="button">{% trans "View details" %}</a></td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

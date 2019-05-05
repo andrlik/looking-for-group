@@ -1,0 +1,48 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% blocktrans with ctype=obj_type %}Suggest additional {{ ctype }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}{% blocktrans with ctype=obj_type %}Suggest additional {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with ctype=obj_type %}Suggest additional {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Suggest additional" %} {{ obj_type }}</h5></div>
+      <div class="card-section">
+<p>{% blocktrans with ctype=obj_type %}Enter your suggested {{ ctype }} below.{% endblocktrans %}</p>
+<form enctype="multipart/form-data" data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{% url 'game_catalog:game-list' %}" class="button float-left secondary">{% trans "Discard suggestion and go back to catalog" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Submit suggestion' %}" />
+  </div>
+</form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% include "datepicker_logic.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block simplemde %}
+{% if obj_type != "sourcebook" and obj_type != "module" %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_description')[0],
+    autosave: {
+      enabled: false,
+      uniqueId: "catalog_addition_create",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
+{% endif %}
+{% endblock %}

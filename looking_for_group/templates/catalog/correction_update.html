@@ -1,0 +1,49 @@
+{% extends "catalog/base_form.html" %}
+{% load i18n foundation_formtags %}
+{% block subtitle %}{% blocktrans with ctype=correction.title %}Update suggested correction for {{ ctype }}{% endblocktrans %} - {% endblock %}
+{% block sectiontitle %}{% blocktrans with ctype=correction.title %}Update suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block mobileheader %}{% blocktrans with ctype=correction.title %}Update suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
+{% block correctactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-6">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Update suggested correction" %}</h5></div>
+      <div class="card-section">
+<p>{% blocktrans %}You can change the details of the suggested corrections below.{% endblocktrans %}</p>
+<form enctype="multipart/form-data" data-abide novalidate action="" method="post">
+  {% csrf_token %}
+  {{ form|as_foundation }}
+  <div class="clearfix">
+    <a href="{{ correction.get_absolute_url }}" class="button float-left secondary">{% trans "Discard corrections and go back to details" %}</a> <input type="submit" class="float-right button success" value="{% trans 'Save changes' %}" />
+  </div>
+</form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% include "datepicker_logic.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block simplemde %}
+{% if correction.content_type.model != "sourcebook" and correction.content_type.model != "publishedmodule" %}
+<script type="text/javascript">
+  var simplemde = new SimpleMDE({
+    element: $('#id_new_description')[0],
+    autosave: {
+      enabled: false,
+      uniqueId: "catalog_correction_edit_{{ correction.slug }}",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+  });
+</script>
+{% endif %}
+{% endblock %}

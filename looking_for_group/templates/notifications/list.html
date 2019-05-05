@@ -54,7 +54,11 @@
         {% if "not accepted" in notification.verb %}
         {% blocktrans with verb=notification.verb objname=notification.action_object target=notification.target target_type=notification.target_content_type|lower target_url=notification.target.get_absolute_url %}{{ verb }} for {{ target_type }}: <a href="{{ target_url }}">{{ target }}</a>{% endblocktrans %}
         {% else %}
+        {% if not notification.target and "suggested" in notification.verb %}
+        {% blocktrans with aname=notification.actor aurl=notification.actor.get_absolute_url verb=notification.verb objname=notification.action_object %}<a href="{{ aurl }}">{{ aname }}</a> {{ verb }}{% endblocktrans %}
+        {% else %}
         {% blocktrans with aname=notification.actor aurl=notification.actor.get_absolute_url verb=notification.verb objname=notification.action_object target_type=notification.target_content_type|lower target=notification.target target_url=notification.target.get_absolute_url %}<a href="{{ aurl }}">{{ aname }}</a> {{ verb }} for {{ target_type }}: <a href={{ target_url }}>{{ target }}</a>{% endblocktrans %}
+        {% endif %}
         {% endif %}
         {% endif %}
       </td>
