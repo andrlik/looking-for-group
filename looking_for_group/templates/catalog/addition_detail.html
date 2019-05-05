@@ -6,8 +6,7 @@
 {% block additionactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
-  <div class="cell medium-2"></div>
-  <div class="cell medium-6">
+  <div class="cell medium-auto">
     <div class="card">
       <div class="card-divider"><h5>{{ addition.title }}</h5></div>
       <div class="card-section">
@@ -90,6 +89,21 @@
       </div>
       </div>
       {% endif %}
+    </div>
+  </div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h5>{% trans "Submitter stats" %}</h5></div>
+      <div class="card-section">
+        <ul class="stats-list">
+          <li>{{ addition.submitter.gamerprofile.submitted_corrections }} <span class="stats-list-label">{% trans "Corrections submitted" %}</span></li>
+          <li>{{ addition.submitter.gamerprofile.submitted_corrections_approved }} <span class="stats-list-label">{% trans "Corrections approved" %}</span></li>
+          <li{% if addition.submitter.gamerprofile.submitted_corrections_rejected > addition.submitter.gamerprofile.submitted_corrections_approved %} class="stats-list-negative"{% endif %}>{{ addition.submitter.gamerprofile.submitted_corrections_rejected }} <span class="stats-list-label">{% trans "Corrections rejected" %}</span></li>
+          <li>{{ addition.submitter.gamerprofile.submitted_additions }} <span class="stats-list-label">{% trans "Submitted additions" %}</span></li>
+          <li>{{ addition.submitter.gamerprofile.submitted_additions_approved }} <span class="stats-list-label">{% trans "Additions approved" %}</span></li>
+          <li{% if addition.submitter.gamerprofile.submitted_additions_rejected > addition.submitter.gamerprofile.submitted_additions_approved %} class="stats-list-negative"{% endif %}>{{ addition.submitter.gamerprofile.submitted_additions_rejected }} <span class="stats-list-label">{% trans "Additions rejected" %}</span></li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
