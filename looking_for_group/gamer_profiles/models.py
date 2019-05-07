@@ -645,6 +645,7 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
         max_digits=4,
         help_text=_("Attendance percentage for sessions within community."),
     )
+    game_notifications = models.BooleanField(verbose_name="Game Notifications", default=False, help_text=_("Receiving notifications about new games posted in this community?"), db_index=True)
 
     def less_than(self, role_choice):
         """

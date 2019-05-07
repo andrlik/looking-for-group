@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import Sum
 from django.db.models.query_utils import Q
@@ -27,8 +27,8 @@ from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Event, Rule
 
-from .. import models, serializers
 from ...games.models import AvailableCalendar
+from .. import models, serializers
 from ..forms import (
     BlankDistructiveForm,
     GamerAvailabilityForm,
@@ -500,6 +500,58 @@ class CommunityDeleteView(
             self.request, _("You have successfully deleted this community.")
         )
         return reverse_lazy("gamer_profiles:community-list")
+
+
+class CommunityToggleGameNotifications(LoginRequiredMixin, generic.edit.UpdateView):
+    """
+    For a given community, if the requesting user is a member, toggle their notification setting. If an invalid user,
+    produce and error message and redirect them.
+    """
+
+    model = models.GamerCommunity
+    slug_url_kwarg = "community"
+    success_url = None
+    fields = []
+
+    def get_success_url(self):
+        if not self.success_url:
+            return self.get_object().get_absolute_url()
+
+    def dispatch(self, request, *args, **kwargs):
+        next_url = request.GET.get("next", None)
+        if next_url:
+            self.success_url = next_url
+        if request.user.is_authenticated and request.method not in ["post", "POST"]:
+            return HttpResponseNotAllowed(["POST"])
+        if request.user.is_authenticated:
+            self.gamer = request.user.gamerprofile
+            try:
+                self.membership = models.CommunityMembership.objects.get(
+                    gamer=self.gamer, community=self.get_object()
+                )
+            except ObjectDoesNotExist:
+                messages.error(
+                    request, _("You are not a member of the indicated community.")
+                )
+                return HttpResponseRedirect(self.get_success_url())
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _("There was an error with your request."))
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_valid(self, form):
+        self.membership.game_notifications = not self.membership.game_notifications
+        self.membership.save()
+        messages.success(
+            self.request,
+            _(
+                "You have successfully updated your notification settings for {}".format(
+                    self.membership.community.name
+                )
+            ),
+        )
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class CommunityMemberList(
@@ -1427,7 +1479,6 @@ class GamerAvailabilityUpdate(LoginRequiredMixin, generic.FormView):
 
     def form_valid(self, form):
         cdata = form.cleaned_data
-        new_rules = []
         index_num = 0
         events_cancelled = 0
         events_created = 0

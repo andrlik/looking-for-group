@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.contrib.messages import get_messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.urls import reverse
@@ -42,6 +43,55 @@ class TestSetup(AbstractViewTest):
         assert self.community1.get_role(self.gamer1) == "Admin"
         assert self.community2.get_role(self.gamer2) == "Member"
         assert self.gamer1 in self.gamer3.friends.all()
+
+
+class TestToggleNotificationsView(AbstractViewTest):
+    """
+    Test for view to toggle notifications for a user.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.view_name = "gamer_profiles:community-toggle-notifications"
+        self.url_kwargs = {"community": self.community1.slug}
+
+    def test_login_required(self):
+        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+
+    def test_post_required(self):
+        with self.login(username=self.gamer1.username):
+            original_setting = models.CommunityMembership.objects.get(
+                community=self.community1, gamer=self.gamer1
+            ).game_notifications
+            self.get(self.view_name, **self.url_kwargs)
+            self.response_405()
+            assert (
+                models.CommunityMembership.objects.get(
+                    community=self.community1, gamer=self.gamer1
+                ).game_notifications
+                == original_setting
+            )
+
+    def test_unauthorized_user(self):
+        with self.login(username=self.gamer3.username):
+            self.post(self.view_name, data={}, follow=True, **self.url_kwargs)
+            self.response_200()
+            messages = list(self.get_context("messages"))
+            assert "error" in messages[0].tags
+
+    def test_authorized_user(self):
+        with self.login(username=self.gamer1.username):
+            original_setting = models.CommunityMembership.objects.get(
+                community=self.community1, gamer=self.gamer1
+            ).game_notifications
+            self.post(self.view_name, data={}, **self.url_kwargs)
+            self.response_302()
+            assert (
+                models.CommunityMembership.objects.get(
+                    community=self.community1, gamer=self.gamer1
+                ).game_notifications
+                != original_setting
+            )
 
 
 class TestCommunityCreate(AbstractViewTest):

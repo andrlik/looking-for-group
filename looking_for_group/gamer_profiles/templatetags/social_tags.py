@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import pytz
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.query_utils import Q
 from django.template import Library
 from django.urls import reverse
@@ -49,6 +50,15 @@ def community_role_flag(context, community):
                     "gamer_profiles:community-join", kwargs={"community": community.slug}
                 ),
             )
+
+
+@register.simple_tag()
+def get_membership(community, gamer):
+    try:
+        membership = models.CommunityMembership.objects.get(community=community, gamer=gamer)
+    except ObjectDoesNotExist:
+        return None
+    return membership
 
 
 @register.simple_tag(takes_context=True)
