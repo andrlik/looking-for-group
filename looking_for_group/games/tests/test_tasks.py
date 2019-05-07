@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.utils import timezone
 from factory.django import mute_signals
+from notifications.models import Notification
 from schedule.models import Calendar, Rule
 from test_plus import TestCase
 
@@ -203,3 +204,25 @@ class TestEventEdits(AbstractTaskTestCase):
             player3.delete()
             assert models.ChildOccurenceLink.objects.count() == 2
             assert self.game.event.get_child_events().count() == 2
+
+
+class TestNotificationTask(AbstractTaskTestCase):
+    """
+    Test for community notification options.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.community1 = factories.GamerCommunityFactory(owner=self.gamer1)
+        self.community1.add_member(self.gamer2)
+        self.game.communities.add(self.community1)
+        member_rec = self.community1.members.get(gamer=self.gamer2)
+        member_rec.game_notifications = True
+        member_rec.save()
+
+    def test_notify(self):
+        all_notifications = Notification.objects.count()
+        g2_notifications = Notification.objects.filter(recipient=self.gamer2.user).count()
+        tasks.notify_subscribers_of_new_game(self.community1, self.game)
+        assert Notification.objects.count() - all_notifications == 1
+        assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notifications == 1

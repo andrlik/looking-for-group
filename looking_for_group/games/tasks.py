@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from notifications.signals import notify
 from schedule.models import Calendar, Occurrence
 
 from . import models
@@ -234,3 +235,13 @@ def clean_expired_availability_events():
         deleted_info = acal.events.filter(end_recurring_period__lt=timezone.now()).delete()
         deleted_count += deleted_info[0]
     logger.info("Deleted {} expired availability events".format(deleted_count))
+
+
+def notify_subscribers_of_new_game(community, game):
+    """
+    For a given community, notify anyone subscribed to notifications if a game is newly added to it.
+    """
+    members_subscribed = community.members.filter(game_notifications=True)
+    if members_subscribed.exists():
+        for member in members_subscribed:
+            notify(game.gm, recipient=member.gamer.user, verb="posted game {} to community {}".format(game.title, community.name), target=game)
