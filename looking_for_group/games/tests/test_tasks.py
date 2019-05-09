@@ -1,8 +1,9 @@
 from datetime import timedelta
 
-from django.db.models.signals import post_delete, post_save, pre_delete
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.utils import timezone
 from factory.django import mute_signals
+from notifications.models import Notification
 from schedule.models import Calendar, Rule
 from test_plus import TestCase
 
@@ -203,3 +204,80 @@ class TestEventEdits(AbstractTaskTestCase):
             player3.delete()
             assert models.ChildOccurenceLink.objects.count() == 2
             assert self.game.event.get_child_events().count() == 2
+
+
+class TestNotificationTask(AbstractTaskTestCase):
+    """
+    Test for community notification options.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.community1 = factories.GamerCommunityFactory(owner=self.gamer1)
+        self.community2 = factories.GamerCommunityFactory(owner=self.gamer1)
+        self.community1.add_member(self.gamer2)
+        self.community2.add_member(self.gamer2)
+        with mute_signals(m2m_changed):
+            self.game.communities.add(self.community1, self.community2)
+        self.member_rec = self.community1.members.get(gamer=self.gamer2)
+        self.member_rec.game_notifications = True
+        self.member_rec.save()
+        self.member_rec2 = self.community2.members.get(gamer=self.gamer2)
+        self.member_rec2.game_notifications = True
+        self.member_rec2.save()
+
+    def test_notify_one_community(self):
+        all_notifications = Notification.objects.count()
+        g2_notifications = Notification.objects.filter(recipient=self.gamer2.user).count()
+        tasks.notify_subscribers_of_new_game([self.community1], self.game)
+        assert Notification.objects.count() - all_notifications == 1
+        assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notifications == 1
+
+    def test_multiple_communities(self):
+        all_notifications = Notification.objects.count()
+        g2_notifications = Notification.objects.filter(recipient=self.gamer2.user).count()
+        tasks.notify_subscribers_of_new_game([self.community1, self.community2], self.game)
+        assert Notification.objects.count() - all_notifications == 1
+        assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notifications == 1
+
+    def test_multiple_but_only_one_optin(self):
+        self.member_rec2.game_notifications = False
+        self.member_rec2.save()
+        all_notifications = Notification.objects.count()
+        g2_notifications = Notification.objects.filter(recipient=self.gamer2.user).count()
+        tasks.notify_subscribers_of_new_game([self.community1, self.community2], self.game)
+        assert Notification.objects.count() - all_notifications == 1
+        assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notifications == 1
+
+    def test_communties_but_no_opt_in(self):
+        self.member_rec.game_notifications = False
+        self.member_rec.save()
+        self.member_rec2.game_notifications = False
+        self.member_rec2.save()
+        all_notifications = Notification.objects.count()
+        g2_notifications = Notification.objects.filter(recipient=self.gamer2.user).count()
+        tasks.notify_subscribers_of_new_game([self.community1, self.community2], self.game)
+        assert Notification.objects.count() - all_notifications == 0
+        assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notifications == 0
+
+    def test_long_name_one(self):
+        new_name = "".join("a" for x in range(255))
+        self.community1.name = new_name
+        self.community1.save()
+        all_notifications = Notification.objects.count()
+        g2_notifications = Notification.objects.filter(recipient=self.gamer2.user).count()
+        tasks.notify_subscribers_of_new_game([self.community1], self.game)
+        assert Notification.objects.count() - all_notifications == 1
+        assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notifications == 1
+        assert "..." in Notification.objects.latest('timestamp').verb
+
+    def test_long_name_multiple(self):
+        new_name = "".join("a" for x in range(255))
+        self.community1.name = new_name
+        self.community1.save()
+        all_notifications = Notification.objects.count()
+        g2_notifications = Notification.objects.filter(recipient=self.gamer2.user).count()
+        tasks.notify_subscribers_of_new_game([self.community1, self.community2], self.game)
+        assert Notification.objects.count() - all_notifications == 1
+        assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notifications == 1
+        assert "..." in Notification.objects.latest('timestamp').verb

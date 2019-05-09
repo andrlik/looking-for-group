@@ -4,6 +4,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
+from notifications.signals import notify
 from schedule.models import Calendar, Occurrence
 
 from . import models
@@ -234,3 +236,41 @@ def clean_expired_availability_events():
         deleted_info = acal.events.filter(end_recurring_period__lt=timezone.now()).delete()
         deleted_count += deleted_info[0]
     logger.info("Deleted {} expired availability events".format(deleted_count))
+
+
+def notify_subscribers_of_new_game(communities, game):
+    """
+    For a given list of communities, notify anyone subscribed to notifications that the indicated game is newly added to it.
+    """
+    notification_queue = {}
+    for community in communities:
+        members_subscribed = community.get_members().filter(game_notifications=True)
+        if members_subscribed.exists():
+            for member in members_subscribed:
+                if member.gamer.user in notification_queue.keys():
+                    notification_queue[member.gamer.user].append(community)
+                else:
+                    notification_queue[member.gamer.user] = [community]
+    game_title = game.title
+    if len(game_title) > 100:
+        game_title = "{}...".format(game_title[0:100])
+    max_length = 255 - 26 - len(game_title)
+    community_string = None
+    for user, communities in notification_queue.items():
+        comm_name = None
+        pluralizer = ""
+        if len(communities) > 1:
+            new_length = max_length - 17
+            if len(communities[0].name) > new_length:
+                comm_name = "{}...".format(communities[0].name[0:new_length-4])
+                if len(communities) > 2:
+                    pluralizer = "s"
+            else:
+                comm_name = communities[0].name
+            community_string = "{} and {} other{}".format(comm_name, len(communities) - 1, pluralizer)
+        else:
+            if len(communities[0].name) > max_length:
+                community_string = "{}...".format(communities[0].name[0:max_length-4])
+            else:
+                community_string = communities[0].name
+        notify.send(game.gm, recipient=user, verb=_("posted to community {}".format(community_string)), target=game)

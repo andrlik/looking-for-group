@@ -2,13 +2,13 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.signals import post_save
+from django.db.models.signals import m2m_changed
 from django.utils import timezone
 from factory.django import mute_signals
 from test_plus import TestCase
 
-from .. import forms
 from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
+from .. import forms
 from ..models import GamePosting, Player
 
 
@@ -65,7 +65,8 @@ class GameSessionFormTest(AbstractFormTest):
             game_frequency="weekly",
             session_length=3.0,
         )
-        self.game.communities.add(self.comm1)
+        with mute_signals(m2m_changed):
+            self.game.communities.add(self.comm1)
         self.player1 = Player.objects.create(gamer=self.gamer2, game=self.game)
         self.player2 = Player.objects.create(gamer=self.gamer3, game=self.game)
         self.player3 = Player.objects.create(gamer=self.gamer4, game=self.game)

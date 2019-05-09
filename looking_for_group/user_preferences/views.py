@@ -121,6 +121,11 @@ class SettingsView(LoginRequiredMixin, SelectRelatedMixin, generic.DetailView):
         else:
             return None
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["community_list"] = social_models.CommunityMembership.objects.filter(gamer=self.request.user.gamerprofile).select_related('community').order_by("community__name")
+        return context
+
 
 class SettingsEdit(
     LoginRequiredMixin, ModelFormWithSwitcViewhMixin, generic.edit.UpdateView
@@ -137,6 +142,7 @@ class SettingsEdit(
         "notification_digest",
         "feedback_volunteer",
         "email_messages",
+        "community_subscribe_default",
     ]
     success_url = reverse_lazy("user_preferences:setting-view")
 
