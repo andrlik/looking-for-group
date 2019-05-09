@@ -516,11 +516,16 @@ class CommunityToggleGameNotifications(LoginRequiredMixin, generic.edit.UpdateVi
     def get_success_url(self):
         if not self.success_url:
             return self.get_object().get_absolute_url()
+        return self.success_url
 
     def dispatch(self, request, *args, **kwargs):
-        next_url = request.GET.get("next", None)
-        if next_url:
-            self.success_url = next_url
+        logger.debug("Checking to see if there is a different url")
+        if request.GET:
+            logger.debug("Grabbing next value from GET")
+            next_url = request.GET['next']
+            if next_url:
+                logger.debug("Saving {} as success url".format(next_url))
+                self.success_url = next_url
         if request.user.is_authenticated and request.method not in ["post", "POST"]:
             return HttpResponseNotAllowed(["POST"])
         if request.user.is_authenticated:

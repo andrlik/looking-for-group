@@ -39,7 +39,7 @@
       <tr>
         <td><a href="{{ community.community.get_absolute_url }}">{{ community.community.name }}</a></td>
         <td class="text-center"><span class="label {% if community.game_notifications %}success{% else %}alert{% endif %}">{{ community.game_notifications|yesno:"Yes,No" }}</span></td>
-        <td><form action="{% url 'gamer_profiles:community-toggle-notifications' community=community.community.slug %}?next={% url 'user_preferences:setting-view' %}">{% csrf_token %}<input type="submit" class="button" value="{% if community.game_notifications %}{% trans 'Turn off notifications' %}{% else %}{% trans 'Turn on notifications' %}{% endif %}" /></form>
+        <td><form action="{% url 'gamer_profiles:community-toggle-notifications' community=community.community.slug %}?next={% url 'user_preferences:setting-view' %}" method="post">{% csrf_token %}<input type="submit" class="button" value="{% if community.game_notifications %}{% trans 'Turn off notifications' %}{% else %}{% trans 'Turn on notifications' %}{% endif %}" /></form>
       </tr>
       {% empty %}
       {% endfor %}

@@ -63,11 +63,11 @@
         </ul>
       </div>
       {% if community in request.user.gamerprofile.communities.all %}
-      {% get_membership community request.user.gamerprofile as current_membership %}
+      {% get_membership request.user.gamerprofile as current_membership %}
       <div class="card-section">
         <dl>
           <dt>{% trans "Notifications for new games" %}</dt>
-          <dd><span class="label {% if current_membership.game_notfications %}success{% else %}alert{% endif %}">{{ membership.game_notifications|yesno:"On,Off" }}</span></dd>
+          <dd><span class="label {% if current_membership.game_notifications %}success{% else %}alert{% endif %}">{{ current_membership.game_notifications|yesno:"On,Off" }}</span></dd>
         </dl>
         <form action="{% url 'gamer_profiles:community-toggle-notifications' community=community.slug %}" method="post">{% csrf_token %}<input type="submit" class="button" value="{% if current_membership.game_notifications %}{% trans 'Turn off notifications' %}{% else %}{% trans 'Turn on notifications' %}{% endif %}" /></form>
       </div>

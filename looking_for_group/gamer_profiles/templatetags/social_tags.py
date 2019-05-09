@@ -52,10 +52,10 @@ def community_role_flag(context, community):
             )
 
 
-@register.simple_tag()
-def get_membership(community, gamer):
+@register.simple_tag(takes_context=True)
+def get_membership(context, gamer):
     try:
-        membership = models.CommunityMembership.objects.get(community=community, gamer=gamer)
+        membership = models.CommunityMembership.objects.get(community=context['community'], gamer=gamer)
     except ObjectDoesNotExist:
         return None
     return membership
