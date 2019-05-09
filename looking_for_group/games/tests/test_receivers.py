@@ -6,11 +6,12 @@ from django.db.models.signals import post_save
 from django.test import TransactionTestCase
 from django.utils import timezone
 from factory.django import mute_signals
+# from notifications.models import Notification
 from schedule.models import Calendar, Rule
 from test_plus import TestCase
 
-from .. import models
 from ...gamer_profiles.tests import factories
+from .. import models
 
 
 class AbstractSyncTestCase(TestCase):
@@ -128,3 +129,54 @@ class MarkdownSignalTest(AbstractSyncTestCase):
             session.gm_notes = "I am very **strong**!"
             session.save()
             assert session.gm_notes_rendered == "<p>I am very <strong>strong</strong>!</p>"
+
+
+# class TestCommunityNotificationSignal(AbstractAsyncTestCase):
+#     """
+#     Test that communities are notified on the m2m changed.
+#     """
+#     def setUp(self):
+#         super().setUp()
+#         with mute_signals(post_save):
+#             self.community1 = factories.GamerCommunityFactory(owner=self.gamer1)
+#             self.community2 = factories.GamerCommunityFactory(owner=self.gamer1)
+#             self.community2.add_member(self.gamer1, role="admin")
+#             self.community1.add_member(self.gamer1, role="admin")
+#             self.community1.add_member(self.gamer2)
+#             self.community2.add_member(self.gamer2)
+#             self.community1.add_member(self.gamer3)
+#         rec1 = self.community1.get_members().get(gamer=self.gamer1)
+#         rec2 = self.community1.get_members().get(gamer=self.gamer2)
+#         rec3 = self.community2.get_members().get(gamer=self.gamer2)
+#         rec1.game_notifications = True
+#         for rec in [rec1, rec2, rec3]:
+#             rec.game_notifications = True
+#             rec.save()
+
+#     def test_add_community(self):
+#         """
+#         Test adding a single community.
+#         """
+#         allnotify = Notification.objects.count()
+#         g1_notify = Notification.objects.filter(recipient=self.gamer1.user).count()
+#         g2_notify = Notification.objects.filter(recipient=self.gamer2.user).count()
+#         g3_notify = Notification.objects.filter(recipient=self.gamer3.user).count()
+#         self.game.communities.add(self.community1)
+#         assert Notification.objects.count() - allnotify == 2
+#         assert Notification.objects.filter(recipient=self.gamer1.user).count() - g1_notify == 1
+#         assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notify == 1
+#         assert Notification.objects.filter(recipient=self.gamer3.user).count() == g3_notify
+
+#     def test_add_multiple_communities(self):
+#         """
+#         Test adding a game to multiple communities.
+#         """
+#         allnotify = Notification.objects.count()
+#         g1_notify = Notification.objects.filter(recipient=self.gamer1.user).count()
+#         g2_notify = Notification.objects.filter(recipient=self.gamer2.user).count()
+#         g3_notify = Notification.objects.filter(recipient=self.gamer3.user).count()
+#         self.game.communities.add(self.community1, self.community2)
+#         assert Notification.objects.count() - allnotify == 2
+#         assert Notification.objects.filter(recipient=self.gamer1.user).count() - g1_notify == 1
+#         assert Notification.objects.filter(recipient=self.gamer2.user).count() - g2_notify == 1
+#         assert Notification.objects.filter(recipient=self.gamer3.user).count() == g3_notify

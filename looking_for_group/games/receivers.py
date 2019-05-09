@@ -19,6 +19,7 @@ from .tasks import (
     calculate_player_attendance,
     clear_calendar_for_departing_player,
     create_game_player_events,
+    notify_subscribers_of_new_game,
     sync_calendar_for_arriving_player,
     undo_player_attendence_for_incomplete_session,
     update_child_events_for_master,
@@ -338,3 +339,16 @@ def process_invite_accepted(sender, invite, acceptor, *args, **kwargs):
             )
         else:
             logger.debug("Player was already a member of game... moving on.")
+
+@receiver(m2m_changed, sender=models.GamePosting.communities.through)
+def fire_new_game_notification_task(sender, instance, action, reverse, model, pk_set, *args, **kwargs):
+    if action == "post_add":
+        if reverse:
+            games = model.objects.filter(id__in=[pk_set])
+            comms = [instance]
+            for game in games:
+                async_task(notify_subscribers_of_new_game, comms, game)
+        else:
+            comms = models.GamerCommunity.objects.filter(id__in=pk_set)
+            game = instance
+            async_task(notify_subscribers_of_new_game, comms, game)

@@ -1,5 +1,5 @@
 {% extends "gamer_profiles/community_base.html" %}
-{% load avatar_tags i18n rules humanize %}
+{% load avatar_tags i18n rules humanize social_tags %}
 {% block subtitle %}{{ community.name }} - {% endblock %}
 {% block sectiontitle %}{{ community.name }}{% endblock %}
 {% block mobileheader %}{{ community.name }}{% endblock %}
@@ -62,6 +62,16 @@
           <li{% if active_games %} class="stats-list-positive"{% endif %}>{{ active_games|length }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
         </ul>
       </div>
+      {% if community in request.user.gamerprofile.communities.all %}
+      {% get_membership request.user.gamerprofile as current_membership %}
+      <div class="card-section">
+        <dl>
+          <dt>{% trans "Notifications for new games" %}</dt>
+          <dd><span class="label {% if current_membership.game_notifications %}success{% else %}alert{% endif %}">{{ current_membership.game_notifications|yesno:"On,Off" }}</span></dd>
+        </dl>
+        <form action="{% url 'gamer_profiles:community-toggle-notifications' community=community.slug %}" method="post">{% csrf_token %}<input type="submit" class="button" value="{% if current_membership.game_notifications %}{% trans 'Turn off notifications' %}{% else %}{% trans 'Turn on notifications' %}{% endif %}" /></form>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

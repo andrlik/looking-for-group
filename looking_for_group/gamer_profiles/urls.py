@@ -56,6 +56,7 @@ urlpatterns = [
         view=views.LeaveCommunity.as_view(),
         name="community-leave",
     ),
+    path("communities/<slug:community>/togglenotifications/", view=views.CommunityToggleGameNotifications.as_view(), name="community-toggle-notifications"),
     path(
         "communities/<slug:community>/members/",
         view=views.CommunityMemberList.as_view(),

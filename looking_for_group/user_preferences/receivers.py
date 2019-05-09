@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models as django_models
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
@@ -89,6 +90,16 @@ def notify_admins_on_discord_server_change(sender, instance, action, reverse, mo
             for admin in admins:
                 for server in servers:
                     notify.send(instance.community, recipient=admin.gamer.user, verb=verb, action_object=server, target=instance.community)
+
+
+@receiver(post_save, sender=social_models.CommunityMembership)
+def set_notification_default_on_join(sender, instance, created, *args, **kwargs):
+    if created:
+        try:
+            instance.game_notifications = instance.gamer.preferences.community_subscribe_default
+            instance.save()
+        except ObjectDoesNotExist:
+            pass
 
 
 class QueuedSignalProcessor(signals.BaseSignalProcessor):
