@@ -1,9 +1,9 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from . import models
 from ..game_catalog import models as cat_models
 from ..gamer_profiles.forms import BooleanSwitchPaddleFormMixin, SwitchInput
+from . import models
 
 DUMMY_CHOICES = [("", "")]
 
@@ -36,6 +36,16 @@ class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
             self.fields.pop("communities")
         if "communities" in self.fields.keys():
             self.fields["communities"].queryset = allowed_communities
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if "communities" in self.fields.keys():
+            communities = cleaned_data.get("communities")
+            privacy = cleaned_data.get('privacy_level')
+            if privacy == "private" and len(communities) > 0:
+                msg = _("A game cannot be both private and posted in communities. None of your community members would be able to see it. Maximum privacy method allowed for community games is 'Friends/Selected Communities'.")
+                self.add_error('privacy_level', msg)
+                self.add_error('privacy_level', msg)
 
     class Meta:
         model = models.GamePosting

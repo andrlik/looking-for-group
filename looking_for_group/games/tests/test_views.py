@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -12,9 +12,9 @@ from factory.django import mute_signals
 from test_plus import APITestCase, TestCase
 from test_plus.test import BaseTestCase
 
-from .. import models
 from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
 from ...invites.models import Invite
+from .. import models
 from ..utils import mkfirstOfmonth, mkLastOfMonth
 
 
@@ -62,7 +62,8 @@ class AbstractViewTestCase(object):
             session_length=2.5,
             game_description="we will pretend to be elves",
         )
-        self.gp2.communities.add(self.comm1)
+        with mute_signals(m2m_changed):
+            self.gp2.communities.add(self.comm1)
         self.gp3 = models.GamePosting.objects.create(
             game_type="campaign",
             title="A private game",
@@ -182,7 +183,7 @@ class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
             "title": "A Valid Campaign",
             "status": "open",
             "game_type": "campaign",
-            "privacy_level": "private",
+            "privacy_level": "community",
             "min_players": 1,
             "max_players": 3,
             "game_description": "We like pie.",
@@ -211,7 +212,8 @@ class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
     def test_valid_submission(self):
         previous_count = models.GamePosting.objects.count()
         with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.valid_post_data)
+            with mute_signals(m2m_changed):
+                self.post(self.view_name, data=self.valid_post_data)
             self.response_302()
             assert models.GamePosting.objects.count() - previous_count == 1
 
@@ -532,7 +534,7 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
             "title": "A Valid Campaign",
             "game_type": "campaign",
             "status": "open",
-            "privacy_level": "private",
+            "privacy_level": "community",
             "min_players": 1,
             "max_players": 3,
             "game_description": "Some of us enjoy cake, too.",
@@ -544,7 +546,7 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
             "title": "A Valid Campaign",
             "game_type": "campaign",
             "status": "open",
-            "privacy_level": "private",
+            "privacy_level": "community",
             "min_players": 1,
             "max_players": 3,
             "game_description": "I ate a whole pie once.",
@@ -573,7 +575,8 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
 
     def test_valid_submission(self):
         with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.valid_post_data, **self.url_kwargs)
+            with mute_signals(m2m_changed):
+                self.post(self.view_name, data=self.valid_post_data, **self.url_kwargs)
             self.response_302()
             assert (
                 models.GamePosting.objects.get(pk=self.gp2.pk).title
