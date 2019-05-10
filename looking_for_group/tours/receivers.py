@@ -1,13 +1,18 @@
-from django.db.models.signals import pre_save
+from django.core.cache import cache
+from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-from markdown import markdown
 
 from . import models
 
 
-@receiver(pre_save, sender=models.Step)
-def process_markdown_description(sender, instance, *args, **kwargs):
+@receiver(m2m_changed, sender=models.Tour.users_completed.through)
+def update_cache_of_completed_tours(sender, instance, action, reverse, model, pk_set, *args, **kwargs):
     """
-    Save the rendered markdown to the correct description.
+    Whenever the completed tours of a user are changed, invalidate the caches.
     """
-    instance.guide_text_rendered = markdown(instance.guide_text)
+    if action in ["post_add", "post_remove"]:
+        if reverse:
+            cache.set("{}_completed_tours".format(instance.username), models.Tour.objects.filter(id__in=pk_set))
+        else:
+            for user in model.objects.filter(id__in=pk_set):
+                cache.set("{}_completed_tours".format(user.username), user.completed_tours.all())

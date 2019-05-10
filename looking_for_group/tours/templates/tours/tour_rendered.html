@@ -1,0 +1,20 @@
+{% load i18n markdownify %}
+{% if tour and user.is_authenticated %}
+<ol data-joyride data-autostart="{% if tour in completed_tours %}false{% else %}true{% endif %}" id="tour-{{ tour.name }}">
+  {% for step in tour.steps.all %}
+  <li data-target="#{{ step.target_id }}" data-position="bottom">
+    <h3>{% trans step.title %}</h3>
+    {% autoescape off %}
+    {% trans step.guide_text as guide_text %}
+    {{ guide_text|markdownify }}
+    {% endautoescape %}
+    {% if forloop.last %}
+    <p class="text-center">
+      <button class="button success" data-joyride-close>{% trans "Got it. Thanks!" %}</button>
+    </p>
+    {% endif %}
+  </li>
+  {% empty %}
+  {% endfor %}
+</ol>
+{% endif %}

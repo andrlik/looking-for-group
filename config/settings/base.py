@@ -104,6 +104,7 @@ LOCAL_APPS = [
     "looking_for_group.adminutils.apps.AdminutilsConfig",
     "looking_for_group.mailnotify.apps.MailnotifyConfig",
     "looking_for_group.rpgcollections.apps.RpgcollectionsConfig",
+    "looking_for_group.tours.apps.ToursConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -231,6 +232,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "looking_for_group.motd.context_processors.motd",
                 "looking_for_group.context_processors.app_version",
+                "looking_for_group.tours.context_processors.completed_tours",
                 "postman.context_processors.inbox",
             ],
         },
