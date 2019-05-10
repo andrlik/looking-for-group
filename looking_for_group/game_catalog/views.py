@@ -2,9 +2,10 @@ import logging
 from datetime import timedelta
 
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
+from django import forms as dj_forms
 from django.contrib import messages
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
@@ -25,7 +26,7 @@ from .models import (
     PublishedModule,
     SourceBook,
     SuggestedAddition,
-    SuggestedCorrection,
+    SuggestedCorrection
 )
 from .utils import combined_recent
 
@@ -760,6 +761,11 @@ class SuggestedCorrectionCreateView(LoginRequiredMixin, generic.CreateView):
         kwargs["initial"] = initial
         return kwargs
 
+    def get_form(self):
+        form = super().get_form()
+        form.fields["new_release_date"].widget = dj_forms.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")
+        return form
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["source_object"] = self.source_object
@@ -808,6 +814,11 @@ class SuggestedCorrectionUpdateView(
             self.fields = self.fields + ["new_tags"]
         self.fields = self.fields + ["other_notes"]
         return super().dispatch(request, *args, **kwargs)
+
+    def get_form(self):
+        form = super().get_form()
+        form.fields["new_release_date"].widget = dj_forms.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")
+        return form
 
 
 class SuggestedCorrectionDetailView(
