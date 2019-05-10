@@ -34,8 +34,8 @@
     <link type="text/x-scss" href="{% static 'sass/project.scss' %}" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{% static 'star-ratings/css/star-ratings.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'postman/css/postman.css' %}">
+        {% endcompress %}
     <link rel="stylesheet" type="text/css" href="{% static 'tours/css/foundation.joyride.min.css' %}">
-    {% endcompress %}
 
     {% endblock %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/motion-ui@1.2.3/dist/motion-ui.min.css" />
@@ -293,13 +293,13 @@
       {% compress js %}
       <script src="{% static 'js/project.js' %}"></script>
       <script src="{% static 'cookielaw/js/cookielaw.js' %}"></script>
-      <script src="{% static 'tours/js/foundation.joyride.min.js' %}"></script>
       {% endcompress %}
 
       <!-- Your stuff: Third-party javascript libraries go here -->
 
       {% block js_extra %}
       {% endblock %}
+      <script src="{% static 'tours/js/foundation.joyride.min.js' %}"></script>
 
       <script>
         $(document).foundation();
@@ -308,6 +308,7 @@
           $(this).parents('.app-dashboard').toggleClass('shrink-medium').toggleClass('shrink-large');
         });
       </script>
+
       <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
       <script type="text/javascript">
         var n = 40;
@@ -319,6 +320,7 @@
         });
 
       </script>
+
       {% block simplemde %}
       {% endblock %}
     {% endblock javascript %}

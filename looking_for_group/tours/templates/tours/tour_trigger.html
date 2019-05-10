@@ -1,4 +1,4 @@
 {% load i18n %}
 {% if tour and user.is_authenticated %}
-<button class="button" data-joyride-start="tour-{{ tour.name }}">{% trans "Start guide" %}</button>
+<button class="button" data-joyride-start="#tour-{{ tour.name }}">{% trans "Start guide" %}</button>
 {% endif %}

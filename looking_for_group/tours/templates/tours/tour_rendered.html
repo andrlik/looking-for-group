@@ -2,13 +2,12 @@
 {% if tour and user.is_authenticated %}
 <ol data-joyride data-autostart="{% if tour in completed_tours %}false{% else %}true{% endif %}" id="tour-{{ tour.name }}">
   {% for step in tour.steps.all %}
-  <li data-target="#{{ step.target_id }}" data-position="bottom">
-    <h3>{% trans step.title %}</h3>
-    {% autoescape off %}
-    {% trans step.guide_text as guide_text %}
-    {{ guide_text|markdownify }}
-    {% endautoescape %}
-    {% if forloop.last %}
+  <li data-target="#{{ step.target_id }}" data-position="bottom" data-alignment="center">
+    <h3>{{ step.step_title }}</h3>
+    <p>
+    {{ step.guide_text|markdownify|safe }}
+    </p>
+      {% if forloop.last %}
     <p class="text-center">
       <button class="button success" data-joyride-close>{% trans "Got it. Thanks!" %}</button>
     </p>

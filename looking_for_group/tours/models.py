@@ -14,7 +14,7 @@ class Tour(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
     name = models.CharField(max_length=50, db_index=True, unique=True)
     description = models.TextField()
-    users_completed = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="completed_tours")
+    users_completed = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="completed_tours", blank=True)
     enabled = models.BooleanField(default=False)
 
     def __str__(self):
