@@ -236,6 +236,7 @@ $app-dashboard-top-nav-height: 60px;
   height: 100%;
   overflow-x: visible;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 1;
   transition: all $offcanvas-transition-length $offcanvas-transition-timing;
 
