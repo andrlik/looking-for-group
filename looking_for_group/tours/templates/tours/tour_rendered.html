@@ -1,8 +1,8 @@
 {% load i18n markdownify %}
 {% if tour and user.is_authenticated %}
-<ol data-joyride data-autostart="{% if tour in completed_tours %}false{% else %}true{% endif %}" id="tour-{{ tour.name }}">
+<ol data-joyride data-autostart="{% if tour in completed_tours %}false{% else %}true{% endif %}" id="tour-{{ tour.name }}" >
   {% for step in tour.steps.all %}
-  <li data-target="#{{ step.target_id }}" data-position="bottom" data-alignment="center">
+  <li data-target="#{{ step.target_id }}">
     <h3>{{ step.step_title }}</h3>
     <p>
     {{ step.guide_text|markdownify|safe }}

@@ -7,6 +7,12 @@ from ..game_catalog.utils import AbstractUUIDModel, AbstractUUIDWithSlugModel
 
 # Create your models here.
 
+PLACEMENT_CHOICES = (
+    ("bottom", _("Bottom")),
+    ("top", _("Top")),
+    ("left", _("Left")),
+    ("right", _("Right")),
+)
 
 class Tour(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
@@ -31,6 +37,7 @@ class Step(TimeStampedModel, AbstractUUIDModel, models.Model):
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name="steps")
     step_order = models.PositiveIntegerField(default=0, help_text=_("The order of this step. Note that the number must be unique for the tour."))
     target_id = models.CharField(max_length=100, help_text=_("The id of the html element target for this step."))
+    placement = models.CharField(max_length=25, choices=PLACEMENT_CHOICES, default="bottom", help_text=_("Where should this appear in relation to the target?"))
     step_title = models.CharField(max_length=50, help_text=_("The title that should appear for this step."))
     guide_text = models.TextField(help_text=_("The Markdown version of the explanation that you want to appear in the guide box for this step of the tour."))
 
