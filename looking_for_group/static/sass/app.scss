@@ -255,6 +255,7 @@ $app-dashboard-top-nav-height: 60px;
     height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     .menu > li > a {
       align-items: center;
     }
@@ -295,6 +296,7 @@ $app-dashboard-top-nav-height: 60px;
 .app-dashboard-body-content {
   transition: all $offcanvas-transition-length $offcanvas-transition-timing;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   flex: 1 1 0;
   padding: 20px;
   background-color: $white;
