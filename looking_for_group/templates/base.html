@@ -35,7 +35,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'star-ratings/css/star-ratings.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'postman/css/postman.css' %}">
         {% endcompress %}
-    <link rel="stylesheet" type="text/css" href="{% static 'tours/css/foundation.joyride.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'shepherd.js/dist/css/shepherd-theme-default.css' %}">
 
     {% endblock %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/motion-ui@1.2.3/dist/motion-ui.min.css" />
@@ -75,6 +75,7 @@
     </div>
   </div>
   </div>
+  <a class="anchor" id="top"></a>
 
 
   <div class="app-dashboard-body off-canvas-wrapper">
@@ -299,7 +300,7 @@
 
       {% block js_extra %}
       {% endblock %}
-      <script src="{% static 'tours/js/foundation.joyride.min.js' %}"></script>
+      <script type="text/javascript" src="{% static 'shepherd.js/dist/js/shepherd.min.js' %}"></script>
 
       <script>
         $(document).foundation();
@@ -322,6 +323,8 @@
       </script>
 
       {% block simplemde %}
+      {% endblock %}
+      {% block tourjs %}
       {% endblock %}
     {% endblock javascript %}
   </body>

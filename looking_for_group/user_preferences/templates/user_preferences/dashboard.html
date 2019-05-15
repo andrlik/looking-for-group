@@ -4,7 +4,7 @@
 {% block sectiontitle %}{% trans "Dashboard" %}{% endblock %}
 {% block mobileheader %}{% trans "Dashboard" %}{% endblock %}
 {% block content %}
-{% get_tour "Dashboard" as tour %}
+{% get_tour "dashboard" as tour %}
 {% if motd %}
 <div class="grid-x grid-margin-x">
   <div class="cell auto">
@@ -208,12 +208,6 @@
     </div>
     {% endcache %}
   </div>
-  {% if tour %}
-  {% render_tour tour %}
-  {% endif %}
-  {% if tour %}
-  {% update_tour_rendered tour user %}
-  {% endif %}
 
 {% endblock %}
 {% block js_extra %}
@@ -234,3 +228,12 @@
     });
   </script>
   {% endblock %}
+  {% block tourjs %}
+  {% get_tour "dashboard" as tour %}
+  {% if tour %}
+  {% render_tour tour %}
+  {% endif %}
+  {% if tour %}
+  {% update_tour_rendered tour user %}
+  {% endif %}
+{% endblock %}

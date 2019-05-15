@@ -1,5 +1,5 @@
 {% extends "games/base.html" %}
-{% load avatar_tags foundation_formtags i18n humanize rules %}
+{% load avatar_tags foundation_formtags tour_tags i18n humanize rules %}
 {% block subtitle %}{% trans "Game Listings" %} - {% endblock %}
 {% block allgamesactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{% trans "Game listings" %}{% endblock %}
@@ -8,11 +8,18 @@
 {% if not request.user.is_authenticated %}
 <p>{% trans "Showing only public games. You will need to" %} <a href="{% url 'accounts_login' %}">{% trans "login" %}</a> {% trans "to see any more." %}</p>
 {% endif %}
+{% if request.user.is_authenticated %}
+{% get_tour "games" as tour %}
+{% if tour %}
+<div class="clearfix">
+  <div class="float-right">{% render_tour_trigger tour %}</div>
+</div>
+{% endif %}
+{% endif %}
 {% if not game_list %}
 <p>{% trans "No games found." %}</p>
 {% endif %}
 {% if filter_form %}
-
 
 <form class="inline-form" action="" method="get">
   <div class="grid-x grid-margin-x"><input type="hidden" id="id_filter_present" name="filter_present" value="1" /> <div class="cell medium-auto"> {% render_field filter_form.game_status %}</div><div class="cell medium-auto"> {% render_field filter_form.edition %}</div><div class="cell medium-auto"> {% render_field filter_form.system %}</div><div class="cell medium-auto"> {% render_field filter_form.module %}</div> <div class="cell medium-auto">{% render_field filter_form.similar_availability %}</div> <div class="cell medium-auto"><label for="id_submit_filter">&nbsp;</label> <input id="id_submit_filter" type="submit" class="button secondary" value="{% trans 'Filter results' %}" /></div></div></form>
@@ -20,17 +27,17 @@
 <table class="scroll hover">
   <thead>
     <tr>
-      <th width="300">{% trans "Title" %}</th>
-      <th>{% trans "Type" %}</th>
+      <th id="gametitle" width="300">{% trans "Title" %}</th>
+      <th id="gametype">{% trans "Type" %}</th>
       <th>{% trans "Status" %}</th>
       <th width="100">{% trans "Start" %}</th>
       <th width="100">{% trans "End" %}</th>
       <th><abbr title="{% trans 'Game master' %}">{% trans "GM" %}</abbr></th>
       <th><abbr title="{% trans 'Frequency' %}">{% trans "Freq" %}</abbr></th>
       <th class="text-right">{% trans "Length (hours)" %}</th>
-      <th><abbr title="{% trans 'Adult themes?' %}">{% trans "Adult" %}</abbr></th>
-      <th><abbr title="{% trans 'Content Warning' %}">{% trans "CW" %}</abbr></th>
-      <th class="text-right">{% trans 'Privacy' %}</th>
+      <th id="gameat"><abbr title="{% trans 'Adult themes?' %}">{% trans "Adult" %}</abbr></th>
+      <th id="gamecw"><abbr title="{% trans 'Content Warning' %}">{% trans "CW" %}</abbr></th>
+      <th id="gameprivacylevel" class="text-right">{% trans 'Privacy' %}</th>
       <th class="text-right">{% trans "Players" %}</th>
       <th class="text-right"><abbr title="{% trans 'Sessions completed' %}">{% trans "Sessions" %}</abbr></th>
       <th width="500">{% trans "Description" %}</th>
@@ -89,4 +96,13 @@
 </nav>
 {% endif %}
 
+{% endblock %}
+{% block tourjs %}
+{% if request.user.is_authenticated %}
+{% get_tour "games" as tour %}
+{% if tour %}
+{% render_tour tour %}
+{% update_tour_rendered tour request.user %}
+{% endif %}
+{% endif %}
 {% endblock %}

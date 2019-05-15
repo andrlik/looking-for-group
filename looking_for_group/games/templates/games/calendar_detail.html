@@ -1,13 +1,31 @@
 {% extends "games/calendar_base.html" %}
-{% load i18n %}
+{% load i18n tour_tags %}
 {% block subtitle %}{% trans "Calendar Details" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Your calendar" %}{% endblock %}
 {% block mobileheader %}{% trans "Your calendar" %}{% endblock %}
 {% block innernavmenu %}
 <li{% include "is_active_definition.html" %}><a href="{% url 'games:calendar_detail' gamer=request.user.username %}"><i class="fas fa-calendar-alt"></i> {% trans "Your calendar" %}</a></li>
-<li><a href="{% url 'games:calendar_ical' gamer=request.user.gamerprofile.pk %}" data-tooltip tabindex="0" title="Right click/long press to copy link for your calendar app"><i class="fas fa-rss-square"></i> {% trans "iCal feed" %}</a></li>
+<li id="icallink"><a href="{% url 'games:calendar_ical' gamer=request.user.gamerprofile.pk %}" data-tooltip tabindex="0" title="Right click/long press to copy link for your calendar app"><i class="fas fa-rss-square"></i> {% trans "iCal feed" %}</a></li>
 {% endblock %}
 {% block content %}
-<p>{% trans "Your scheduled game events appear below." %}</p>
+<div class="grid-x grid-margin-x">
+  <div class="cell auto">
+    <p>{% trans "Your scheduled game events appear below." %}</p>
+  </div>
+  {% get_tour "calendar" as tour %}
+  {% if tour %}
+  <div class="cell auto">
+    {% render_tour_trigger tour %}
+  </div>
+  {% endif %}
+</div>
 <div id="calendar"></div>
+{% endblock %}
+
+{% block tourjs %}
+{% get_tour "calendar" as tour %}
+{% if tour %}
+{% render_tour tour %}
+{% update_tour_rendered tour request.user %}
+{% endif %}
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends "gamer_profiles/base.html" %}
-{% load avatar_tags i18n humanize social_tags %}
+{% load avatar_tags i18n humanize social_tags tour_tags %}
 {% block subtitle %}{% trans "Communities" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Communities" %}{% endblock %}
 {% block mobileheader %}{% trans "Communities" %}{% endblock %}
@@ -9,17 +9,25 @@
 {% if not request.user.is_authenticated %}
 <p>{% trans "Showing only public communities. To see others, you must first" %} <a href="{% url 'account_login' %}">{% trans "login." %}</a></p>
 {% endif %}
+{% if request.user.is_authenticated %}
+{% get_tour "communities" as tour %}
+{% if tour %}
+<div class="clearfix">
+  <div class="float-right">{% render_tour_trigger tour %}</div>
+</div>
+{% endif %}
+{% endif %}
 {% if not object_list %}
 <p>{% trans "No communities found." %}</p>
 {% endif %}
 <table class="scroll hover">
   <thead>
-    <th>{% trans "Name" %}</th>
-    <th class="text-right">{% trans "Members" %}</th>
+    <th id="commname">{% trans "Name" %}</th>
+    <th id="membercount" class="text-right">{% trans "Members" %}</th>
     <th>{% trans "Owner" %}</th>
-    <th>{% trans "Public/Private" %}</th>
-    <th width="400">{% trans "Description" %}</th>
-    <th class="text-right">{% trans "Games" %}</th>
+    <th id="commprivacylevel">{% trans "Public/Private" %}</th>
+    <th id="commdescription" width="400">{% trans "Description" %}</th>
+    <th id="commgamecount" class="text-right">{% trans "Games" %}</th>
     <th>{% trans "Your status" %}</th>
   </thead>
   <tbody>
@@ -61,4 +69,11 @@
 </nav>
 {% endif %}
 
+{% endblock %}
+{% block tourjs %}
+{% get_tour "communities" as tour %}
+{% if request.user.is_authenticated and tour %}
+{% render_tour tour %}
+{% update_tour_rendered tour request.user %}
+{% endif %}
 {% endblock %}

@@ -1,5 +1,6 @@
 import logging
 
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.template import Library
 
@@ -15,10 +16,11 @@ def get_tour(tour_name):
     tour = None
     try:
         logger.debug("Searching for tour with name {}".format(tour_name))
-        tour = (
+        tour = cache.get_or_set(
+            "tour_{}".format(tour_name),
             models.Tour.objects.prefetch_related("steps")
             .filter(enabled=True)
-            .get(name=tour_name)
+            .get(name=tour_name),
         )
         logger.debug("Found it!")
     except ObjectDoesNotExist:

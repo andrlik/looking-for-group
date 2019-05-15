@@ -31,17 +31,25 @@
 {% endif %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
-    <div class="card">
-      <div class="card-divider"><h5 id="game-description">{% trans "Description" %}</h5></div>
+    <div class="card" id="game-description">
+      <div class="card-divider"><h5>{% trans "Description" %}</h5></div>
       <div class="card-section">
+        {% has_perm "game.is_member" request.user game as is_member %}
+        {% get_tour "game" as tour %}
+        {% if tour and is_member %}
+        <div class="float-right">
+          {% render_tour_trigger tour %}
+        </div>
+        {% endif %}
         <section class="description-text">{{ game.game_description_rendered|safe }}</section>
+
       </div>
     </div>
   </div>
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="game-details">
       <div class="card-divider">
-        <h5 id="game-details">{% trans "Details" %}</h5>
+        <h5>{% trans "Details" %}</h5>
       </div>
       <div class="card-section">
         <table class="hover scroll">
@@ -151,8 +159,8 @@
   </div>
   {% endif %}
   <div class="cell medium-auto">
-    <div class="card">
-      <div class="card-divider"><h5 id="game-players">{% trans "Current Players" %}</h5></div>
+    <div class="card" id="game-players">
+      <div class="card-divider"><h5>{% trans "Current Players" %}</h5></div>
       <div class="card-section">
 {% if not player_list %}
 <p>{% trans "No players yet" %}</p>
@@ -227,10 +235,13 @@
 {% endif %}
       </div>
     </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
     {% if recent_sessions or game.next_session_time %}
     <div class="cell medium-auto">
-      <div class="card">
-        <div class="card-divider"><h5 id="game-recent-sessions">{% trans "Recent and upcoming sessions" %}</h5></div>
+      <div class="card" id="game-recent-sessions">
+        <div class="card-divider"><h5>{% trans "Recent and upcoming sessions" %}</h5></div>
         <div class="card-section">
           {% if game.gm.user == request.user %}
           <div class="clearfix">
@@ -298,7 +309,13 @@
 {% endif %}
     {% endblock %}
   </div>
-  {% if tour %}
-  {% render_tour tour %}
-  {% endif %}
+
 {% endblock %}
+  {% block tourjs %}
+  {% has_perm "game.is_member" request.user game as is_member %}
+  {% get_tour "game" as tour %}
+  {% if tour and is_member %}
+  {% render_tour tour %}
+  {% update_tour_rendered tour request.user %}
+  {% endif %}
+  {% endblock %}
