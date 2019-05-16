@@ -4,6 +4,10 @@
 {% block sectiontitle %}{% blocktrans with cname=community.name %}Invites for {{ cname }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with cname=community.name %}Invites for {{ cname }}{% endblocktrans %}{% endblock %}
 {% block inviteactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block comm_crumbs %}
+<li><a href="{{ community.get_absolute_url }}">{{ community.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Invites" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm "community.can_invite" user community as is_inviter %}
 {% has_perm "community.can_admin_invites" user community as is_invite_admin %}

@@ -155,9 +155,19 @@
     </div>
 
     <div class="app-dashboard-body-content off-canvas-content" data-off-canvas-content id="content">
+      {% block breadcrumbs %}
+      <nav aria-label="{% trans 'You are here:' %}" role="navigation">
+        <ul class="breadcrumbs">
+          <li><a href="/">{% trans "Home" %}</a></li>
+          {% block extracrumbs %}
+          {% endblock %}
+        </ul>
+      </nav>
+      {% endblock %}
       {% block innernav %}
       {% endblock %}
       <main>
+
       <div class ="clearfix">
 
 {% block cookielaw %}

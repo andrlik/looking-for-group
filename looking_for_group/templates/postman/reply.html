@@ -2,3 +2,7 @@
 {% load i18n %}
 {% block pm_write_title %}{% trans "Reply"%}{% endblock %}
 {% block pm_write_recipient %}<tr><th><label>{% trans "Recipient" %}:</label></th><td>{{ recipient }}</td></tr>{% endblock %}
+{% block extracrumbs %}
+<li><a href="{% url 'postman:inbox' %}">{% trans "Messages" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Reply" %}</li>
+{% endblock %}

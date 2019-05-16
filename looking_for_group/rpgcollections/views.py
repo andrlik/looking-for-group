@@ -14,10 +14,10 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
+from . import forms, models
 from ..game_catalog import models as catalog_model
 # from ..game_catalog import models as db_models
 from ..gamer_profiles.models import GamerProfile
-from . import forms, models
 
 # Views from here on out assume you are specifying a specific user to view. In site architechture it is a subset of the gamer profile.
 # You will also need to be authenticated to view anyone's collection, and collections are only visible to people with whom you have a connection.
@@ -432,4 +432,5 @@ class BookDelete(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["gamer"] = self.get_object().library.user.gamerprofile
+        context["thebook"] = get_object_or_404(models.Book, pk=self.get_object().id)
         return context

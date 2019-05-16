@@ -4,6 +4,11 @@
 {% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% blocktrans with gametitle=player.game.title %}Create new character for {{ gametitle }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with gametitle=player.game.title %}Create new character for {{ gametitle }}{% endblocktrans %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'games:character_game_list' gameid=game.slug %}">{% trans "Characters" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Create" %}</li>
+{% endblock %}
 {% block content %}
 <p>{% trans "Enter the character information below. You may also optionally upload a character sheet." %}</p>
 <form enctype="multipart/form-data" method="post" action ="">

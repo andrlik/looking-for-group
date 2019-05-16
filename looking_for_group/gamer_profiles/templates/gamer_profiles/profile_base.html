@@ -1,5 +1,10 @@
 {% extends "gamer_profiles/base.html" %}
 {% load i18n social_tags %}
+{% block extracrumbs %}
+<li class="disabled">{% trans "Profiles" %}</li>
+{% block profile_crumbs %}
+{% endblock %}
+{% endblock %}
 {% block innernavmenu %}
 {% is_blocked_by_user gamer as blocked %}
 <li{% block detailactive %}{% endblock %}><a href="{{ gamer.get_absolute_url }}"><i class="fas fa-user"></i> {% trans "Profile details" %}</a></li>

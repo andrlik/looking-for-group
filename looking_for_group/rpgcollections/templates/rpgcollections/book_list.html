@@ -5,6 +5,15 @@
 {% block detailactive %}{% endblock %}
 {% block collectactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% load i18n static foundation_formtags %}
+{% block profile_crumbs %}
+{% if request.user == gamer.user %}
+<li><a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Your profile" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Manage collection" %}</li>
+{% else %}
+<li><a href="{{ gamer.get_absolute_url }}">{{ gamer }}'s {% trans "profile" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "View collection" %}</li>
+{% endif %}
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
     <div class="cell medium-auto">

@@ -4,6 +4,9 @@
 {% block gameactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
 {% block mobileheader %}{{ game.title }}{% endblock %}
+{% block game_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ game.title|truncatechars_html:"70" }}</li>
+{% endblock %}
 {% block og_graph %}
 <meta name="twitter:title" content="{{ game.title }} on LFG Directory">
 <meta name="twitter:description" content="{{ game.game_description_rendered|truncatewords_html:15|striptags }}">

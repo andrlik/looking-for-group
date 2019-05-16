@@ -3,6 +3,12 @@
 {% block subtitle %}{% blocktrans with gametitle=log.session.game.title %}Editing log entry for {{ gametitle }}{% endblocktrans %} - {% endblock %}
 {% block sectiontitle %}{% trans "Editing adventure log" %}{% endblock %}
 {% block mobileheader %}{% trans "Editing adventure log" %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ log.session.game.get_absolute_url }}">{{ log.session.game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'games:session_list' gameid=log.session.game.slug %}">{% trans "Sessions" %}</a></li>
+<li><a href="{{ log.session.get_absolute_url }}">{{ log.session.scheduled_time }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Log" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">

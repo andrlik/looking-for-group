@@ -4,6 +4,10 @@
 {% block sectiontitle %}{% blocktrans with gname=game.title %}Invites for {{ gname }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with gname=game.title %}Invites for {{ gname }}{% endblocktrans %}{% endblock %}
 {% block inviteactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Invites" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm "invite.can_invite" user game as is_inviter %}
 {% if is_inviter %}

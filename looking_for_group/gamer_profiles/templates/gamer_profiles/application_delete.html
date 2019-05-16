@@ -1,6 +1,11 @@
 {% extends "gamer_profiles/base.html" %}
 {% load i18n humanize foundation_formtags %}
 {% block subtitle %}{% trans "Withdraw application to join" %} {{ object.community.name }} - {% endblock %}
+{% block comm_crumbs %}
+<li><a href="{% url 'gamer_profiles:my-application-list' %}">{% trans "Your applications" %}</a></li>
+<li><a href="{{ object.community.get_absolute_url }}">{{ object.community.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Withdraw" %}</li>
+{% endblock %}
 {% block content %}
 <h1>{% blocktrans %}Withdraw application to join {{ object.community.name }}?{% endblocktrans %}</h1>
 <span class="meta">{% blocktrans count counter=object.community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ object.community.owner.get_absolute_url }}">{{ object.community.owner.display_name }}</a></span>

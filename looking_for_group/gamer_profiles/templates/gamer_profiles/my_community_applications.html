@@ -4,6 +4,9 @@
 {% block appactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{% trans "My community applications" %}{% endblock %}
 {% block mobileheader %}{% trans "My community applications" %}{% endblock %}
+{% block comm_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Your applications" %}</li>
+{% endblock %}
 {% block content %}
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">
   <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ applications|length }})</a></li>

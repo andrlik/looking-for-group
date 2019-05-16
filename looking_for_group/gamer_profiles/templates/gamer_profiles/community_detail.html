@@ -6,6 +6,9 @@
 {% has_perm 'community.edit_community' request.user community as is_admin %}
 {% has_perm 'community.transfer_owner' request.user community as is_owner %}
 {% block commdetailactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block comm_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ community.name|truncatechars_html:"70" }}</li>
+{% endblock %}
 {% block og_graph %}
 <meta name="twitter:title" content="{{ community.name }} on LFG Directory">
 <meta name="twitter:description" content="{{ community.description_rendered|truncatewords_html:15|striptags }}">

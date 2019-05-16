@@ -5,6 +5,11 @@
 {% block subtitle %}{% trans "Create session" %} - {% endblock %}
 
 {% block mobileheader %}{% trans "Create session" %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'games:session_list' gameid=game.slug %}">{% trans "Sessions" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Create" %}</li>
+{% endblock %}
 
 {% block content %}
 <div class="grid-x grid-margin-x">

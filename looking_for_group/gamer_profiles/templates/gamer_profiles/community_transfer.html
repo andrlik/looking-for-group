@@ -4,6 +4,10 @@
 {% block subtitle %}{% trans "Transfer ownership" %}{% endblock %}
 {% block sectiontitle %}{% trans "Transfer Ownership" %}{% endblock %}
 {% block mobileheader %}{% trans "Transfer Ownership" %}{% endblock %}
+{% block comm_crumbs %}
+<li><a href="{{ community.get_absolute_url }}">{{ community.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Transfer" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-2"></div>

@@ -1,2 +1,8 @@
 {% extends "postman/base.html" %}
+{% load i18n %}
+{% block extracrumbs %}
+<li><a href="{% url 'postman:inbox' %}">{% trans "Messages" %}</a></li>
+{% block post_crumbs %}
+{% endblock %}
+{% endblock %}
 {% block silenceactive %}{% include "is_active_definition.html" %}{% endblock %}
