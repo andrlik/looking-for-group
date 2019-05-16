@@ -153,7 +153,7 @@ $app-dashboard-top-nav-height: 60px;
   justify-content: center;
   background: $app-dashboard-top-nav-color;
   height: $app-dashboard-top-nav-height;
-  width: 100%;
+  min-width: 100%;
   flex: 0 0 $app-dashboard-top-nav-height;
   .menu-icon {
     vertical-align: text-bottom;
@@ -200,14 +200,17 @@ $app-dashboard-top-nav-height: 60px;
   display: flex;
   vertical-align: middle;
 
-  ul.menu{
+
+  ul.dropdown{
     display:inline-block;
+
 
    li {
     display:inline-block;
     a.button {
     margin-bottom: 0;
     margin-right: 2rem;
+    background-color: $app-dashboard-top-nav-color;
     color: $white;
 
     &.hollow {
@@ -223,7 +226,20 @@ $app-dashboard-top-nav-height: 60px;
         margin: 0;
       }
     }}
+    ul.menu li {
+      a {
+        min-width:100%;
+        margin-bottom: 0;
+        margin-right: 2rem;
+        background-color: $app-dashboard-top-nav-color;
+        color: $white;
+          &:hover {
+            background: $white;
+            color: $primary-color;
+          }
+        }
     }
+   }
   }
 
   .fa-info-circle {

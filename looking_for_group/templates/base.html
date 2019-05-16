@@ -45,8 +45,8 @@
   <body>
 <div class="app-dashboard grid-y grid-frame shrink-medium" >
   <div class="cell header shrink medium-cell-block-container">
-  <div id="top-nav-bar" class="grid-x expanded app-dashboard-top-nav-bar">
-    <div class="cell logo-container medium-2">
+  <div id="top-nav-bar" class="grid-x grid-margin-x expanded app-dashboard-top-nav-bar">
+    <div class="cell logo-container small-7 medium-2">
       <button data-toggle="app-dashboard-sidebar" class="menu-icon hide-for-medium"></button>
       <a class="app-dashboard-logo" href="/">LFG Directory</a>
     </div>
@@ -58,26 +58,32 @@
        </form>
       </div>
     </div>
-    <div class="cell medium-auto large-offset-1 app-dashboard-top-bar-actions" data-equalizer="menu" data-equalize-on="medium" id="top-bar-actions">
-      <ul class="menu ">
-      {% if request.user.is_authenticated %}
-        <li class=""><a data-equalizer-watch class="button hollow" href="{% url 'gamer_profiles:profile-detail' gamer=request.user.username %}">{% trans "My Profile" %} {% avatar request.user 20 class="avatar" %}</a></li>
-        {% if request.user.is_superuser %}
-            <li class=""><a data-equalizer-watch="menu" class="button hollow" href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
-        {% endif %}
-        <li class=""><a data-equalizer-watch="menu" class="button hollow" href="{% url 'account_logout' %}" >{% trans "Logout" %}</a></li>
-      {% else %}
-        <li class=""><a data-equalizer-watch="menu" class="button hollow" href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+    <div class="cell auto app-dashboard-top-bar-actions" id="top-bar-actions">
 
+        {% if request.user.is_authenticated %}
+          <ul class="dropdown menu" data-dropdown-menu>
+            <li>
+              <a href="#" class="hollow button">{{ request.user.username }} {% avatar request.user 20 class="avatar" %}</a>
+              <ul class="menu rounded">
+                <li><a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "My Profile" %}</a></li>
+                {% if request.user.is_superuser %}
+                <li><a href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
+                {% endif %}
+                <li><a href="{% url 'account_logout' %}">{% trans "Logout" %}</a></li>
+              </ul>
+            </li>
+          </ul>
+          {% else %}
+          <ul class="dropdown menu">
+            <li><a class="button hollow" href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+          </ul>
         {% endif %}
-        <!--   <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li> -->
-      </ul>
-    </div>
+          <!--   <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li> -->
+
+
+      </div>
   </div>
   </div>
-  <a class="anchor" id="top"></a>
-
-
   <div class="app-dashboard-body off-canvas-wrapper">
     <div id="app-dashboard-sidebar" class="app-dashboard-sidebar position-left off-canvas off-canvas-absolute reveal-for-medium" data-off-canvas>
       <div class="app-dashboard-sidebar-title-area">
@@ -98,47 +104,50 @@
         <ul class="menu vertical">
           {% if request.user.is_authenticated %}
           <li><a href="{% url 'dashboard' %}">
-            <i class="large fas fa-tachometer-alt"></i><span class="app-dashboard-sidebar-text">Dashboard</span>
+            <i class="large fas fa-tachometer-alt"></i><span class="app-dashboard-sidebar-text">{% trans "Dashboard" %}</span>
           </a></li>
           <li><a href="{% url 'notifications:unread' %}">
               <i id="dash-badge" data-badge="0" class="live_notify_badge large fa fas fa-bell"></i>
-            <span class="app-dashboard-sidebar-text">Notifications</span>
+            <span class="app-dashboard-sidebar-text">{% trans "Notifications" %}</span>
           </a></li>
-          <li><a href="{% url 'postman:inbox' %}"><i id="dash-message-badge" data-badge="{{ postman_unread_count }}" class="{% if postman_unread_count > 0 %}live_notify_badge_unread{% else %}live_notify_badge{% endif %} large fas fa-envelope"></i><span class="app-dashboard-sidebar-text">Messages</span></a> </li>
+          <li><a href="{% url 'postman:inbox' %}"><i id="dash-message-badge" data-badge="{{ postman_unread_count }}" class="{% if postman_unread_count > 0 %}live_notify_badge_unread{% else %}live_notify_badge{% endif %} large fas fa-envelope"></i><span class="app-dashboard-sidebar-text">{% trans "Messages" %}</span></a> </li>
           <li><a href="{% url 'games:calendar_detail' gamer=request.user.username %}">
-            <i class="large fas fa-calendar-alt"></i><span class="app-dashboard-sidebar-text">Calendar</span>
+            <i class="large fas fa-calendar-alt"></i><span class="app-dashboard-sidebar-text">{% trans "Calendar" %}</span>
           </a></li>
           {% endif %}
           <li><a href="{% url 'games:game_list' %}">
-            <i class="large fas fa-dice"></i><span class="app-dashboard-sidebar-text">Games</span>
+            <i class="large fas fa-dice"></i><span class="app-dashboard-sidebar-text">{% trans "Games" %}</span>
           </a></li>
           <li><a href="{% url 'gamer_profiles:community-list' %}">
-            <i class="large fas fa-users"></i><span class="app-dashboard-sidebar-text">Communities</span>
+            <i class="large fas fa-users"></i><span class="app-dashboard-sidebar-text">{% trans "Communities" %}</span>
           </a></li>
           <li><a href="{% url 'game_catalog:game-list' %}" class="is-active">
-            <i class="large fas fa-database"></i><span class="app-dashboard-sidebar-text">RPG Database</span>
+            <i class="large fas fa-database"></i><span class="app-dashboard-sidebar-text">{% trans "RPG Database" %}</span>
+          </a></li>
+          <li><a href="{% url 'haystack_search' %}">
+            <i class="large fas fa-search"></i><span class="app-dashboard-sidebar-text">{% trans "Search" %}</span>
           </a></li>
           {% if request.user.is_authenticated %}
           <li><a href="{% url 'gamer_profiles:my-gamer-friend-requests' %}">
-            <i class="large fas fa-user-friends"></i><span class="app-dashboard-sidebar-text">Friend Requests</span>
+            <i class="large fas fa-user-friends"></i><span class="app-dashboard-sidebar-text">{% trans "Friend Requests"%}</span>
           </a> </li>
           <li><a href="{% url 'gamer_profiles:my-block-list' %}">
-            <i class="large fas fa-ban"></i><span class="app-dashboard-sidebar-text">Blocked Users</span>
+            <i class="large fas fa-ban"></i><span class="app-dashboard-sidebar-text">{% trans "Blocked Users" %}</span>
           </a></li>
           <li><a href="{% url 'gamer_profiles:profile-edit' %}">
-            <i class="large fas fa-user-edit"></i><span class="app-dashboard-sidebar-text">Edit Profile</span>
+            <i class="large fas fa-user-edit"></i><span class="app-dashboard-sidebar-text">{% trans "Edit Profile" %}</span>
           </a> </li>
           <li><a href="{% url 'socialaccount_connections' %}">
-            <i class="large fab fa-discord"></i><span class="app-dashboard-sidebar-text">Manage Discord</span>
+            <i class="large fab fa-discord"></i><span class="app-dashboard-sidebar-text">{% trans "Manage Discord" %}</span>
           </a></li>
           {% if request.user.is_superuser %}
           <li><a href="{% url 'adminutils:notification' %}">
-            <i class="large fas fa-mail-bulk"></i><span class="app-dashboard-sidebar-text">Mass Messaging</span>
+            <i class="large fas fa-mail-bulk"></i><span class="app-dashboard-sidebar-text">{% trans "Mass Messaging" %}</span>
           </a>
           </li>
           {% endif %}
           <li><a href="{% url 'user_preferences:setting-view' %}">
-            <i class="large fas fa-cog"></i><span class="app-dashboard-sidebar-text">Settings</span>
+            <i class="large fas fa-cog"></i><span class="app-dashboard-sidebar-text">{% trans "Settings" %}</span>
           </a></li>
           {% endif %}
         </ul>
