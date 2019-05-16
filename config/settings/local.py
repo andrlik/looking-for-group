@@ -111,5 +111,6 @@ LOGGING = {
         "games": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "haystack": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "postman": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "tours": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
     },
 }

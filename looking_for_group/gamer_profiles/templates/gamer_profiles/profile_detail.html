@@ -1,5 +1,5 @@
 {% extends "gamer_profiles/profile_base.html" %}
-{% load avatar_tags i18n humanize social_tags ratings dash_tags rules collection_tags %}
+{% load avatar_tags i18n humanize social_tags ratings dash_tags rules tour_tags collection_tags %}
 {% block subtitle %}{{ gamer }} - {% endblock %}
 {% block sectiontitle %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block mobileheader %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
@@ -9,9 +9,17 @@
 {% get_collection_stats gamer as rpgcollection %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="profile-general-info">
       <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
       <div class="card-section">
+        {% if request.user.is_authenticated and request.user == gamer.user %}
+        {% get_tour "profile" as tour %}
+        {% if tour %}
+        <div class="clearfix">
+          <div class="float-right">{% render_tour_trigger tour %}</div>
+        </div>
+        {% endif %}
+        {% endif %}
 <dl>
   <dt>{% trans "Display Name" %}</dt>
   <dd>{{ gamer }}</dd>
@@ -37,7 +45,7 @@
     </div>
   </div>
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="profile-stats">
       <div class="card-divider"><h5>{% trans "Gamer stats" %}</h5></div>
       <div class="card-section">
         <h5>{% trans "GM Stats" %}</h5>
@@ -72,7 +80,7 @@
 {% block profdetails %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="profile-status">
       <div class="card-divider"><h5>{% trans "Status" %}</h5></div>
       <div class="card-section">
 
@@ -93,7 +101,7 @@
     </div>
   </div>
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="profile-game-available">
       <div class="card-divider"><h5>{% trans "Generally available to play at" %}</h5></div>
       <div class="card-section">
 {% has_perm "profile.see_detailed_availability" request.user gamer as see_avail_calendar %}
@@ -232,7 +240,7 @@
 </div>
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="profile-game-favorites">
       <div class="card-divider"><h5>{% trans "Favorites" %}</h5></div>
       <div class="card-section">
 
@@ -257,7 +265,7 @@
     </div>
   </div>
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="profile-game-library">
       <div class="card-divider"><h5>{% trans "Game library" %}</h5></div>
       <div class="card-section">
         <h5>{% trans "Collection stats" %}</h5>
@@ -342,4 +350,11 @@
 {% endif %}
 
 
+{% endblock %}
+{% block tourjs %}
+{% get_tour "profile" as tour %}
+{% if request.user.is_authenticated and request.user == gamer.user and tour %}
+{% render_tour tour %}
+{% update_tour_rendered tour request.user %}
+{% endif %}
 {% endblock %}
