@@ -15,7 +15,11 @@
   {% get_tour "calendar" as tour %}
   {% if tour %}
   <div class="cell auto">
-    {% render_tour_trigger tour %}
+    <div class="clearfix">
+    <div class="float-right">
+      {% render_tour_trigger tour %}
+    </div>
+    </div>
   </div>
   {% endif %}
 </div>

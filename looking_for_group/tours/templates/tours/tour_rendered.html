@@ -45,7 +45,7 @@
     },
               {
                 text: "{% trans 'Got it! Thanks!' %}",
-                action: tour_{{ tour.name }}.hide
+                action: tour_{{ tour.name }}.next
               }
     ]
     {% else %}
@@ -60,19 +60,16 @@
   {% empty %}
   {% endfor %}
   tour_{{ tour.name }}.on("complete", function() {
-    jQuery("html, body").animate({
-      scrollTop: jQuery("#top").offset().top
-    }, 2000);
+    document.getElementById("top-nav-bar").scrollIntoView();
+    jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
   });
   tour_{{ tour.name }}.on("cancel", function() {
-    jQuery("html, body").animate({
-      scrollTop: jQuery("#top").offset().top
-    }, 2000);
+    document.getElementById("top-nav-bar").scrollIntoView();
+    jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
   });
   tour_{{ tour.name }}.on("hide", function() {
-    jQuery("html, body").animate({
-      scrollTop: jQuery("#top").offset().top
-    }, 2000);
+    document.getElementById("top-nav-bar").scrollIntoView();
+    jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
   });
   {% if tour not in completed_tours %}
   tour_{{ tour.name }}.start();
