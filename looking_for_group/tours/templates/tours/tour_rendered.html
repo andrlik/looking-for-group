@@ -1,0 +1,78 @@
+{% load i18n markdownify %}
+{% if tour and user.is_authenticated %}
+<script type="text/javascript">
+  let tour_{{ tour.name }} = new Shepherd.Tour({
+    tourName: "{{ tour.name }}",
+    defaultStepOptions: {
+      scrollTo: true,
+    },
+    useModalOverlay: true,
+
+  });
+
+  tour_{{ tour.name }}.addStep("intro_{{ tour.slug }}", {
+
+    title: "{{ tour.name|capfirst }}",
+    text: "{{ tour.description|safe|markdownify|safe }}",
+    buttons:[
+      {
+        text: "{% trans 'Take a quick tour' %}",
+        action: tour_{{ tour.name }}.next
+      },
+    ]
+  });
+  {% for step in tour.steps.all %}
+  tour_{{ tour.name }}.addStep("{{ tour.name }}_{{ forloop.counter0 }}", {
+    title: "{{ step.title }}",
+    attachTo: "#{{ step.target_id }} {{ step.placement|default_if_none:'bottom' }}",
+    text: "{{ step.guide_text|safe|markdownify|safe }}",
+    {% if not forloop.first and not forloop.last %}
+    buttons:  [
+      {
+        text: "{% trans 'Prev' %}",
+        action: tour_{{ tour.name }}.back
+      },
+      {
+        text: "{% trans 'Next' %}",
+        action: tour_{{ tour.name }}.next
+      }
+    ]
+    {% else %}
+    {% if forloop.last %}
+    buttons: [{
+      text: "{% trans 'Prev' %}",
+      action: tour_{{ tour.name }}.back
+    },
+              {
+                text: "{% trans 'Got it! Thanks!' %}",
+                action: tour_{{ tour.name }}.next
+              }
+    ]
+    {% else %}
+    buttons: [{
+      text: "{% trans 'Next' %}",
+      action: tour_{{ tour.name }}.next
+    }
+    ]
+    {% endif %}
+    {% endif %}
+  });
+  {% empty %}
+  {% endfor %}
+  tour_{{ tour.name }}.on("complete", function() {
+    document.getElementById("top-nav-bar").scrollIntoView();
+    jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
+  });
+  tour_{{ tour.name }}.on("cancel", function() {
+    document.getElementById("top-nav-bar").scrollIntoView();
+    jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
+  });
+  tour_{{ tour.name }}.on("hide", function() {
+    document.getElementById("top-nav-bar").scrollIntoView();
+    jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
+  });
+  {% if tour not in completed_tours %}
+  tour_{{ tour.name }}.start();
+  {% endif %}
+</script>
+{% endif %}

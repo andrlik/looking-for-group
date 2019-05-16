@@ -1,5 +1,5 @@
 {% extends "gamer_profiles/community_base.html" %}
-{% load avatar_tags i18n rules humanize social_tags %}
+{% load avatar_tags i18n rules humanize social_tags tour_tags %}
 {% block subtitle %}{{ community.name }} - {% endblock %}
 {% block sectiontitle %}{{ community.name }}{% endblock %}
 {% block mobileheader %}{{ community.name }}{% endblock %}
@@ -32,15 +32,22 @@
 {% endif %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="comm-description">
       <div class="card-divider"><h5>{% trans "Description" %}</h5></div>
       <div class="card-section">
+        {% get_tour "community" as tour %}
+        {% if tour %}
+        <div class="float-right">
+          {% render_tour_trigger tour %}
+        </div>
+        {% endif %}
         <p>{{ community.description_rendered|default_if_none:"No description yet."|safe }}</p>
+
       </div>
     </div>
   </div>
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="comm-details">
       <div class="card-divider"><h5>{% trans "Details" %}</h5></div>
       <div class="card-section">
         <table class="hover scroll">
@@ -64,7 +71,7 @@
       </div>
       {% if community in request.user.gamerprofile.communities.all %}
       {% get_membership request.user.gamerprofile as current_membership %}
-      <div class="card-section">
+      <div class="card-section" id="comm-notifications">
         <dl>
           <dt>{% trans "Notifications for new games" %}</dt>
           <dd><span class="label {% if current_membership.game_notifications %}success{% else %}alert{% endif %}">{{ current_membership.game_notifications|yesno:"On,Off" }}</span></dd>
@@ -93,7 +100,7 @@
   </div>
   {% endif %}
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="comm-members">
       <div class="card-divider"><h5>{% trans "Members" %}</h5></div>
       <div class="card-section">
 <div class="member-list">
@@ -125,7 +132,7 @@
     </div>
   </div>
 </div>
-<div class="card">
+<div class="card" id="comm-games">
   <div class="card-divider"><h5>{% trans "Current Active Games" %}</h5></div>
   <div class="card-section">
     {% if not active_games %}
@@ -183,4 +190,11 @@
   </div>
 </div>
 
+{% endblock %}
+{% block tourjs %}
+{% get_tour "community" as tour %}
+{% if tour %}
+{% render_tour tour %}
+{% update_tour_rendered tour request.user %}
+{% endif %}
 {% endblock %}

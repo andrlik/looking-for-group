@@ -1,5 +1,5 @@
 {% extends "games/game_base.html" %}
-{% load i18n avatar_tags mail_tags rules %}
+{% load i18n avatar_tags mail_tags tour_tags rules %}
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block gameactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
@@ -18,6 +18,7 @@
 <meta property="og_description" content="{{ game.game_description_rendered|truncatewords_html:15|striptags }}">
 {% endblock %}
 {% block content %}
+{% get_tour "gamedetail" as tour %}
 {% if game.featured_image %}
 <div id="feature-image">
   <img alt="{% blocktrans with gname=game.title %}Featured image for {{ gname }}{% endblocktrans %}" class="thumbnail logo" src="{{ game.featured_image.url }}" />
@@ -30,15 +31,23 @@
 {% endif %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="game-description">
       <div class="card-divider"><h5>{% trans "Description" %}</h5></div>
       <div class="card-section">
+        {% has_perm "game.is_member" request.user game as is_member %}
+        {% get_tour "game" as tour %}
+        {% if tour and is_member %}
+        <div class="float-right">
+          {% render_tour_trigger tour %}
+        </div>
+        {% endif %}
         <section class="description-text">{{ game.game_description_rendered|safe }}</section>
+
       </div>
     </div>
   </div>
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="game-details">
       <div class="card-divider">
         <h5>{% trans "Details" %}</h5>
       </div>
@@ -150,7 +159,7 @@
   </div>
   {% endif %}
   <div class="cell medium-auto">
-    <div class="card">
+    <div class="card" id="game-players">
       <div class="card-divider"><h5>{% trans "Current Players" %}</h5></div>
       <div class="card-section">
 {% if not player_list %}
@@ -226,9 +235,12 @@
 {% endif %}
       </div>
     </div>
+  </div>
+</div>
+<div class="grid-x grid-margin-x">
     {% if recent_sessions or game.next_session_time %}
     <div class="cell medium-auto">
-      <div class="card">
+      <div class="card" id="game-recent-sessions">
         <div class="card-divider"><h5>{% trans "Recent and upcoming sessions" %}</h5></div>
         <div class="card-section">
           {% if game.gm.user == request.user %}
@@ -297,4 +309,13 @@
 {% endif %}
     {% endblock %}
   </div>
+
 {% endblock %}
+  {% block tourjs %}
+  {% has_perm "game.is_member" request.user game as is_member %}
+  {% get_tour "game" as tour %}
+  {% if tour and is_member %}
+  {% render_tour tour %}
+  {% update_tour_rendered tour request.user %}
+  {% endif %}
+  {% endblock %}

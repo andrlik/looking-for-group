@@ -2,6 +2,7 @@
   "name": "looking_for_group",
   "version": "0.1.0",
   "dependencies": {
+    "shepherd.js": "^2.8.0",
     "simplemde": "andrlik/simplemde-markdown-editor#master"
   },
   "devDependencies": {

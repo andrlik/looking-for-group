@@ -34,7 +34,8 @@
     <link type="text/x-scss" href="{% static 'sass/project.scss' %}" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{% static 'star-ratings/css/star-ratings.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'postman/css/postman.css' %}">
-    {% endcompress %}
+        {% endcompress %}
+    <link rel="stylesheet" type="text/css" href="{% static 'shepherd.js/dist/css/shepherd-theme-default.css' %}">
 
     {% endblock %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/motion-ui@1.2.3/dist/motion-ui.min.css" />
@@ -44,7 +45,7 @@
   <body>
 <div class="app-dashboard grid-y grid-frame shrink-medium" >
   <div class="cell header shrink medium-cell-block-container">
-  <div class="grid-x expanded app-dashboard-top-nav-bar">
+  <div id="top-nav-bar" class="grid-x expanded app-dashboard-top-nav-bar">
     <div class="cell logo-container medium-2">
       <button data-toggle="app-dashboard-sidebar" class="menu-icon hide-for-medium"></button>
       <a class="app-dashboard-logo" href="/">LFG Directory</a>
@@ -74,6 +75,7 @@
     </div>
   </div>
   </div>
+  <a class="anchor" id="top"></a>
 
 
   <div class="app-dashboard-body off-canvas-wrapper">
@@ -270,7 +272,7 @@
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
       <script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
         <script src="{% static 'libs/what-input/what-input.min.js' %}"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/js/foundation.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.5.3/js/foundation.min.js"></script>
 
       {% if request.user.is_authenticated %}
       <script src="{% static 'notifications/notify.js' %}" type="text/javascript"></script>
@@ -298,6 +300,7 @@
 
       {% block js_extra %}
       {% endblock %}
+      <script type="text/javascript" src="{% static 'shepherd.js/dist/js/shepherd.min.js' %}"></script>
 
       <script>
         $(document).foundation();
@@ -306,6 +309,7 @@
           $(this).parents('.app-dashboard').toggleClass('shrink-medium').toggleClass('shrink-large');
         });
       </script>
+
       <script type="text/javascript" src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
       <script type="text/javascript">
         var n = 40;
@@ -317,7 +321,10 @@
         });
 
       </script>
+
       {% block simplemde %}
+      {% endblock %}
+      {% block tourjs %}
       {% endblock %}
     {% endblock javascript %}
   </body>
