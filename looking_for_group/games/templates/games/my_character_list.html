@@ -4,6 +4,9 @@
 {% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% trans "Your characters" %}{% endblock %}
 {% block mobileheader %}{% trans "Your chracters" %}{% endblock %}
+{% block game_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Your characters" %}</li>
+{% endblock %}
 {% block content %}
 <p></p>
 {% if not character_list %}

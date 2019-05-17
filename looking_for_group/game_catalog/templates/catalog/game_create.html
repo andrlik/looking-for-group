@@ -4,6 +4,10 @@
 {% block subtitle %}{% trans "Create game" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Create game" %}{% endblock %}
 {% block mobileheader %}{% trans "Create game" %}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Create" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-2"></div>

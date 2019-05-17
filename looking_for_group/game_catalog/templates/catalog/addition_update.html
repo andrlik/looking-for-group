@@ -4,6 +4,31 @@
 {% block sectiontitle %}{% blocktrans with ctype=addition.title %}Update suggestion {{ ctype }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with ctype=addition.title %}Update suggestion {{ ctype }}{% endblocktrans %}{% endblock %}
 {% block additionactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block cata_crumbs %}
+{% if addition.content_type.model == "gamepublisher" %}
+<li><a href="{% url 'game_catalog:pub-list' %}">{% trans "Publishers" %}</a></li>
+{% else %}
+{% if addition.content_type.model == "gamesystem" %}
+<li><a href="{% url 'game_catalog:system-list' %}">{% trans "Systems" %}</a></li>
+{% else %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+{% if addition.content_type.model != "publishedgame" %}
+<li><a href="{{ addition.edition.game.get_absolute_url }}">{{ addition.edition.game.title|truncatechars_html:"70" }}</a></li>
+{% if addition.content_type.model != "gameedition" %}
+<li><a href="{{ addition.edition.get_absolute_url }}">{{ addition.edition.name }}</a></li>
+{% if addition.content_type.model == "sourcebook" %}
+<li class="disabled">{% trans "Sourcebooks" %}</li>
+{% else %}
+<li class="disabled">{% trans "Modules" %}</li>
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+<li><a href="{% url 'game_catalog:addition_list' %}">{% trans "Suggested Additions" %}</a></li>
+<li><a href="{{ addition.get_absolute_url }}">{{ addition.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-2"></div>

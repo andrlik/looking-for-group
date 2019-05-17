@@ -4,6 +4,10 @@
 {% block editactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{% trans "Edit game" %}{% endblock %}
 {% block mobileheader %}{% trans "Edit game" %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
+{% endblock %}
 {% block content %}
 
 <div class="grid-x grid-margin-x">

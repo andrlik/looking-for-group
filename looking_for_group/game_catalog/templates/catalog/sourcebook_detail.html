@@ -5,6 +5,13 @@
 {% block sectiontitle %}{{ book.title }}{% endblock %}
 {% block mobileheader %}{{ book.title }}{% endblock %}
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+<li><a href="{{ book.edition.game.get_absolute_url }}">{{ book.edition.game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{{ book.edition.get_absolute_url }}">{{ book.edition.name }}</a></li>
+<li class="disabled">{% trans "Sourcebooks" %}</li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ book.title|truncatechars_html:"70" }}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">

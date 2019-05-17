@@ -4,6 +4,15 @@
 {% block sectiontitle %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block mobileheader %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block detailactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block profile_crumbs %}
+{% if gamer and request.user == gamer.user %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Your profile" %}</li>
+{% else %}
+{% if gamer %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% blocktrans with gmr=gamer %}{{ gmr }}'s profile{% endblocktrans %}</li>
+{% endif %}
+{% endif %}
+{% endblock %}
 {% block content %}
 {% has_perm "postman.can_message_user" request.user gamer.user as can_message %}
 {% get_collection_stats gamer as rpgcollection %}

@@ -4,6 +4,10 @@
 {% block sectiontitle %}{% trans "Player applications for" %} {{ game.title }}{% endblock %}
 {% block mobileheader %}{% trans "Player applications for" %} {{ game.title }}{% endblock %}
 {% block appactive %} class="is-active"{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Applicants" %}</li>
+{% endblock %}
 {% block content %}
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="game-applications-tabs">

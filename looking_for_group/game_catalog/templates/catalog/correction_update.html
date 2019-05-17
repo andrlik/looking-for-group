@@ -4,6 +4,37 @@
 {% block sectiontitle %}{% blocktrans with ctype=correction.title %}Update suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with ctype=correction.title %}Update suggested correction for {{ ctype }}{% endblocktrans %}{% endblock %}
 {% block correctactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block cata_crumbs %}
+{% if correction.content_type.model == "gamepublisher" %}
+<li><a href="{% url 'game_catalog:pub-list' %}">{% trans "Publishers" %}</a></li>
+<li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.name|truncatechars_html:"70" }}</a></li>
+{% else %}
+{% if correction.content_type.model == "gamesystem" %}
+<li><a href="{% url 'game_catalog:system-list' %}">{% trans "Systems" %}</a></li>
+<li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.name|truncatechars_html:"70" }}</a></li>
+{% else %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+{% if correction.content_type.model == "publishedgame" %}
+<li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.title|truncatechars_html:"70" }}</a></li>
+{% elif correction.content_type.model == "gameedition" %}
+<li><a href="{{ correction.content_object.game.get_absolute_url }}">{{ correction.content_object.game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.name }}</a></li>
+{% elif correction.content_type.model == "sourcebook" %}
+<li><a href="{{ correction.content_object.edition.game.get_absolute_url }}">{{ correction.content_object.edition.game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{{ correction.content_object.edition.get_absolute_url }}">{{ correction.content_object.edition.name }}</a></li>
+<li class="disabled">{% trans "Sourcebooks" %}</li>
+<li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.title|truncatechars_html:"70" }}</a></li>
+{% else %}
+<li><a href="{{ correction.content_object.parent_game_edition.game.get_absolute_url }}">{{ correction.content_object.parent_game_edition.game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{{ correction.content_object.parent_game_edition.get_absolute_url }}">{{ correction.content_object.parent_game_edition.name }}</a></li>
+<li class="disabled">{% trans "Modules" %}</li>
+<li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.title|truncatechars_html:"70" }}</a></li>
+{% endif %}
+{% endif %}
+{% endif %}
+<li><a href="{{ correction.get_absolute_url }}">{% trans "Suggested Correction" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-2"></div>

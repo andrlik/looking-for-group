@@ -2,6 +2,20 @@
 {% block subtitle %}{% trans "Create invite link" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Create invite link" %}{% endblock %}
 {% block mobileheader %}{% trans "Create invite link" %}{% endblock %}
+{% block extracrumbs %}
+{% if ct == "community" %}
+<li><a href="{% url 'gamer_profiles:community-list' %}">{% trans "Communities" %}</a></li>
+<li><a href="{{ content_object.get_absolute_url }}">{{ content_object.name|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'gamer_profiles:community_invite_list' slug=community.slug %}">{% trans "Invites" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Create" %}</li>
+{% endif %}
+{% if ct == "game" %}
+<li><a href="{% url 'games:game_list' %}">{% trans "Games" %}</a></li>
+<li><a href="{{ content_object.get_absolute_url }}">{{ content_object.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'games:game_invite_list' slug=content_object.slug %}">{% trans "Invites" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Create" %}</li>
+{% endif %}
+{% endblock %}
 {% block content %}
 {% if ct == "game" %}
 <p>{% blocktrans %}Creating player invite for{% endblocktrans %} <a href="{{ content_object.get_absolute_url }}">{{ content_object.title }}</a>:</p>

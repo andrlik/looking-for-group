@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Game Systems" %}{% endblock %}
 {% block mobileheader %}{% trans "Game Systems" %}{% endblock %}
 {% block systemactive %} class="is-active"{% endblock %}
+{% block cata_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Systems" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user object_list as is_editor %}
 {% if is_editor %}

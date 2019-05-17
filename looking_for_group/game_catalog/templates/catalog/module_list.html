@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Published Game Modules" %}{% endblock %}
 {% block mobileheader %}{% trans "Published Game Modules" %}{% endblock %}
 {% block moduleactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block cata_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Modules" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm "catalog.can_edit" user user as is_editor %}
 {% if not is_editor %}

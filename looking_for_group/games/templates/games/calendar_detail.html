@@ -3,6 +3,9 @@
 {% block subtitle %}{% trans "Calendar Details" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Your calendar" %}{% endblock %}
 {% block mobileheader %}{% trans "Your calendar" %}{% endblock %}
+{% block extracrumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Calendar" %}</li>
+{% endblock %}
 {% block innernavmenu %}
 <li{% include "is_active_definition.html" %}><a href="{% url 'games:calendar_detail' gamer=request.user.username %}"><i class="fas fa-calendar-alt"></i> {% trans "Your calendar" %}</a></li>
 <li id="icallink"><a href="{% url 'games:calendar_ical' gamer=request.user.gamerprofile.pk %}" data-tooltip tabindex="0" title="Right click/long press to copy link for your calendar app"><i class="fas fa-rss-square"></i> {% trans "iCal feed" %}</a></li>

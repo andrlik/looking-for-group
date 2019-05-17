@@ -3,6 +3,11 @@
 {% block sectiontitle %}{% trans "Remove from your collection" %}{% endblock %}
 {% block mobileheader %}{% trans "Remove from your collection" %}{% endblock %}
 {% block subtitle %}{% trans "Remove from your collection" %}{% endblock %}
+{% block collection_crumbs %}
+<li><a href="{{ book.library.get_absolute_url }}">{% if request.user == book.library.user %}{% trans "Manage collection" %}{% else %}{% trans "View collection" %}{% endif %}</a></li>
+<li><a href="{{ book.get_absolute_url }}">{{ thebook.title|truncatechars_html:40 }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Remove copy" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-2"></div>

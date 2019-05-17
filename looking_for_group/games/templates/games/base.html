@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% block extracrumbs %}
+<li><a href="{% url 'games:game_list' %}">{% trans "Games" %}</a></li>
+{% block game_crumbs %}
+{% endblock %}
+{% endblock %}
 {% block innernav %}
 <div class="title-bar" data-responsive-toggle="section-menu" data-hide-for="medium">
   <button class="menu-icon" type="button" data-toggle="section-menu"></button>

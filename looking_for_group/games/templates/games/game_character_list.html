@@ -4,6 +4,10 @@
 {% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{{ game.title }} {% trans "characters" %}{% endblock %}
 {% block mobileheader %}{{ game.title }} {% trans "characters" %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Characters" %}</li>
+{% endblock %}
 {% block content %}
 <p></p>
 {% if not character_list %}

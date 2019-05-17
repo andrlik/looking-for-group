@@ -4,6 +4,10 @@
 {% block sectiontitle %}{{ publisher.name }}{% endblock %}
 {% block mobileheader %}{{ publisher.name }}{% endblock %}
 {% block pubactive %} class="is-active"{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:pub-list' %}">{% trans "Publishers" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ publisher.name|truncatechars_html:"70" }}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user publisher as is_editor %}
 <div class="grid-x grid-margin-x">

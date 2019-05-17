@@ -4,6 +4,12 @@
 {% block sectiontitle %}{% trans "Edit settings" %}{% endblock %}
 {% block mobileheader %}{% trans "Edit settings" %}{% endblock %}
 {% block editactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block extracrumbs %}
+<li class="disabled">{% trans "Profiles" %}</li>
+<li><a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Your profile" %}</a></li>
+<li><a href="{% url 'user_preferences:setting-view' %}">{% trans "Settings" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grix-margin-x">
   <div class="cell medium-2"></div>

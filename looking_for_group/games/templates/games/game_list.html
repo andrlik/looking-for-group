@@ -4,6 +4,9 @@
 {% block allgamesactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{% trans "Game listings" %}{% endblock %}
 {% block mobileheader %}{% trans "Game listings" %}{% endblock %}
+{% block extracrumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Games" %}</li>
+{% endblock %}
 {% block content %}
 {% if not request.user.is_authenticated %}
 <p>{% trans "Showing only public games. You will need to" %} <a href="{% url 'accounts_login' %}">{% trans "login" %}</a> {% trans "to see any more." %}</p>

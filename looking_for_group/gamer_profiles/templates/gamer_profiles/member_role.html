@@ -3,6 +3,12 @@
 {% block subtitle %}{% blocktrans with gname=gamer.username %}Editing community role for {{ gname }}{% endblocktrans %}{% endblock %}
 {% block sectiontitle %}{% trans "Edit member role" %}{% endblock %}
 {% block mobileheader %}{% trans "Edit member role" %}{% endblock %}
+{% block comm_crumbs %}
+<li><a href="{{ community.get_absolute_url }}">{{ community.name|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'gamer_profiles:community-member-list' community=community.slug %}">{% trans "Members" %}</a></li>
+<li class="disabled">{{ gamer }}</li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-2"></div>

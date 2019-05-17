@@ -4,6 +4,11 @@
 {% block applyactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% blocktrans with cname=community.name %}Apply to join {{ cname }}?{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with cname=community.name %}Apply to join {{ cname }}?{% endblocktrans %}{% endblock %}
+{% block comm_crumbs %}
+<li><a href="{% url 'gamer_profiles:my-application-list' %}">{% trans "Your applications" %}</a></li>
+<li><a href="{{ object.community.get_absolute_url }}">{{ object.community.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Apply" %}</li>
+{% endblock %}
 {% block content %}
 <span class="meta">{% blocktrans count counter=community.member_count %}One Member{% plural %}{{ counter }} Members{% endblocktrans %}, {% trans "Owner:" %} <a href="{{ community.owner.get_absolute_url }}">{{ community.owner.display_name }}</a></span>
 <p>{{ community.description_rendered|default_if_none:""|safe }}</p>
