@@ -61,7 +61,7 @@
     <div class="cell auto app-dashboard-top-bar-actions" id="top-bar-actions">
 
         {% if request.user.is_authenticated %}
-          <ul class="vertical medium-horizontal menu" data-responsive-menu="accordian medium-dropdown">
+          <ul class="dropdown menu" data-dropdown-menu>
             <li>
               <a href="#" class="hollow button">{{ request.user.username }} {% avatar request.user 20 class="avatar" %}</a>
               <ul class="menu rounded">
