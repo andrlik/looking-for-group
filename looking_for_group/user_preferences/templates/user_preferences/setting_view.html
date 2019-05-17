@@ -25,7 +25,7 @@
   <dd><span class="label {% if preferences.feedback_volunteer %}success{% else %}alert{% endif %}">{{ preferences.feedback_volunteer|yesno:"Yes,No" }}</span></dd>
   <dt>{% trans "Receive email copies of messages?" %}</dt>
   <dd><span class="label {% if preferences.email_messages %}success{% else %}alert{% endif %}">{{ preferences.email_messages|yesno:"Yes,No" }}</span></dd>
-<dt>{% trans "Subscribe to community game notifications by default" %} <span data-tooltip class="top" tabindex="5" title="{% trans 'When I join communties, subscribe me to new game notifications. You can also do this community-by-community instead."><i class="fas fa-info-circle"></i></span></dt>
+<dt>{% trans "Subscribe to community game notifications by default" %} <span data-tooltip class="top" tabindex="5" title="{% trans 'When I join communties, subscribe me to new game notifications. You can also do this community-by-community instead.' %}"><i class="fas fa-info-circle"></i></span></dt>
 <dd><span class="label {% if preferences.community_subscribe_default %}success{% else %}alert{% endif %}">{{ preferences.community_subscribe_default|yesno:"Yes,No" }}</span></dd>
 {% if community_list %}
 <dt>{% trans "Community notification settings" %}</dt>
