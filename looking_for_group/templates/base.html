@@ -61,21 +61,22 @@
     <div class="cell auto app-dashboard-top-bar-actions" id="top-bar-actions">
 
         {% if request.user.is_authenticated %}
-          <ul class="dropdown menu" data-dropdown-menu>
+          <ul class="vertical medium-horizontal menu" data-responsive-menu="accordian medium-dropdown">
             <li>
               <a href="#" class="hollow button">{{ request.user.username }} {% avatar request.user 20 class="avatar" %}</a>
               <ul class="menu rounded">
-                <li><a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "My Profile" %}</a></li>
+                <li><a href="{{ request.user.gamerprofile.get_absolute_url }}"><i class="fas fa-user"></i>&nbsp;&nbsp;{% trans "My Profile" %}</a></li>
+                <li><a href="{% url 'user_preferences:setting-view' %}"><i class="fas fa-cog"></i>&nbsp;&nbsp;{% trans "Settings" %}</a></li>
                 {% if request.user.is_superuser %}
-                <li><a href="{% url 'admin:index' %}">{% trans "Admin" %}</a></li>
+                <li><a href="{% url 'admin:index' %}"><i class="fas fa-user-lock"></i> {% trans "Admin" %}</a></li>
                 {% endif %}
-                <li><a href="{% url 'account_logout' %}">{% trans "Logout" %}</a></li>
+                <li><a href="{% url 'account_logout' %}"><i class="fas fa-sign-out-alt"></i>&nbsp;&nbsp;{% trans "Logout" %}</a></li>
               </ul>
             </li>
           </ul>
           {% else %}
           <ul class="dropdown menu">
-            <li><a class="button hollow" href="{% url 'account_login' %}">{% trans "Sign In" %}</a></li>
+            <li><a class="button hollow" href="{% url 'account_login' %}"><i class="fas fa-sign-in-alt"></i> {% trans "Sign In" %}</a></li>
           </ul>
         {% endif %}
           <!--   <li><a href="#" height="30" width="30" alt=""><i class="fa fa-info-circle"></i></a></li> -->

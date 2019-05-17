@@ -4,6 +4,12 @@
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% trans "Delete" %} {{ edition }}{% endblock %}
 {% block mobileheader %}{% trans "Delete" %} {{ edition }}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+<li><a href="{{ edition.game.get_absolute_url }}">{{ edition.game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{{ edition.get_absolute_url }}">{{ edition.name }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete" %}</li>
+{% endblock %}
 {% block content %}
 <div class="callout alert">
   <h5>{% trans "Are you sure?" %}</h5>

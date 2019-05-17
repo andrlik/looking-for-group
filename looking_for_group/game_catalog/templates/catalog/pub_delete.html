@@ -4,6 +4,11 @@
 {% block pubactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% trans "Delete" %} {{ publisher.name }}{% endblock %}
 {% block mobileheader %}{% trans "Delete" %} {{ publisher.name }}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:pub-list' %}">{% trans "Publishers" %}</a></li>
+<li><a href="{{ publisher.get_absolute_url }}">{{ publisher.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete" %}</li>
+{% endblock %}
 {% block content %}
 <div class="callout alert">
   <h5>{% trans "Are you sure?" %}</h5>

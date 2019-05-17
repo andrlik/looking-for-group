@@ -4,6 +4,11 @@
 {% block systemactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% trans "Edit" %} {{ system.name }}{% endblock %}
 {% block mobileheader %}{% trans "Edit" %} {{ system.name }}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:system-list' %}">{% trans "Systems" %}</a></li>
+<li><a href="{{ system.get_absolute_url }}">{{ system.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-2"></div>
