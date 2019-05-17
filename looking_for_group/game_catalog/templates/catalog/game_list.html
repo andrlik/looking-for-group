@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Published Games" %}{% endblock %}
 {% block mobileheader %}{% trans "Published Games" %}{% endblock %}
 {% block gameactive %} class="is-active"{% endblock %}
+{% block cata_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Published games" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user game_list as is_editor %}
 {% if is_editor %}

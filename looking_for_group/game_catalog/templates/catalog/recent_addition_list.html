@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Recent additions" %}{% endblock %}
 {% block mobileheader %}{% trans "Recent additions" %}{% endblock %}
 {% block recentactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block cata_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Recent additions" %}</li>
+{% endblock %}
 {% block content %}
 <p>{% trans "Now showing the 30 most recent additions to the RPG database:" %}</p>
 {% cache 500 recent_addition_table %}
