@@ -3,6 +3,9 @@
 {% block subtitle %}{% trans "The Silenced" %} - {% endblock %}
 {% block sectiontitle %}{% trans "The Silenced" %}{% endblock %}
 {% block mobileheader %}{% trans "The Silenced" %}{% endblock %}
+{% block post_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Silenced" %}</li>
+{% endblock %}
 {% block content %}
 {% if not silence_list %}
 <p>{% trans "No records found." %}</p>

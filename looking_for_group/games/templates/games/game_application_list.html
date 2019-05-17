@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Your game applications" %}{% endblock %}
 {% block mobileheader %}{% trans "Your game applications" %}{% endblock %}
 {% block appactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block game_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Your game applications" %}</li>
+{% endblock %}
 {% block content %}
 
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="my-applications-tabs">

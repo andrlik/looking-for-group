@@ -5,6 +5,10 @@
 {% block sectiontitle %}{{ system.name }}{% endblock %}
 {% block systemactive %} class="is-active"{% endblock %}
 {% block mobileheader %}{{ system.name }}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:system-list' %}">{% trans "Systems" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ system.name|truncatechars_html:"70" }}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user system as is_editor %}
 <div class="grid-x grid-margin-x">

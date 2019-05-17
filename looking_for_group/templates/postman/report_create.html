@@ -9,6 +9,9 @@
 {% block js_extra %}
 {% include "datepicker_js.html" %}
 {% endblock %}
+{% block post_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Report message" %}</li>
+{% endblock %}
 {% block content %}
 <p>{% trans "Report the message using the form below. For your convenience, we are displaying the message you are reporting as well." %}</p>
 <div class="grid-x grid-margin-x">

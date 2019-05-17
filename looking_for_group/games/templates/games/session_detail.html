@@ -4,6 +4,11 @@
 {% block sessionactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{{ session.scheduled_time|date:"M d, Y" }} - {{ session.game.title }}{% endblock %}
 {% block mobileheader %}{{ session.scheduled_time|date:"M d, Y" }} - {{ session.game.title }}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'games:session_list' gameid=session.game.slug %}">{% trans "Sessions" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ session.scheduled_time }}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">

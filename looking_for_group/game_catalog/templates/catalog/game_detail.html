@@ -4,6 +4,10 @@
 {% block subtitle %}{{ game.title }} - {% endblock %}
 {% block sectiontitle %}{{ game.title }}{% endblock %}
 {% block mobileheader %}{{ game.title }}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ game.title|truncatechars_html:"70" }}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user game as is_editor %}
 <div class="grid-x grid-margin-x">

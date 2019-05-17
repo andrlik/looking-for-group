@@ -4,6 +4,10 @@
 {% block sectiontitle %}{% blocktrans with cname=community.name %}Applicants for {{ cname }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with cname=community.name %}Applicants for {{ cname }}{% endblocktrans %}{% endblock %}
 {% block appactive %} class="is-active"{% endblock %}
+{% block comm_crumbs %}
+<li><a href="{{ community.get_absolute_url }}">{{ community.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Applicants" %}</li>
+{% endblock %}
 {% block content %}
 <span class="meta">{% blocktrans count counter=applicants.count %}One Application{% plural %}{{ counter }} Applications{% endblocktrans %} {% trans "Pending" %}</span>
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="community-application-tabs">

@@ -4,6 +4,12 @@
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% trans "Create game edition for" %} {{ game.title }}{% endblock %}
 {% block mobileheader %}{% trans "Create game edition for" %} {{ game.title }}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Create Edition" %}</li>
+{% endblock %}
+
 {% block content %}
 <p>{% blocktrans %}Enter the game edition details below.{% endblocktrans %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">

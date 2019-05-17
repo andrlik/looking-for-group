@@ -5,6 +5,13 @@
 {% block sectiontitle %}{{ module.title }}{% endblock %}
 {% block mobileheader %}{{ module.title }}{% endblock %}
 {% block moduleactive %} class="is-active"{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+<li><a href="{{ module.parent_game_edition.game.get_absolute_url }}">{{ module.parent_game_edition.game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition.name }}</a></li>
+<li class="disabled">{% trans "Modules" %}</li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ module.title|truncatechars_html:"70" }}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user module as is_editor %}
 <div class="grid-x grid-margin-x">

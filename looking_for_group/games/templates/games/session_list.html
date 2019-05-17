@@ -4,6 +4,10 @@
 {% block sessionactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{{ game.title }} {% trans "sessions" %}{% endblock %}
 {% block mobileheader %}{{ game.title }} {% trans "sessions" %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Sessions" %}</li>
+{% endblock %}
 {% block content %}
 <p>{% blocktrans count counter=game.gamesession_set.count %}This game has {{ counter }} session associated with it.{% plural %}This game has {{ counter }} sessions associated with it.{% endblocktrans %}</p>
 {% if not session_list %}

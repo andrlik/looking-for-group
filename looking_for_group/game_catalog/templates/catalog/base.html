@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% load i18n humanize rules %}
 {% block title %}{% block subtitle %}{% endblock %}{% trans "Game Catalog - Looking for Group" %}{% endblock %}
+{% block extracrumbs %}
+<li class="disabled">{% trans "Catalog" %}</li>
+{% block cata_crumbs %}
+{% endblock %}
+{% endblock %}
 {% block innernav %}
 {% has_perm "catalog.can_edit" user user as is_editor %}
 <div class="title-bar" data-responsive-toggle="section-menu" data-hide-for="medium">

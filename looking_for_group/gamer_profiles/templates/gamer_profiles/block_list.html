@@ -4,6 +4,10 @@
 {% block sectiontitle %}{% trans "Blocked Users" %}{% endblock %}
 {% block mobileheader %}{% trans "Blocked Users" %}{% endblock %}
 {% block blockactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block profile_crumbs %}
+<li><a href="{{ gamer.get_absolute_url }}">{% trans "Your profile" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Blocked users" %}</li>
+{% endblock %}
 {% block content %}
 {% if not block_list %}
 <p>{% trans "No blocked users found." %}</p>

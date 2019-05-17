@@ -5,6 +5,11 @@
 {% block sectiontitle %}{{ edition }}{% endblock %}
 {% block mobileheader %}{{ edition }}{% endblock %}
 {% block gameactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block cata_crumbs %}
+<li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
+<li><a href="{{ edition.game.get_absolute_url }}">{{ edition.game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ edition.name }}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user edition as is_editor %}
 <div class="grid-x grid-margin-x">

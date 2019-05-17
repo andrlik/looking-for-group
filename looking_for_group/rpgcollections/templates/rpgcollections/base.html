@@ -1,2 +1,12 @@
 {% extends "gamer_profiles/profile_base.html" %}
+{% load i18n %}
 {% block collectactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block profile_crumbs %}
+{% if request.user == gamer.user %}
+<li><a href="{{ gamer.get_absolute_url }}">{% trans "Your profile" %}</a></li>
+{% else %}
+<li><a href="{{ gamer.get_absolute_url }}">{{ gamer }}'s {% trans "profile" %}</a></li>
+{% endif %}
+{% block collection_crumbs %}
+{% endblock %}
+{% endblock %}

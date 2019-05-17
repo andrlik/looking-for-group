@@ -11,3 +11,6 @@
 {% block pm_footer_info %}
 <p>{% trans "Messages in this folder can be removed from time to time. For long term storage, use instead the archive folder." %}</p>
 {% endblock %}
+{% block post_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Trash" %}</li>
+{% endblock %}

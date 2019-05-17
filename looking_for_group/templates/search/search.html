@@ -4,6 +4,9 @@
 {% block subtitle %}{% trans "Search" %} - {% endblock %}
 {% block mobileheader %}{% trans "Search" %}{% endblock %}
 {% block sectiontitle %}{% trans "Search" %}{% endblock %}
+{% block extracrumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Search" %}</li>
+{% endblock %}
 {% block content %}
 <p>{% trans "Enter your search terms below" %}</p>
 <form method="get" action="">
