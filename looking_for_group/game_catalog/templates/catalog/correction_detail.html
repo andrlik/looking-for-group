@@ -18,15 +18,15 @@
 <li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.title|truncatechars_html:"70" }}</a></li>
 {% elif correction.content_type.model == "gameedition" %}
 <li><a href="{{ correction.content_object.game.get_absolute_url }}">{{ correction.content_object.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.name }}</a></li>
+<li><a href="{{ correction.content_object.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ correction.content_object.name }}</a></li>
 {% elif correction.content_type.model == "sourcebook" %}
 <li><a href="{{ correction.content_object.edition.game.get_absolute_url }}">{{ correction.content_object.edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ correction.content_object.edition.get_absolute_url }}">{{ correction.content_object.edition.name }}</a></li>
+<li><a href="{{ correction.content_object.edition.get_absolute_url }}"<span class="show-for-sr">{% trans "Edition:" %} </span>>{{ correction.content_object.edition.name }}</a></li>
 <li class="disabled">{% trans "Sourcebooks" %}</li>
 <li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.title|truncatechars_html:"70" }}</a></li>
 {% else %}
 <li><a href="{{ correction.content_object.parent_game_edition.game.get_absolute_url }}">{{ correction.content_object.parent_game_edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ correction.content_object.parent_game_edition.get_absolute_url }}">{{ correction.content_object.parent_game_edition.name }}</a></li>
+<li><a href="{{ correction.content_object.parent_game_edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ correction.content_object.parent_game_edition.name }}</a></li>
 <li class="disabled">{% trans "Modules" %}</li>
 <li><a href="{{ correction.content_object.get_absolute_url }}">{{ correction.content_object.title|truncatechars_html:"70" }}</a></li>
 {% endif %}

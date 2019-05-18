@@ -7,7 +7,7 @@
 {% block cata_crumbs %}
 <li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
 <li><a href="{{ module.parent_game_edition.game.get_absolute_url }}">{{ module.parent_game_edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition.name }}</a></li>
+<li><a href="{{ module.parent_game_edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ module.parent_game_edition.name }}</a></li>
 <li class="disabled">{% trans "Modules" %}</li>
 <li><a href="{{ module.get_absolute_url }}">{{ module.title|truncatechars_html:"70" }}</a></li>
 <li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>

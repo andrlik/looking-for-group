@@ -7,7 +7,7 @@
 {% block cata_crumbs %}
 <li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
 <li><a href="{{ book.edition.game.get_absolute_url }}">{{ book.edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ book.edition.get_absolute_url }}">{{ book.edition.name }}</a></li>
+<li><a href="{{ book.edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ book.edition.name }}</a></li>
 <li class="disabled">{% trans "Sourcebooks" %}</li>
 <li><a href="{{ book.get_absolute_url }}">{{ book.title|truncatechars_html:"70" }}</a></li>
 <li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
