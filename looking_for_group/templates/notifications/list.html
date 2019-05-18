@@ -6,6 +6,9 @@
 {% block mobileheader %}{% trans "Notifications" %}{% endblock %}
 {% block unreadactive %}{% if unread == all %}{% include "is_active_definition.html" %}{% endif %}{% endblock %}
 {% block allactive %}{% if unread < all %}{% include "is_active_definition.html" %}{% endif %}{% endblock %}
+{% block extracrumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Notifications" %}</li>
+{% endblock %}
 {% block content %}
 <p>{% trans "Your notifications can be found below." %}</p>
 {% if not notifications %}

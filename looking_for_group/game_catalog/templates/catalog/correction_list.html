@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Suggested corrections" %}{% endblock %}
 {% block mobileheader %}{% trans "Suggested corrections" %}{% endblock %}
 {% block correctactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block cata_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Suggested corrections" %}</li>
+{% endblock %}
 {% block content %}
 <ul class="tabs" data-tabs data-deep-link="true" data-deep-link-smudge="true" id="correction-tabs">
   <li class="tabs-title is-active"><a href="#pending_panel" aria-selected="true">{% trans "Pending" %} ({{ correction_list.count }})</a></li>

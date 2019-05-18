@@ -1,0 +1,4 @@
+{% load i18n %}
+{% if tour and user.is_authenticated %}
+<button id="trigger_tour_{{ tour.name }}" class="button" onclick="tour_{{ tour.name }}.start();">{% trans "Start guide" %}</button>
+{% endif %}

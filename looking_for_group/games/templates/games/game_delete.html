@@ -4,6 +4,10 @@
 {% block deleteactive %} class="is-active"{% endblock %}
 {% block sectiontitle %}{% trans "Delete game" %}{% endblock %}
 {% block mobileheader %}{% trans "Delete game" %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete" %}</li>
+{% endblock %}
 {% block content %}
 <div class="alert callout">
   <h5>{% trans "Are you sure?" %}</h5>

@@ -3,6 +3,9 @@
 {% block subtitle %}{% trans "Report list" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Report list" %}{% endblock %}
 {% block mobileheader %}{% trans "Report list" %}{% endblock %}
+{% block post_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Reports" %}</li>
+{% endblock %}
 {% block content %}
 <p>{% trans "Reports requiring your attention appear below." %}</p>
 {% if not report_list %}

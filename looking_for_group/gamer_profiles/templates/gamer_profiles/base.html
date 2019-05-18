@@ -23,3 +23,8 @@
   </div>
 </div>
 {% endblock %}
+{% block extracrumbs %}
+<li><a href="{% url 'gamer_profiles:community-list' %}">{% trans "Communities" %}</a></li>
+{% block comm_crumbs %}
+{% endblock %}
+{% endblock %}

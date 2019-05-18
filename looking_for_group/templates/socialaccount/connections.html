@@ -4,7 +4,11 @@
 {% block mobileheader %}{% trans "Manage Discord" %}{% endblock %}
 {% block subtitle %}{% trans "Manage Discord" %}{% endblock %}
 {% block innernavmenu %}{% endblock %}
-
+{% block extracrumbs %}
+<li class="disabled">{% trans "Profiles" %}</li>
+<li><a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Your profile" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>Discord</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-6">

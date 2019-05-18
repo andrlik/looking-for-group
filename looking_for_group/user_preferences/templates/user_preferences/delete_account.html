@@ -4,6 +4,11 @@
 {% block sectiontitle %}{% trans "Delete your account" %}{% endblock %}
 {% block mobileheader %}{% trans "Delete your account" %}{% endblock %}
 {% block deleteactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block extracrumbs %}
+<li class="disabled">{% trans "Profiles" %}</li>
+<li><a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Your profile" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete account" %}</li>
+{% endblock %}
 {% block content %}
 <div class="callout alert">
   <h5>{% trans "We are so sorry to see you go!" %}</h5>

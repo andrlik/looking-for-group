@@ -1,6 +1,12 @@
 {% extends "games/base.html" %}
 {% load i18n %}
 {% block subtitle %}{% blocktrans with gametitle=log.session.game.title sessiontime=log.session.scheduled_time %}Delete log for {{ gametitle }} session?{% endblocktrans %} - {% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'games:session_list' gameid=log.session.game.slug %}">{% trans "Sessions" %}</a></li>
+<li><a href="{{ log.session.get_absolute_url }}">{{ log.session.scheduled_time }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Log" %}</li>
+{% endblock %}
 {% block content %}
 <h1>{% blocktrans with gametitle=log.session.game.title sessiontime=log.session.scheduled_time %}Delete log entry for {{ gametitle }} session on {{ sessiontime }}?{% endblocktrans %}</h1>
 <div class="callout alert">

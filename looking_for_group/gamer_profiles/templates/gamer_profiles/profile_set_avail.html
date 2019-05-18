@@ -4,6 +4,10 @@
 {% block sectiontitle %}{% trans "Set available play times" %}{% endblock %}
 {% block mobileheader %}{% trans "Set available play times" %}{% endblock %}
 {% block availactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block profile_crumbs %}
+<li><a href="{{ request.user.gamerprofile.get_absolute_url }}">{% trans "Your Profile" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Set your availability" %}</li>
+{% endblock %}
 {% block js_extra %}
 {% include "datepicker_js.html" %}
 {% include "datepicker_logic.html" %}

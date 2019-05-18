@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Publishers" %}{% endblock %}
 {% block mobileheader %}{% trans "Publishers" %}{% endblock %}
 {% block pubactive %} class="is-active"{% endblock %}
+{% block cata_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Publishers" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'catalog.can_edit' user object_list as is_editor %}
 {% if is_editor %}

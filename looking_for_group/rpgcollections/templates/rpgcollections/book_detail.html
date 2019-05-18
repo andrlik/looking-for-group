@@ -3,6 +3,10 @@
 {% block subtitle %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% endblocktrans %}{% endblock %}
 {% block sectiontitle %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with title=book.title %}Copy details for {{ title }}{% endblocktrans %}{% endblock %}
+{% block collection_crumbs %}
+<li><a href="{{ book.library.get_absolute_url }}">{% if request.user == book.library.user %}{% trans "Manage collection" %}{% else %}{% trans "View collection" %}{% endif %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{{ book.title|truncatechars_html:40 }}</li>
+{% endblock %}
 {% block content %}
 <div class="grid-x grid-margin-x">
   <div class="cell medium-1"></div>

@@ -9,6 +9,10 @@
 {% endblock %}
 {% block sectiontitle %}{% if pm_messages|length > 1 %}{% trans "Conversation" %}{% else %}{% trans "Message" %}{% endif %}{% endblock %}
 {% block mobileheader %}{% if pm_messages|length > 1 %}{% trans "Conversation" %}{% else %}{% trans "Message" %}{% endif %}{% endblock %}
+{% block extracrumbs %}
+<li><a href="{% url 'postman:inbox' %}">{% trans "Messages" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Message" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm "postman.can_send_messages" request.user as can_send %}
 <div id="postman">

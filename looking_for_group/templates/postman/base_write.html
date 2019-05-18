@@ -11,6 +11,10 @@
 {% block css_extra %}
 {% include "datepicker_css.html" %}
 {% endblock %}
+{% block extracrumbs %}
+<li><a href="{% url 'postman:inbox' %}">{% trans "Messages" %}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Write" %}</li>
+{% endblock %}
 {% block content %}
 {% has_perm 'postman.can_send_messages' request.user form as can_send %}
 <div id="postman">

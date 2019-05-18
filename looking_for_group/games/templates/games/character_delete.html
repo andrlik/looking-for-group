@@ -4,6 +4,12 @@
 {% block charactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% blocktrans with cname=character.name %}Delete character {{ cname }}?{% endblocktrans %}{% endblock %}
 {% block mobileheader %}{% blocktrans with cname=character.name %}Delete character {{ cname }}?{% endblocktrans %}{% endblock %}
+{% block game_crumbs %}
+<li><a href="{{ game.get_absolute_url }}">{{ game.title|truncatechars_html:"70" }}</a></li>
+<li><a href="{% url 'games:character_game_list' gameid=game.slug %}">{% trans "Characters" %}</a></li>
+<li><a href="{{ character.get_absolute_url }}">{{ character.name|truncatechars_html:"70" }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete" %}</li>
+{% endblock %}
 {% block content %}
 <div class="callout alert">
   <h5>{% trans "Are you sure?" %}</h5>

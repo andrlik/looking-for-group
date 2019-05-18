@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "Your Games" %}{% endblock %}
 {% block mobileheader %}{% trans "Your Games" %}{% endblock %}
 {% block yourgamesactive %} class="is-active"{% endblock %}
+{% block game_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Your games" %}</li>
+{% endblock %}
 {% block content %}
 
 {% if filter_form %}

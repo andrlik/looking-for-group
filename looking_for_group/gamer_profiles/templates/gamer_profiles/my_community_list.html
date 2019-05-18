@@ -4,6 +4,9 @@
 {% block sectiontitle %}{% trans "My Communities" %}{% endblock %}
 {% block mobileheader %}{% trans "My Communities" %}{% endblock %}
 {% block yourcomactive %} class="is-active"{% endblock %}
+{% block comm_crumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Your Communities" %}</li>
+{% endblock %}
 {% block content %}
 <br />
 {% if not object_list %}

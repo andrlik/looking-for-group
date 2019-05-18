@@ -7,6 +7,11 @@ for the template tag library.
 If the real implementation is to be used, just make sure that 'dj_pagination' is declared before 'postman'
 in the INSTALLED_APPS setting.
 {% endcomment %}
+{% block extracrumbs %}
+<li><a href="{% url 'postman:inbox' %}">{% trans "Messages" %}</a></li>
+{% block post_crumbs %}
+{% endblock %}
+{% endblock %}
 {% block sectiontitle %}{% block pm_folder_title %}{% endblock %}{% endblock %}
 {% block content %}
 {% if not request.user.gamerprofile.preferences.notification_digest and not request.user.gamerprofile.preferences.email_messages %}
