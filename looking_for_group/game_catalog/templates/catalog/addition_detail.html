@@ -53,7 +53,7 @@
           <dd>{{ addition.title }}</dd>
           {% if addition.image.name %}
           <dt>{% trans "Cover image/logo" %}</dt>
-          <dd><img src="{{ addition.image.url }}" class="thumbnail" /></dd>
+          <dd><img src="{{ addition.image.url }}" class="thumbnail" alt="cover image or logo" /></dd>
           {% endif %}
           {% if addition.content_type.model != "sourcebook" and addition.content_type.model != "publishedmodule" %}
           <dt>{% trans "Description" %}</dt>

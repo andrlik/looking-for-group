@@ -17,7 +17,7 @@
     <div class="card">
       <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
       <div class="card-section">
-{% if edition.image %}<img class="thumbnail" src="{{ edition.image.url }}" />{% endif %}
+{% if edition.image %}<img class="thumbnail" alt="{% trans 'Cover of' %} {{ edition }}" src="{{ edition.image.url }}" />{% endif %}
 {% if edition.url %}<h5><a href="{{ edition.url }}">{% trans "Official site" %}</a></h5>{% endif %}
 <dl>
   <dt>{% trans "Game" %}</dt>

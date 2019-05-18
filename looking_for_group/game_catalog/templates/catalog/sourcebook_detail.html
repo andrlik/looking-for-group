@@ -19,7 +19,7 @@
       <div class="card-divider"><h5>{% trans "Sourcebook details" %}</h5></div>
       <div class="card-section">
 {% has_perm 'catalog.can_edit' user book as is_editor %}
-{% if book.image %}<img class="thumbnail" src="{{ book.image.url }}" />{% endif %}
+{% if book.image %}<img class="thumbnail" alt="{% trans 'Cover of' %} {{ book.title }}" src="{{ book.image.url }}" />{% endif %}
 {% if book.url %}<h5><a href="{{ book.url }}">{% trans "More info can be found here." %}</a></h5>{% endif %}
 <dl>
   <dt>{% trans "For game edition" %}</dt>
