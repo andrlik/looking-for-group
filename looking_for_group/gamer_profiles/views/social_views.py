@@ -27,8 +27,8 @@ from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Event, Rule
 
-from ...games.models import AvailableCalendar
 from .. import models, serializers
+from ...games.models import AvailableCalendar
 from ..forms import (
     BlankDistructiveForm,
     GamerAvailabilityForm,
@@ -344,6 +344,7 @@ class CommunityCreateView(
     fields = [
         "name",
         "community_logo",
+        "community_logo_description",
         "community_logo_cw",
         "description",
         "url",
@@ -454,6 +455,7 @@ class CommunityUpdateView(
     fields = [
         "name",
         "community_logo",
+        "community_logo_description",
         "community_logo_cw",
         "description",
         "url",

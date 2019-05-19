@@ -25,7 +25,7 @@
 {% block content %}
 {% if community.community_logo %}
 <div id="feature-image">
-  <img alt="{% trans 'Logo for' %} {{ community.name }}" class="thumbnail logo" src="{{ community.community_logo.url }}" />
+  <img alt="{% if community.community_logo_description %}{{ community.community_logo_description }}{% else %}{% trans 'Logo for' %} {{ community.name }}{% endif %}" class="thumbnail logo" src="{{ community.community_logo.url }}" />
   {% if community.community_logo_cw %}
   <div id="cw_overlay" onclick="cw_off()">
     <div id="overlay_text"><p>{% trans 'Logo CW:' %} {{ community.community_logo_cw }}</p><p>{% trans 'Click to reveal' %}</p></div>

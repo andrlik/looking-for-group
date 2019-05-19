@@ -71,7 +71,11 @@ class WeekdayAvailable(object):
             base_date = timezone.now()
         cal_events = availability_calendar.events.filter(end_date_empty_q)
         if cal_events.count() == 0:
-            raise ValueError(_("This is not a valid calendar for representation as nothing is defined."))
+            raise ValueError(
+                _(
+                    "This is not a valid calendar for representation as nothing is defined."
+                )
+            )
         self.weekdays = [[]] * 7
         for occurrence in availability_calendar.get_next_week_occurrences(base_date):
             weekday_key = occurrence.start.astimezone(user_timezone).weekday()
@@ -87,8 +91,15 @@ class AvailableCalendarManager(CalendarManager):
         """
         For the given gamer, either get or create their availability calendar.
         """
-        gamer_primary_calendar, created = Calendar.objects.get_or_create(slug=gamer.username, defaults={'name': "{}'s calendar".format(gamer.username)})
-        return self.get_or_create_calendar_for_object(gamer_primary_calendar, distinction='available', name="{} availability".format(gamer.username))
+        gamer_primary_calendar, created = Calendar.objects.get_or_create(
+            slug=gamer.username,
+            defaults={"name": "{}'s calendar".format(gamer.username)},
+        )
+        return self.get_or_create_calendar_for_object(
+            gamer_primary_calendar,
+            distinction="available",
+            name="{} availability".format(gamer.username),
+        )
 
     def find_compatible_schedules(self, requester_calendar, gamer_list):
         """
@@ -104,21 +115,36 @@ class AvailableCalendarManager(CalendarManager):
         """
         end_date_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
         end_date_future_q = Q(end_recurring_period__gt=timezone.now())
-        query_range = Week(events=requester_calendar.events.filter(end_date_future_q | end_date_empty_q), date=timezone.now()).next_week()
+        query_range = Week(
+            events=requester_calendar.events.filter(
+                end_date_future_q | end_date_empty_q
+            ),
+            date=timezone.now(),
+        ).next_week()
         requestor_occurrences = query_range.get_occurrences()
         matches = []
         gamer_list_length = gamer_list.count()
         logger.debug("Starting evaluation of {} gamers".format(gamer_list_length))
         for occurrence in requestor_occurrences:
-            conflicts = self.check_availability(gamer_list, occurrence.start, occurrence.end, minimum_overlap=150)
+            conflicts = self.check_availability(
+                gamer_list, occurrence.start, occurrence.end, minimum_overlap=150
+            )
             if (conflicts and len(conflicts) < gamer_list_length) or not conflicts:
-                logger.debug("There is at least one match here. Adding gamer(s) to match list.")
-                match_list = gamer_list.exclude(id__in=[item['gamer'].pk for item in conflicts])
+                logger.debug(
+                    "There is at least one match here. Adding gamer(s) to match list."
+                )
+                match_list = gamer_list.exclude(
+                    id__in=[item["gamer"].pk for item in conflicts]
+                )
                 logger.debug("Appening {} gamers".format(match_list.count()))
                 matches.append(match_list)
-                gamer_list = gamer_list.filter(id__in=[item['gamer'].pk for item in conflicts])
+                gamer_list = gamer_list.filter(
+                    id__in=[item["gamer"].pk for item in conflicts]
+                )
                 gamer_list_length = gamer_list.count()
-                logger.debug("New list of gamers to evaluate is {}".format(gamer_list_length))
+                logger.debug(
+                    "New list of gamers to evaluate is {}".format(gamer_list_length)
+                )
                 if gamer_list_length == 0:
                     break
         logger.debug("{} matches in list".format(len(matches)))
@@ -146,9 +172,16 @@ class AvailableCalendarManager(CalendarManager):
         for gamer in gamer_list:
             logger.debug("Evaluating for gamer {}".format(gamer))
             cal = self.get_or_create_availability_calendar_for_gamer(gamer)
-            if cal.events.filter(end_recurring_period__isnull=True, rule__isnull=False).count() == 0:
+            if (
+                cal.events.filter(
+                    end_recurring_period__isnull=True, rule__isnull=False
+                ).count()
+                == 0
+            ):
                 # Gamer has nothing set, which means ambiguous results. Include in matches.
-                logger.debug("Gamer has specified no availability. Treat like an ambiguous match.")
+                logger.debug(
+                    "Gamer has specified no availability. Treat like an ambiguous match."
+                )
                 matches += 1
             else:
                 result = cal.check_proposed_time(start, end, minimum_overlap)
@@ -157,7 +190,11 @@ class AvailableCalendarManager(CalendarManager):
                     conflict_list.append({"gamer": gamer, "conflicts": result})
                 else:
                     matches += 1
-                    logger.debug("No conflicts for this gamer. Currently {} matching gamers".format(matches))
+                    logger.debug(
+                        "No conflicts for this gamer. Currently {} matching gamers".format(
+                            matches
+                        )
+                    )
         logger.debug("Returning list of {} conflicts".format(len(conflict_list)))
         return conflict_list
 
@@ -176,10 +213,15 @@ class AvailableCalendar(Calendar):
         """
         if not date_base:
             date_base = timezone.now()
-        date_range = Week(self.events.filter(end_recurring_period__isnull=True, rule__isnull=False), date=date_base).next_week()
+        date_range = Week(
+            self.events.filter(end_recurring_period__isnull=True, rule__isnull=False),
+            date=date_base,
+        ).next_week()
         return date_range.get_occurrences()
 
-    def get_weekly_availability(self, user_timezone=pytz.timezone('UTC'), date_base=None):
+    def get_weekly_availability(
+        self, user_timezone=pytz.timezone("UTC"), date_base=None
+    ):
         """
         For the given date_base retrieve weekly schedule in a friendly
         format.
@@ -204,7 +246,9 @@ class AvailableCalendar(Calendar):
         if minimum_overlap and end - start > timedelta(seconds=minimum_overlap * 60):
             minimum_overlap = timedelta(seconds=minimum_overlap * 60)
         elif minimum_overlap and end - start < timedelta(seconds=minimum_overlap * 60):
-            logger.debug("Time to check is less than specified minimum overlap, so using time to check instead.")
+            logger.debug(
+                "Time to check is less than specified minimum overlap, so using time to check instead."
+            )
             minimum_overlap = end - start
         else:
             logger.debug("Setting minimum overlap to check period")
@@ -212,25 +256,55 @@ class AvailableCalendar(Calendar):
         logger.debug("Minimum overlap is now {}".format(minimum_overlap.seconds))
         end_date_empty_q = Q(rule__isnull=False, end_recurring_period__isnull=True)
         end_date_future_q = Q(end_recurring_period__gt=timezone.now())
-        day_period = Day(events=self.events.filter(end_date_empty_q | end_date_future_q), date=start)
+        day_period = Day(
+            events=self.events.filter(end_date_empty_q | end_date_future_q), date=start
+        )
         occurrences = day_period.get_occurrences()
         logger.debug("Occurrences fetched.")
         error_reasons = []
         matches = []
         try:
             for occurrence in occurrences:
-                logger.debug("Evaluating {} - {} against start: {} and end {}".format(occurrence.start, occurrence.end, start, end))
-                if occurrence.start > start and occurrence.end < end and occurrence.end - occurrence.start < minimum_overlap:
-                    logger.debug("Occurrence begins after start and ends before end. Overlap is insufficient.")
+                logger.debug(
+                    "Evaluating {} - {} against start: {} and end {}".format(
+                        occurrence.start, occurrence.end, start, end
+                    )
+                )
+                if (
+                    occurrence.start > start
+                    and occurrence.end < end
+                    and occurrence.end - occurrence.start < minimum_overlap
+                ):
+                    logger.debug(
+                        "Occurrence begins after start and ends before end. Overlap is insufficient."
+                    )
                     error_reasons.append(occurrence)
-                elif occurrence.start <= start and occurrence.end < end and occurrence.end - start < minimum_overlap:
-                    logger.debug("Occurrence begins before start, but ends before end. Overlap is insufficient. ")
+                elif (
+                    occurrence.start <= start
+                    and occurrence.end < end
+                    and occurrence.end - start < minimum_overlap
+                ):
+                    logger.debug(
+                        "Occurrence begins before start, but ends before end. Overlap is insufficient. "
+                    )
                     error_reasons.append(occurrence)
-                elif occurrence.start > start and occurrence.end >= end and end - occurrence.start < minimum_overlap:
-                    logger.debug("Occurrence begins after start but occurrence goes late than end. Overlap is still insufficient")
+                elif (
+                    occurrence.start > start
+                    and occurrence.end >= end
+                    and end - occurrence.start < minimum_overlap
+                ):
+                    logger.debug(
+                        "Occurrence begins after start but occurrence goes late than end. Overlap is still insufficient"
+                    )
                     error_reasons.append(occurrence)
-                elif occurrence.start <= start and occurrence.end >= end and end - start < minimum_overlap:
-                    logger.debug("occurrence is larger than end and start, but the minimum overlap is still too small")
+                elif (
+                    occurrence.start <= start
+                    and occurrence.end >= end
+                    and end - start < minimum_overlap
+                ):
+                    logger.debug(
+                        "occurrence is larger than end and start, but the minimum overlap is still too small"
+                    )
                     error_reasons.append(occurrence)
                 else:
                     logger.debug("There is sufficient overlap. This is a MATCH")
@@ -245,7 +319,9 @@ class AvailableCalendar(Calendar):
                 logger.debug("Returning list of conflicts.")
                 return error_reasons
             else:
-                logger.debug("Returning default value as user has no availability defined for this day.")
+                logger.debug(
+                    "Returning default value as user has no availability defined for this day."
+                )
                 return ["No availability"]
 
     class Meta:
@@ -340,14 +416,22 @@ class GameEvent(Event):
                             calendar=calendar,
                             color_event=self.color_event,
                         )
-                        logger.debug("Created event with pk of {}".format(child_event.pk))
-                        logger.debug("Now creating event relation back to master event...")
+                        logger.debug(
+                            "Created event with pk of {}".format(child_event.pk)
+                        )
+                        logger.debug(
+                            "Now creating event relation back to master event..."
+                        )
                         ch_rel = GameEventRelation.objects.create_relation(
                             event=child_event,
                             content_object=self,
                             distinction="playerevent",
                         )
-                        logger.debug("Created event relation {} for child event {}".format(ch_rel.pk, child_event.pk))
+                        logger.debug(
+                            "Created event relation {} for child event {}".format(
+                                ch_rel.pk, child_event.pk
+                            )
+                        )
                         logger.debug(
                             "Added event {} for calendar {}".format(
                                 child_event.title, calendar.slug
@@ -518,7 +602,14 @@ class GamePosting(
         ),
         null=True,
         blank=True,
-        upload_to='games/game_feature_images/%Y/%m/%d',
+        upload_to="games/game_feature_images/%Y/%m/%d",
+    )
+    featured_image_description = models.CharField(
+        max_length=255,
+        verbose_name=_("Featured image description"),
+        null=True,
+        blank=True,
+        help_text=_("Description of your featured image for the visually impaired."),
     )
     featured_image_cw = models.CharField(
         max_length=50,
@@ -677,7 +768,9 @@ class GamePosting(
                 latest_session = self.gamesession_set.filter(
                     status__in=["complete", "cancel"]
                 ).latest("scheduled_time")
-                date_cutoff = latest_session.scheduled_time.astimezone(tz) + timedelta(days=1)
+                date_cutoff = latest_session.scheduled_time.astimezone(tz) + timedelta(
+                    days=1
+                )
                 logger.debug("Set new date cutoff of {}".format(date_cutoff))
             logger.debug("Checking for occurrences after {}".format(date_cutoff))
             occurrences = self.event.occurrences_after(after=date_cutoff)
@@ -704,7 +797,9 @@ class GamePosting(
 
     def get_next_session(self):
         if self.event:
-            sessions_to_check = GameSession.objects.filter(game=self, session_type='normal', status="pending")
+            sessions_to_check = GameSession.objects.filter(
+                game=self, session_type="normal", status="pending"
+            )
             if sessions_to_check.count() > 0:
                 return sessions_to_check.earliest("scheduled_time")
         return None
@@ -824,7 +919,9 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     def get_attendance_rating_for_game(self):
         if self.game.sessions > 0 and self.sessions_expected > 0:
-            return (1 - (float(self.sessions_missed) / float(self.sessions_expected))) * 100
+            return (
+                1 - (float(self.sessions_missed) / float(self.sessions_expected))
+            ) * 100
         return None
 
     def get_attendance_average(self):
@@ -910,7 +1007,9 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     )
 
     def __str__(self):
-        return "{} (session at {})".format(self.game.title, self.scheduled_time.strftime("%Y-%m-%d %H:%M %Z"))
+        return "{} (session at {})".format(
+            self.game.title, self.scheduled_time.strftime("%Y-%m-%d %H:%M %Z")
+        )
 
     @property
     def title(self):
@@ -936,7 +1035,9 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
             self.save()
 
     def get_players_present(self):
-        return self.players_expected.exclude(id__in=[m.id for m in self.players_missing.all()])
+        return self.players_expected.exclude(
+            id__in=[m.id for m in self.players_missing.all()]
+        )
 
     def delete(self, *args, **kwargs):
         if self.occurrence:
