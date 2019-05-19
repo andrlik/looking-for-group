@@ -108,10 +108,10 @@
             <i class="large fas fa-tachometer-alt"></i><span class="app-dashboard-sidebar-text">{% trans "Dashboard" %}</span>
           </a></li>
           <li><a href="{% url 'notifications:unread' %}">
-              <i id="dash-badge" data-badge="0" class="live_notify_badge large fa fas fa-bell"></i>
+              <i id="dash-badge" data-badge="0" aria-live="polite" class="live_notify_badge large fa fas fa-bell"></i>
             <span class="app-dashboard-sidebar-text">{% trans "Notifications" %}</span>
           </a></li>
-          <li><a href="{% url 'postman:inbox' %}"><i id="dash-message-badge" data-badge="{{ postman_unread_count }}" class="{% if postman_unread_count > 0 %}live_notify_badge_unread{% else %}live_notify_badge{% endif %} large fas fa-envelope"></i><span class="app-dashboard-sidebar-text">{% trans "Messages" %}</span></a> </li>
+          <li><a href="{% url 'postman:inbox' %}"><i id="dash-message-badge" aria-live="polite" data-badge="{{ postman_unread_count }}" class="{% if postman_unread_count > 0 %}live_notify_badge_unread{% else %}live_notify_badge{% endif %} large fas fa-envelope"></i><span class="app-dashboard-sidebar-text">{% trans "Messages" %}</span></a> </li>
           <li><a href="{% url 'games:calendar_detail' gamer=request.user.username %}">
             <i class="large fas fa-calendar-alt"></i><span class="app-dashboard-sidebar-text">{% trans "Calendar" %}</span>
           </a></li>
