@@ -77,7 +77,7 @@
 <nav aria-label="Pagination">
   <ul class="pagination">
     {% if not page_obj.has_previous %}
-    <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+    <li class="pagination-previous disabled" disabled>{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
     {% else %}
     <li class="pagination-previous"><a href="{% if unread == all %}{% url 'notifications:unread' %}{% else %}{% url 'notfications:all' %}{% endif %}?page={{ page_obj.previous_page_number }}" aria-label="Previous page">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
     {% endif %}

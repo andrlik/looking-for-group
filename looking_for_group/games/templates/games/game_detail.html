@@ -35,7 +35,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card" id="game-description">
-      <div class="card-divider"><h5>{% trans "Description" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Description" %}</h2></div>
       <div class="card-section">
         {% has_perm "game.is_member" request.user game as is_member %}
         {% get_tour "game" as tour %}
@@ -52,7 +52,7 @@
   <div class="cell medium-auto">
     <div class="card" id="game-details">
       <div class="card-divider">
-        <h5>{% trans "Details" %}</h5>
+        <h2>{% trans "Details" %}</h2>
       </div>
       <div class="card-section">
         <table class="hover scroll">
@@ -153,7 +153,7 @@
   {% if game.gm.user == request.user and pending_applicant_list %}
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Applicants" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Applicants" %}</h2></div>
       <div class="card-section">
 <p>{% blocktrans count counter=pending_applicant_list|length %}You have {{ counter }} pending application.{% plural %}You have {{ counter }} pending applications.{% endblocktrans %}</p>
 <p><a href="{% url 'games:game_applicant_list' gameid=game.slug %}" class="button">{% trans "View applicants" %}</a></p>
@@ -163,7 +163,7 @@
   {% endif %}
   <div class="cell medium-auto">
     <div class="card" id="game-players">
-      <div class="card-divider"><h5>{% trans "Current Players" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Current Players" %}</h2></div>
       <div class="card-section">
 {% if not player_list %}
 <p>{% trans "No players yet" %}</p>
@@ -244,19 +244,19 @@
     {% if recent_sessions or game.next_session_time %}
     <div class="cell medium-auto">
       <div class="card" id="game-recent-sessions">
-        <div class="card-divider"><h5>{% trans "Recent and upcoming sessions" %}</h5></div>
+        <div class="card-divider"><h2>{% trans "Recent and upcoming sessions" %}</h2></div>
         <div class="card-section">
           {% if game.gm.user == request.user %}
           <div class="clearfix">
             {% if game.players.count == 0 %}
             <p>{% blocktrans %}You will need to have at least one player in your game before you can create a session.{% endblocktrans %}</p>
-            <button class="button disabled primary float-left">{% trans "Create next regular session" %}</button>
-            <div class="float-right"><button class="button primary disabled"><i class="fas fa-plus-circle"></i> {% trans "Create an ad hoc session" %}</button> <abbr title="{% trans 'Create a session that is separate from the main recurrence rules, e.g. a side session.' %}"><i class="fas fa-question-circle"></i></abbr></div>
+            <button class="button disabled primary float-left" disabled>{% trans "Create next regular session" %}</button>
+            <div class="float-right"><button class="button primary disabled" disabled><i class="fas fa-plus-circle"></i> {% trans "Create an ad hoc session" %}</button> <abbr title="{% trans 'Create a session that is separate from the main recurrence rules, e.g. a side session.' %}"><i class="fas fa-question-circle"></i></abbr></div>
             {% else %}
             {% if game.next_session_time %}
           {% if game.get_next_session and game.get_next_session.scheduled_time == game.next_session_time %}
           <p>{% blocktrans %}You have a session pending completion before you can create the next regular session.{% endblocktrans %}</p>
-          <button class="button float-left disabled">{% trans "Create next regular session" %}</button>
+          <button class="button float-left disabled" disabled>{% trans "Create next regular session" %}</button>
           {% else %}
           <form action="{% url 'games:session_create' gameid=game.slug %}" method="post">
             {% csrf_token %}

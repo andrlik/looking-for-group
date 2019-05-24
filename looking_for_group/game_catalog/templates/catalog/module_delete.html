@@ -14,7 +14,7 @@
 {% endblock %}
 {% block content %}
 <div class="callout alert">
-  <h5>{% trans "Are you sure?" %}</h5>
+  <h2>{% trans "Are you sure?" %}</h2>
   <p>{% trans "If you delete this module, you will nullify selections related to this in:" %}</p>
   <ul>
     <li>{% blocktrans count counter=module.gameposting_set.count %}{{ counter }} game being played by other users.{% plural %}{{ counter }} games being played by other users.{% endblocktrans %}</li>

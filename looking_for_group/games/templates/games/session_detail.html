@@ -13,7 +13,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Session info" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Session info" %}</h2></div>
       <div class="card-section">
 <dl>
   <dt>{% trans "Scheduled Time" %}</dt>
@@ -28,7 +28,7 @@
   </div>
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Players" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Players" %}</h2></div>
       <div class="card-section">
 
 
@@ -72,7 +72,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-6">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Adventure Log" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Adventure Log" %}</h2></div>
       <div class="card-section">
 
         {% if session.adventurelog %}
@@ -92,10 +92,10 @@
   {% if request.user.gamerprofile == session.game.gm %}
   <div class="cell medium-6">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "GM Tools" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "GM Tools" %}</h2></div>
       <div class="card-section">
   <dl>
-    <dt><h5>{% trans "GM Notes" %}</h5></dt>
+    <dt><h2>{% trans "GM Notes" %}</h2></dt>
     <dd>
       {{ session.gm_notes_rendered|safe }}</dd>
   </dl>

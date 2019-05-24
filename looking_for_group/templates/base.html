@@ -45,7 +45,7 @@
   <body>
 <div class="app-dashboard grid-y grid-frame shrink-medium" >
   <div class="cell header shrink medium-cell-block-container">
-  <div id="top-nav-bar" class="grid-x grid-margin-x expanded app-dashboard-top-nav-bar">
+  <div id="top-nav-bar" class="grid-x grid-margin-x expanded app-dashboard-top-nav-bar" role="banner">
     <div class="cell logo-container small-7 medium-2">
       <button data-toggle="app-dashboard-sidebar" class="menu-icon hide-for-medium"></button>
       <a class="app-dashboard-logo" href="/">LFG Directory</a>
@@ -53,17 +53,22 @@
     <div class="cell medium-4 show-for-medium">
       <div class="app-dashboard-search-bar-container">
        <form action="{% url 'haystack_search' %}"  method="get">
-          <input name="q" id="id_q" class="app-dashboard-search " type="search" placeholder="Search">
-          <i class="app-dashboard-search-icon fa fa-search"></i>
+         <div class="input-group">
+           <label for="id_q" class="show-for-sr">{% trans "Search" %}</label>
+          <input name="q" id="id_q" class="app-dashboard-search input-group-field" type="search" placeholder="Search">
+          <div class="input-group-button">
+            <button type="submit" class="button hollow"><i class="fas fa-search"></i> {% trans "Search" %}</button>
+          </div>
+         </div>
        </form>
       </div>
     </div>
-    <div class="cell auto app-dashboard-top-bar-actions" id="top-bar-actions">
+    <div class="cell auto medium-offset-2 app-dashboard-top-bar-actions" id="top-bar-actions">
 
         {% if request.user.is_authenticated %}
           <ul class="dropdown menu" data-dropdown-menu>
             <li>
-              <a href="#" class="hollow button">{{ request.user.username }} {% avatar request.user 20 class="avatar" %}</a>
+              <a href="#" class="hollow button">{{ request.user.gamerprofile }} {% avatar request.user 20 class="avatar" %}</a>
               <ul class="menu rounded">
                 <li><a href="{{ request.user.gamerprofile.get_absolute_url }}"><i class="fas fa-user"></i>&nbsp;&nbsp;{% trans "My Profile" %}</a></li>
                 <li><a href="{% url 'user_preferences:setting-view' %}"><i class="fas fa-cog"></i>&nbsp;&nbsp;{% trans "Settings" %}</a></li>
@@ -86,13 +91,13 @@
   </div>
   </div>
   <div class="app-dashboard-body off-canvas-wrapper">
-    <div id="app-dashboard-sidebar" class="app-dashboard-sidebar position-left off-canvas off-canvas-absolute reveal-for-medium" data-off-canvas>
+    <div id="app-dashboard-sidebar" class="app-dashboard-sidebar position-left off-canvas off-canvas-absolute reveal-for-medium" role="complementary" data-off-canvas>
       <div class="app-dashboard-sidebar-title-area">
         <div class="app-dashboard-close-sidebar">
           <h1 class="app-dashboard-sidebar-block-title">Menu</h1>
           <!-- Close button -->
           <button id="close-sidebar" data-app-dashboard-toggle-shrink class="app-dashboard-sidebar-close-button show-for-medium" aria-label="Close menu" type="button">
-            <span aria-hidden="true"><a href="#"><i class="large fa fa-angle-double-left"></i></a></span>
+            <span aria-hidden="true"><a href="#" tabindex="-1"><i class="large fa fa-angle-double-left"></i></a></span>
           </button>
         </div>
         <div class="app-dashboard-open-sidebar">
@@ -335,7 +340,7 @@
         var n = 40;
         $("abbr").each(function(){
           $(this).attr("data-tooltip","");
-          $(this).attr("tabindex", ""+n);
+          //$(this).attr("tabindex", ""+n);
           n++;
           new Foundation.Tooltip($(this));
         });

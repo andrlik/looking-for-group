@@ -10,7 +10,7 @@
 {% endblock %}
 {% block content %}
 <div class="alert callout">
-  <h5>{% trans "Are you sure?" %}</h5>
+  <h2>{% trans "Are you sure?" %}</h2>
   <p>{% blocktrans with gametitle=game.title %}If you delete {{ gametitle }} you will also delete all the following pieces of information: {% endblocktrans %}</p>
   <ul>
     <li>{% blocktrans count counter=game.gamesession_set|length %}{{ counter }} session and its associated adventure log.{% plural %}{{ counter }} sessions and their associated adventure logs.{% endblocktrans %}</li>
