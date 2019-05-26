@@ -14,9 +14,9 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "General info" %}</h2></div>
       <div class="card-section">
-        {% if system.image %}<img class="thumbnail" src="{{ system.image.url }}" />{% endif %}
+        {% if system.image %}<img class="thumbnail" alt="{% trans 'Cover of' %} {{ system.name }}" src="{{ system.image.url }}" />{% endif %}
         <dl>
           <dt>{% trans "Title" %}</dt>
           <dd>{{ system.name }}</dd>
@@ -84,7 +84,7 @@
 
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "LFG Stats" %}</h2></div>
       <div class="card-section">
         <dl>
           <dt>{% trans "DB Stats" %}</dt>
@@ -118,7 +118,7 @@
   </div>
   <div class="cell">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Game Editions" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Game Editions" %}</h2></div>
       <div class="card-section">
 {% if system.game_editions.count == 0 %}
 <p>{% blocktrans with sname=system.name %}We don't have any game information for {{ sname }} yet.{% endblocktrans %}</p>

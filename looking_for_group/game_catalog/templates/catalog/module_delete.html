@@ -7,14 +7,14 @@
 {% block cata_crumbs %}
 <li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
 <li><a href="{{ module.parent_game_edition.game.get_absolute_url }}">{{ module.parent_game_edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition.name }}</a></li>
+<li><a href="{{ module.parent_game_edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ module.parent_game_edition.name }}</a></li>
 <li class="disabled">{% trans "Modules" %}</li>
 <li><a href="{{ module.get_absolute_url }}">{{ module.title|truncatechars_html:"70" }}</a></li>
 <li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete" %}</li>
 {% endblock %}
 {% block content %}
 <div class="callout alert">
-  <h5>{% trans "Are you sure?" %}</h5>
+  <h2>{% trans "Are you sure?" %}</h2>
   <p>{% trans "If you delete this module, you will nullify selections related to this in:" %}</p>
   <ul>
     <li>{% blocktrans count counter=module.gameposting_set.count %}{{ counter }} game being played by other users.{% plural %}{{ counter }} games being played by other users.{% endblocktrans %}</li>

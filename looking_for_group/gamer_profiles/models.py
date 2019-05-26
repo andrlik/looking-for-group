@@ -114,6 +114,13 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         upload_to="social/community_logos/%Y/%m/%d",
         help_text=_("Optional featured logo for your community."),
     )
+    community_logo_description = models.CharField(
+        verbose_name=_("Community Logo Description"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Brief description of your logo for the visually impaired."),
+    )
     community_logo_cw = models.CharField(
         verbose_name=_("Logo content warning"),
         help_text=_(
@@ -448,16 +455,39 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
             "How many times has this user left a game before it was completed?"
         ),
     )
-    gm_games_finished = models.PositiveIntegerField(default=0, help_text=_("How many games has this GM completed?"))
-    games_finished = models.PositiveIntegerField(
-        default=0, help_text=_("How many finished games has this user participated in as a player?")
+    gm_games_finished = models.PositiveIntegerField(
+        default=0, help_text=_("How many games has this GM completed?")
     )
-    submitted_corrections = models.PositiveIntegerField(default=0, help_text=_("How many corrections has this user submitted to the catalog?"))
-    submitted_corrections_approved = models.PositiveIntegerField(default=0, help_text=_("How many corrections has this user submitted that were approved?"))
-    submitted_corrections_rejected = models.PositiveIntegerField(default=0, help_text=_("How many corrections has this user submitted that were rejected?"))
-    submitted_additions = models.PositiveIntegerField(default=0, help_text=_("How may additions has this user submitted to the catalog?"))
-    submitted_additions_approved = models.PositiveIntegerField(default=0, help_text=_("How many additions has this user submitted which were approved?"))
-    submitted_additions_rejected = models.PositiveIntegerField(default=0, help_text=_("How many additions has this user submitted which were rejected?"))
+    games_finished = models.PositiveIntegerField(
+        default=0,
+        help_text=_(
+            "How many finished games has this user participated in as a player?"
+        ),
+    )
+    submitted_corrections = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How many corrections has this user submitted to the catalog?"),
+    )
+    submitted_corrections_approved = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How many corrections has this user submitted that were approved?"),
+    )
+    submitted_corrections_rejected = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How many corrections has this user submitted that were rejected?"),
+    )
+    submitted_additions = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How may additions has this user submitted to the catalog?"),
+    )
+    submitted_additions_approved = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How many additions has this user submitted which were approved?"),
+    )
+    submitted_additions_rejected = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How many additions has this user submitted which were rejected?"),
+    )
     # preferred_genres = models.ManyToManyField(GameGenres, null=True, blank=True)
     # preferred_playstyles = models.ManyToManyField(PlayStyles, null=True, blank=True)
     communities = models.ManyToManyField(
@@ -645,7 +675,14 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
         max_digits=4,
         help_text=_("Attendance percentage for sessions within community."),
     )
-    game_notifications = models.BooleanField(verbose_name="Game Notifications", default=False, help_text=_("Receiving notifications about new games posted in this community?"), db_index=True)
+    game_notifications = models.BooleanField(
+        verbose_name="Game Notifications",
+        default=False,
+        help_text=_(
+            "Receiving notifications about new games posted in this community?"
+        ),
+        db_index=True,
+    )
 
     def less_than(self, role_choice):
         """

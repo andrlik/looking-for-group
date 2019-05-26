@@ -3,13 +3,14 @@
 {% block subtitle %}{% trans "Dashboard" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Dashboard" %}{% endblock %}
 {% block mobileheader %}{% trans "Dashboard" %}{% endblock %}
+{% block dashtitle %}<h1>{% trans "Dashboard" %}</h1>{% endblock %}
 {% block content %}
 {% get_tour "dashboard" as tour %}
 {% if motd %}
 <div class="grid-x grid-margin-x">
   <div class="cell auto">
     <div class="callout">
-      <h5>{% blocktrans with dname=request.user.display_name|default_if_none:"friend" %}Hi, {{ dname }}!{% endblocktrans %}</h5>
+      <h2>{% blocktrans with dname=request.user.display_name|default_if_none:"friend" %}Hi, {{ dname }}!{% endblocktrans %}</h2>
       <ul class="motd">
         {% for m in motd %}
         <li>{% if m.monospace %}<pre class="motd-mono">{{ m|default_if_none:"" }}</pre>{% else %}{{ m.message|default_if_none:""|markdownify|safe }}{% endif %}</li>
@@ -29,33 +30,33 @@
     <a class="dashboard-nav-card" href="{% url 'gamer_profiles:my-gamer-friend-requests' %}" title="Friend requests">
       <i class="dashboard-nav-card-icon fas fa-handshake"></i>
       <h3 class="dashboard-nav-card-stat">{{ friend_requests.count }}</h3>
-      <h5 class="dashboard-nav-card-title">{% trans "Friend requests" %}</h5>
+      <h4 class="dashboard-nav-card-title">{% trans "Friend requests" %}</h4>
     </a>
   </div>
   <div class="cell large-auto">
 <a class="dashboard-nav-card" title="Communities" href="{% url 'gamer_profiles:my-community-list' %}">
   <i class="dashboard-nav-card-icon fa fa-users" aria-hidden="true"></i>
   <h3 class="dashboard-nav-card-stat">{{ gamer_communities.count }}</h3>
-  <h5 class="dashboard-nav-card-title">{% trans "Communities" %}</h5>
+  <h4 class="dashboard-nav-card-title">{% trans "Communities" %}</h4>
 </a></div>
   <div class="cell large-auto">
 <a class="dashboard-nav-card" title="Pending community applications" href="{% url 'gamer_profiles:my-application-list' %}">
   <i class="dashboard-nav-card-icon fas fa-file-signature"></i>
   <h3 class="dashboard-nav-card-stat">{{ pending_community_applications.count }}</h3>
-  <h5 class="dashboard-nav-card-title">{% trans "Applications" %}</h5>
+  <h4 class="dashboard-nav-card-title">{% trans "Applications" %}</h4>
 </a></div>
 
   <div class="cell large-auto">
 <a class="dashboard-nav-card" title="Active games" href="{% url 'games:my_game_list' %}">
   <i class="dashboard-nav-card-icon fas fa-dice-d20"></i>
       <h3 class="dashboard-nav-card-stat">{{ gamer_active_games.count }}</h3>
-    <h5 class="dashboard-nav-card-title">{% trans "Games" %}</h5>
+    <h4 class="dashboard-nav-card-title">{% trans "Games" %}</h4>
 </a></div>
   <div class="cell large-auto">
 <a class="dashboard-nav-card" title="Pending game applications" href="{% url 'games:my-game-applications' %}">
   <i class="dashboard-nav-card-icon fas fa-dungeon"></i>
   <h3 class="dashboard-nav-card-stat">{{ pending_game_applications.count }}</h3>
-  <h5 class="dashboard-nav-card-title">{% trans "Game applications" %}</h5>
+  <h4 class="dashboard-nav-card-title">{% trans "Game applications" %}</h4>
 </a></div>
 </div>
 
@@ -64,7 +65,7 @@
   <div class="cell medium-auto">
   <div class="card ">
     <div class="card-divider">
-      <h5>{% trans "Upcoming game sessions" %}</h5>
+      <h3>{% trans "Upcoming game sessions" %}</h3>
     </div>
     <div class="card-section">
       {% if not next_sessions %}
@@ -94,7 +95,7 @@
     <div class="cell medium-auto">
   <div class="card">
     <div class="card-divider">
-      <h5>{% trans "Game applicants" %}</h5>
+      <h3>{% trans "Game applicants" %}</h3>
     </div>
     <div class="card-section">
       {% if not game_applicants %}
@@ -111,7 +112,7 @@
           {% for game in game_applicants %}
           <tr>
             <td><a href="{{ game.game.get_absolute_url }}">{{ game.game.title }}</a></td>
-            <td class="text-right"><a href="{% url 'games:game_applicant_list' gameid=game.game.slug %}">{{ game.game.get_pending_applicant_count }}</a></td>
+            <td class="text-right"><a href="{% url 'games:game_applicant_list' gameid=game.game.slug %}">{{ game.game.get_pending_applicant_count }}<span class="show-for-sr"> {% blocktrans count counter=game.game.get_pending_applicant_count %}pending applicant for game.{% plural %}pending applicants for game.{% endblocktrans %}</span></a></td>
           </tr>
           {% empty %}
           {% endfor %}
@@ -124,7 +125,7 @@
   <div class="cell medium-auto">
   <div class="card">
     <div class="card-divider">
-      <h5>{% trans "Commmunity Applicants" %}</h5>
+      <h3>{% trans "Commmunity Applicants" %}</h3>
     </div>
     <div class="card-section">
       {% if not comms_with_apps %}
@@ -141,7 +142,7 @@
           {% for comm in comms_with_apps %}
           <tr>
             <td><a href="{{ comm.community.get_absolute_url }}">{{ comm.community.name }}</a></td>
-            <td class="text-right"><a href="{% url 'gamer_profiles:community-applicant-list' community=comm.community.slug %}">{{ comm.community.get_pending_applications.count }}</a></td>
+            <td class="text-right"><a href="{% url 'gamer_profiles:community-applicant-list' community=comm.community.slug %}">{{ comm.community.get_pending_applications.count }}<span class="show-for-sr"> {% blocktrans count counter=comm.community.get_pending_applicant_count %}pending applicant for community.{% plural %}pending applicants for community.{% endblocktrans %}</span></a></td>
           </tr>
           {% empty %}
           {% endfor %}
@@ -155,7 +156,7 @@
   <div class="grid-x grid-margin-x">
     <div class="cell medium-auto">
       <div id="dash-site-user-stats" class="card">
-        <div class="card-divider"><h5>{% trans "User stats" %}</h5></div>
+        <div class="card-divider"><h3>{% trans "User stats" %}</h3></div>
         <div class="card-section">
 
           <ul class="stats-list">
@@ -184,10 +185,10 @@
     </div>
     <div class="cell medium-auto">
       <div id="dash-site-catalog-stats" class="card">
-        <div class="card-divider"><h5>{% trans "RPG DB Stats" %}</h5></div>
+        <div class="card-divider"><h3>{% trans "RPG DB Stats" %}</h3></div>
         <div class="card-section">
           <ul class="stats-list">
-            <li>
+            <li class="stats-list-positive">
               {{ site_total_systems }} <span class="stats-list-label">{% trans "Game systems" %}</span>
             </li>
             <li>
@@ -216,7 +217,7 @@
     $("a.dashboard-nav-card").each(function(){
       $(this).attr("data-tooltip","");
       $(this).attr("title", $(this).attr("title")+ " (click to view)");
-      $(this).attr("tabindex",""+card_num);
+     // $(this).attr("tabindex",""+card_num);
       card_num++;
       try
       {

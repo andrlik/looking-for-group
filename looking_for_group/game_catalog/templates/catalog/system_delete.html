@@ -11,7 +11,7 @@
 {% endblock %}
 {% block content %}
 <div class="callout alert">
-  <h5>{% trans "Are you sure?" %}</h5>
+  <h2>{% trans "Are you sure?" %}</h2>
   <p>{% trans "If you delete this system, you will also delete the following additional records." %}</p>
   <ul>
     <li>{% blocktrans count counter=system.game_editions.count %}{{ counter }} game edition.{% plural %}{{ counter }} game editions and their associated sourcebooks and published modules/adventures.{% endblocktrans %}</li>

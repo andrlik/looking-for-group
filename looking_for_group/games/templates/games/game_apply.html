@@ -26,12 +26,17 @@
 {% endblock %}
 {% block simplemde %}
 <script type="text/javascript">
-  var simplemde = new SimpleMDE({
+  var easymde = new EasyMDE({
     element: $("#id_message")[0],
     tabSize: 4,
     indentWithTabs: false,
     forceSync: true,
-    spellChecker: false
+    spellChecker: false,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true;
+      }
+    }
   });
 </script>
 {% endblock %}

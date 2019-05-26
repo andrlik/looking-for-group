@@ -13,7 +13,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Current Servers" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Current Servers" %}</h2></div>
       <div class="card-section">
 <p>{% blocktrans count counter=community_discord_link.servers.all|length %}This community is currently linked to {{ counter }} server.{% plural %}This community is currently linked to {{ counter }} servers.{% endblocktrans %}</p>
 <ul>
@@ -27,7 +27,7 @@
   </div>
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Edit servers" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Edit servers" %}</h2></div>
       <div class="card-section">
 <form method="post" action="">
   {% csrf_token %}

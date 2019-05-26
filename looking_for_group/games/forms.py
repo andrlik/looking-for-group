@@ -1,9 +1,9 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
+from . import models
 from ..game_catalog import models as cat_models
 from ..gamer_profiles.forms import BooleanSwitchPaddleFormMixin, SwitchInput
-from . import models
 
 DUMMY_CHOICES = [("", "")]
 
@@ -54,6 +54,7 @@ class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
             "title",
             "status",
             "featured_image",
+            "featured_image_description",
             "featured_image_cw",
             "min_players",
             "max_players",

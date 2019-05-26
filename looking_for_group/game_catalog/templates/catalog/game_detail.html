@@ -13,9 +13,9 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "General info" %}</h2></div>
       <div class="card-section">
-        {% if game.image %}<img class="thumbnail" src="{{ game.image.url }}" />{% endif %}
+        {% if game.image %}<img class="thumbnail" alt="{% trans 'Cover of' %} {{ game.title }}" src="{{ game.image.url }}" />{% endif %}
         <dl>
           <dt>{% trans "Website" %}</dt>
           <dd>
@@ -47,7 +47,7 @@
   </div>
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "LFG Stats" %}</h2></div>
       <div class="card-section">
         <dl>
           <dt>{% trans "DB Stats" %}</dt>
@@ -82,7 +82,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Editions" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Editions" %}</h2></div>
       <div class="card-section">
 
         {% if request.user.is_authenticated and is_editor %}<a href="{% url 'game_catalog:edition_create' game=game.pk %}" class="button"><i class="fas fa-plus-circle"></i> {% trans "Add new edition" %}</a><br />{% else %}<a href="{% url 'game_catalog:addition_create' obj_type='edition' %}" class="button"><i class="fas fa-plus-circle"></i> {% trans "Suggest new edition" %}</a> {% endif %}

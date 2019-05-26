@@ -15,7 +15,7 @@
 {% if addition.content_type.model != "publishedgame" %}
 <li><a href="{{ addition.edition.game.get_absolute_url }}">{{ addition.edition.game.title|truncatechars_html:"70" }}</a></li>
 {% if addition.content_type.model != "gameedition" %}
-<li><a href="{{ addition.edition.get_absolute_url }}">{{ addition.edition.name }}</a></li>
+<li><a href="{{ addition.edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ addition.edition.name }}</a></li>
 {% if addition.content_type.model == "sourcebook" %}
 <li class="disabled">{% trans "Sourcebooks" %}</li>
 {% else %}
@@ -34,10 +34,10 @@
   <div class="cell medium-2"></div>
   <div class="cell medium-6">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Delete suggested addition?" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Delete suggested addition?" %}</h2></div>
       <div class="card-section">
         <div class="callout alert">
-          <h5>{% trans "Are you sure?" %}</h5>
+          <h3>{% trans "Are you sure?" %}</h3>
           <p>{% trans "Deleting this suggestion cannot be undone." %}</p>
         </div>
         <form action="" method="post">
