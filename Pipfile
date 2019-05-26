@@ -47,7 +47,6 @@ django-extensions = "*"
 django-registration = "*"
 django-scheduler = "*"
 django-ical = "*"
-"psycopg2" = "*"
 django-notifications-hq = "*"
 elasticsearch = "<6"
 haystack = {editable = true,ref = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8",git = "https://github.com/andrlik/django-haystack.git"}
@@ -58,6 +57,7 @@ django-allow-cidr = "*"
 django-postman = "*"
 django-ajax-selects = "*"
 django-markdownify = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 sphinx = "*"
