@@ -15,7 +15,7 @@
 {% if addition.content_type.model != "publishedgame" %}
 <li><a href="{{ addition.edition.game.get_absolute_url }}">{{ addition.edition.game.title|truncatechars_html:"70" }}</a></li>
 {% if addition.content_type.model != "gameedition" %}
-<li><a href="{{ addition.edition.get_absolute_url }}">{{ addition.edition.name }}</a></li>
+<li><a href="{{ addition.edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ addition.edition.name }}</a></li>
 {% if addition.content_type.model == "sourcebook" %}
 <li class="disabled">{% trans "Sourcebooks" %}</li>
 {% else %}
@@ -34,7 +34,7 @@
   <div class="cell medium-2"></div>
   <div class="cell medium-6">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Update suggestion " %} {{ addition.title }}</h5></div>
+      <div class="card-divider"><h2>{% trans "Update suggestion " %} {{ addition.title }}</h2></div>
       <div class="card-section">
 <p>{% blocktrans %}Enter your changes below.{% endblocktrans %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">
@@ -59,7 +59,7 @@
 {% block simplemde %}
 {% if addition.content_type.model != "sourcebook" and addition.content_type.model != "publishedmodule" %}
 <script type="text/javascript">
-  var simplemde = new SimpleMDE({
+  var easymde = new EasyMDE({
     element: $('#id_description')[0],
     autosave: {
       enabled: false,
@@ -68,6 +68,11 @@
     tabSize: 4,
     indentWithTabs: false,
     forceSync: true,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true;
+      }
+    }
   });
 </script>
 {% endif %}

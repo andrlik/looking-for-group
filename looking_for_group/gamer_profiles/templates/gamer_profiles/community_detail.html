@@ -25,7 +25,7 @@
 {% block content %}
 {% if community.community_logo %}
 <div id="feature-image">
-  <img alt="{% trans 'Logo for' %} {{ community.name }}" class="thumbnail logo" src="{{ community.community_logo.url }}" />
+  <img alt="{% if community.community_logo_description %}{{ community.community_logo_description }}{% else %}{% trans 'Logo for' %} {{ community.name }}{% endif %}" class="thumbnail logo" src="{{ community.community_logo.url }}" />
   {% if community.community_logo_cw %}
   <div id="cw_overlay" onclick="cw_off()">
     <div id="overlay_text"><p>{% trans 'Logo CW:' %} {{ community.community_logo_cw }}</p><p>{% trans 'Click to reveal' %}</p></div>
@@ -36,7 +36,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card" id="comm-description">
-      <div class="card-divider"><h5>{% trans "Description" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Description" %}</h2></div>
       <div class="card-section">
         {% get_tour "community" as tour %}
         {% if tour %}
@@ -51,7 +51,7 @@
   </div>
   <div class="cell medium-auto">
     <div class="card" id="comm-details">
-      <div class="card-divider"><h5>{% trans "Details" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Details" %}</h2></div>
       <div class="card-section">
         <table class="hover scroll">
           <tbody>
@@ -89,7 +89,7 @@
   {% if community.linked_with_discord %}
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Discord Servers" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Discord Servers" %}</h2></div>
       <div class="card-section">
 <p>{% blocktrans count counter=community.discord.servers.all|length %}This community is linked to {{ counter }} Discord server.{% plural %}This community is linked to {{ counter }} Discord servers.{% endblocktrans %}</p>
 <ul>
@@ -104,7 +104,7 @@
   {% endif %}
   <div class="cell medium-auto">
     <div class="card" id="comm-members">
-      <div class="card-divider"><h5>{% trans "Members" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Members" %}</h2></div>
       <div class="card-section">
 <div class="member-list">
 
@@ -136,7 +136,7 @@
   </div>
 </div>
 <div class="card" id="comm-games">
-  <div class="card-divider"><h5>{% trans "Current Active Games" %}</h5></div>
+  <div class="card-divider"><h2>{% trans "Current Active Games" %}</h2></div>
   <div class="card-section">
     {% if not active_games %}
     <p>{% trans "There are no active games here at the moment." %}</p>

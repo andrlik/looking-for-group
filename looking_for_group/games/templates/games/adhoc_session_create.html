@@ -158,7 +158,7 @@
 {% block simplemde %}
 
 <script type="text/javascript">
-  var simplemde = new SimpleMDE({
+  var easymde = new EasyMDE({
     element: $('#id_gm_notes')[0],
     autosave: {
       enabled: true,
@@ -167,6 +167,11 @@
     tabSize: 4,
     indentWithTabs: false,
     forceSync: true,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true;
+      }
+    }
   });
   var $schedule_reveal_button = $("<a />").text("{% trans 'View Player Schedules' %}").attr("class", "button float-right small").attr("data-open", "scheduling_modal").attr("href", "#");
   var starttimelabel = $("label[for='id_scheduled_time']");

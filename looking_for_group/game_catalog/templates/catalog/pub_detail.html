@@ -13,7 +13,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "General info" %}</h2></div>
       <div class="card-section">
         {% if publisher.logo %}<img class="thumbnail" alt="Logo for {{ publisher.name }}" src="{{ publisher.logo.url }}" />{% endif %}
         <dl>
@@ -39,7 +39,7 @@
     </div>
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "LFG Stats" %}</h2></div>
       <div class="card-section">
         <dl>
           <dt>{% trans "The numbers" %}</dt>
@@ -56,7 +56,7 @@
   </div>
   <div class="cell">
     <div class="card">
-      <div class="card-divider" ><h5>{% trans "Publications" %}</h5></div>
+      <div class="card-divider" ><h2>{% trans "Publications" %}</h2></div>
       <div class="card-section">
 {% cache 900 publisher_publications publisher.pk %}
 

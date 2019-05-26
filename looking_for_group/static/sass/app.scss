@@ -2,6 +2,11 @@
 
 @import 'sass/settings';
 @import 'libs/foundation-sites/scss/foundation';
+$alert-color: #c44031;
+$dark-gray: #767676;
+$tab-active-color: #006ca9;
+$switch-background: $dark-gray;
+
 
 @include foundation-global-styles;
 @include foundation-grid;
@@ -52,6 +57,19 @@
 
 /********* Project Scss **************/
 
+ul.breadcrumbs, ul.pagination {
+
+ li.disabled {
+  color: #767676;
+ }
+}
+
+form span.fake-label {
+  color: $form-label-color;
+  font-size: $form-label-font-size;
+  font-weight: $form-label-font-weight;
+  line-height: $form-label-line-height;
+}
 .title-bar
 {
   li.menu-text{color: $white;}
@@ -79,6 +97,12 @@
 }
 $app-dashboard-top-nav-color: #2c3840;
 $app-dashboard-top-nav-height: 60px;
+
+.button {
+  &.alert {
+    background-color: #c44031;
+  }
+}
 
 .notify-container {
   vertical-align: top;
@@ -173,13 +197,23 @@ $app-dashboard-top-nav-height: 60px;
 
 .app-dashboard-search-bar-container {
   position: relative;
+  margin: auto;
+  padding: 0;
+  vertical-align: middle;
+  align-items: center;
+  .input-group {
+    vertical-align:middle;
+    margin:auto;
+  }
 }
 
 .app-dashboard-search {
   background: lighten($app-dashboard-top-nav-color, 10%);
   border: 0;
+  margin-top: auto;
   margin-bottom: 0;
   color: $white;
+  vertical-align: middle;
 
   &:active,
   &:focus {
@@ -187,12 +221,25 @@ $app-dashboard-top-nav-height: 60px;
   }
 }
 
-.app-dashboard-search-icon {
+/* .app-dashboard-search-icon {
   position: absolute;
   color: $white;
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
+}
+*/
+
+.app-dashboard-search-bar-container {
+    button[type=submit]{
+      color: $white;
+      border-color: $white;
+      &:hover {
+        color: $primary-color;
+        background-color: $white;
+      }
+    }
+
 }
 
 .app-dashboard-top-bar-actions {
@@ -256,6 +303,10 @@ $app-dashboard-top-nav-height: 60px;
   -webkit-overflow-scrolling: touch;
   z-index: 1;
   transition: all $offcanvas-transition-length $offcanvas-transition-timing;
+
+  h1 {
+    font-size: rem-calc(24);
+  }
 
 
   .app-dashboard-open-sidebar, .app-dashboard-close-sidebar{
@@ -422,11 +473,11 @@ $app-dashboard-top-nav-height: 60px;
   margin-bottom: 30px;
 
   .stats-list-positive {
-    color: $success-color;
+    color: #008500;
   }
 
   .stats-list-negative {
-    color: $alert-color;
+    color: #c44031;
   }
 
   & > li {
@@ -501,6 +552,18 @@ $app-dashboard-top-nav-height: 60px;
   position: absolute;
   right: 1rem;
   text-align: right;
+}
+
+@include breakpoint(small only){
+  .dashboard-nav-card-title {
+    font-size: 17px;
+  }
+}
+
+@include breakpoint(medium){
+  .dashboard-nav-card-title {
+    font-size: 20px;
+  }
 }
 
 .dashboard-table {
@@ -730,4 +793,49 @@ a.anchor {
   position: relative;
   top: -60px;
   visbility: hidden;
+}
+
+.callout {
+  &.warning {
+    a {
+      color: #0075b6;
+    }
+  }
+}
+
+table {
+  thead th a {
+    color: #0b77b9;
+  }
+  tbody td a {
+    color: #0073b4;
+  }
+}
+
+.fc-state-disabled {
+  &:disabled {
+  color: #727272 !important;
+  background-color: #f8f8f8 !important;
+  }
+}
+
+@include breakpoint(small only){
+  .card-divider, .callout {
+
+  h3, h2, h4 {
+    font-size: 17px;
+  }
+  }
+}
+
+@include breakpoint(medium){
+  .card-divider, .callout{
+  h2, h3, h4 {
+  font-size: 20px;
+  }
+  }
+}
+
+blockquote p {
+  color: $dark-gray !important;
 }

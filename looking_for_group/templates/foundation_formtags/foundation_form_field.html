@@ -3,8 +3,19 @@
 {% if field.is_hidden %}
 {{ field }}
 {% else %}
+{% if field.label %}
 
-    {% if field.label %}
+{% if "switch" in field.field.widget.attrs.class %}
+<br />
+<span class="fake-label{% if field.errors %} is-invalid-label{% endif %}">
+  {{ field.label|safe }}
+  {% if not field.field.required and use_optional %}
+  <span class="optional">(optional)</span>
+  {% elif field.field.required and not use_optional %}
+  <span class="required">*</span>
+  {% endif %}
+</span>
+{% else %}
         <label for="{{ field.auto_id }}" class="{% if field.errors %}is-invalid-label{% endif %}">
             {{ field.label|safe }}
             {% if not field.field.required and use_optional %}
@@ -13,9 +24,10 @@
                     <span class="required">*</span>
             {% endif %}
         </label>
-    {% endif %}
+        {% endif %}
+        {% endif %}
         {% if field|is_checkbox %}
-        {% if "switch" not in field.attrs.class %}
+        {% if "switch" not in field.field.widget.attrs.class %}
         {{ field|add_error_class:"is-invalid-input" }}
         {% if field.help_text %}
         <small>{{ field.help_text|safe }}</small>

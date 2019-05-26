@@ -17,15 +17,15 @@
 <li><a href="{{ source_object.get_absolute_url }}">{{ source_object.title|truncatechars_html:"70" }}</a></li>
 {% elif obj_type == "edition" %}
 <li><a href="{{ source_object.game.get_absolute_url }}">{{ source_object.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ source_object.get_absolute_url }}">{{ source_object.name }}</a></li>
+<li><a href="{{ source_object.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ source_object.name }}</a></li>
 {% elif obj_type == "sourcebook" %}
 <li><a href="{{ source_object.edition.game.get_absolute_url }}">{{ source_object.edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ source_object.edition.get_absolute_url }}">{{ source_object.edition.name }}</a></li>
+<li><a href="{{ source_object.edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ source_object.edition.name }}</a></li>
 <li class="disabled">{% trans "Sourcebooks" %}</li>
 <li><a href="{{ source_object.get_absolute_url }}">{{ source_object.title|truncatechars_html:"70" }}</a></li>
 {% else %}
 <li><a href="{{ source_object.parent_game_edition.game.get_absolute_url }}">{{ source_object.parent_game_edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ source_object.parent_game_edition.get_absolute_url }}">{{ source_object.parent_game_edition.name }}</a></li>
+<li><a href="{{ source_object.parent_game_edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ source_object.parent_game_edition.name }}</a></li>
 <li class="disabled">{% trans "Modules" %}</li>
 <li><a href="{{ source_object.get_absolute_url }}">{{ source_object.title|truncatechars_html:"70" }}</a></li>
 {% endif %}
@@ -39,7 +39,7 @@
   <div class="cell medium-2"></div>
   <div class="cell medium-6">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Suggest correction" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Suggest correction" %}</h2></div>
       <div class="card-section">
 <p>{% blocktrans %}Enter your suggested corrections below.{% endblocktrans %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">
@@ -64,7 +64,7 @@
 {% block simplemde %}
 {% if obj_type != "sourcebook" and obj_type != "module" %}
 <script type="text/javascript">
-  var simplemde = new SimpleMDE({
+  var easymde = new EasyMDE({
     element: $('#id_new_description')[0],
     autosave: {
       enabled: false,
@@ -73,6 +73,11 @@
     tabSize: 4,
     indentWithTabs: false,
     forceSync: true,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true;
+      }
+    }
   });
 </script>
 {% endif %}

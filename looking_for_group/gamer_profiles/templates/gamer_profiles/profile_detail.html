@@ -19,7 +19,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card" id="profile-general-info">
-      <div class="card-divider"><h5>{% trans "General info" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "General info" %}</h2></div>
       <div class="card-section">
         {% if request.user.is_authenticated and request.user == gamer.user %}
         {% get_tour "profile" as tour %}
@@ -55,9 +55,9 @@
   </div>
   <div class="cell medium-auto">
     <div class="card" id="profile-stats">
-      <div class="card-divider"><h5>{% trans "Gamer stats" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Gamer stats" %}</h2></div>
       <div class="card-section">
-        <h5>{% trans "GM Stats" %}</h5>
+        <h3>{% trans "GM Stats" %}</h3>
         {% if gamer.gmed_games.count == 0 %}
         <p>{% trans "No games GMed on LFG yet." %}</p>
         {% else %}
@@ -68,7 +68,7 @@
           <li>{{ gamer.gm_games_finished }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
         </ul>
         {% endif %}
-        <h5>{% trans "Player Stats" %}</h5>
+        <h3>{% trans "Player Stats" %}</h3>
         <ul class="stats-list">
           <li{% stat_class_data gamer.games_joined 10 -1 %}>{{ gamer.games_joined|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games joined" %}</span></li>
           <li>{{ gamer.get_player_active_games.count|default_if_none:"0" }} <span class="stats-list-label">{% trans "Active games" %}</span></li>
@@ -76,7 +76,7 @@
           <li{% if gamer.games_left > gamer.games_finished %} class="stats-list-negative"{% endif %}>{{ gamer.games_left|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games left" %}</span></li>
           <li{% stat_class_data gamer.games_finished 10 -1 %}>{{ gamer.games_finished|default_if_none:"0" }} <span class="stats-list-label">{% trans "Games finished" %}</span></li>
         </ul>
-        <h5>{% trans "Communities" %}</h5>
+        <h3>{% trans "Communities" %}</h3>
         <ul class="stats-list">
           <li>{{ gamer.communities.count }} <span class="stats-list-label">{% trans "Member" %}</span></li>
           <li>{{ gamer.get_owned_communities.count }} <span class="stats-list-label">{% trans "Owner" %}</span></li>
@@ -90,7 +90,7 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card" id="profile-status">
-      <div class="card-divider"><h5>{% trans "Status" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Status" %}</h2></div>
       <div class="card-section">
 
 <table class="hover scroll">
@@ -111,7 +111,7 @@
   </div>
   <div class="cell medium-auto">
     <div class="card" id="profile-game-available">
-      <div class="card-divider"><h5>{% trans "Generally available to play at" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Generally available to play at" %}</h2></div>
       <div class="card-section">
 {% has_perm "profile.see_detailed_availability" request.user gamer as see_avail_calendar %}
 {% if see_avail_calendar %}
@@ -250,10 +250,10 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card" id="profile-game-favorites">
-      <div class="card-divider"><h5>{% trans "Favorites" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Favorites" %}</h2></div>
       <div class="card-section">
 
-<h6>{% trans "Preferred Games" %}</h6>
+<h3>{% trans "Preferred Games" %}</h3>
 
 <ul>
   {% for game in gamer.preferred_games.all %}
@@ -262,7 +262,7 @@
   <p>{% blocktrans with gname=gamer.display_name %}{{ gname }} hasn't listed any preferred games yet.{% endblocktrans %}</p>
   {% endfor %}
 </ul>
-<h6>{% trans "Preferred Systems" %}</h6>
+<h3>{% trans "Preferred Systems" %}</h3>
 <ul>
   {% for system in gamer.preferred_systems.all %}
   <li><a href="{{ system.get_absolute_url }}">{{ system.name }}</a></li>
@@ -275,9 +275,9 @@
   </div>
   <div class="cell medium-auto">
     <div class="card" id="profile-game-library">
-      <div class="card-divider"><h5>{% trans "Game library" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Game library" %}</h2></div>
       <div class="card-section">
-        <h5>{% trans "Collection stats" %}</h5>
+        <h3>{% trans "Collection stats" %}</h3>
         <ul class="stats-list">
 
           <li>{{ rpgcollection.sourcebooks }} <span class="stats-list-label">{% trans "Sourcebooks" %}</span></li>
@@ -297,7 +297,7 @@
   {% if request.user.is_authenticated %}
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Gamer Metadata" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Gamer Metadata" %}</h2></div>
       <div class="card-section">
 <div id="user-gamer-meta-data">
   <dl>

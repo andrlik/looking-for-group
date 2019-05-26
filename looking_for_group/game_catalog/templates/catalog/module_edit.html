@@ -7,7 +7,7 @@
 {% block cata_crumbs %}
 <li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
 <li><a href="{{ module.parent_game_edition.game.get_absolute_url }}">{{ module.parent_game_edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ module.parent_game_edition.get_absolute_url }}">{{ module.parent_game_edition.name }}</a></li>
+<li><a href="{{ module.parent_game_edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ module.parent_game_edition.name }}</a></li>
 <li class="disabled">{% trans "Modules" %}</li>
 <li><a href="{{ module.get_absolute_url }}">{{ module.title|truncatechars_html:"70" }}</a></li>
 <li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Edit" %}</li>
@@ -17,7 +17,7 @@
   <div class="cell medium-2"></div>
   <div class="cell medium-6">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Edit module" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Edit module" %}</h2></div>
       <div class="card-section">
 <p>{% blocktrans %}Enter your changes below.{% endblocktrans %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">

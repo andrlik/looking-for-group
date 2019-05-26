@@ -8,7 +8,7 @@
 {% block cata_crumbs %}
 <li><a href="{% url 'game_catalog:game-list' %}">{% trans "Published games" %}</a></li>
 <li><a href="{{ book.edition.game.get_absolute_url }}">{{ book.edition.game.title|truncatechars_html:"70" }}</a></li>
-<li><a href="{{ book.edition.get_absolute_url }}">{{ book.edition.name }}</a></li>
+<li><a href="{{ book.edition.get_absolute_url }}"><span class="show-for-sr">{% trans "Edition:" %} </span>{{ book.edition.name }}</a></li>
 <li class="disabled">{% trans "Sourcebooks" %}</li>
 <li><span class="show-for-sr">{% trans "Current:" %} </span>{{ book.title|truncatechars_html:"70" }}</li>
 {% endblock %}
@@ -16,11 +16,11 @@
 <div class="grid-x grid-margin-x">
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "Sourcebook details" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "Sourcebook details" %}</h2></div>
       <div class="card-section">
 {% has_perm 'catalog.can_edit' user book as is_editor %}
-{% if book.image %}<img class="thumbnail" src="{{ book.image.url }}" />{% endif %}
-{% if book.url %}<h5><a href="{{ book.url }}">{% trans "More info can be found here." %}</a></h5>{% endif %}
+{% if book.image %}<img class="thumbnail" alt="{% trans 'Cover of' %} {{ book.title }}" src="{{ book.image.url }}" />{% endif %}
+        {% if book.url %}<strong><a href="{{ book.url }}">{% trans "More info can be found here." %}</a></strong>{% endif %}
 <dl>
   <dt>{% trans "For game edition" %}</dt>
   <dd><a href="{{ book.edition.get_absolute_url }}">{{ book.edition }}</a></dd>
@@ -82,7 +82,7 @@
   </div>
   <div class="cell medium-auto">
     <div class="card">
-      <div class="card-divider"><h5>{% trans "LFG Stats" %}</h5></div>
+      <div class="card-divider"><h2>{% trans "LFG Stats" %}</h2></div>
       <div class="card-section">
         <ul class="stats-list">
           <li>{{ book.collected_copies.count }} <span class="stats-list-label">{% trans "Copies owned by users" %}</span></li>
