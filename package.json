@@ -6,7 +6,7 @@
     "shepherd.js": "^2.8.0"
   },
   "devDependencies": {
-    "browser-sync": "^2.24.7",
+    "browser-sync": "^2.26.5",
     "del": "^2.2.2",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^5.0.0",
