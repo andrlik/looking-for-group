@@ -7,11 +7,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from test_plus import TestCase
 
-from .. import models
 from ...gamer_profiles.tests import factories
+from .. import models
 
 
-class AbstractViewTest(TestCase):
+class BaseAbstractViewTest(object):
     """
     An abstract class to remove repitition from test setup.
     """
@@ -74,6 +74,14 @@ class AbstractViewTest(TestCase):
         )
         self.strange.save()
 
+        def tearDown(self):
+            ContentType.objects.clear_cache()
+            super().tearDown()
+
+
+class AbstractViewTest(BaseAbstractViewTest, TestCase):
+    pass
+
 
 class AbstractEditingViewTest(AbstractViewTest):
     """
@@ -82,7 +90,7 @@ class AbstractEditingViewTest(AbstractViewTest):
 
     def setUp(self):
         super().setUp()
-        self.editor_group = Group.objects.create(name="rpgeditors")
+        self.editor_group, created = Group.objects.get_or_create(name="rpgeditors")
         self.superuser = self.make_user(username="superuser")
         self.superuser.is_superuser = True
         self.superuser.save()
@@ -625,8 +633,13 @@ class AbstractSuggestedCorrectionAdditionTest(AbstractViewTest):
 
     def setUp(self):
         super().setUp()
-        editor_group, created = Group.objects.get_or_create(name="rpgeditors")
-        self.gamer2.user.groups.add(editor_group)
+        self.editor_group, created = Group.objects.get_or_create(name="rpgeditors")
+        self.superuser = self.make_user(username="superuser")
+        self.superuser.is_superuser = True
+        self.superuser.save()
+        self.editor = factories.GamerProfileFactory()
+        self.editor.user.groups.add(self.editor_group)
+        self.random_gamer = factories.GamerProfileFactory()
         self.correction1 = models.SuggestedCorrection.objects.create(
             new_title="OG Numenera",
             new_description="Show em your **bad** cypher self.",
@@ -647,6 +660,7 @@ class AbstractSuggestedCorrectionAdditionTest(AbstractViewTest):
             system=self.cypher,
             submitter=self.gamer1.user,
         )
+        self.gamer2.user.groups.add(self.editor_group)
         # TODO: Add more cases here for use.
 
 
