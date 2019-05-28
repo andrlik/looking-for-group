@@ -11,7 +11,8 @@ test:
     - apt-get install -y nodejs
     - python -V
     - pip install pipenv
-    - npm install --production
+    - npm install
+    - npm prune --production
     - pipenv sync --dev
   script:
   - pipenv run pytest -n 2
