@@ -32,6 +32,7 @@
           <th width="100">{% trans "Start" %}</th>
           <th width="100">{% trans "End" %}</th>
           <th><abbr title="{% trans 'Game master' %}">{% trans "GM" %}</abbr></th>
+          <th>{% trans "GM Timezone" %}</th>
           <th><abbr title="{% trans 'Frequency' %}">{% trans "Freq" %}</abbr></th>
           <th class="text-right">{% trans "Length (hours)" %}</th>
           <th><abbr title="{% trans 'Adult themes?' %}">{% trans "Adult" %}</abbr></th>
@@ -51,9 +52,10 @@
           <td><a href="{{ game.get_absolute_url }}">{{ game.title }}</a></td>
           <td>{{ game.get_game_type_display }}</td>
           <td><span class="label {% if game.status == 'started' %}secondary{% else %}primary{% endif %}">{{ game.get_status_display }}</span></td>
-          <td>{{ game.start_time|default_if_none:"Pending" }}</td>
-          <td>{{ game.end_date|default_if_none:"N/A" }}</td>
+          <td>{{ game.start_time|date:"E d, Y H:i e"|default_if_none:"Pending" }}</td>
+          <td>{{ game.end_date|date:"E d, Y"|default_if_none:"N/A" }}</td>
           <td><a href="{{ game.gm.get_absolute_url }}">{% avatar game.gm.user 30  class="avatar" %} {{ game.gm }}</a></td>
+          <td>{{ game.gm.user.get_timezone_display }}</td>
           <td>{{ game.get_game_frequency_display }} </td>
           <td class="text-right">{{ game.session_length }}</td>
           <td>{{ game.adult_themes|yesno:"Yes,No" }}</td>
