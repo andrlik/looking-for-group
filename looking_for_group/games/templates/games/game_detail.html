@@ -62,6 +62,10 @@
               <td>{% avatar game.gm.user 30 class="avatar" %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm }}</a></td>
             </tr>
             <tr>
+              <td>{% trans "GM Timezone" %}</td>
+              <td>{{ game.gm.user.get_timezone_display }}</td>
+            </tr>
+            <tr>
               <td>{% trans "GM Stats" %}</td>
               <td>
                 <ul class="stats-list">
@@ -79,7 +83,7 @@
             {% if game.next_session_time %}
             <tr>
               <td>{% trans "Next session" %}</td>
-              <td>{% if game.next_session %}<a href="{{ game.next_session.get_absolute_url }}">{{ game.next_session_time }}</a>{% else %}{{ game.next_session_time }}{% endif %}</td>
+              <td>{% if game.next_session %}<a href="{{ game.next_session.get_absolute_url }}">{{ game.next_session_time|date:"E d, Y H:i e"|default_if_none:"Pending" }}</a>{% else %}{{ game.next_session_time|date:"E d, Y H:i e"|default_if_none:"Pending" }}{% endif %}</td>
             </tr>
             {% endif %}
             <tr>
@@ -96,7 +100,7 @@
             </tr>
             <tr>
               <td>{% trans "Starts" %}</td>
-              <td>{{ game.start_time }}</td>
+              <td>{{ game.start_time|date:"E d, Y H:i e"|default_if_none:"Pending" }}</td>
             </tr>
             {% if game.game_type != "oneshot" %}
             <tr>
@@ -106,7 +110,7 @@
             {% if game.end_date %}
             <tr>
               <td>{% trans "End Date" %}</td>
-              <td>{{ game.end_date }}</td>
+              <td>{{ game.end_date|date:"E d, Y" }}</td>
             </tr>
             {% endif %}
             {% endif %}
@@ -195,7 +199,7 @@
     <tr>
       <td>{% avatar player.gamer.user 20 class="avatar" %} <a href="{{ player.gamer.get_absolute_url }}">{{ player.gamer }}</a></td>
       <td>{% if player.current_character %}<a href="{{ player.current_character.get_absolute_url }}">{{ player.current_character.name }}</a>{% else %}{% trans "Pending" %}{% endif %}</td>
-      <td>{{ player.created }}</td>
+      <td>{{ player.created|date:"E d, Y H:i e" }}</td>
       {% if game.sessions > 0 %}
       {% with rank=player.get_attendance_rating_for_game %}
       <td class="text-center"><span class="label {% if rank > 80 %}success{% elif rank < 50 %}alert{% else %}primary{% endif %}"><abbr title="{% trans 'Sessions expected' %}">{{ player.sessions_expected }}</abbr> / <abbr title="{% trans 'Sessions missed' %}">{{ player.sessions_missed }}</abbr> / <abbr title="{% trans 'Attendance rating' %}"><strong>{{ player.get_attendance_rating_for_game|default_if_none:"N/A" }}%</strong></abbr></span></td>
@@ -261,7 +265,7 @@
           <form action="{% url 'games:session_create' gameid=game.slug %}" method="post">
             {% csrf_token %}
             <input id="id_game" name="game" type="hidden" value="{{ game.pk }}" />
-            <p>{% blocktrans with session_time=game.next_session_time %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}</p>
+            <p>{% blocktrans with session_time=game.next_session_time|date:"E d, Y H:i e" %}Create next session for {{ session_time }}? (You can change this time afterwards if needed.){% endblocktrans %}</p>
             <input type="submit" class="button float-left" value="{% trans 'Create next regular session' %}" />
           </form>
           {% endif %}
@@ -291,7 +295,7 @@
   <tbody>
     {% for session in recent_sessions %}
     <tr>
-      <td><a href="{{ session.get_absolute_url }}">{{ session.scheduled_time }}</a></td>
+      <td><a href="{{ session.get_absolute_url }}">{{ session.scheduled_time|date:"E d, Y H:i e" }}</a></td>
       <td><span class="label {% if session.status == 'cancel' %}secondary{% elif session.status == 'complete' %}success{% else %}primary{% endif %}">{{ session.get_status_display }}</span></td>
       <td>{{ session.get_players_present|join:", " }}</td>
       <td>{{ session.adventurelog.body_rendered|safe|truncatewords_html:30 }}</td>
