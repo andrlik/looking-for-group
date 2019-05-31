@@ -839,3 +839,13 @@ table {
 blockquote p {
   color: $dark-gray !important;
 }
+
+div#CookielawBanner {
+  a {
+    color: #0b6dae;
+    &.button {
+      color: #fefefe;
+      background-color: #0b6dae;
+    }
+  }
+}

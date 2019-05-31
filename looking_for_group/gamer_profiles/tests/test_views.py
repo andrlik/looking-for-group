@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 import pytest
-from django.contrib.messages import get_messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.urls import reverse
@@ -13,7 +12,7 @@ from .. import models
 from . import factories
 
 
-class AbstractViewTest(TestCase):
+class BaseAbstractViewTest(object):
     """
     Does initial setup for all the following tests,
     which will subclass it.
@@ -29,6 +28,10 @@ class AbstractViewTest(TestCase):
         )
         self.community2.add_member(self.gamer2)
         self.gamer3.friends.add(self.gamer1)
+
+
+class AbstractViewTest(BaseAbstractViewTest, TestCase):
+    pass
 
 
 class TestSetup(AbstractViewTest):
