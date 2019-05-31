@@ -3,12 +3,13 @@
 {% load i18n %}
 {% load account socialaccount %}
 {% load foundation_formtags %}
+{% block mobileheader %}{% trans "Sign In" %}{% endblock %}
 
 {% block head_title %}{% trans "Sign In" %}{% endblock %}
 
 {% block inner %}
 
-<h1>{% trans "Sign In" %}</h1>
+<h1 class="show-for-medium">{% trans "Sign In" %}</h1>
 
 {% get_providers as socialaccount_providers %}
 
@@ -47,4 +48,3 @@ for a {{ site_name }} account and sign in below:{% endblocktrans %}</p>
 </form>
 
 {% endblock %}
-
