@@ -3,8 +3,8 @@ arrow==0.13.2
 bleach-whitelist==0.0.10
 bleach==3.1.0
 blessed==1.15.0
-boto3==1.9.156
-botocore==1.12.156
+boto3==1.9.159
+botocore==1.12.159
 certifi==2019.3.9
 cffi==1.12.3
 chardet==3.0.4
@@ -20,7 +20,7 @@ django-appconf==1.0.3
 django-avatar==4.1.0
 django-braces==1.13.0
 django-classy-tags==0.9.0
-django-compressor==2.2
+django-compressor==2.3
 django-cookie-law==2.0.1
 django-environ==0.4.5
 django-extensions==2.1.7
@@ -59,7 +59,7 @@ jinja2==2.10.1
 jmespath==0.9.4
 jsonfield==2.0.2
 libsass==0.19.1
-markdown2==2.3.7
+markdown2==2.3.8
 markdown==3.1.1
 markupsafe==1.1.1
 netaddr==0.7.19
@@ -78,7 +78,7 @@ rcssmin==1.0.6
 redis==2.10.6
 requests-oauthlib==1.2.0
 requests==2.22.0
-rjsmin==1.0.12
+rjsmin==1.1.0
 rules==2.0.1
 s3transfer==0.2.0
 six==1.12.0

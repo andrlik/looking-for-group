@@ -2,7 +2,7 @@
 {% load i18n dash_tags markdownify cache tour_tags %}
 {% block subtitle %}{% trans "Dashboard" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Dashboard" %}{% endblock %}
-{% block mobileheader %}{% trans "Dashboard" %}{% endblock %}
+{% block mobileheader %}{% endblock %}
 {% block dashtitle %}<h1>{% trans "Dashboard" %}</h1>{% endblock %}
 {% block content %}
 {% get_tour "dashboard" as tour %}
@@ -188,7 +188,7 @@
         <div class="card-divider"><h3>{% trans "RPG DB Stats" %}</h3></div>
         <div class="card-section">
           <ul class="stats-list">
-            <li class="stats-list-positive">
+            <li>
               {{ site_total_systems }} <span class="stats-list-label">{% trans "Game systems" %}</span>
             </li>
             <li>
