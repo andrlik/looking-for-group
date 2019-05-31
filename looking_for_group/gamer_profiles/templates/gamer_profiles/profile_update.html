@@ -27,3 +27,59 @@
   </div>
 </div>
 {% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% include "datepicker_logic.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var easymde = new EasyMDE({
+    element: $('#id_profile-rpg_experience')[0],
+    autosave: {
+      enabled: false,
+      uniqueId: "profile_rpg_experience",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true,
+      }
+    }
+  });
+  var easymde2 = new EasyMDE({
+    element: $('#id_profile-ttgame_experience')[0],
+    autosave: {
+      enabled: false,
+      uniqueId: "profile_ttgame_experience",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true,
+      }
+    }
+  });
+  var easymde3 = new EasyMDE({
+    element: $('#id_profile-playstyle')[0],
+    autosave: {
+      enabled: false,
+      uniqueId: "profile_playstyle",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true,
+      }
+    }
+  });
+</script>
+{% endblock %}

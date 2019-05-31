@@ -1,5 +1,5 @@
 {% extends "gamer_profiles/profile_base.html" %}
-{% load avatar_tags i18n humanize social_tags ratings dash_tags rules tour_tags collection_tags %}
+{% load avatar_tags i18n humanize social_tags ratings dash_tags rules tour_tags collection_tags markdownify %}
 {% block subtitle %}{{ gamer }} - {% endblock %}
 {% block sectiontitle %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
 {% block mobileheader %}{% avatar gamer.user class="avatar" %} {{ gamer }}{% endblock %}
@@ -41,11 +41,11 @@
   <dt>{% trans "Timezone" %}</dt>
   <dd>{{ gamer.user.get_timezone_display }}</dd>
   <dt>{% trans "RPG Experience" %}</dt>
-  <dd>{{ gamer.rpg_experience|default:"No info" }}</dd>
+  <dd>{{ gamer.rpg_experience|default:"No info"|markdownify|safe }}</dd>
   <dt>{% trans "Tabletop Game Experience" %}</dt>
-  <dd>{{ gamer.ttgame_experience|default:"No info" }}</dd>
+  <dd>{{ gamer.ttgame_experience|default:"No info"|markdownify|safe }}</dd>
   <dt>{% trans "Playstyle" %}</dt>
-  <dd>{{ gamer.playstyle|default:"No info" }}</dd>
+  <dd>{{ gamer.playstyle|default:"No info"|markdownify|safe }}</dd>
 </dl>
 {% if request.user != gamer.user and can_message %}
 <a href="{% url 'postman:write' gamer.username %}" class="button primary"><i class="fas fa-envelope"></i> {% trans "Message" %}</a>
