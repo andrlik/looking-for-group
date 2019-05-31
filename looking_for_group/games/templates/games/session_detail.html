@@ -1,6 +1,6 @@
 {% extends "games/game_base.html" %}
 {% load i18n avatar_tags %}
-{% block subtitle %}{% blocktrans with gametitle=session.game.title sesdate=session.scheduled_time %}Session ({{ sesdate }} of {{ gametitle }} - {% endblocktrans %}{% endblock %}
+{% block subtitle %}{% blocktrans with gametitle=session.game.title sesdate=session.scheduled_time %}Session ({{ sesdate }}) of {{ gametitle }} - {% endblocktrans %}{% endblock %}
 {% block sessionactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{{ session.scheduled_time|date:"M d, Y" }} - {{ session.game.title }}{% endblock %}
 {% block mobileheader %}{{ session.scheduled_time|date:"M d, Y" }} - {{ session.game.title }}{% endblock %}
