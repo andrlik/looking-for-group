@@ -2,11 +2,11 @@
 
 {% load i18n %}
 {% load foundation_formtags %}
-
+{% block mobile_header %}{% trans "Sign Up" %}{% endblock %}
 {% block head_title %}{% trans "Signup" %}{% endblock %}
 
 {% block inner %}
-<h1>{% trans "Sign Up" %}</h1>
+<h1 class="show-for-medium">{% trans "Sign Up" %}</h1>
 
 <p>{% blocktrans %}Already have an account? Then please <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</p>
 
@@ -20,4 +20,3 @@
 </form>
 
 {% endblock %}
-
