@@ -46,7 +46,7 @@ django-storages==1.7.1
 django-taggit-serializer==0.1.7
 django-taggit==1.1.0
 django-treebeard==4.3
-django==2.2.1
+django==2.1.8
 djangorestframework==3.9.4
 docutils==0.14
 elasticsearch==5.5.3
@@ -82,7 +82,6 @@ rjsmin==1.1.0
 rules==2.0.1
 s3transfer==0.2.0
 six==1.12.0
-sqlparse==0.3.0
 swapper==1.1.0
 text-unidecode==1.2
 uritemplate==3.0.0
