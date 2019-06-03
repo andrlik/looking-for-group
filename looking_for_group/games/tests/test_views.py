@@ -212,8 +212,7 @@ class GamePostingCreateTest(AbstractViewTestCaseNoSignals):
     def test_valid_submission(self):
         previous_count = models.GamePosting.objects.count()
         with self.login(username=self.gamer1.username):
-            with mute_signals(m2m_changed):
-                self.post(self.view_name, data=self.valid_post_data)
+            self.post(self.view_name, data=self.valid_post_data)
             self.response_302()
             assert models.GamePosting.objects.count() - previous_count == 1
 
@@ -575,8 +574,7 @@ class GamePostingUpdateTest(AbstractViewTestCaseNoSignals):
 
     def test_valid_submission(self):
         with self.login(username=self.gamer1.username):
-            with mute_signals(m2m_changed):
-                self.post(self.view_name, data=self.valid_post_data, **self.url_kwargs)
+            self.post(self.view_name, data=self.valid_post_data, **self.url_kwargs)
             self.response_302()
             assert (
                 models.GamePosting.objects.get(pk=self.gp2.pk).title
@@ -712,13 +710,13 @@ class GameSessionAdHocCreateTest(AbstractGameSessionTest):
 
     def test_valid_update(self):
         session_count = models.GameSession.objects.filter(game=self.gp2).count()
-        with mute_signals(post_save):
-            with self.login(username=self.gamer1.username):
+        with self.login(username=self.gamer1.username):
+            with mute_signals(post_save):
                 self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-                if self.last_response.status_code == 200:
-                    self.print_form_errors()
-                self.response_302()
-                assert models.GameSession.objects.count() - session_count == 1
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            assert models.GameSession.objects.count() - session_count == 1
 
 
 class GameSessionCreateTest(AbstractGameSessionTest):
@@ -754,49 +752,47 @@ class GameSessionCreateTest(AbstractGameSessionTest):
             self.response_403()
 
     def test_gm_but_open_session(self):
-        with mute_signals(post_save):
-            with self.login(username=self.gamer1.username):
-                session_count = models.GameSession.objects.filter(game=self.gp2).count()
-                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-                self.response_302()
-                assert (
-                    session_count
-                    == models.GameSession.objects.filter(game=self.gp2).count()
-                )
+        with self.login(username=self.gamer1.username):
+            session_count = models.GameSession.objects.filter(game=self.gp2).count()
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            self.response_302()
+            assert (
+                session_count
+                == models.GameSession.objects.filter(game=self.gp2).count()
+            )
 
     def test_gm_game_over(self):
-        with mute_signals(post_save):
-            self.session2.status = "complete"
-            self.session2.save()
-            self.gp2.status = "closed"
-            self.gp2.save()
-            with self.login(username=self.gamer1.username):
-                session_count = models.GameSession.objects.filter(game=self.gp2).count()
-                self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-                assert (
-                    session_count
-                    == models.GameSession.objects.filter(game=self.gp2).count()
-                )
+        self.session2.status = "complete"
+        self.session2.save()
+        self.gp2.status = "closed"
+        self.gp2.save()
+        with self.login(username=self.gamer1.username):
+            session_count = models.GameSession.objects.filter(game=self.gp2).count()
+            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
+            assert (
+                session_count
+                == models.GameSession.objects.filter(game=self.gp2).count()
+            )
 
     def test_gm_sessions_closed(self):
-        with mute_signals(post_save):
-            self.session2.status = "complete"
-            self.session2.save()
-            with self.login(username=self.gamer1.username):
-                session_count = models.GameSession.objects.filter(game=self.gp2).count()
+        self.session2.status = "complete"
+        self.session2.save()
+        with self.login(username=self.gamer1.username):
+            session_count = models.GameSession.objects.filter(game=self.gp2).count()
+            with mute_signals(post_save):
                 self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-                self.response_302()
-                assert (
-                    models.GameSession.objects.filter(game=self.gp2).count()
-                    - session_count
-                    == 1
-                )
-                newest_session = models.GameSession.objects.filter(
-                    game=self.gp2
-                ).latest("scheduled_time")
-                assert self.last_response["location"] == reverse(
-                    "games:session_edit", kwargs={"session": newest_session.slug}
-                )
+            self.response_302()
+            assert (
+                models.GameSession.objects.filter(game=self.gp2).count()
+                - session_count
+                == 1
+            )
+            newest_session = models.GameSession.objects.filter(
+                game=self.gp2
+            ).latest("scheduled_time")
+            assert self.last_response["location"] == reverse(
+                "games:session_edit", kwargs={"session": newest_session.slug}
+            )
 
 
 class GameSessionDetailTest(AbstractGameSessionTest):
@@ -862,17 +858,17 @@ class GameSessionUpdateTest(AbstractGameSessionTest):
             self.assertGoodView(self.view_name, **self.url_kwargs)
 
     def test_update(self):
-        with mute_signals(post_save):
-            with self.login(username=self.gamer1.username):
-                print(self.post_data)
+        with self.login(username=self.gamer1.username):
+            print(self.post_data)
+            with mute_signals(post_save):
                 self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-                if self.last_response.status_code == 200:
-                    self.print_form_errors(self.last_response)
-                self.response_302()
-                assert (
-                    models.GameSession.objects.get(pk=self.session2.pk).gm_notes
-                    == "This will be wild and **wacky**!"
-                )
+            if self.last_response.status_code == 200:
+                self.print_form_errors(self.last_response)
+            self.response_302()
+            assert (
+                models.GameSession.objects.get(pk=self.session2.pk).gm_notes
+                == "This will be wild and **wacky**!"
+            )
 
 
 class GameSessionCompleteTest(AbstractGameSessionTest):
@@ -965,14 +961,14 @@ class GameSessionMoveTest(AbstractGameSessionTest):
             original_time = self.session2.scheduled_time
             with mute_signals(post_save):
                 self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-                if self.last_response.status_code == 200:
-                    self.print_form_errors()
-                self.response_302()
-                updated_session = models.GameSession.objects.get(pk=self.session2.pk)
-                assert original_time < updated_session.scheduled_time
-                assert (
-                    updated_session.scheduled_time == updated_session.occurrence.start
-                )
+            if self.last_response.status_code == 200:
+                self.print_form_errors()
+            self.response_302()
+            updated_session = models.GameSession.objects.get(pk=self.session2.pk)
+            assert original_time < updated_session.scheduled_time
+            assert (
+                updated_session.scheduled_time == updated_session.occurrence.start
+            )
 
 
 class GameSessionCancelTest(AbstractGameSessionTest):
@@ -1193,8 +1189,7 @@ class CalendarDetailTest(AbstractViewTestCaseNoSignals):
         self.gp2.start_time = timezone.now() + timedelta(days=2)
         self.gp2.game_frequency = "weekly"
         self.gp2.session_length = 2.5
-        with mute_signals(post_save):
-            self.gp2.save()
+        self.gp2.save()
         self.view_name = "games:calendar_detail"
         self.url_kwargs = {"gamer": self.gamer1.username}
 
@@ -1219,8 +1214,7 @@ class CalendarJSONTest(AbstractAPITestCase):
         self.gp2.start_time = timezone.now() + timedelta(days=2)
         self.gp2.game_frequency = "weekly"
         self.gp2.session_length = 2.5
-        with mute_signals(post_save):
-            self.gp2.save()
+        self.gp2.save()
         self.view_name = "games:api_occurrences"
         self.query_values = {
             "calendar_slug": self.gamer1.username,
@@ -1256,10 +1250,9 @@ class PlayerLeaveTest(AbstractViewTestCaseSignals):
 
     def setUp(self):
         super().setUp()
-        with mute_signals(post_save):
-            self.player1 = models.Player.objects.create(
-                game=self.gp2, gamer=self.gamer4
-            )
+        self.player1 = models.Player.objects.create(
+            game=self.gp2, gamer=self.gamer4
+        )
         self.view_name = "games:player_leave"
         self.url_kwargs = {"gameid": self.gp2.slug, "player": self.player1.slug}
 
@@ -1284,7 +1277,7 @@ class PlayerLeaveTest(AbstractViewTestCaseSignals):
         with self.login(username=self.gamer4.username):
             with mute_signals(pre_delete):
                 self.post(self.view_name, data={}, **self.url_kwargs)
-                self.response_302()
+            self.response_302()
             with pytest.raises(ObjectDoesNotExist):
                 models.Player.objects.get(pk=self.player1.pk)
 
@@ -1321,7 +1314,7 @@ class PlayerKickTest(AbstractViewTestCaseSignals):
         with self.login(username=self.gamer1.username):
             with mute_signals(pre_delete):
                 self.post(self.view_name, data={}, **self.url_kwargs)
-                self.response_302()
+            self.response_302()
             with pytest.raises(ObjectDoesNotExist):
                 models.Player.objects.get(pk=self.player1.pk)
 
