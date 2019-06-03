@@ -6,7 +6,6 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-from test_plus.test import BaseTestCase
 
 from ..tests.test_views import BaseAbstractViewTest
 
@@ -21,6 +20,55 @@ def create_user(username="testuser", password="password"):
     email.primary = True
     email.save()
     return user
+
+
+# Begin Pytest conversions here ---------------------
+
+def strip_out_false_positives(self, violations):
+    """
+    Cleans an axe instance of false positives.
+    """
+    x = 0
+    ids_to_remove = []
+    if len(violations) == 0:
+        return violations
+    for viol in violations:
+        if (
+            viol["id"] == "label"
+            and len(viol["nodes"][0]["target"]) == 1
+            and viol["nodes"][0]["target"][0] == "#id_q"
+        ):
+            ids_to_remove.append(x)
+        if (
+            viol["id"] == "color-contrast"
+                and len(viol["nodes"][0]["target"]) == 1
+                and len(viol["nodes"][0]["any"]) == 1
+                and "#1779ba" in viol["nodes"][0]["any"][0]["message"]
+                and "#2c3840" in viol["nodes"][0]["any"][0]["message"]
+        ):
+            ids_to_remove.append(x)
+        x += 1
+    for idr in reversed(ids_to_remove):
+        del violations[idr]
+    return violations
+
+
+def get_axe_violations(selenium, axe_options, url):
+    selenium.get(url)
+    axe = Axe(selenium)
+    axe.inject()
+    results = axe.run(options=axe_options)
+    return axe, strip_out_false_positives(results["violations"])
+
+
+@pytest.mark.parameterize("url_to_test", ["/", "/accounts/signin/"])
+@pytest.mark.nondestructive
+def basic_accessibility_test(liveserver, url_to_test):
+    axe, violations = get_axe_violations(liveserver.url + url_to_test)
+    assert len(violations) == 0, axe.report()
+
+
+# Legacy tests start here. --------------------------
 
 
 class BaseAccessibilityTest(object):
