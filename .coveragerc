@@ -1,6 +1,6 @@
 [run]
 # include = looking_for_group/*
-omit = *migrations*, *tests*, *apps.py, looking_for_group/discord/permissions.py
+omit = *migrations*, *tests*, *apps.py, *search_indexes.py, looking_for_group/discord/permissions.py
 [report]
 exclude_lines =
     pragma: no cover
