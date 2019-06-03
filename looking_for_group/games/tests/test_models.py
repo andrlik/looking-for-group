@@ -9,8 +9,8 @@ from django.utils import timezone
 from factory.django import mute_signals
 from schedule.models import Calendar, Rule
 
-from .. import models, tasks
 from ...gamer_profiles.tests import factories
+from .. import models, tasks
 from ..utils import check_table_exists
 
 
@@ -107,59 +107,54 @@ class GameEventProxyMethods(AbstractGamesModelTest):
         )
 
     def test_create_child_events(self):
-        with mute_signals(post_save):
-            assert self.master_event.get_child_events().count() == 0
-            events_added = self.master_event.generate_missing_child_events(
-                [self.player_calendar1, self.player_calendar2]
-            )
-            assert events_added == 2
-            assert self.master_event.get_child_events().count() == 2
-            # Now ensure we don't duplicate
-            events_added = self.master_event.generate_missing_child_events(
-                [self.player_calendar1, self.player_calendar2]
-            )
-            assert events_added == 0
-            assert self.master_event.get_child_events().count() == 2
+        assert self.master_event.get_child_events().count() == 0
+        events_added = self.master_event.generate_missing_child_events(
+            [self.player_calendar1, self.player_calendar2]
+        )
+        assert events_added == 2
+        assert self.master_event.get_child_events().count() == 2
+        # Now ensure we don't duplicate
+        events_added = self.master_event.generate_missing_child_events(
+            [self.player_calendar1, self.player_calendar2]
+        )
+        assert events_added == 0
+        assert self.master_event.get_child_events().count() == 2
 
     def test_event_type_evaluation(self):
-        with mute_signals(post_save):
-            self.master_event.generate_missing_child_events(
-                [self.player_calendar1, self.player_calendar2]
-            )
-            assert self.master_event.is_master_event()
-            assert not self.master_event.is_player_event()
-            for event in self.master_event.child_events:
-                assert not event.is_master_event()
-                assert event.is_player_event()
+        self.master_event.generate_missing_child_events(
+            [self.player_calendar1, self.player_calendar2]
+        )
+        assert self.master_event.is_master_event()
+        assert not self.master_event.is_player_event()
+        for event in self.master_event.child_events:
+            assert not event.is_master_event()
+            assert event.is_player_event()
 
     def test_remove_child_events(self):
-        with mute_signals(post_save):
-            self.master_event.generate_missing_child_events(
-                [self.player_calendar1, self.player_calendar2]
-            )
-            assert self.master_event.get_child_events().count() == 2
-            self.master_event.remove_child_events()
-            assert self.master_event.get_child_events().count() == 0
+        self.master_event.generate_missing_child_events(
+            [self.player_calendar1, self.player_calendar2]
+        )
+        assert self.master_event.get_child_events().count() == 2
+        self.master_event.remove_child_events()
+        assert self.master_event.get_child_events().count() == 0
 
     def test_cascade_deletes(self):
-        with mute_signals(post_save):
-            self.master_event.generate_missing_child_events(
-                [self.player_calendar1, self.player_calendar2]
-            )
-            ids_to_check = [f.id for f in self.master_event.child_events]
-            self.master_event.delete()
-            for idu in ids_to_check:
-                with pytest.raises(ObjectDoesNotExist):
-                    models.GameEvent.objects.get(id=idu)
+        self.master_event.generate_missing_child_events(
+            [self.player_calendar1, self.player_calendar2]
+        )
+        ids_to_check = [f.id for f in self.master_event.child_events]
+        self.master_event.delete()
+        for idu in ids_to_check:
+            with pytest.raises(ObjectDoesNotExist):
+                models.GameEvent.objects.get(id=idu)
 
     def test_update_child_events(self):
-        with mute_signals(post_save):
-            self.master_event.generate_missing_child_events(
-                [self.player_calendar1, self.player_calendar2]
-            )
-            self.master_event.rule = self.rule2
-            self.master_event.save()
-            assert self.master_event.update_child_events() == 2
+        self.master_event.generate_missing_child_events(
+            [self.player_calendar1, self.player_calendar2]
+        )
+        self.master_event.rule = self.rule2
+        self.master_event.save()
+        assert self.master_event.update_child_events() == 2
 
 
 class GamePostingModelMethods(AbstractGamesModelTest):
@@ -191,12 +186,11 @@ class GameSessionModelMethods(AbstractGamesModelTest):
         super().setUp()
 
     def test_create_adhoc_event_generated(self):
-        with mute_signals(post_save):
-            adhoc_session = models.GameSession.objects.create(
-                game=self.game_posting,
-                session_type="adhoc",
-                scheduled_time=timezone.now() + timedelta(days=3),
-            )
+        adhoc_session = models.GameSession.objects.create(
+            game=self.game_posting,
+            session_type="adhoc",
+            scheduled_time=timezone.now() + timedelta(days=3),
+        )
         assert adhoc_session.occurrence
         assert (
             models.GameEvent.objects.get(id=adhoc_session.occurrence.event.id)
@@ -226,33 +220,32 @@ class GameSessionModelMethods(AbstractGamesModelTest):
             ]
 
     def test_adhoc_update_session(self):
-        with mute_signals(post_save):
-            adhoc_session = models.GameSession.objects.create(
-                game=self.game_posting,
-                session_type="adhoc",
-                scheduled_time=timezone.now() + timedelta(days=3),
-            )
+        adhoc_session = models.GameSession.objects.create(
+            game=self.game_posting,
+            session_type="adhoc",
+            scheduled_time=timezone.now() + timedelta(days=3),
+        )
         with mute_signals(m2m_changed):
             adhoc_session.players_expected.add(self.player1, self.player2)
             adhoc_session.players_expected.remove(self.player2)
-        tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+            tasks.update_player_calendars_for_adhoc_session(adhoc_session)
         child_events = models.GameEvent.objects.get(
             id=adhoc_session.occurrence.event.id
         ).get_child_events()
         assert child_events.count() == 1
 
     def test_adhoc_player_leave(self):
-        with mute_signals(post_save):
-            adhoc_session = models.GameSession.objects.create(
-                game=self.game_posting,
-                session_type="adhoc",
-                scheduled_time=timezone.now() + timedelta(days=3),
-            )
+        adhoc_session = models.GameSession.objects.create(
+            game=self.game_posting,
+            session_type="adhoc",
+            scheduled_time=timezone.now() + timedelta(days=3),
+        )
         with mute_signals(m2m_changed):
             adhoc_session.players_expected.add(self.player1, self.player2)
-        tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+            tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+            adhoc_session.players_expected.remove(self.player2)
+            tasks.update_player_calendars_for_adhoc_session(adhoc_session)
         with mute_signals(pre_delete):
-            tasks.clear_calendar_for_departing_player(self.player2)
             self.player2.delete()
         assert (
             models.GameEvent.objects.get(id=adhoc_session.occurrence.event.id)
@@ -262,16 +255,15 @@ class GameSessionModelMethods(AbstractGamesModelTest):
         )
 
     def test_adhoc_player_clear(self):
-        with mute_signals(post_save):
-            adhoc_session = models.GameSession.objects.create(
-                game=self.game_posting,
-                session_type="adhoc",
-                scheduled_time=timezone.now() + timedelta(days=3),
-            )
+        adhoc_session = models.GameSession.objects.create(
+            game=self.game_posting,
+            session_type="adhoc",
+            scheduled_time=timezone.now() + timedelta(days=3),
+        )
         with mute_signals(m2m_changed):
             adhoc_session.players_expected.add(self.player1, self.player2)
             adhoc_session.players_expected.clear()
-        tasks.update_player_calendars_for_adhoc_session(adhoc_session)
+            tasks.update_player_calendars_for_adhoc_session(adhoc_session)
         assert (
             models.GameEvent.objects.get(id=adhoc_session.occurrence.event.id)
             .get_child_events()
