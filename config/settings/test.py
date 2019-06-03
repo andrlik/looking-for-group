@@ -22,12 +22,12 @@ TEST_RUNNER = "django.test.runner.DiscoverRunner"
 # https://docs.djangoproject.com/en/dev/ref/settings/#caches
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
         "LOCATION": "",
     },
     "DJRedis": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDISCLOUD_URL", "redis://127.0.0.1:6379/1"),
+        "LOCATION": env("REDISCLOUD_URL", default="redis://127.0.0.1:6379/1"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
