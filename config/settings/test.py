@@ -24,7 +24,14 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "",
-    }
+    },
+    "DJRedis": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env("REDISCLOUD_URL", "redis://127.0.0.1:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
 }
 
 # PASSWORDS
@@ -93,7 +100,7 @@ LOGGING = {
 }
 
 Q_CLUSTER['sync'] = True  # noqa:F405
-Q_CLUSTER['orm'] = 'default'  # noqa: F405
+Q_CLUSTER['django_redis'] = 'DJRedis'  # noqa: F405
 
 
 HAYSTACK_CONNECTIONS = {
