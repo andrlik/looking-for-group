@@ -1,7 +1,7 @@
 import pytest
 from allauth.account.models import EmailAddress
 from allauth.utils import get_user_model
-from axe_selenium_python.axe import Axe
+from conftest import MyAxe
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 from selenium import webdriver
@@ -53,19 +53,13 @@ def strip_out_false_positives(self, violations):
     return violations
 
 
-def get_axe_violations(selenium, axe_options, url):
-    selenium.get(url)
-    axe = Axe(selenium)
-    axe.inject()
-    results = axe.run(options=axe_options)
-    return axe, strip_out_false_positives(results["violations"])
-
-
 @pytest.mark.parameterize("url_to_test", ["/", "/accounts/signin/"])
 @pytest.mark.nondestructive
-def basic_accessibility_test(liveserver, url_to_test):
-    axe, violations = get_axe_violations(liveserver.url + url_to_test)
-    assert len(violations) == 0, axe.report()
+def basic_accessibility_test(myselenium, axe_options, liveserver, url_to_test):
+    myselenium.get(liveserver.url + url_to_test)
+    axe = MyAxe(myselenium)
+    results = axe.get_axe_results(options=axe_options)
+    assert len(results["violations"]) == 0, axe.report(results["violations"])
 
 
 # Legacy tests start here. --------------------------

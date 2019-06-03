@@ -1,6 +1,52 @@
 import sys
 
 import pytest
+from axe_selenium_python import Axe
+from selenium.webdriver import Firefox
+
+
+class MyAxe(Axe):
+    """
+    Same as base class but strips out results.
+    """
+
+    def strip_out_false_positives(self, violations):
+        """
+        Cleans an axe instance of false positives.
+        """
+
+        x = 0
+        ids_to_remove = []
+        if len(violations) == 0:
+            return violations
+        for viol in violations:
+            if (
+                    viol["id"] == "label"
+                    and len(viol["nodes"][0]["target"]) == 1
+                    and viol["nodes"][0]["target"][0] == "#id_q"
+            ):
+                ids_to_remove.append(x)
+            if (
+                    viol["id"] == "color-contrast"
+                    and len(viol["nodes"][0]["target"]) == 1
+                    and len(viol["nodes"][0]["any"]) == 1
+                    and "#1779ba" in viol["nodes"][0]["any"][0]["message"]
+                    and "#2c3840" in viol["nodes"][0]["any"][0]["message"]
+            ):
+                ids_to_remove.append(x)
+            x += 1
+        for idr in reversed(ids_to_remove):
+            del violations[idr]
+        return violations
+
+    def get_axe_results(self, options=None):
+        """
+        Strips out false positives.
+        """
+        self.inject()
+        results = self.run(options=options)
+        results["violations"] = self.strip_out_false_positives(results["violations"])
+        return results
 
 
 @pytest.fixture(autouse=True)
@@ -14,24 +60,25 @@ def firefox_options(firefox_options):
     return firefox_options
 
 
-@pytest.fixture(autouse=True)
-def selenium(selenium):
+@pytest.fixture(scope="module", autouse=True)
+def myselenium():
+    selenium = Firefox(options=firefox_options)
     selenium.implicitly_wait(10)
     yield selenium
     selenium.quit()
 
 
-@pytest.fixture(scope="session")
-def login_browser(selenium, usertologin, liveserver, password="password"):
-    selenium.get(liveserver.url + "/accounts/login/")
-    username_input = selenium.find_element_by_id("id_login")
-    password_input = selenium.find_element_by_id("id_password")
+@pytest.fixture(scope="module")
+def logged_browser(myselenium, usertologin, liveserver, password="password"):
+    myselenium.get(liveserver.url + "/accounts/login/")
+    username_input = myselenium.find_element_by_id("id_login")
+    password_input = myselenium.find_element_by_id("id_password")
     username_input.send_keys(usertologin.username)
     password_input.send_keys(password)
-    selenium.find_element_by_xpath("//button[text()='Sign In']").click()
-    yield selenium
-    selenium.get(liveserver.url + "/accounts/logout/")
-    selenium.find_element_by_xpath("//button[text()='Sign Out']").click()
+    myselenium.find_element_by_xpath("//button[text()='Sign In']").click()
+    yield myselenium
+    myselenium.get(liveserver.url + "/accounts/logout/")
+    myselenium.find_element_by_xpath("//button[text()='Sign Out']").click()
 
 
 @pytest.fixture(autouse=True)
