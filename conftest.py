@@ -4,6 +4,7 @@ import pytest
 from axe_selenium_python import Axe
 from django.contrib.contenttypes.models import ContentType
 
+from looking_for_group.game_catalog.tests.fixtures import *  # noqa
 from looking_for_group.gamer_profiles.tests import factories
 
 
