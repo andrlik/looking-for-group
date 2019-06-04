@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from looking_for_group.game_catalog.tests.fixtures import *  # noqa
 from looking_for_group.gamer_profiles.tests import factories
 from looking_for_group.gamer_profiles.tests.fixtures import *  # noqa
+from looking_for_group.games.tests.fixtures import *  # noqa
 
 
 class MyAxe(Axe):
@@ -43,7 +44,7 @@ class MyAxe(Axe):
             del violations[idr]
         return violations
 
-    def get_axe_results(self, options=None):
+    def get_axe_results(self, options={"runOnly": ["wcag2a", "wcag2aa"]}):
         """
         Strips out false positives.
         """
