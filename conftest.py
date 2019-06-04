@@ -2,7 +2,9 @@ import sys
 
 import pytest
 from axe_selenium_python import Axe
-from selenium.webdriver import Firefox
+from django.contrib.contenttypes.models import ContentType
+
+from looking_for_group.gamer_profiles.tests import factories
 
 
 class MyAxe(Axe):
@@ -49,6 +51,28 @@ class MyAxe(Axe):
         return results
 
 
+@pytest.mark.django_db(transaction=True)
+@pytest.fixture
+def base_db_gamers():
+    ContentType.objects.clear_cache()
+    gamer1 = factories.GamerProfileFactory()
+    gamer2 = factories.GamerProfileFactory()
+    gamer3 = factories.GamerProfileFactory()
+    gamer4 = factories.GamerProfileFactory()
+    gamers = [gamer1, gamer2, gamer3, gamer4]
+    yield gamers
+
+
+@pytest.fixture
+def usertologinas(base_db_gamers):
+    return base_db_gamers[0].user
+
+
+@pytest.fixture(autouse=True)
+def axe_class():
+    return MyAxe
+
+
 @pytest.fixture(autouse=True)
 def enable_db_access(db):
     pass
@@ -60,25 +84,35 @@ def firefox_options(firefox_options):
     return firefox_options
 
 
-@pytest.fixture(scope="module", autouse=True)
-def myselenium():
-    selenium = Firefox(options=firefox_options)
+@pytest.fixture
+def myselenium(selenium):
     selenium.implicitly_wait(10)
     yield selenium
     selenium.quit()
 
 
-@pytest.fixture(scope="module")
-def logged_browser(myselenium, usertologin, liveserver, password="password"):
-    myselenium.get(liveserver.url + "/accounts/login/")
+def browser_login(myselenium, usertologin, live_server, password="password"):
+    myselenium.get(live_server.url + "/accounts/login/")
     username_input = myselenium.find_element_by_id("id_login")
     password_input = myselenium.find_element_by_id("id_password")
     username_input.send_keys(usertologin.username)
     password_input.send_keys(password)
     myselenium.find_element_by_xpath("//button[text()='Sign In']").click()
-    yield myselenium
-    myselenium.get(liveserver.url + "/accounts/logout/")
+
+
+def browser_logout(myselenium, live_server):
+    myselenium.get(live_server.url + "/accounts/logout/")
     myselenium.find_element_by_xpath("//button[text()='Sign Out']").click()
+
+
+@pytest.fixture(autouse=True)
+def login_method():
+    return browser_login
+
+
+@pytest.fixture(autouse=True)
+def logout_method():
+    return browser_logout
 
 
 @pytest.fixture(autouse=True)
