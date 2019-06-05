@@ -119,7 +119,7 @@
     {% if session.status == "cancel" %}
     <form action="{% url 'games:session_uncancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="pending" /> <button type="submit" class="button"><i class="fas fa-calendar-plus"></i> {% trans 'Undo cancellation' %}</button></form>
     {% elif session.status == "complete" %}
-    <button class="button alert disabled"><i class="fas fa-calendar-minus"></i> {% trans "Cancel session" %}</button>
+    <button class="button alert disabled" aria-disabled="true"><i class="fas fa-calendar-minus"></i> {% trans "Cancel session" %}</button>
     {% else %}
     <form action="{% url 'games:session_cancel' session=session.slug %}" method="post">{% csrf_token %}<input type="hidden" id="id_status" name="status" value="cancel" /> <button type="submit" class="button alert"><i class="fas fa-calendar-minus"></i> {% trans 'Cancel session' %}</button></form>
     {% endif %}

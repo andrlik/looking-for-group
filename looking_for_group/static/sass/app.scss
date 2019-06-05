@@ -849,3 +849,13 @@ div#CookielawBanner {
     }
   }
 }
+
+.label {
+  &.alert{
+    color: #fff;
+  }
+}
+
+#autosaved, .autosave, .cursor, .lines, .words{
+  color: #757674 !important;
+}

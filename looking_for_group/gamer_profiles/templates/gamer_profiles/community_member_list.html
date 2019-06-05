@@ -15,8 +15,8 @@
 
 
 {% if is_kicker or is_banner %}
-<ul class="tabs" data-tabs data-deep-links="true" data-deep-links-smudge="true" id="member-tabs">
-  <li class="tabs-title is-active"><a href="#member_panel" aria-selected="true">{% trans "Members" %} ({{ community.get_member_count }})</a></li>
+<ul class="tabs" id="member-tabs">
+  <li class="tabs-title is-active"><a href="#member_panel">{% trans "Members" %} ({{ community.get_member_count }})</a></li>
   {% if is_kicker %}
   <li class="tabs-title"><a href="{% url 'gamer_profiles:community-kick-list' community=community.slug %}">{% trans "Kicked Users" %} ({{ community.kickeduser_set.count }})</a></li>
   {% endif %}
@@ -65,21 +65,21 @@
       <td>{{ member.gamer.games_finished|default_if_none:"0" }}</td>
       {% if is_admin %}
       {% if request.user == member.gamer.user %}
-      <td><button class="button disabled" disabled><i class="fas fa-user-edit"></i> {% trans "Edit Member Role" %}</button></td>
+      <td><button class="button disabled" disabled aria-disabled="true"><i class="fas fa-user-edit"></i> {% trans "Edit Member Role" %}</button></td>
       {% else %}
       <td><a href="{% url 'gamer_profiles:community-edit-gamer-role' community=community.slug gamer=member.gamer.username %}" class="button"><i class="fas fa-user-edit"></i> {% trans "Edit Member Role" %}</a> </td>
       {% endif %}
       {% endif %}
       {% if is_kicker %}
       {% if request.user == member.gamer.user %}
-      <td><button class="disabled alert button" disabled><i class="fas fa-sign-out-alt"></i> {% trans "Kick from community" %}</button></td>
+      <td><button class="disabled alert button" disabled aria-disabled="true"><i class="fas fa-sign-out-alt"></i> {% trans "Kick from community" %}</button></td>
       {% else %}
       <td><a href="{% url 'gamer_profiles:community-kick-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert"><i class="fas fa-sign-out-alt"></i>{% trans "Kick from community" %}</a></td>
       {% endif %}
       {% endif %}
       {% if is_banner %}
       {% if request.user == member.gamer.user %}
-      <td><button class="button alert disabled" disabled><i class="fas fa-ban"></i> {% trans "Ban from community" %}</button></td>
+      <td><button class="button alert disabled" disabled aria-disabled="true"><i class="fas fa-ban"></i> {% trans "Ban from community" %}</button></td>
       {% else %}
       <td><a href="{% url 'gamer_profiles:community-ban-gamer' community=community.slug gamer=member.gamer.username %}" class="button alert"><i class="fas fa-ban"></i> {% trans "Ban from community" %}</a></td>
       {% endif %}

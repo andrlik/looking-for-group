@@ -1,13 +1,13 @@
 import pytest
 from allauth.account.models import EmailAddress
 from allauth.utils import get_user_model
-from axe_selenium_python.axe import Axe
+from axe_selenium_python import Axe
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-from test_plus.test import BaseTestCase
 
+from .. import models
 from ..tests.test_views import BaseAbstractViewTest
 
 
@@ -21,6 +21,109 @@ def create_user(username="testuser", password="password"):
     email.primary = True
     email.save()
     return user
+
+
+# Begin Pytest conversions here ---------------------
+
+
+@pytest.mark.parametrize("url_to_test", ["/", "/accounts/signin/"])
+@pytest.mark.nondestructive
+@pytest.mark.accessibility
+def basic_accessibility_test(
+    myselenium, axe_class, axe_options, live_server, url_to_test
+):
+    myselenium.get(live_server.url + url_to_test)
+    axe = axe_class(myselenium)
+    results = axe.get_axe_results(options=axe_options)
+    assert len(results["violations"]) == 0, axe.report(results["violations"])
+
+
+@pytest.mark.nondestructive
+@pytest.mark.accessibility
+def test_logout_page(
+    myselenium, axe_class, axe_options, login_method, usertologinas, live_server
+):
+    login_method(myselenium, usertologinas, live_server)
+    myselenium.get(live_server.url + "/accounts/logout/")
+    axe = axe_class(myselenium)
+    results = axe.get_axe_results(options=axe_options)
+    assert len(results["violations"]) == 0, axe.report(results["violations"])
+
+
+@pytest.mark.parametrize(
+    "url_to_test",
+    [
+        reverse("game_catalog:game-list"),
+        reverse("game_catalog:system-list"),
+        reverse("game_catalog:pub-list"),
+        reverse("game_catalog:module-list"),
+        reverse("game_catalog:addition_create", kwargs={"obj_type": "game"}),
+    ],
+)
+@pytest.mark.nondestructive
+@pytest.mark.accessibility
+def test_list_views(
+    myselenium,
+    axe_class,
+    axe_options,
+    login_method,
+    usertologinas,
+    live_server,
+    catalog_testdata,
+    url_to_test,
+):
+    login_method(myselenium, usertologinas, live_server)
+    myselenium.get(live_server.url + url_to_test)
+    axe = axe_class(myselenium)
+    results = axe.get_axe_results(options=axe_options)
+    assert len(results["violations"]) == 0, axe.report(results["violations"])
+
+
+@pytest.mark.nondestructive
+@pytest.mark.accessibility
+def test_detail_views(
+    myselenium,
+    axe_class,
+    axe_options,
+    login_method,
+    usertologinas,
+    live_server,
+    catalog_detail_url_to_check,
+):
+    login_method(myselenium, usertologinas, live_server)
+    print("Checking url: {}".format(catalog_detail_url_to_check))
+    myselenium.get(live_server.url + catalog_detail_url_to_check)
+    axe = axe_class(myselenium)
+    results = axe.get_axe_results(options=axe_options)
+    assert len(results["violations"]) == 0, axe.report(results["violations"])
+
+
+@pytest.mark.nondestructive
+@pytest.mark.accessibility
+def test_correction_create(
+    myselenium,
+    axe_class,
+    axe_options,
+    login_method,
+    usertologinas,
+    catalog_testdata,
+    live_server,
+):
+    login_method(myselenium, usertologinas, live_server)
+    myselenium.get(
+        live_server.url
+        + reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "game", "object_id": catalog_testdata.numensource.pk},
+        )
+    )
+    axe = axe_class(myselenium)
+    results = axe.get_axe_results(options=axe_options)
+    violations = axe.get_axe_results(options=axe_options)["violations"]
+    assert len(violations) == 0, axe.report(violations)
+
+
+# Legacy tests start here. --------------------------
 
 
 class BaseAccessibilityTest(object):
@@ -93,98 +196,3 @@ class BaseAccessibilityTest(object):
     def tearDownClass(cls):
         cls.selenium.quit()
         super().tearDownClass()
-
-
-@pytest.mark.accessibility
-@pytest.mark.nondestructive
-class SimpleAccessibilityTest(BaseAccessibilityTest, StaticLiveServerTestCase):
-    """
-    Quick tests for main pages that are not tied to apps.
-    """
-
-    def setUp(self):
-        user = create_user(username="testuser", password="password")
-        self.usertologinas = user.username
-
-    def test_root_page(self):
-        axe, violations = self.get_axe_violations("/")
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_signin_page(self):
-        axe, violations = self.get_axe_violations("/accounts/signin/")
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_signout_page(self):
-        self.login_browser()
-        axe, violations = self.get_axe_violations("/accounts/logout/")
-        assert len(violations) == 0, axe.report(violations)
-
-
-@pytest.mark.accessibility
-@pytest.mark.nondestructive
-class CatalogUrlTests(
-    BaseAccessibilityTest, BaseAbstractViewTest, StaticLiveServerTestCase
-):
-    """
-    Runs axe tests as a logged in user for each of the catalog urls.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.usertologinas = self.gamer1.username
-        self.login_browser()
-
-    def tearDown(self):
-        # self.logout_browser()
-        super().tearDown()
-
-    def test_game_list(self):
-        axe, violations = self.get_axe_violations(reverse("game_catalog:game-list"))
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_system_list(self):
-        axe, violations = self.get_axe_violations(reverse("game_catalog:system-list"))
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_pub_list(self):
-        axe, violations = self.get_axe_violations(reverse("game_catalog:pub-list"))
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_module_list(self):
-        axe, violations = self.get_axe_violations(reverse("game_catalog:module-list"))
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_game_detail(self):
-        axe, violations = self.get_axe_violations(self.numensource.get_absolute_url())
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_edition_detail(self):
-        axe, violations = self.get_axe_violations(self.numen.get_absolute_url())
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_sourcebook_detail(self):
-        axe, violations = self.get_axe_violations(self.numenbook.get_absolute_url())
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_module_detail(self):
-        axe, violations = self.get_axe_violations(self.cos.get_absolute_url())
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_pub_detail(self):
-        axe, violations = self.get_axe_violations(self.mcg.get_absolute_url())
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_addition_add(self):
-        axe, violations = self.get_axe_violations(
-            reverse("game_catalog:addition_create", kwargs={"obj_type": "game"})
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_correction_add(self):
-        axe, violations = self.get_axe_violations(
-            reverse(
-                "game_catalog:correction_create",
-                kwargs={"objtype": "game", "object_id": self.numensource.pk},
-            )
-        )
-        assert len(violations) == 0, axe.report(violations)

@@ -17,22 +17,28 @@
 
 <div class="tabs-content" data-tabs-content="friend-request-tabs">
   <div class="tabs-panel is-active" id="received_panel">
+    {% if pending_requests.count == 0 %}
+    <p>{% trans "No pending requests" %}</p>
+    {% else %}
     <ul>
       {% for fr in pending_requests %}
       <li>{% avatar fr.requestor.user 30 class="avatar" %} <a href="{{ fr.requestor.get_absolute_url }}">{{ fr.requestor.display_name }}</a> ({{ fr.requestor.username }}) <form action="{% url 'gamer_profiles:gamer-friend-request-approve' friend_request=fr.pk %}" method="post">{% csrf_token %}<button class="button success" type="submit"><i class="fas fa-check-circle"></i> {% trans "Accept" %}</button></form> <form action="{% url 'gamer_profiles:gamer-friend-request-reject' friend_request=fr.pk %}" method="post">{% csrf_token %}<button class="alert button" type="submit"><i class="fas fa-minus-circle"></i> {% trans "Ignore" %}</button> </form></li>
       {% empty %}
-      <p>{% trans "No pending requests." %}</p>
       {% endfor %}
     </ul>
+    {% endif %}
   </div>
   <div class="tabs-panel" id="sent_panel">
+    {% if sent_requests.count == 0 %}
+    <p>{% trans "You do not have any sent requests pending." %}</p>
+    {% else %}
     <ul>
       {% for fr in sent_requests %}
       <li>{% avatar fr.recipient.user 30 class="avatar" %} <a href="{{ fr.recipient.get_absolute_url }}">{{ fr.recipient.display_name }}</a> ({{ fr.recipient.username }}) <form action="{% url 'gamer_profiles:gamer-friend-request-delete' friend_request=fr.pk %}" method="'post">{% csrf_token %}<button class="alert button" type="submit"><i class="fas fa-trash-alt"></i> {% trans "Withdraw request" %}</button></form> </li>
       {% empty %}
-      <p>{% trans "You do not have any sent requests pending." %}</p>
       {% endfor %}
     </ul>
+    {% endif %}
   </div>
 </div>
 
