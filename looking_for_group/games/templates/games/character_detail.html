@@ -17,42 +17,50 @@
   <dt>{% trans "Game" %}</dt>
   <dd>{{ character.game.title }}</dd>
   <dt>{% trans "Character Sheet" %}</dt>
-  <dd><a href="{{ character.character_sheet.url }}">{{ character.character_sheet.name }}</a> ({{ character.character_sheet.size|filesizeformat }})</dd>
+  <dd>{% if character.character_sheet %}<a href="{{ character.character_sheet.url }}">{{ character.character_sheet.name }}</a> ({{ character.character_sheet.size|filesizeformat }}){% else %}{% trans "No character sheet provided." %}{% endif %}</dd>
 </dl>
 {% has_perm 'game.edit_character' request.user character as can_edit_character %}
 {% has_perm 'game.delete_character' request.user character as can_delete_character %}
 {% has_perm 'game.approve_character' request.user character.game as can_approve_character %}
 <div class="callout clearfix">
+  <div class="grid-x grid-margin-x">
+    <div class="cell auto">
   {% if can_edit_character %}
   <a href="{% url 'games:character_edit' character=character.slug %}" class="button float-left">{% trans "Edit character" %}</a>
   {% endif %}
+    </div>
+    <div class="cell auto">
   {% if can_delete_character %}
   {% if status != 'inactive' %}
   <form enctype="multipart/form-data" action="{% url 'games:character_inactivate' character=character.slug %}" method="post">
     {% csrf_token %}
-    <input type="hidden" name="status" id="id_status" value="inactive" />
+    <input type="hidden" name="status" value="inactive" />
     <input type="submit" class="button secondary float-center" value="{% trans 'Make inactive' %}" />
   </form>
   {% else %}
   <form action="{% url 'games:character_reactivate' character=character.slug %}" method="post">
     {% csrf_token %}
-    <input type="hidden" name="status" id="id_status" value="pending" />
+    <input type="hidden" name="status" value="pending" />
     <input type="submit" class="button float-center"  value="{% trans 'Reactivate' %}" />
   </form>
   {% endif %}
-  <a href="{% url 'games:character_delete' character=character.slug %}" class="button float-right alert">{% trans "Delete" %}</a>
+    </div>
+    <div class="cell auto">
+      <a href="{% url 'games:character_delete' character=character.slug %}" class="button float-right alert">{% trans "Delete" %}</a>
+    </div>
+  </div>
 </div>
 {% endif %}
 {% if can_approve_character %}
 <div class="callout clearfix">
   <form action="{% url 'games:character_reject' character=character.slug %}" method="post">
     {% csrf_token %}
-    <input type="hidden" name="status" id="id_status" value="rejected" />
+    <input type="hidden" name="status" value="rejected" />
     <input type="submit" class="button float-left alert" value="{% trans 'Reject character' %}" />
   </form>
   <form action="{% url 'games:character_approve' character=character.slug %}" method="post">
     {% csrf_token %}
-    <input type="hidden" name="status" id="id_status" value="approved" />
+    <input type="hidden" name="status"  value="approved" />
     <input type="submit" class="button float-right success" value="{% trans 'Approve character' %}" />
   </form>
 </div>

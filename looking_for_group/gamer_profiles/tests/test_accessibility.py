@@ -1,107 +1,90 @@
 import pytest
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
-from ...game_catalog.tests.test_accessibility import BaseAccessibilityTest
-from ..tests.test_views import BaseAbstractViewTest
+
+@pytest.mark.parametrize(
+    "url_to_check",
+    [
+        reverse("gamer_profiles:community-list"),
+        reverse("gamer_profiles:my-community-list"),
+        reverse("gamer_profiles:my-application-list"),
+        reverse("gamer_profiles:community-create"),
+        reverse("gamer_profiles:my-gamer-friend-requests"),
+        reverse("gamer_profiles:my-block-list"),
+        reverse("gamer_profiles:profile-edit"),
+        "myprofile",
+    ],
+)
+@pytest.mark.accessibility
+@pytest.mark.nondestructive
+def test_list_views(
+    myselenium,
+    axe_class,
+    axe_options,
+    live_server,
+    login_method,
+    social_gamer_to_check,
+    url_to_check,
+):
+    login_method(myselenium, social_gamer_to_check.user, live_server)
+    if url_to_check == "myprofile":
+        url_to_check = social_gamer_to_check.get_absolute_url()
+    myselenium.get(live_server.url + url_to_check)
+    axe = axe_class(myselenium)
+    violations = axe.get_axe_results(options=axe_options)["violations"]
+    assert len(violations) == 0, axe.report(violations)
+
+
+@pytest.mark.parametrize(
+    "view_name",
+    [
+        "gamer_profiles:community-edit",
+        "gamer_profiles:community-detail",
+        "gamer_profiles:community-delete",
+        "gamer_profiles:community-member-list",
+    ],
+)
+@pytest.mark.accessibility
+@pytest.mark.nondestructive
+def test_community_edit(
+    myselenium,
+    axe_class,
+    axe_options,
+    live_server,
+    login_method,
+    social_gamer_to_check,
+    social_community_slug,
+    view_name,
+):
+    login_method(myselenium, social_gamer_to_check.user, live_server)
+    myselenium.get(
+        live_server.url
+        + reverse(view_name, kwargs={"community": social_community_slug})
+    )
+    axe = axe_class(myselenium)
+    violations = axe.get_axe_results(options=axe_options)["violations"]
+    assert len(violations) == 0, axe.report(violations)
 
 
 @pytest.mark.accessibility
 @pytest.mark.nondestructive
-class SocialViewsAccessibilityTest(
-    BaseAccessibilityTest, BaseAbstractViewTest, StaticLiveServerTestCase
+def test_add_gamer_note(
+    myselenium,
+    axe_class,
+    axe_options,
+    live_server,
+    login_method,
+    social_gamer_to_check,
+    social_testdata,
 ):
-    """
-    Accessibility tests for the social views.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.usertologinas = self.gamer1.user.username
-        self.login_browser()
-
-    def test_community_list(self):
-        axe, violations = self.get_axe_violations(
-            reverse("gamer_profiles:community-list")
+    login_method(myselenium, social_gamer_to_check.user, live_server)
+    myselenium.get(
+        live_server.url
+        + reverse(
+            "gamer_profiles:add-gamer-note",
+            kwargs={"gamer": social_testdata.gamer3.username},
         )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_my_community_list(self):
-        axe, violations = self.get_axe_violations(
-            reverse("gamer_profiles:my-community-list")
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_my_application_list(self):
-        axe, violations = self.get_axe_violations(
-            reverse("gamer_profiles:my-application-list")
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_community_create(self):
-        axe, violations = self.get_axe_violations(
-            reverse("gamer_profiles:community-create")
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_community_edit(self):
-        axe, violations = self.get_axe_violations(
-            reverse(
-                "gamer_profiles:community-edit",
-                kwargs={"community": self.community1.slug},
-            )
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_community_delete(self):
-        axe, violations = self.get_axe_violations(
-            reverse(
-                "gamer_profiles:community-delete",
-                kwargs={"community": self.community1.slug},
-            )
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_community_member_list(self):
-        axe, violations = self.get_axe_violations(
-            reverse(
-                "gamer_profiles:community-member-list",
-                kwargs={"community": self.community1.slug},
-            )
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_profile_view(self):
-        axe, violations = self.get_axe_violations(
-            reverse(
-                "gamer_profiles:profile-detail",
-                kwargs={"gamer": self.gamer1.user.username},
-            )
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_profile_edit(self):
-        axe, violations = self.get_axe_violations(
-            reverse("gamer_profiles:profile-edit")
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_add_note(self):
-        axe, violations = self.get_axe_violations(
-            reverse(
-                "gamer_profiles:add-gamer-note", kwargs={"gamer": self.gamer3.username}
-            )
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_view_friend_requests(self):
-        axe, violations = self.get_axe_violations(
-            reverse("gamer_profiles:my-gamer-friend-requests")
-        )
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_view_block_list(self):
-        axe, violations = self.get_axe_violations(
-            reverse("gamer_profiles:my-block-list")
-        )
-        assert len(violations) == 0, axe.report(violations)
+    )
+    axe = axe_class(myselenium)
+    violations = axe.get_axe_results(options=axe_options)["violations"]
+    assert len(violations) == 0, axe.report(violations)
