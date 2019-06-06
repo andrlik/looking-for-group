@@ -1,27 +1,16 @@
 import pytest
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 
-from ...game_catalog.tests.test_accessibility import BaseAccessibilityTest
-from ..tests.test_views import AbstractUtilsTest
+pytestmark = [pytest.mark.accessibility, pytest.mark.nondestructive]
 
 
-@pytest.mark.accessibility
-@pytest.mark.nondestructive
-class AdminUtilsAccessibilityTest(BaseAccessibilityTest, AbstractUtilsTest, StaticLiveServerTestCase):
-    """
-    Run accessibility tests on admin util views.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.usertologinas = self.admin_gamer.user.username
-        self.login_browser()
-
-    def test_notification_view(self):
-        axe, violations = self.get_axe_violations(reverse("adminutils:notification"))
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_email_view(self):
-        axe, violations = self.get_axe_violations(reverse("adminutils:email"))
-        assert len(violations) == 0, axe.report(violations)
+@pytest.mark.parametrize("url_to_check", [
+    reverse("adminutils:notification"),
+    reverse("adminutils:email"),
+])
+def test_notification_view(myselenium, axe_class, login_method, live_server, admin_testdata, url_to_check):
+    login_method(myselenium, admin_testdata.admin_gamer.user, live_server)
+    myselenium.get(live_server.url + url_to_check)
+    axe = axe_class(myselenium)
+    violations = axe.get_axe_results()["violations"]
+    assert len(violations) == 0, axe.report(violations)
