@@ -1,31 +1,11 @@
 import pytest
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from django.urls import reverse
 
-from looking_for_group.game_catalog.tests.test_accessibility import BaseAccessibilityTest
-from looking_for_group.rpgcollections.tests.test_views import AbstractCollectionsTest
+pytestmark = [pytest.mark.accessibility, pytest.mark.nondestructive]
 
 
-@pytest.mark.accessibility
-@pytest.mark.nondestructive
-class TestRPGViews(BaseAccessibilityTest, AbstractCollectionsTest, StaticLiveServerTestCase):
-    """
-    Test collection views for accessibility.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.usertologinas = self.gamer1.user.username
-        self.login_browser()
-
-    def test_detail_view(self):
-        axe, violations = self.get_axe_violations(reverse("rpgcollections:book-detail", kwargs={"book": self.cypher_collect_1.slug}))
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_edit_view(self):
-        axe, violations = self.get_axe_violations(reverse("rpgcollections:edit-book", kwargs={"book": self.cypher_collect_1.slug}))
-        assert len(violations) == 0, axe.report(violations)
-
-    def test_delete_view(self):
-        axe, violations = self.get_axe_violations(reverse("rpgcollections:remove-book", kwargs={"book": self.cypher_collect_1.slug}))
-        assert len(violations) == 0, axe.report(violations)
+def test_collections_detail_views(myselenium, axe_class, login_method, live_server, collection_testdata, collection_detail_url):
+    login_method(myselenium, collection_testdata.gamer1.user, live_server)
+    myselenium.get(live_server.url + collection_detail_url)
+    axe = axe_class(myselenium)
+    violations = axe.get_axe_results()["violations"]
+    assert len(violations) == 0, axe.report(violations)

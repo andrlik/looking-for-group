@@ -10,6 +10,7 @@ from looking_for_group.gamer_profiles.tests import factories
 from looking_for_group.gamer_profiles.tests.fixtures import *  # noqa
 from looking_for_group.games.tests.fixtures import *  # noqa
 from looking_for_group.invites.tests.fixtures import *  # noqa
+from looking_for_group.rpgcollections.tests.fixtures import *  # noqa
 
 
 class MyAxe(Axe):
