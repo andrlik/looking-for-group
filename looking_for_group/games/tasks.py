@@ -40,9 +40,7 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
                     master_event_occurence=occurence
                 )
                 logger.debug(
-                    "Found {} existing occurences to update.".format(
-                        polinks.count()
-                    )
+                    "Found {} existing occurences to update.".format(polinks.count())
                 )
                 child_occurences_to_update = Occurrence.objects.filter(
                     id__in=[p.child_event_occurence.id for p in polinks]
@@ -62,7 +60,9 @@ def create_or_update_linked_occurences_on_edit(occurence, created=False):
             logger.debug("Adding any missing occurences...")
             child_events = game_event.get_child_events()
             if child_occurences_to_update:
-                child_events = child_events.exclude(id__in=[c.event.id for c in child_occurences_to_update])
+                child_events = child_events.exclude(
+                    id__in=[c.event.id for c in child_occurences_to_update]
+                )
             occ_created = 0
             for event in child_events:
                 with transaction.atomic():
@@ -143,11 +143,15 @@ def clear_calendar_for_departing_player(player):
         else:
             logger.debug("No events to delete.")
     logger.debug("Checking for ad hoc sessions")
-    adhocsessions = player.game.gamesession_set.filter(session_type='adhoc').prefetch_related('players_expected')
+    adhocsessions = player.game.gamesession_set.filter(
+        session_type="adhoc"
+    ).prefetch_related("players_expected")
     if adhocsessions.count() > 0:
         for sess in adhocsessions:
             mevent = models.GameEvent.objects.get(id=sess.occurrence.event.id)
-            candidate_events = mevent.get_child_events().filter(calendar=player_calendar)
+            candidate_events = mevent.get_child_events().filter(
+                calendar=player_calendar
+            )
             if candidate_events.count() > 0:
                 logger.debug("Removing an adhoc child event.")
                 candidate_events.delete()
@@ -161,8 +165,12 @@ def calculate_player_attendance(gamesession):
     game_players = gamesession.players_expected.all()
     if game_players:
         for player in game_players:
-            player.sessions_expected = player.gamesession_set.filter(status='complete').count()
-            player.sessions_missed = player.missed_sessions.filter(status='complete').count()
+            player.sessions_expected = player.gamesession_set.filter(
+                status="complete"
+            ).count()
+            player.sessions_missed = player.missed_sessions.filter(
+                status="complete"
+            ).count()
             player.save()
 
 
@@ -180,7 +188,10 @@ def undo_player_attendence_for_incomplete_session(gamesession):
         for player in game_players:
             if player.sessions_expected > 0:
                 player.sessions_expected = F("sessions_expected") - 1
-            if player in gamesession.players_missing.all() and player.sessions_missed > 0:
+            if (
+                player in gamesession.players_missing.all()
+                and player.sessions_missed > 0
+            ):
                 player.sessions_missed = F("sessions_missed") - 1
             player.save()
 
@@ -206,26 +217,46 @@ def update_player_calendars_for_adhoc_session(gamesession):
         if gamesession.players_expected.count() > 0:
             logger.debug("This session has players, grabbing calendars")
             for player in gamesession.players_expected.all():
-                pcal, created = Calendar.objects.get_or_create(slug=player.gamer.username, defaults={'name': "{}'s calendar".format(player.gamer.username)})  # Create event if missing.
+                pcal, created = Calendar.objects.get_or_create(
+                    slug=player.gamer.username,
+                    defaults={"name": "{}'s calendar".format(player.gamer.username)},
+                )  # Create event if missing.
                 calendar_list.append(pcal)
-            logger.debug("Running generation for {} calendars".format(len(calendar_list)))
+            logger.debug(
+                "Running generation for {} calendars".format(len(calendar_list))
+            )
             master_event.generate_missing_child_events(calendar_list)
             created = len(calendar_list)
         logger.debug("Checking for missing players...")
         if gamesession.players_expected.count() < gamesession.game.players.count():
-            logger.debug("We do have players not associated with this session, grabbing their usernames.")
-            non_attending_player_usernames = [np.gamer.username for np in models.Player.objects.filter(game=gamesession.game).exclude(
-                id__in=[p.id for p in gamesession.players_expected.all()]
-            )]
-            logger.debug("Found {} usernames for clearing of child events".format(len(non_attending_player_usernames)))
+            logger.debug(
+                "We do have players not associated with this session, grabbing their usernames."
+            )
+            non_attending_player_usernames = [
+                np.gamer.username
+                for np in models.Player.objects.filter(game=gamesession.game).exclude(
+                    id__in=[p.id for p in gamesession.players_expected.all()]
+                )
+            ]
+            logger.debug(
+                "Found {} usernames for clearing of child events".format(
+                    len(non_attending_player_usernames)
+                )
+            )
             if master_event.get_child_events().count() > 0:
                 logger.debug("Fetching child events for session...")
                 for child_event in master_event.get_child_events():
                     if child_event.calendar.slug in non_attending_player_usernames:
-                        logger.debug("Child event is for a non-participating player, removing this from their calendar.")
+                        logger.debug(
+                            "Child event is for a non-participating player, removing this from their calendar."
+                        )
                         child_event.delete()
                         deleted += 1
-    logger.debug("Created {} new child events and deleted {} child events".format(created, deleted))
+    logger.debug(
+        "Created {} new child events and deleted {} child events".format(
+            created, deleted
+        )
+    )
     return created, deleted
 
 
@@ -233,7 +264,9 @@ def clean_expired_availability_events():
     avail_calls = models.AvailableCalendar.objects.all()
     deleted_count = 0
     for acal in avail_calls:
-        deleted_info = acal.events.filter(end_recurring_period__lt=timezone.now()).delete()
+        deleted_info = acal.events.filter(
+            end_recurring_period__lt=timezone.now()
+        ).delete()
         deleted_count += deleted_info[0]
     logger.info("Deleted {} expired availability events".format(deleted_count))
 
@@ -262,15 +295,24 @@ def notify_subscribers_of_new_game(communities, game):
         if len(communities) > 1:
             new_length = max_length - 17
             if len(communities[0].name) > new_length:
-                comm_name = "{}...".format(communities[0].name[0:new_length-4])
+                comm_name = "{}...".format(communities[0].name[0:new_length - 4])
                 if len(communities) > 2:
                     pluralizer = "s"
             else:
                 comm_name = communities[0].name
-            community_string = "{} and {} other{}".format(comm_name, len(communities) - 1, pluralizer)
+            community_string = "{} and {} other{}".format(
+                comm_name, len(communities) - 1, pluralizer
+            )
         else:
             if len(communities[0].name) > max_length:
-                community_string = "{}...".format(communities[0].name[0:max_length-4])
+                community_string = "{}...".format(
+                    communities[0].name[0:max_length - 4]
+                )
             else:
                 community_string = communities[0].name
-        notify.send(game.gm, recipient=user, verb=_("posted to community {}".format(community_string)), target=game)
+        notify.send(
+            game.gm,
+            recipient=user,
+            verb=_("posted to community {}".format(community_string)),
+            target=game,
+        )

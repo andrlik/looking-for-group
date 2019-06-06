@@ -44,7 +44,6 @@ django-q = "*"
 django-extensions = "*"
 "boto3" = "*"
 django-registration = "*"
-django-scheduler = "*"
 django-ical = "*"
 django-notifications-hq = "*"
 elasticsearch = "<6"
@@ -57,7 +56,8 @@ django-postman = "*"
 django-ajax-selects = "*"
 django-markdownify = "*"
 psycopg2-binary = "*"
-django = "==2.1.8"
+django = "==2.2.2"
+django-scheduler = {editable = true,git = "https://github.com/andrlik/django-scheduler.git"}
 
 [dev-packages]
 sphinx = "*"

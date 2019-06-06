@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_q.tasks import async_task
 from markdown import markdown
 from notifications.signals import notify
-from schedule.models import Calendar, Occurrence, Rule
+from schedule.models import Calendar, Event, Occurrence, Rule
 
 from ..invites.models import Invite
 from ..invites.signals import invite_accepted
@@ -70,9 +70,19 @@ def notify_on_log_create_edit(sender, instance, created, *args, **kwargs):
     if created:
         for player in instance.session.players_expected.all():
             if instance.initial_author != player.gamer:
-                notify.send(instance.initial_author, recipient=player.gamer.user, verb="posted a new adventure log", target=instance.session)
+                notify.send(
+                    instance.initial_author,
+                    recipient=player.gamer.user,
+                    verb="posted a new adventure log",
+                    target=instance.session,
+                )
         if instance.initial_author != instance.session.game.gm:
-            notify.send(instance.initial_author, recipient=instance.session.game.gm.user, verb="posted a new adventure log", target=instance.session)
+            notify.send(
+                instance.initial_author,
+                recipient=instance.session.game.gm.user,
+                verb="posted a new adventure log",
+                target=instance.session,
+            )
 
 
 @receiver(post_save, sender=models.GameSession)
@@ -204,7 +214,11 @@ def create_player_events_as_needed(sender, instance, created, *args, **kwargs):
 
 @receiver(post_save, sender=Occurrence)
 def create_or_update_player_occurence(sender, instance, created, *args, **kwargs):
-    async_task('looking_for_group.games.tasks.create_or_update_linked_occurences_on_edit', instance, created)
+    async_task(
+        "looking_for_group.games.tasks.create_or_update_linked_occurences_on_edit",
+        instance,
+        created,
+    )
 
 
 @receiver(m2m_changed, sender=models.GamePosting.players.through)
@@ -340,8 +354,11 @@ def process_invite_accepted(sender, invite, acceptor, *args, **kwargs):
         else:
             logger.debug("Player was already a member of game... moving on.")
 
+
 @receiver(m2m_changed, sender=models.GamePosting.communities.through)
-def fire_new_game_notification_task(sender, instance, action, reverse, model, pk_set, *args, **kwargs):
+def fire_new_game_notification_task(
+    sender, instance, action, reverse, model, pk_set, *args, **kwargs
+):
     if action == "post_add":
         if reverse:
             games = model.objects.filter(id__in=[pk_set])
