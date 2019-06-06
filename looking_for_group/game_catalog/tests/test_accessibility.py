@@ -118,7 +118,6 @@ def test_correction_create(
         )
     )
     axe = axe_class(myselenium)
-    results = axe.get_axe_results(options=axe_options)
     violations = axe.get_axe_results(options=axe_options)["violations"]
     assert len(violations) == 0, axe.report(violations)
 
