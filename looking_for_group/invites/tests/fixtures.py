@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
 from ...games.models import GamePosting, Player
@@ -12,6 +15,7 @@ class InviteTData(object):
         self.gamer2 = GamerProfileFactory()
         self.gamer3 = GamerProfileFactory()
         self.gamer4 = GamerProfileFactory()
+        self.gamer5 = GamerProfileFactory()
         self.comm1 = GamerCommunityFactory(owner=self.gamer1)
         self.comm2 = GamerCommunityFactory(owner=self.gamer2)
         self.comm3 = GamerCommunityFactory(owner=self.gamer3)
@@ -47,6 +51,23 @@ class InviteTData(object):
             "slug": self.gp1.slug,
         }
         self.invite1 = Invite.objects.create(label="test_game_invite", content_object=self.gp1, creator=self.gamer3.user)
+        self.invite2 = Invite(
+            label="community_test_invite",
+            content_object=self.comm1,
+            creator=self.gamer3.user,
+        )
+        self.invite2.save()
+        self.invite3 = Invite(
+            label="community_test_invite_dos",
+            content_object=self.comm1,
+            creator=self.gamer1.user,
+        )
+        self.invite3.save()
+        self.expired_invite = Invite.objects.create(label="expired_invite", content_object=self.gp1, creator=self.gamer3.user)
+        self.expired_invite.expires = timezone.now() - timedelta(days=2)
+        self.expired_invite.status = "expired"
+        self.expired_invite.save()
+        self.accepted_invite = Invite.objects.create(label="accepted_invite", content_object=self.gp1, creator=self.gamer3.user, status="accepted", accepted_by=self.gamer2.user)
 
 
 @pytest.fixture

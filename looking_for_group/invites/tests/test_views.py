@@ -1,285 +1,176 @@
-from datetime import timedelta
-
 import pytest
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
-from test_plus import TestCase
+from django.urls import reverse
 
 from ...gamer_profiles.models import CommunityMembership
-from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
 from ...games.models import GamePosting, Player
 from ..models import Invite
 
+# -------- Start pytest conversions ---------#
+pytestmark = pytest.mark.django_db(transaction=True)
 
-class AbstractInviteTestCase(TestCase):
-    """
-    Makes setup less redundant.
-    """
 
-    def setUp(self):
-        ContentType.objects.clear_cache()
-        self.gamer1 = GamerProfileFactory()
-        self.gamer2 = GamerProfileFactory()
-        self.gamer3 = GamerProfileFactory()
-        self.gamer4 = GamerProfileFactory()
-        self.comm1 = GamerCommunityFactory(owner=self.gamer1)
-        self.comm2 = GamerCommunityFactory(owner=self.gamer2)
-        self.comm3 = GamerCommunityFactory(owner=self.gamer3)
-        self.comm1.add_member(self.gamer4, role="moderator")
-        self.comm1.add_member(self.gamer3, role="member")
-        self.comm2.add_member(self.gamer4, role="moderator")
-        self.comm3.add_member(self.gamer1)
-        self.comm3.add_member(self.gamer4, role="moderator")
-        self.comm2.invites_allowed = "moderator"
-        self.comm2.save()
-        self.comm1.invites_allowed = "member"
-        self.comm1.save()
-        self.gp1 = GamePosting.objects.create(
-            title="the long dark tea time of the soul",
-            gm=self.gamer1,
-            game_description="Lots of spoooooooky stuff",
+@pytest.mark.parametrize(
+    "view_name_to_test",
+    ["invites:invite_create", "invites:invite_accept", "invites:invite_delete"],
+)
+def test_login_required(client, invite_testdata, view_name_to_test):
+    if "create" in view_name_to_test:
+        url = reverse(view_name_to_test, kwargs=invite_testdata.mem_url_kwargs)
+    else:
+        url = reverse(
+            view_name_to_test, kwargs={"invite": invite_testdata.invite1.slug}
         )
-        self.player1 = Player.objects.create(gamer=self.gamer2, game=self.gp1)
-        self.admin_url_kwargs = {
-            "content_type": ContentType.objects.get_for_model(self.comm3).id,
-            "slug": self.comm3.slug,
-        }
-        self.mod_url_kwargs = {
-            "content_type": ContentType.objects.get_for_model(self.comm2).id,
-            "slug": self.comm2.slug,
-        }
-        self.mem_url_kwargs = {
-            "content_type": ContentType.objects.get_for_model(self.comm1).id,
-            "slug": self.comm1.slug,
-        }
-        self.game_url_kwargs = {
-            "content_type": ContentType.objects.get_for_model(self.gp1).pk,
-            "slug": self.gp1.slug,
-        }
-
-    def tearDown(self):
-        ContentType.objects.clear_cache()
-        super().tearDown()
+    response = client.get(url)
+    assert response.status_code == 302
+    assert "/accounts/login/" in response["Location"]
 
 
-class TestInviteCreateView(AbstractInviteTestCase):
-    """
-    Test invite creation
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "invites:invite_create"
-        self.post_data = {"label": "test invite"}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.mem_url_kwargs)
-
-    def test_member_invite_not_allowed(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.mod_url_kwargs)
-            self.response_403()
-            self.get(self.view_name, **self.admin_url_kwargs)
-            self.response_403()
-        with self.login(username=self.gamer4.username):
-            self.assertGoodView(self.view_name, **self.mod_url_kwargs)
-            self.get(self.view_name, **self.admin_url_kwargs)
-            self.response_403()
-
-    def test_member_invite_allowed(self):
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_name, **self.mem_url_kwargs)
-
-    def test_admin_allowed(self):
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_name, **self.admin_url_kwargs)
-
-    def test_game_invite_allowed(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_name, **self.game_url_kwargs)
-            self.response_403()
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.game_url_kwargs)
-
-    def test_create_community_invite(self):
-        with self.login(username=self.gamer1.username):
-            invite_count = Invite.objects.count()
-            self.post(self.view_name, data=self.post_data, **self.mem_url_kwargs)
-            self.response_302()
-            assert Invite.objects.count() - invite_count == 1
-
-    def test_create_game_invite(self):
-        with self.login(username=self.gamer1.username):
-            invite_count = Invite.objects.count()
-            self.post(self.view_name, data=self.post_data, **self.game_url_kwargs)
-            self.response_302()
-            assert Invite.objects.count() - invite_count == 1
-
-
-class InviteDeletionTest(AbstractInviteTestCase):
-    """
-    Tests deletion of invites, so we'll create a few here.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "invites:invite_delete"
-        self.invite1 = Invite(
-            label="test_game_invite", content_object=self.gp1, creator=self.gamer1.user
+@pytest.mark.parametrize(
+    "objtoget, gamer_to_use",
+    [("comm3", "gamer1"), ("comm3", "gamer4"), ("gp1", "gamer1")],
+)
+def test_invite_creation_not_allowed(client, invite_testdata, objtoget, gamer_to_use):
+    client.force_login(user=getattr(invite_testdata, gamer_to_use).user)
+    obj = getattr(invite_testdata, objtoget)
+    response = client.get(
+        reverse(
+            "invites:invite_create",
+            kwargs={
+                "content_type": ContentType.objects.get_for_model(obj).pk,
+                "slug": obj.slug,
+            },
         )
-        self.invite1.save()
-        self.invite2 = Invite(
-            label="community_test_invite",
-            content_object=self.comm1,
-            creator=self.gamer3.user,
-        )
-        self.invite2.save()
-        self.invite3 = Invite(
-            label="community_test_invite_dos",
-            content_object=self.comm1,
-            creator=self.gamer1.user,
-        )
-        self.invite3.save()
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, invite=self.invite1.slug)
-
-    def test_non_gm_game_delete(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_name, invite=self.invite1.slug)
-            self.response_403()
-
-    def test_gm_game_delete(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, invite=self.invite1.slug)
-
-    def test_delete_game_invite(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data={}, invite=self.invite1.slug)
-            with pytest.raises(ObjectDoesNotExist):
-                Invite.objects.get(pk=self.invite1.pk)
-
-    def test_delete_own_community_invite(self):
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_name, invite=self.invite2.slug)
-            self.post(self.view_name, data={}, invite=self.invite2.slug)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                Invite.objects.get(pk=self.invite2.pk)
-
-    def test_delete_other_user_invite(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_name, invite=self.invite3.slug)
-            self.response_403()
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, invite=self.invite2.slug)
-            self.post(self.view_name, data={}, invite=self.invite2.slug)
-            self.response_302()
+    )
+    assert response.status_code == 403
 
 
-class InviteAcceptTest(AbstractInviteTestCase):
-    """
-    Testing acceptance of invites.
-    Note, this only tests the internal process. For apps that use this,
-    tests should be written for their relevant receivers. Any example
-    checking here is purely educational and not intended to be comprehensive.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "invites:invite_accept"
-        self.post_data = {"status": "accepted"}
-        self.bad_post_data = {"status": "expired"}
-        self.invite1 = Invite(
-            label="test_game_invite", content_object=self.gp1, creator=self.gamer1.user
-        )
-        self.invite1.save()
-        self.invite2 = Invite(
-            label="community_test_invite",
-            content_object=self.comm1,
-            creator=self.gamer3.user,
-        )
-        self.invite2.save()
-        self.invite3 = Invite(
-            label="community_test_invite_dos",
-            content_object=self.comm1,
-            creator=self.gamer1.user,
-        )
-        self.invite3.save()
-        self.gamer5 = GamerProfileFactory()
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, invite=self.invite1.slug)
-        self.assertLoginRequired(self.view_name, invite=self.invite2.slug)
-
-    def test_page_load_valid(self):
-        with self.login(username=self.gamer5.username):
-            self.assertGoodView(self.view_name, invite=self.invite1.slug)
-
-    def test_page_load_accepted(self):
-        self.invite1.status = "accepted"
-        self.invite1.accepted_by = self.gamer4.user
-        self.invite1.save()
-        with self.login(username=self.gamer5.username):
-            self.get(self.view_name, invite=self.invite1.slug)
-            self.response_302()
-        self.invite1.refresh_from_db()
-        assert self.invite1.status == "accepted"
-
-    def test_page_load_expired(self):
-        self.invite1.expires_at = timezone.now() - timedelta(days=10)
-        self.invite1.save()
-        with self.login(username=self.gamer5.username):
-            self.get(self.view_name, invite=self.invite1.slug)
-            self.response_302()
-        self.invite1.refresh_from_db()
-        assert self.invite1.status == "expired"
-
-    def test_invalid_post_data(self):
-        with self.login(username=self.gamer5.username):
-            self.post(self.view_name, data=self.bad_post_data, invite=self.invite1.slug)
-            self.response_200()
-            assert Invite.objects.get(pk=self.invite1.pk).status == "pending"
-
-    def test_valid_post_data_game(self):
-        with self.login(username=self.gamer5.username):
-            self.post(self.view_name, data=self.post_data, invite=self.invite1.slug)
-            self.response_302()
-            self.invite1.refresh_from_db()
-            assert self.invite1.status == "accepted"
-            assert self.invite1.accepted_by == self.gamer5.user
-            assert Player.objects.get(game=self.gp1, gamer=self.gamer5)
-
-    def test_valid_post_data_community(self):
-        with self.login(username=self.gamer5.username):
-            self.post(self.view_name, data=self.post_data, invite=self.invite2.slug)
-            self.response_302()
-            self.invite2.refresh_from_db()
-            assert self.invite2.status == "accepted"
-            assert self.invite2.accepted_by == self.gamer5.user
-            assert CommunityMembership.objects.get(
-                community=self.comm1, gamer=self.gamer5
+@pytest.mark.parametrize(
+    "objtoget, gamer_to_use",
+    [
+        ("comm3", "gamer3"),
+        ("comm2", "gamer2"),
+        ("comm2", "gamer4"),
+        ("comm1", "gamer3"),
+        ("gp1", "gamer3"),
+    ],
+)
+def test_invite_creation_allowed(
+    client, django_assert_max_num_queries, invite_testdata, objtoget, gamer_to_use
+):
+    client.force_login(user=getattr(invite_testdata, gamer_to_use).user)
+    obj = getattr(invite_testdata, objtoget)
+    with django_assert_max_num_queries(50):
+        response = client.get(
+            reverse(
+                "invites:invite_create",
+                kwargs={
+                    "content_type": ContentType.objects.get_for_model(obj).pk,
+                    "slug": obj.slug,
+                },
             )
+        )
+        assert response.status_code == 200
 
-    def test_already_in_game(self):
-        """
-        This should proceed silently without error.
-        """
-        with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data=self.post_data, invite=self.invite1.slug)
-            self.response_302()
-            self.invite1.refresh_from_db()
-            assert self.invite1.status == "accepted"
-            assert self.invite1.accepted_by == self.gamer2.user
 
-    def test_already_in_community(self):
-        """
-        This should fail silently without error.
-        """
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.post_data, invite=self.invite2.slug)
-            self.response_302()
-            self.invite2.refresh_from_db()
-            assert self.invite2.status == "accepted"
-            assert self.invite2.accepted_by == self.gamer1.user
+@pytest.mark.parametrize(
+    "objtoget,gamer_to_use",
+    [
+        ("comm3", "gamer3"),
+        ("comm2", "gamer2"),
+        ("comm2", "gamer4"),
+        ("comm1", "gamer3"),
+        ("gp1", "gamer3"),
+    ],
+)
+def test_invite_creation(client, invite_testdata, objtoget, gamer_to_use):
+    client.force_login(user=getattr(invite_testdata, gamer_to_use).user)
+    obj = getattr(invite_testdata, objtoget)
+    invite_count = Invite.objects.count()
+    response = client.post(
+        reverse(
+            "invites:invite_create",
+            kwargs={
+                "content_type": ContentType.objects.get_for_model(obj).pk,
+                "slug": obj.slug,
+            },
+        ),
+        data={"label": "Test invite"},
+    )
+    assert response.status_code == 302
+    assert Invite.objects.count() - invite_count == 1
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, invite_to_use", [("gamer2", "invite1"), ("gamer3", "invite3")]
+)
+def test_deletion_not_allowed(client, invite_testdata, gamer_to_use, invite_to_use):
+    client.force_login(user=getattr(invite_testdata, gamer_to_use).user)
+    invite = getattr(invite_testdata, invite_to_use)
+    response = client.get(
+        reverse("invites:invite_delete", kwargs={"invite": invite.slug})
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, invite_to_use",
+    [("gamer3", "invite1"), ("gamer1", "invite2"), ("gamer1", "invite3")],
+)
+def test_delete_invite(
+    client, django_assert_max_num_queries, invite_testdata, gamer_to_use, invite_to_use
+):
+    client.force_login(user=getattr(invite_testdata, gamer_to_use).user)
+    invite = getattr(invite_testdata, invite_to_use)
+    url = reverse("invites:invite_delete", kwargs={"invite": invite.slug})
+    invite_count = Invite.objects.count()
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    assert response.status_code == 200
+    response = client.post(url, data={})
+    assert response.status_code == 302
+    assert invite_count - Invite.objects.count() == 1
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, invite_to_use, expected_get_status, data_to_send, expected_result",
+    [
+        ("gamer5", "expired_invite", 302, {}, "expired"),
+        ("gamer5", "invite1", 200, {"status": "accepted"}, "accepted"),
+        ("gamer5", "accepted_invite", 302, {"status": "accepted"}, "accepted"),
+        ("gamer5", "invite1", 200, {"status": "expired"}, "pending"),
+        ("gamer2", "invite3", 200, {"status": "accepted"}, "accepted"),
+        ("gamer4", "invite2", 200, {"status": "accepted"}, "accepted"),
+    ],
+)
+def test_invite_acceptance(
+    client,
+    django_assert_max_num_queries,
+    invite_testdata,
+    gamer_to_use,
+    invite_to_use,
+    expected_get_status,
+    data_to_send,
+    expected_result,
+):
+    gamer = getattr(invite_testdata, gamer_to_use)
+    client.force_login(user=gamer.user)
+    invite = getattr(invite_testdata, invite_to_use)
+    url = reverse("invites:invite_accept", kwargs={"invite": invite.slug})
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+        assert response.status_code == expected_get_status
+    if expected_get_status == 200:
+        response = client.post(url, data=data_to_send)
+        assert Invite.objects.get(pk=invite.pk).status == expected_result
+        if expected_result == "pending":
+            assert response.status_code == 200
+        else:
+            assert response.status_code == 302
+            assert Invite.objects.get(pk=invite.pk).accepted_by == gamer.user
+            if isinstance(invite.content_object, GamePosting):
+                assert Player.objects.get(gamer=gamer, game=invite.content_object)
+            else:
+                assert CommunityMembership.objects.get(
+                    gamer=gamer, community=invite.content_object
+                )
