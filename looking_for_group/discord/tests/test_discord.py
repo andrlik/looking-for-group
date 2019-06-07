@@ -4,8 +4,7 @@ from datetime import timedelta
 
 import factory.django
 from allauth.socialaccount import providers
-from allauth.socialaccount.models import SocialAccount, SocialApp, SocialLogin, SocialToken
-from allauth.socialaccount.signals import social_account_added, social_account_updated
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from allauth.socialaccount.tests import OAuth2TestsMixin
 from allauth.tests import MockedResponse
 from allauth.tests import TestCase as AllAuthTestCase
@@ -16,8 +15,8 @@ from django.test import TransactionTestCase
 from django.test.client import RequestFactory
 from django.utils import timezone
 
-from .. import models
 from ...gamer_profiles.tests import factories
+from .. import models
 from ..provider import DiscordProviderWithGuilds
 from ..signals import updated_discord_social_account
 from ..tasks import find_discord_orphans, orphan_discord_sync, prune_servers, sync_discord_servers_from_discord_account
