@@ -1,1059 +1,1103 @@
-from datetime import datetime, timedelta
-
 import pytest
-from django.contrib.auth.models import Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
-from test_plus import TestCase
+from django.urls import reverse
 
-from ...gamer_profiles.tests import factories
 from .. import models
 
-
-class BaseAbstractViewTest(object):
-    """
-    An abstract class to remove repitition from test setup.
-    """
-
-    def setUp(self):
-        ContentType.objects.clear_cache()
-        self.gamer1 = factories.GamerProfileFactory()
-        self.gamer2 = factories.GamerProfileFactory()
-        self.mcg = models.GamePublisher(name="Monte Cook Games")
-        self.mcg.save()
-        self.wotc = models.GamePublisher(name="Wizards of the Coast")
-        self.wotc.save()
-        self.cypher = models.GameSystem(
-            name="Cypher System", original_publisher=self.mcg
-        )
-        self.cypher.save()
-        self.fivesrd = models.GameSystem(name="5E SRD", original_publisher=self.wotc)
-        self.fivesrd.save()
-        self.cypher.tags.add("player focused", "streamlined")
-        self.fivesrd.tags.add("crunchy", "traditional")
-        self.dd = models.PublishedGame.objects.create(title="Dungeons & Dragons")
-        self.dd.tags.add("fantasy")
-        self.ddfive = models.GameEdition(
-            name="5E", game=self.dd, publisher=self.wotc, game_system=self.fivesrd
-        )
-        self.ddfive.save()
-        self.numensource = models.PublishedGame(title="Numenera")
-        self.numensource.save()
-        self.numen = models.GameEdition.objects.create(
-            name="1", game=self.numensource, publisher=self.mcg, game_system=self.cypher
-        )
-        self.numen.tags.add("weird", "future", "science fantasy")
-        self.numenbook = models.SourceBook.objects.create(
-            edition=self.numen, publisher=self.mcg, title="Numenera", corebook=True
-        )
-        self.cos = models.PublishedModule(
-            title="Curse of Strahd",
-            publisher=self.wotc,
-            parent_game_edition=self.ddfive,
-        )
-        self.cos.save()
-        self.cos.tags.add("horror")
-        self.tiamat = models.PublishedModule(
-            title="Rise of Tiamat", publisher=self.wotc, parent_game_edition=self.ddfive
-        )
-        self.tiamat.save()
-        self.tiamat.tags.add("dragons")
-        self.vv = models.PublishedModule(
-            title="Into the Violet Vale",
-            publisher=self.mcg,
-            parent_game_edition=self.numen,
-        )
-        self.vv.save()
-        self.strange_source = models.PublishedGame.objects.create(title="The Strange")
-        self.strange = models.GameEdition(
-            name="1",
-            publisher=self.mcg,
-            game=self.strange_source,
-            game_system=self.cypher,
-        )
-        self.strange.save()
-
-        def tearDown(self):
-            ContentType.objects.clear_cache()
-            super().tearDown()
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
-class AbstractViewTest(BaseAbstractViewTest, TestCase):
-    pass
+@pytest.mark.parametrize(
+    "max_queries, url_to_test, gamer_to_use, expected_count, expected_response_code, expected_location",
+    [
+        (50, reverse("game_catalog:pub-list"), None, 2, 200, None),
+        (50, reverse("game_catalog:system-list"), None, 2, 200, None),
+        (50, reverse("game_catalog:game-list"), None, 3, 200, None),
+        (50, reverse("game_catalog:module-list"), None, 3, 200, None),
+        (50, reverse("game_catalog:correction_list"), "editor", 1, 200, None),
+        (50, reverse("game_catalog:correction_list"), "random_gamer", None, 403, None),
+        (
+            50,
+            reverse("game_catalog:correction_list"),
+            None,
+            None,
+            302,
+            "/accounts/login/",
+        ),
+        (
+            50,
+            reverse("game_catalog:addition_list"),
+            None,
+            None,
+            302,
+            "/accounts/login/",
+        ),
+        (50, reverse("game_catalog:addition_list"), "random_gamer", None, 403, None),
+        (50, reverse("game_catalog:addition_list"), "editor", 1, 200, None),
+        (150, reverse("game_catalog:recent_additions"), None, None, 200, None),
+    ],
+)
+def test_list_views(
+    client,
+    catalog_testdata,
+    django_assert_max_num_queries,
+    max_queries,
+    url_to_test,
+    gamer_to_use,
+    expected_count,
+    expected_response_code,
+    expected_location,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    with django_assert_max_num_queries(max_queries):
+        response = client.get(url_to_test)
+    assert response.status_code == expected_response_code
+    if expected_response_code == 200 and expected_count:
+        assert len(response.context["object_list"]) == expected_count
+    if expected_response_code == 302:
+        assert expected_location in response["Location"]
 
 
-class AbstractEditingViewTest(AbstractViewTest):
-    """
-    Handles some of the basic checks needed repeatedly for the views.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.editor_group, created = Group.objects.get_or_create(name="rpgeditors")
-        self.superuser = self.make_user(username="superuser")
-        self.superuser.is_superuser = True
-        self.superuser.save()
-        self.editor = factories.GamerProfileFactory()
-        self.editor.user.groups.add(self.editor_group)
-        self.random_gamer = factories.GamerProfileFactory()
-        self.view_name = (
-            "game_catalog:pub-create"
-        )  # We will override this in descendent modules.
-        self.url_kwargs = {}
-        self.post_data = {}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_invalid_user(self):
-        with self.login(username=self.random_gamer.username):
-            self.get(self.view_name, **self.url_kwargs)
-
-    def test_valid_page_load_superuser(self):
-        with self.login(username=self.superuser.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-
-    def test_valid_page_load_editor(self):
-        with self.login(username=self.editor.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-
-
-class PublisherViews(AbstractViewTest):
-    def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:pub-list")
-        assert len(self.get_context("object_list")) == 2
-
-    def test_detail_retrieval(self):
-        with self.assertNumQueriesLessThan(100):
-            self.get("game_catalog:pub-detail", publisher=self.mcg.pk)
-            self.response_200()
-            self.get("game_catalog:pub-detail", publisher=self.wotc.pk)
-            self.response_200()
-
-
-class PublisherCreateTest(AbstractEditingViewTest):
-    """
-    Test publisher creation.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:pub-create"
-        self.post_data = {
-            "name": "Andrlik publishing",
-            "url": "https://www.andrlik.org",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            pub_count = models.GamePublisher.objects.count()
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.GamePublisher.objects.count() - pub_count == 1
-
-
-class PublisherEditTest(AbstractEditingViewTest):
-    """
-    Test publisher editing
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:pub-edit"
-        self.url_kwargs = {"publisher": self.mcg.pk}
-        self.post_data = {
-            "name": "Monte Cook Games 2000",
-            "url": "https://www.montecookgames.com",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.GamePublisher.objects.get(pk=self.mcg.pk).name
-                == "Monte Cook Games 2000"
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use, object_name, url_kwarg, obj_attr, expected_response_code, expected_location",
+    [
+        ("game_catalog:pub-detail", None, "mcg", "publisher", "pk", 200, None),
+        ("game_catalog:system-detail", None, "cypher", "system", "pk", 200, None),
+        ("game_catalog:game-detail", None, "numensource", "game", "pk", 200, None),
+        ("game_catalog:module-detail", None, "cos", "module", "pk", 200, None),
+        ("game_catalog:edition_detail", None, "numen", "edition", "slug", 200, None),
+        (
+            "game_catalog:sourcebook_detail",
+            None,
+            "numenbook",
+            "book",
+            "slug",
+            200,
+            None,
+        ),
+        (
+            "game_catalog:correction_detail",
+            None,
+            "correction1",
+            "correction",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:addition_detail",
+            None,
+            "addition1",
+            "addition",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:correction_detail",
+            "random_gamer",
+            "correction1",
+            "correction",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:correction_detail",
+            "editor",
+            "correction1",
+            "correction",
+            "slug",
+            200,
+            None,
+        ),
+        (
+            "game_catalog:addition_detail",
+            "random_gamer",
+            "addition1",
+            "addition",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:addition_detail",
+            "editor",
+            "addition1",
+            "addition",
+            "slug",
+            200,
+            None,
+        ),
+    ],
+)
+def test_detail_view(
+    client,
+    catalog_testdata,
+    django_assert_max_num_queries,
+    view_name,
+    gamer_to_use,
+    object_name,
+    url_kwarg,
+    obj_attr,
+    expected_response_code,
+    expected_location,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    with django_assert_max_num_queries(50):
+        response = client.get(
+            reverse(
+                view_name,
+                kwargs={
+                    url_kwarg: getattr(getattr(catalog_testdata, object_name), obj_attr)
+                },
             )
+        )
+    assert response.status_code == expected_response_code
+    if expected_response_code == 302:
+        assert expected_location in response["Location"]
 
 
-class PublisherDeleteTest(AbstractEditingViewTest):
-    """
-    Test deletion.
-    """
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use, model, expected_get_status_code, expected_get_location, post_data",
+    [
+        ("pub-create", None, models.GamePublisher, 302, "/accounts/login/", None),
+        ("pub-create", "random_gamer", models.GamePublisher, 403, None, None),
+        (
+            "pub-create",
+            "editor",
+            models.GamePublisher,
+            200,
+            None,
+            {"name": "Andrlik Publishing", "url": "https://www.andrlik.org"},
+        ),
+        ("game-create", None, models.PublishedGame, 302, "/accounts/login/", None),
+        ("game-create", "random_gamer", models.PublishedGame, 403, None, None),
+        (
+            "game-create",
+            "editor",
+            models.PublishedGame,
+            200,
+            None,
+            {
+                "title": "Invisible Sun",
+                "description": "So strange and surreal",
+                "publication_date": "2017-10-01",
+                "tags": "surreal, modern, fantasy",
+            },
+        ),
+        ("system-create", None, models.GameSystem, 302, "/accounts/login/", None),
+        ("system-create", "random_gamer", models.GameSystem, 403, None, None),
+        ("system-create", "editor", models.GameSystem, 200, None, None),
+    ],
+)
+def test_create_simple_views(
+    client,
+    catalog_testdata,
+    view_name,
+    gamer_to_use,
+    model,
+    expected_get_status_code,
+    expected_get_location,
+    post_data,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    url = reverse("game_catalog:{}".format(view_name))
+    response = client.get(url)
+    assert response.status_code == expected_get_status_code
+    if expected_get_status_code == 302 and expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_status_code == 200 and post_data:
+        prev_count = model.objects.count()
+        response = client.post(url, data=post_data)
+        assert model.objects.count() - prev_count == 1
 
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:pub-delete"
-        self.url_kwargs = {"publisher": self.mcg.pk}
 
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.GamePublisher.objects.get(pk=self.mcg.pk)
-
-
-class GameSystemViews(AbstractViewTest):
-    def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:system-list")
-
-    def test_detail_retrieval(self):
-        self.assertGoodView("game_catalog:system-detail", system=self.cypher.pk)
-        self.assertGoodView("game_catalog:system-detail", system=self.fivesrd.pk)
-
-
-class GameSystemCreateTest(AbstractEditingViewTest):
-    """
-    Test creating a game system.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.evilhat = models.GamePublisher.objects.create(name="Evil Hat")
-        self.view_name = "game_catalog:system-create"
-        self.url_kwargs = {}
-        self.post_data = {
+def test_create_system(client, catalog_testdata):
+    client.force_login(user=catalog_testdata.editor.user)
+    evilhat = models.GamePublisher.objects.create(name="Evil Hat Productions")
+    sys_count = models.GameSystem.objects.count()
+    response = client.post(
+        reverse("game_catalog:system-create"),
+        data={
             "name": "Forged in the dark",
-            "original_publisher": self.evilhat.pk,
+            "original_publisher": evilhat.pk,
             "description": "I am here",
             "publication_date": "2016-09-01",
             "isbn": "",
             "system_url": "",
             "tags": "freeform, narrative",
-        }
-
-    def test_post_data(self):
-        prev_count = models.GameSystem.objects.count()
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.GameSystem.objects.count() - prev_count == 1
+        },
+    )
+    assert response.status_code == 302
+    assert models.GameSystem.objects.count() - sys_count == 1
 
 
-class GameSystemEditTest(AbstractEditingViewTest):
-    """
-    Test for editing a game system.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:system-edit"
-        self.url_kwargs = {"system": self.cypher.pk}
-        self.post_data = {
-            "name": "Cypher System Reloaded",
-            "original_publisher": self.mcg.pk,
-            "description": "So much fun",
-            "publication_date": "2012-07-01",
-            "isbn": "",
-            "system_url": "",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.GameSystem.objects.get(pk=self.cypher.pk).name
-                == "Cypher System Reloaded"
-            )
-
-
-class GameSystemDeleteTest(AbstractEditingViewTest):
-    """
-    Test Deletion of a game system
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:system-delete"
-        self.url_kwargs = {"system": self.cypher.pk}
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.GameSystem.objects.get(pk=self.cypher.pk)
-
-
-class GameEditionCreateTest(AbstractEditingViewTest):
-    """Create test"""
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:edition_create"
-        self.url_kwargs = {"game": self.numensource.pk}
-        self.post_data = {
-            "game_system": self.cypher.pk,
-            "name": "Discovery and Destiny",
-            "description": "A rewrite and expansion of the core rules adding community building.",
-            "release_date": "2018-09-01",
-            "tags": "community building, destiny",
-            "publisher": self.mcg.pk,
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            prev_count = models.GameEdition.objects.count()
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.GameEdition.objects.count() - prev_count == 1
-            assert models.GameEdition.objects.latest("created").game == self.numensource
-
-
-class GameEditionEditTest(AbstractEditingViewTest):
-    """
-    Editing test
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:edition_edit"
-        self.url_kwargs = {"edition": self.numen.slug}
-        self.post_data = {
-            "game_system": self.cypher.pk,
-            "name": "OG",
-            "description": "Explore the Ninth World",
-            "publisher": self.mcg.pk,
-            "release_date": "2012-07-01",
-            "tags": "discovery",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.GameEdition.objects.get(pk=self.numen.pk).name == "OG"
-
-
-class GameEditionDeleteTest(AbstractEditingViewTest):
-    """
-    Test deleting an edition.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:edition_delete"
-        self.url_kwargs = {"edition": self.numen.slug}
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.GameEdition.objects.get(pk=self.numen.pk)
-
-
-class GameEditionDEtailViewTest(AbstractViewTest):
-    def test_detail_retrieval(self):
-        self.assertGoodView("game_catalog:edition_detail", edition=self.numen.slug)
-
-
-class SourcebookCreateTest(AbstractEditingViewTest):
-    """
-    Test creating a sourcebook
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:sourcebook_create"
-        self.url_kwargs = {"edition": self.numen.slug}
-        self.post_data = {
-            "title": "Numenera",
-            "publisher": self.mcg.pk,
-            "corebook": 1,
-            "release_date": "2012-07-01",
-            "tags": "artwork",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            prev_count = models.SourceBook.objects.count()
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.SourceBook.objects.count() - prev_count == 1
-            assert models.SourceBook.objects.latest("created").edition == self.numen
-
-
-class SourcebookEditTest(AbstractEditingViewTest):
-    """
-    Test editing a sourcebook
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.sb = models.SourceBook.objects.create(
-            title="Numenera",
-            edition=self.numen,
-            publisher=self.mcg,
-            release_date=datetime.strptime("2012-07-01", "%Y-%m-%d"),
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [
+        (None, 302, "/accounts/login/"),
+        ("random_gamer", 403, None),
+        ("editor", 200, None),
+    ],
+)
+def test_create_edition(
+    client, catalog_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    url = reverse(
+        "game_catalog:edition_create", kwargs={"game": catalog_testdata.numensource.pk}
+    )
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_response == 200:
+        edi_count = models.GameEdition.objects.count()
+        response = client.post(
+            url,
+            data={
+                "game_system": catalog_testdata.cypher.pk,
+                "name": "Discovery and Destiny",
+                "description": "A rewrite and expansion of the core rules adding community building.",
+                "release_date": "2018-09-01",
+                "tags": "community building, destiny",
+                "publisher": catalog_testdata.mcg.pk,
+            },
         )
-        self.view_name = "game_catalog:sourcebook_edit"
-        self.url_kwargs = {"book": self.sb.slug}
-        self.post_data = {
-            "title": "Numenera OG",
-            "publisher": self.mcg.pk,
-            "corebook": 1,
-            "release_date": "2012-07-01",
-            "tags": "artwork",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.SourceBook.objects.get(pk=self.sb.pk).title == "Numenera OG"
+        assert response.status_code == 302
+        assert models.GameEdition.objects.count() - edi_count == 1
 
 
-class SourcebookDeleteTest(SourcebookEditTest):
-    """
-    Test deleteing a sourcebook.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:sourcebook_delete"
-        self.post_data = {}
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.SourceBook.objects.get(pk=self.sb.pk)
-
-
-class SourcebookDetailView(AbstractViewTest):
-    def test_detail_retrieval(self):
-        self.assertGoodView("game_catalog:sourcebook_detail", book=self.numenbook.slug)
-
-
-class PublishedGameCreateTest(AbstractEditingViewTest):
-    """
-    Create a game.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:game-create"
-        self.url_kwargs = {}
-        self.post_data = {
-            "title": "Invisible Sun",
-            "description": "So strange and surreal",
-            "publication_date": "2017-10-01",
-            "tags": "surreal, modern, fantasy",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            prev_count = models.PublishedGame.objects.count()
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.PublishedGame.objects.count() - prev_count == 1
-
-
-class PublishedGameEditTest(AbstractEditingViewTest):
-    """
-    Edit a game
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:game-edit"
-        self.url_kwargs = {"game": self.dd.pk}
-        self.post_data = {
-            "title": "DND",
-            "description": "Oh baby I like your way.",
-            "publication_date": "1970-01-01",
-            "tags": "crunchy, fantasy",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.PublishedGame.objects.get(pk=self.dd.pk).title == "DND"
-
-
-class PublishedGameDeleteTest(AbstractEditingViewTest):
-    """
-    Test deleting a game.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:game-delete"
-        self.url_kwargs = {"game": self.strange_source.pk}
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.PublishedGame.objects.get(pk=self.strange_source.pk)
-
-
-class PublishedGameViews(AbstractViewTest):
-    def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:game-list")
-
-    def test_detail_retrieval(self):
-        for g in [self.numensource, self.strange_source, self.dd]:
-            self.assertGoodView("game_catalog:game-detail", game=g.pk)
-
-
-class PublishedModuleCreateTest(AbstractEditingViewTest):
-    """
-    Test creating a published module
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:module-create"
-        self.url_kwargs = {"edition": self.strange.slug}
-        self.post_data = {
-            "title": "The Dark Spiral",
-            "publisher": self.mcg.pk,
-            "publication_date": "2013-10-15",
-            "tags": "world hopping, advanced",
-            "isbn": "",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            prev_count = models.PublishedModule.objects.count()
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.PublishedModule.objects.count() - prev_count == 1
-            assert (
-                models.PublishedModule.objects.latest("created").parent_game_edition
-                == self.strange
-            )
-
-
-class PublishedModuleEditTest(AbstractEditingViewTest):
-    """
-    Test Editing a module
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:module-edit"
-        self.url_kwargs = {"module": self.cos.pk}
-        self.post_data = {
-            "title": "RAVENLOFT!!!!",
-            "publisher": self.wotc.pk,
-            "publication_date": "2016-11-01",
-            "tags": "horror, nonlinear",
-            "isbn": "",
-        }
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.PublishedModule.objects.get(pk=self.cos.pk).title
-                == "RAVENLOFT!!!!"
-            )
-
-
-class PublishedModuleDeleteTest(AbstractEditingViewTest):
-    """
-    Delete a module
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:module-delete"
-        self.url_kwargs = {"module": self.vv.pk}
-
-    def test_post_data(self):
-        with self.login(username=self.editor.username):
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.PublishedModule.objects.get(pk=self.vv.pk)
-
-
-class PublishedModuleViews(AbstractViewTest):
-    def test_list_retrieval(self):
-        self.assertGoodView("game_catalog:module-list")
-
-    def test_detail_retrieval(self):
-        for m in [self.cos, self.tiamat, self.vv]:
-            self.assertGoodView("game_catalog:module-detail", module=m.pk)
-
-
-class RecentAdditionViewTest(AbstractViewTest):
-    """
-    Basic test for the recent additions view
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:recent_additions"
-
-    def test_list_retrieval(self):
-        with self.assertNumQueriesLessThan(150):
-            self.get(self.view_name)
-            self.response_200()
-
-
-class AbstractSuggestedCorrectionAdditionTest(AbstractViewTest):
-    """
-    An abstract base class that allows us to prepopulate some needed values.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.editor_group, created = Group.objects.get_or_create(name="rpgeditors")
-        self.superuser = self.make_user(username="superuser")
-        self.superuser.is_superuser = True
-        self.superuser.save()
-        self.editor = factories.GamerProfileFactory()
-        self.editor.user.groups.add(self.editor_group)
-        self.random_gamer = factories.GamerProfileFactory()
-        self.correction1 = models.SuggestedCorrection.objects.create(
-            new_title="OG Numenera",
-            new_description="Show em your **bad** cypher self.",
-            new_url="https://www.google.com",
-            new_release_date=timezone.now() - timedelta(days=30),
-            submitter=self.gamer1.user,
-            other_notes="You might want to update the cover...",
-            content_object=self.numen,
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [
+        (None, 302, "/accounts/login/"),
+        ("random_gamer", 403, None),
+        ("editor", 200, None),
+    ],
+)
+def test_create_module(
+    client, catalog_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    url = reverse(
+        "game_catalog:module-create", kwargs={"edition": catalog_testdata.strange.slug}
+    )
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_response == 200:
+        prev_count = models.PublishedModule.objects.count()
+        response = client.post(
+            url,
+            data={
+                "title": "The Dark Spiral",
+                "publisher": catalog_testdata.mcg.pk,
+                "publication_date": "2013-10-15",
+                "tags": "world hopping, advanced",
+                "isbn": "",
+            },
         )
-        self.addition1 = models.SuggestedAddition.objects.create(
-            content_type=ContentType.objects.get_for_model(models.GameEdition),
-            title="Numenera 4",
-            description="The next generation",
-            release_date=timezone.now() + timedelta(days=400),
-            suggested_tags="future, wild",
-            game=self.numensource,
-            publisher=self.mcg,
-            system=self.cypher,
-            submitter=self.gamer1.user,
+        assert response.status_code == 302
+        assert models.PublishedModule.objects.count() - prev_count == 1
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [
+        (None, 302, "/accounts/login/"),
+        ("random_gamer", 403, None),
+        ("editor", 200, None),
+    ],
+)
+def test_create_sourcebook(
+    client, catalog_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    url = reverse(
+        "game_catalog:sourcebook_create",
+        kwargs={"edition": catalog_testdata.numen.slug},
+    )
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if response.status_code == 200:
+        prev_count = models.SourceBook.objects.count()
+        response = client.post(
+            url,
+            data={
+                "title": "Numenera",
+                "publisher": catalog_testdata.mcg.pk,
+                "corebook": 1,
+                "release_date": "2012-07-01",
+                "tags": "artwork",
+            },
         )
-        self.gamer2.user.groups.add(self.editor_group)
-        # TODO: Add more cases here for use.
-
-
-class SuggestedCorrectionListView(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test list view for suggested corrections.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:correction_list"
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name)
-
-
-class SuggestedCorrectionCreateTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test for creating a suggested correction.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:correction_create"
-        self.url_kwargs = {"objtype": "edition", "object_id": self.numen.pk}
-        self.post_data = {
-            "new_title": "Future monkeys are us",
-            "new_url": "https://www.google.com",
-            "new_description": "I ate something and now I feel bad.",
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_test_mismatch_type(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, objtype="publisher", object_id=self.numen.pk)
-            self.response_404()
-
-    def test_correct_data(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.SuggestedCorrection.objects.latest('created').new_title
-                == "Future monkeys are us"
-            )
-
-
-class SuggestedCorrectionUpdateTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test for updating a suggested correction
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:correction_update"
-        self.url_kwargs = {"correction": self.correction1.slug}
-        self.post_data = {
-            "new_title": "Future monkeys are us",
-            "new_url": "https://www.google.com",
-            "new_description": "I ate something and now I feel bad.",
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.SuggestedCorrection.objects.get(id=self.correction1.pk).new_title
-                == "Future monkeys are us"
-            )
-
-
-class SuggestedCorrectionDetailTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test detail view.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:correction_detail"
-        self.url_kwargs = {"correction": self.correction1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-
-
-class SuggestedCorrectionDeleteTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test deleting a correction.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:correction_delete"
-        self.url_kwargs = {"correction": self.correction1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            with pytest.raises(ObjectDoesNotExist):
-                models.SuggestedCorrection.objects.get(id=self.correction1.pk)
-
-
-class SuggestedCorrectionApproveDenyTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test approval and deny modes for corrections.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:correction_review"
-        self.url_kwargs = {"correction": self.correction1.slug}
-        self.approve_data = {"approve": 1}
-        self.deny_data = {"reject": 1}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_post_required(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_405()
-
-    def test_unauthrorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
-            self.response_403()
-            assert (
-                models.SuggestedCorrection.objects.get(id=self.correction1.pk).status
-                == "new"
-            )
-
-    def test_authorized_deny(self):
-        with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data=self.deny_data, **self.url_kwargs)
-            assert (
-                models.SuggestedCorrection.objects.get(id=self.correction1.pk).status
-                == "rejected"
-            )
-
-    def test_authorized_approval(self):
-        tag_count = self.correction1.content_object.tags.count()
-        with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
-            obj = models.SuggestedCorrection.objects.get(id=self.correction1.pk)
-            source_obj = obj.content_object
-            assert source_obj.tags.count() - tag_count == 0
-            assert obj.status == "approved"
-            assert source_obj.name == obj.new_title
-            assert source_obj.description == obj.new_description
-
-    def test_omit_change(self):
-        self.correction1.new_title = None
-        self.correction1.save()
-        with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
-            obj = models.SuggestedCorrection.objects.get(id=self.correction1.pk)
-            source_obj = obj.content_object
-            assert obj.status == "approved"
-            assert source_obj.name and obj.new_title != source_obj.name
-            assert source_obj.description == obj.new_description
-
-
-class SuggestedAdditionListView(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test list view for suggested addition.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:addition_list"
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name)
-
-
-class SuggestedAdditionCreateTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test creating a new addition.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:addition_create"
-        self.url_kwargs = {"obj_type": "publisher"}
-        self.post_data = {
-            "title": "Future monkeys are us",
-            "publisher": self.mcg.pk,
-            "system": self.cypher.pk,
-            "description": "I ate something and now I feel bad.",
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_invalid_obj_type(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, obj_type="monkey")
-            self.response_404()
-
-    def test_valid_obj_type(self):
-        current_additions = models.SuggestedAddition.objects.count()
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.SuggestedAddition.objects.count() - current_additions == 1
-
-
-class SuggestedAdditionUpdateTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test for updating a suggested addition.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:addition_update"
-        self.url_kwargs = {"addition": self.addition1.slug}
-        self.post_data = {
-            "title": "Future monkeys are us",
-            "publisher": self.mcg.pk,
-            "system": self.cypher.pk,
-            "game": self.numensource.pk,
-            "description": "I ate something and now I feel bad.",
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.SuggestedAddition.objects.get(id=self.addition1.pk).title
-                == "Future monkeys are us"
-            )
-
-
-class SuggestedAdditionDetailTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test detail view for suggested addition.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:addition_detail"
-        self.url_kwargs = {"addition": self.addition1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-
-
-class SuggestedAdditionDeleteTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test delete view for suggested addition.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:addition_delete"
-        self.url_kwargs = {"addition": self.addition1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_incorrect_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            with pytest.raises(ObjectDoesNotExist):
-                models.SuggestedAddition.objects.get(id=self.addition1.pk)
-
-
-class SuggestedAdditionApproveDenyTest(AbstractSuggestedCorrectionAdditionTest):
-    """
-    Test approving and denying additions and that records are updated correctly.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "game_catalog:addition_review"
-        self.url_kwargs = {"addition": self.addition1.slug}
-        self.approve_data = {"approve": 1}
-        self.reject_data = {"reject": 1}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_post_required(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_405()
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data=self.reject_data, **self.url_kwargs)
-            self.response_403()
-            assert (
-                models.SuggestedAddition.objects.get(id=self.addition1.pk).status
-                == "new"
-            )
-
-    def test_authorized_reject(self):
-        with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data=self.reject_data, **self.url_kwargs)
-            assert (
-                models.SuggestedAddition.objects.get(id=self.addition1.pk).status
-                == "rejected"
-            )
-
-    def test_authorized_approval(self):
-        original_edition_count = models.GameEdition.objects.count()
-        with self.login(username=self.gamer2.username):
-            self.post(self.view_name, data=self.approve_data, **self.url_kwargs)
-            assert models.GameEdition.objects.count() - original_edition_count == 1
-            assert (
-                models.SuggestedAddition.objects.get(id=self.addition1.pk).status
-                == "approved"
-            )
+        assert response.status_code == 302
+        assert models.SourceBook.objects.count() - prev_count == 1
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [(None, 302, "/accounts/login/"), ("random_gamer", 200, None)],
+)
+def test_create_correction(
+    client, catalog_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    url = reverse(
+        "game_catalog:correction_create",
+        kwargs={"objtype": "edition", "object_id": catalog_testdata.numen.pk},
+    )
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_response == 200:
+        prev_count = models.SuggestedCorrection.objects.count()
+        response = client.post(
+            url,
+            data={
+                "new_title": "Future monkeys are us",
+                "new_url": "https://www.google.com",
+                "new_description": "I ate something and now I feel bad.",
+            },
+        )
+        assert response.status_code == 302
+        assert models.SuggestedCorrection.objects.count() - prev_count == 1
+
+
+def test_mismatched_correction_url(client, catalog_testdata):
+    client.force_login(user=catalog_testdata.random_gamer.user)
+    response = client.get(
+        reverse(
+            "game_catalog:correction_create",
+            kwargs={"objtype": "sourcebook", "object_id": catalog_testdata.numen.pk},
+        )
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [(None, 302, "/accounts/login/"), ("random_gamer", 200, None)],
+)
+def test_addition_create(
+    client, catalog_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    url = reverse("game_catalog:addition_create", kwargs={"obj_type": "edition"})
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_response == 200:
+        prev_count = models.SuggestedAddition.objects.count()
+        response = client.post(
+            url,
+            data={
+                "title": "Future monkeys are us",
+                "publisher": catalog_testdata.mcg.pk,
+                "system": catalog_testdata.cypher.pk,
+                "game": catalog_testdata.numensource.pk,
+                "description": "I ate something and now I feel bad.",
+            },
+        )
+        assert response.status_code == 302
+        assert models.SuggestedAddition.objects.count() - prev_count == 1
+
+
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use, object_name, object_kwarg, object_attr, expected_get_response, expected_get_location",
+    [
+        (
+            "game_catalog:pub-edit",
+            None,
+            "mcg",
+            "publisher",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:system-edit",
+            None,
+            "cypher",
+            "system",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:game-edit",
+            None,
+            "numensource",
+            "game",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:edition_edit",
+            None,
+            "numen",
+            "edition",
+            "slug",
+            302,
+            "/accounts/login",
+        ),
+        (
+            "game_catalog:sourcebook_edit",
+            None,
+            "numenbook",
+            "book",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:module-edit",
+            None,
+            "cos",
+            "module",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:addition_update",
+            None,
+            "addition1",
+            "addition",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:correction_update",
+            None,
+            "correction1",
+            "correction",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:pub-delete",
+            None,
+            "mcg",
+            "publisher",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:system-delete",
+            None,
+            "cypher",
+            "system",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:game-delete",
+            None,
+            "numensource",
+            "game",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:edition_delete",
+            None,
+            "numen",
+            "edition",
+            "slug",
+            302,
+            "/accounts/login",
+        ),
+        (
+            "game_catalog:sourcebook_delete",
+            None,
+            "numenbook",
+            "book",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:module-delete",
+            None,
+            "cos",
+            "module",
+            "pk",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:addition_delete",
+            None,
+            "addition1",
+            "addition",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        (
+            "game_catalog:correction_delete",
+            None,
+            "correction1",
+            "correction",
+            "slug",
+            302,
+            "/accounts/login/",
+        ),
+        ("game_catalog:pub-edit", "random_gamer", "mcg", "publisher", "pk", 403, None),
+        (
+            "game_catalog:system-edit",
+            "random_gamer",
+            "cypher",
+            "system",
+            "pk",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:game-edit",
+            "random_gamer",
+            "numensource",
+            "game",
+            "pk",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:edition_edit",
+            "random_gamer",
+            "numen",
+            "edition",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:sourcebook_edit",
+            "random_gamer",
+            "numenbook",
+            "book",
+            "slug",
+            403,
+            None,
+        ),
+        ("game_catalog:module-edit", "random_gamer", "cos", "module", "pk", 403, None),
+        (
+            "game_catalog:addition_update",
+            "random_gamer",
+            "addition1",
+            "addition",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:correction_update",
+            "random_gamer",
+            "correction1",
+            "correction",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:pub-delete",
+            "random_gamer",
+            "mcg",
+            "publisher",
+            "pk",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:system-delete",
+            "random_gamer",
+            "cypher",
+            "system",
+            "pk",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:game-delete",
+            "random_gamer",
+            "numensource",
+            "game",
+            "pk",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:edition_delete",
+            "random_gamer",
+            "numen",
+            "edition",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:sourcebook_delete",
+            "random_gamer",
+            "numenbook",
+            "book",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:module-delete",
+            "random_gamer",
+            "cos",
+            "module",
+            "pk",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:addition_delete",
+            "random_gamer",
+            "addition1",
+            "addition",
+            "slug",
+            403,
+            None,
+        ),
+        (
+            "game_catalog:correction_delete",
+            "random_gamer",
+            "correction1",
+            "correction",
+            "slug",
+            403,
+            None,
+        ),
+        ("game_catalog:pub-edit", "editor", "mcg", "publisher", "pk", 200, None),
+        ("game_catalog:system-edit", "editor", "cypher", "system", "pk", 200, None),
+        ("game_catalog:game-edit", "editor", "numensource", "game", "pk", 200, None),
+        ("game_catalog:edition_edit", "editor", "numen", "edition", "slug", 200, None),
+        (
+            "game_catalog:sourcebook_edit",
+            "editor",
+            "numenbook",
+            "book",
+            "slug",
+            200,
+            None,
+        ),
+        ("game_catalog:module-edit", "editor", "cos", "module", "pk", 200, None),
+        (
+            "game_catalog:addition_update",
+            "editor",
+            "addition1",
+            "addition",
+            "slug",
+            200,
+            None,
+        ),
+        (
+            "game_catalog:correction_update",
+            "editor",
+            "correction1",
+            "correction",
+            "slug",
+            200,
+            None,
+        ),
+        ("game_catalog:pub-delete", "editor", "mcg", "publisher", "pk", 200, None),
+        ("game_catalog:system-delete", "editor", "cypher", "system", "pk", 200, None),
+        ("game_catalog:game-delete", "editor", "numensource", "game", "pk", 200, None),
+        (
+            "game_catalog:edition_delete",
+            "editor",
+            "numen",
+            "edition",
+            "slug",
+            200,
+            None,
+        ),
+        (
+            "game_catalog:sourcebook_delete",
+            "editor",
+            "numenbook",
+            "book",
+            "slug",
+            200,
+            None,
+        ),
+        ("game_catalog:module-delete", "editor", "cos", "module", "pk", 200, None),
+        (
+            "game_catalog:addition_delete",
+            "editor",
+            "addition1",
+            "addition",
+            "slug",
+            200,
+            None,
+        ),
+        (
+            "game_catalog:correction_delete",
+            "editor",
+            "correction1",
+            "correction",
+            "slug",
+            200,
+            None,
+        ),
+    ],
+)
+def test_load_edit_delete_views(
+    client,
+    catalog_testdata,
+    view_name,
+    gamer_to_use,
+    object_name,
+    object_kwarg,
+    object_attr,
+    expected_get_response,
+    expected_get_location,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    obj = getattr(catalog_testdata, object_name)
+    url = reverse(view_name, kwargs={object_kwarg: getattr(obj, object_attr)})
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+
+
+@pytest.mark.parametrize(
+    "view_name, object_name, object_attr, object_kwarg",
+    [
+        ("game_catalog:pub-delete", "mcg", "pk", "publisher"),
+        ("game_catalog:system-delete", "cypher", "pk", "system"),
+        ("game_catalog:game-delete", "numensource", "pk", "game"),
+        ("game_catalog:edition_delete", "numen", "slug", "edition"),
+        ("game_catalog:sourcebook_delete", "numenbook", "slug", "book"),
+        ("game_catalog:correction_delete", "correction1", "slug", "correction"),
+        ("game_catalog:addition_delete", "addition1", "slug", "addition"),
+    ],
+)
+def test_delete_views(
+    client, catalog_testdata, view_name, object_name, object_attr, object_kwarg
+):
+    client.force_login(user=catalog_testdata.editor.user)
+    obj = getattr(catalog_testdata, object_name)
+    model = type(obj)
+    response = client.post(
+        reverse(view_name, kwargs={object_kwarg: getattr(obj, object_attr)})
+    )
+    assert response.status_code == 302
+    with pytest.raises(ObjectDoesNotExist):
+        model.objects.get(pk=obj.pk)
+
+
+@pytest.mark.parametrize(
+    "view_name, object_name, object_kwarg",
+    [
+        ("game_catalog:correction_review", "correction1", "correction"),
+        ("game_catalog:addition_review", "addition1", "addition"),
+    ],
+)
+def test_addition_correction_post_required(
+    client, catalog_testdata, view_name, object_name, object_kwarg
+):
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.get(
+        reverse(
+            view_name,
+            kwargs={object_kwarg: getattr(catalog_testdata, object_name).slug},
+        )
+    )
+    assert response.status_code == 405
+
+
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use, object_name, object_kwarg, submit_status, expected_response_status, expected_obj_status",
+    [
+        (
+            "game_catalog:correction_review",
+            None,
+            "correction1",
+            "correction",
+            "approve",
+            302,
+            "new",
+        ),
+        (
+            "game_catalog:correction_review",
+            "random_gamer",
+            "correction1",
+            "correction",
+            "approve",
+            403,
+            "new",
+        ),
+        (
+            "game_catalog:correction_review",
+            "editor",
+            "correction1",
+            "correction",
+            "approve",
+            302,
+            "approved",
+        ),
+        (
+            "game_catalog:correction_review",
+            "editor",
+            "correction1",
+            "correction",
+            "reject",
+            302,
+            "rejected",
+        ),
+        (
+            "game_catalog:addition_review",
+            None,
+            "addition1",
+            "addition",
+            "approve",
+            302,
+            "new",
+        ),
+        (
+            "game_catalog:addition_review",
+            "random_gamer",
+            "addition1",
+            "addition",
+            "approve",
+            403,
+            "new",
+        ),
+        (
+            "game_catalog:addition_review",
+            "editor",
+            "addition1",
+            "addition",
+            "approve",
+            302,
+            "approved",
+        ),
+        (
+            "game_catalog:addition_review",
+            "editor",
+            "addition1",
+            "addition",
+            "reject",
+            302,
+            "rejected",
+        ),
+    ],
+)
+def test_addition_correction_approve_reject(
+    client,
+    catalog_testdata,
+    view_name,
+    gamer_to_use,
+    object_name,
+    object_kwarg,
+    submit_status,
+    expected_response_status,
+    expected_obj_status,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
+    obj = getattr(catalog_testdata, object_name)
+    response = client.post(
+        reverse(view_name, kwargs={object_kwarg: obj.slug}), data={submit_status: 1}
+    )
+    assert response.status_code == expected_response_status
+    new_obj = type(obj).objects.get(pk=obj.pk)
+    assert new_obj.status == expected_obj_status
+    if expected_obj_status == "approved":
+        if isinstance(new_obj, models.SuggestedCorrection):
+            assert new_obj.new_title == new_obj.content_object.name
+        else:
+            assert models.GameEdition.objects.latest("created").name == "Numenera 4"
+
+
+def test_publisher_update(client, catalog_testdata):
+    post_data = {
+        "name": "Monte Cook Games 2000",
+        "url": "https://www.montecookgames.com",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse("game_catalog:pub-edit", kwargs={"publisher": catalog_testdata.mcg.pk}),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert (
+        models.GamePublisher.objects.get(pk=catalog_testdata.mcg.pk).name
+        == "Monte Cook Games 2000"
+    )
+
+
+def test_game_update(client, catalog_testdata):
+    post_data = {
+        "title": "DND",
+        "description": "Oh baby I like your way.",
+        "publication_date": "1970-01-01",
+        "tags": "crunchy, fantasy",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse("game_catalog:game-edit", kwargs={"game": catalog_testdata.dd.pk}),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert models.PublishedGame.objects.get(pk=catalog_testdata.dd.pk).title == "DND"
+
+
+def test_system_update(client, catalog_testdata):
+    post_data = {
+        "name": "Cypher System Reloaded",
+        "original_publisher": catalog_testdata.mcg.pk,
+        "description": "So much fun",
+        "publication_date": "2012-07-01",
+        "isbn": "",
+        "system_url": "",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse(
+            "game_catalog:system-edit", kwargs={"system": catalog_testdata.cypher.pk}
+        ),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert (
+        models.GameSystem.objects.get(pk=catalog_testdata.cypher.pk).name
+        == "Cypher System Reloaded"
+    )
+
+
+def test_edition_update(client, catalog_testdata):
+    post_data = {
+        "game_system": catalog_testdata.cypher.pk,
+        "name": "OG",
+        "description": "Explore the Ninth World",
+        "publisher": catalog_testdata.mcg.pk,
+        "release_date": "2012-07-01",
+        "tags": "discovery",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse(
+            "game_catalog:edition_edit", kwargs={"edition": catalog_testdata.numen.slug}
+        ),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert models.GameEdition.objects.get(pk=catalog_testdata.numen.pk).name == "OG"
+
+
+def test_sourcebook_update(client, catalog_testdata):
+    post_data = {
+        "title": "Numenera OG",
+        "publisher": catalog_testdata.mcg.pk,
+        "corebook": 1,
+        "release_date": "2012-07-01",
+        "tags": "artwork",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse(
+            "game_catalog:sourcebook_edit",
+            kwargs={"book": catalog_testdata.numenbook.slug},
+        ),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert (
+        models.SourceBook.objects.get(pk=catalog_testdata.numenbook.pk).title
+        == "Numenera OG"
+    )
+
+
+def test_module_update(client, catalog_testdata):
+    post_data = {
+        "title": "RAVENLOFT!!!!",
+        "publisher": catalog_testdata.wotc.pk,
+        "publication_date": "2016-11-01",
+        "tags": "horror, nonlinear",
+        "isbn": "",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse("game_catalog:module-edit", kwargs={"module": catalog_testdata.cos.pk}),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert (
+        models.PublishedModule.objects.get(pk=catalog_testdata.cos.pk).title
+        == "RAVENLOFT!!!!"
+    )
+
+
+def test_correction_update(client, catalog_testdata):
+    post_data = {
+        "new_title": "Future monkeys are us",
+        "new_url": "https://www.google.com",
+        "new_description": "I ate something and now I feel bad.",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse(
+            "game_catalog:correction_update",
+            kwargs={"correction": catalog_testdata.correction1.slug},
+        ),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert (
+        models.SuggestedCorrection.objects.get(
+            pk=catalog_testdata.correction1.pk
+        ).new_title
+        == "Future monkeys are us"
+    )
+
+
+def test_addition_update(client, catalog_testdata):
+    post_data = {
+        "title": "Future monkeys are us",
+        "publisher": catalog_testdata.mcg.pk,
+        "system": catalog_testdata.cypher.pk,
+        "game": catalog_testdata.numensource.pk,
+        "description": "I ate something and now I feel bad.",
+    }
+    client.force_login(user=catalog_testdata.editor.user)
+    response = client.post(
+        reverse(
+            "game_catalog:addition_update",
+            kwargs={"addition": catalog_testdata.addition1.slug},
+        ),
+        data=post_data,
+    )
+    assert response.status_code == 302
+    assert (
+        models.SuggestedAddition.objects.get(pk=catalog_testdata.addition1.pk).title
+        == "Future monkeys are us"
+    )
