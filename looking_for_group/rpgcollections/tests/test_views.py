@@ -1,12 +1,9 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.urls import reverse
 from factory.django import mute_signals
 
-from looking_for_group.game_catalog.tests.test_views import AbstractViewTest
-from looking_for_group.gamer_profiles.tests import factories
 from looking_for_group.rpgcollections import models
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -102,7 +99,7 @@ def test_delete_book(client, collection_testdata):
         library=collection_testdata.game_lib1
     ).count()
     with mute_signals(post_delete):
-        response = client.post(
+        client.post(
             reverse(
                 "rpgcollections:remove-book",
                 kwargs={"book": collection_testdata.cypher_collect_1.slug},
