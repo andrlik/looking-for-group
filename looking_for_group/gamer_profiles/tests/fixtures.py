@@ -9,6 +9,8 @@ class SocialTData(object):
         self.gamer1 = factories.GamerProfileFactory()
         self.gamer2 = factories.GamerProfileFactory()
         self.gamer3 = factories.GamerProfileFactory(private=False)
+        self.community = factories.GamerCommunityFactory(owner=factories.GamerProfileFactory())
+        self.community.add_member(self.gamer1)
         self.community1 = factories.GamerCommunityFactory(owner=self.gamer1)
         self.community2 = factories.GamerCommunityFactory(
             owner=factories.GamerProfileFactory(), private=False
