@@ -91,4 +91,4 @@ wcwidth==0.1.7
 webencodings==0.5.1
 whitenoise==4.1.2
 -e git+https://github.com/andrlik/django-haystack.git@6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8#egg=haystack
--e git+https://github.com/andrlik/django-scheduler.git@b571578ef97b99af294bdb718e50da47f18ecaeb#egg=django-scheduler
+-e git+https://github.com/andrlik/django-scheduler.git@4ae1fcf09065f0c9b7380685772549c70d2e78ff#egg=django-scheduler

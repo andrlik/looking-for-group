@@ -382,7 +382,7 @@
         "django-scheduler": {
             "editable": true,
             "git": "https://github.com/andrlik/django-scheduler.git",
-            "ref": "b571578ef97b99af294bdb718e50da47f18ecaeb"
+            "ref": "4ae1fcf09065f0c9b7380685772549c70d2e78ff"
         },
         "django-star-ratings": {
             "hashes": [
