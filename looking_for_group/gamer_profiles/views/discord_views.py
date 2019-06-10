@@ -67,6 +67,9 @@ class CommunityDiscordLinkView(
         )
         return self.community_discord_link
 
+    def get_permission_object(self):
+        return self.get_object().community
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["community"] = self.community
