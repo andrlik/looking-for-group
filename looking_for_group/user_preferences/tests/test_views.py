@@ -1,117 +1,87 @@
-from test_plus import TestCase
+import pytest
+from django.urls import reverse
 
 from ...gamer_profiles import models as social_models
-from ...games.tests.test_views import AbstractGameSessionTest
 from ..models import Preferences
 from ..utils import fetch_or_set_discord_comm_links, prime_site_stats_cache
 
-
-class SettingsViewTest(TestCase):
-    """
-    Test settings view and editing.
-    """
-
-    def setUp(self):
-        self.user = self.make_user(username="booga")
-        self.gamer = self.user.gamerprofile
-
-    def test_login_required(self):
-        assert Preferences.objects.get(gamer=self.gamer)
-        self.assertLoginRequired("user_preferences:setting-view")
-        self.assertLoginRequired("user_preferences:setting-edit")
-
-    def test_view_load(self):
-        with self.login(username=self.gamer.username):
-            self.assertGoodView("user_preferences:setting-view")
-            self.assertGoodView("user_preferences:setting-edit")
-
-    def test_update_settings(self):
-        self.post_data = {
-            "news_emails": "1",
-            "notification_digest": "1",
-            "feedback_volunteer": "1",
-        }
-        with self.login(username=self.gamer.username):
-            self.post("user_preferences:setting-edit", data=self.post_data)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            new_version = Preferences.objects.get(gamer=self.gamer)
-            assert (
-                new_version.news_emails
-                and new_version.notification_digest
-                and new_version.feedback_volunteer
-            )
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
-class DashboardTest(AbstractGameSessionTest):
-    """
-    Test the dashboard.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "dashboard"
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name)
-
-    def test_page_load(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name)
-
-
-class DeleteAccountTest(AbstractGameSessionTest):
-    """
-    Test deleting a user using an async task. Ensure all connected
-    data items are removed.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "user_preferences:account_delete"
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name)
-
-    def test_load_correct(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name)
-
-    def test_post_without_confirm(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data={})
-            self.response_200()
-            assert social_models.GamerProfile.objects.get(pk=self.gamer1.pk)
-
-    # def test_with_correct_confirm(self):
-    #     with self.login(username=self.gamer1.username):
-    #         self.get(self.view_name)
-    #         delete_key = self.get_context('delete_confirm_key')
-    #         try:
-    #             self.post(self.view_name, data={'delete_confirm_key': delete_key})
-    #         except InterfaceError:
-    #             print("Typical error occurred, moving foward with checks")
-    #         except PGInterfaceError:
-    #             print("typical async error occurred")
-    #         self.response_302()
-    #         with pytest.raises(ObjectDoesNotExist):
-    #             User.objects.get(id=self.gamer1.user.id)
-    #         with pytest.raises(ObjectDoesNotExist):
-    #             social_models.GamerProfile.objects.get(pk=self.gamer1.pk)
-    #         with pytest.raises(ObjectDoesNotExist):
-    #             GamePosting.objects.get(pk=self.gp2.id)
-    #         with pytest.raises(ObjectDoesNotExist):
-    #             Calendar.objects.get(slug=self.gamer1.username)
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use, expected_status_code, expected_location",
+    [
+        (
+            "user_preferences:setting-view",
+            None,
+            302,
+            "/accounts/login/",
+        ),  # Require login
+        (
+            "user_preferences:setting-edit",
+            None,
+            302,
+            "/accounts/login/",
+        ),  # Require login
+        ("dashboard", None, 302, "/accounts/login/"),  # Require login
+        (
+            "user_preferences:account_delete",
+            None,
+            302,
+            "/accounts/login/",
+        ),  # Require login
+        ("user_preferences:setting-view", "gamer1", 200, None),  # Valid
+        ("user_preferences:setting-edit", "gamer1", 200, None),  # Valid
+        ("dashboard", "gamer1", 200, None),  # Valid
+        ("user_preferences:account_delete", "gamer1", 200, None),  # Valid
+    ],
+)
+def test_get_requests(
+    client,
+    game_testdata,
+    django_assert_max_num_queries,
+    view_name,
+    gamer_to_use,
+    expected_status_code,
+    expected_location,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(game_testdata, gamer_to_use).user)
+    with django_assert_max_num_queries(50):
+        response = client.get(reverse(view_name))
+    assert response.status_code == expected_status_code
+    if expected_location:
+        assert expected_location in response["Location"]
 
 
-class TestCachePriming(AbstractGameSessionTest):
-    """
-    Simply testing to ensure that our cache priming scripts don't trigger exceptions.
-    """
+def test_update_settings(client, game_testdata):
+    client.force_login(user=game_testdata.gamer1.user)
+    response = client.post(
+        reverse("user_preferences:setting-edit"),
+        data={"news_emails": 1, "notification_digest": 1, "feedback_volunteer": 1},
+    )
+    assert response.status_code == 302
+    new_version = Preferences.objects.get(gamer=game_testdata.gamer1)
+    assert (
+        new_version.news_emails
+        and new_version.notification_digest
+        and new_version.feedback_volunteer
+    )
 
-    def test_discord_fetch(self):
-        fetch_or_set_discord_comm_links()
 
-    def test_stats_priming(self):
-        prime_site_stats_cache()
+def test_delete_requires_confirm_code(client, game_testdata):
+    client.force_login(user=game_testdata.gamer1.user)
+    response = client.post(reverse("user_preferences:account_delete"), data={})
+    assert response.status_code == 200
+    assert social_models.GamerProfile.objects.get(pk=game_testdata.gamer1.pk)
+
+
+# Check that our cache and fetch methods don't generate exceptions
+
+
+def test_discord_fetch(game_testdata):
+    fetch_or_set_discord_comm_links()
+
+
+def test_stats_priming(game_testdata):
+    prime_site_stats_cache()

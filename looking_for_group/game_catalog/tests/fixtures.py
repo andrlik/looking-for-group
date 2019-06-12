@@ -1,5 +1,11 @@
-import pytest
+from datetime import timedelta
 
+import pytest
+from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
+
+from ...gamer_profiles.tests import factories
 from .. import models
 
 
@@ -59,6 +65,36 @@ class TDataCatalogObject(object):
             game_system=self.cypher,
         )
         self.strange.save()
+        self.gamer1 = factories.GamerProfileFactory()
+        self.gamer2 = factories.GamerProfileFactory()
+        self.editor_group, created = Group.objects.get_or_create(name="rpgeditors")
+        self.editor = factories.GamerProfileFactory()
+        self.editor.user.groups.add(self.editor_group)
+        self.random_gamer = factories.GamerProfileFactory()
+        self.correction1 = models.SuggestedCorrection.objects.create(
+            new_title="OG Numenera",
+            new_description="Show em your **bad** cypher self.",
+            new_url="https://www.google.com",
+            new_release_date=timezone.now() - timedelta(days=30),
+            submitter=self.gamer1.user,
+            other_notes="You might want to update the cover...",
+            content_object=self.numen,
+        )
+        self.addition1 = models.SuggestedAddition.objects.create(
+            content_type=ContentType.objects.get_for_model(models.GameEdition),
+            title="Numenera 4",
+            description="The next generation",
+            release_date=timezone.now() + timedelta(days=400),
+            suggested_tags="future, wild",
+            game=self.numensource,
+            publisher=self.mcg,
+            system=self.cypher,
+            submitter=self.gamer1.user,
+        )
+        self.gamer2.user.groups.add(self.editor_group)
+        self.gamer1.refresh_from_db()
+        self.gamer2.refresh_from_db()
+        self.editor.refresh_from_db()
 
 
 @pytest.fixture
