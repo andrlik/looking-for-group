@@ -58,6 +58,8 @@ django-markdownify = "*"
 psycopg2-binary = "*"
 django = "==2.2.2"
 django-scheduler = {editable = true,git = "https://github.com/andrlik/django-scheduler.git"}
+numpy = "*"
+geopy = "*"
 
 [dev-packages]
 sphinx = "*"
