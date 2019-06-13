@@ -10,7 +10,7 @@ else
   echo "Start non-leader deploy"
 fi
 
-
+copy_ext $SCRIPT_PATH/files/django.conf /opt/python/etc/django.conf 0755 root root
 copy_ext $SCRIPT_PATH/files/djangoq.conf /opt/python/etc/djangoq.conf 0755 root root
 copy_ext $SCRIPT_PATH/files/launch_worker /opt/python/bin/launch_worker 0755 root root
 

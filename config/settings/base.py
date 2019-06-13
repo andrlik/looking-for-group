@@ -1,6 +1,3 @@
-"""
-Base settings to build other settings files upon.
-"""
 
 import environ
 
@@ -192,6 +189,7 @@ STATICFILES_DIRS = [str(APPS_DIR.path("static"))]
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
 ]
 
 # MEDIA
@@ -248,9 +246,7 @@ TEMPLATES = [
             "debug": DEBUG,
             # https://docs.djangoproject.com/en/dev/ref/settings/#template-loaders
             # https://docs.djangoproject.com/en/dev/ref/templates/api/#loader-types
-            "loaders": [
-                "django.template.loaders.filesystem.Loader",
-            ],
+            "loaders": ["django.template.loaders.filesystem.Loader"],
             # https://docs.djangoproject.com/en/dev/ref/settings/#template-context-processors
             "context_processors": [
                 # "django.template.context_processors.debug",
@@ -262,7 +258,7 @@ TEMPLATES = [
                 # "django.template.context_processors.tz",
             ],
         },
-    }
+    },
 ]
 
 # FIXTURES
