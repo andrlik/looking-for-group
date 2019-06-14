@@ -2,9 +2,6 @@
 
 set -xe
 
-/usr/local/bin/supervisorctl -c /opt/python/etc/supervisord.conf status | grep django_q
-if [[ $? ]]; then
-  /usr/local/bin/supervisorctl -c /opt/python/etc/supervisord.conf restart django_q
-fi
+/opt/elasticbeanstalk/hooks/restartappserver/enact/99restartnginx.sh
 
-eventHelper.py --msg "Worker server restarted." --severity INFO
+# eventHelper.py --msg "Worker and web server restarted." --severity INFO
