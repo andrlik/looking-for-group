@@ -4,7 +4,6 @@ import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-from test_plus import TestCase
 
 from ...invites.models import Invite
 from .. import models
@@ -1725,26 +1724,3 @@ def test_community_invite_view(
         assert assert_login_redirect(response)
     else:
         assert response.status_code == expected_get_response
-
-
-# ------------ Legacy Tests ------------#
-class BaseAbstractViewTest(object):
-    """
-    Does initial setup for all the following tests,
-    which will subclass it.
-    """
-
-    def setUp(self):
-        self.gamer1 = factories.GamerProfileFactory()
-        self.gamer2 = factories.GamerProfileFactory()
-        self.gamer3 = factories.GamerProfileFactory(private=False)
-        self.community1 = factories.GamerCommunityFactory(owner=self.gamer1)
-        self.community2 = factories.GamerCommunityFactory(
-            owner=factories.GamerProfileFactory(), private=False
-        )
-        self.community2.add_member(self.gamer2)
-        self.gamer3.friends.add(self.gamer1)
-
-
-class AbstractViewTest(BaseAbstractViewTest, TestCase):
-    pass
