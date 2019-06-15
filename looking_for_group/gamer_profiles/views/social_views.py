@@ -1,21 +1,29 @@
 import logging
 import urllib
-from datetime import datetime, timedelta
-
+from datetime import timedelta, datetime
 import pytz
-from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import (
+    ImproperlyConfigured,
+    ObjectDoesNotExist,
+    PermissionDenied,
+)
 from django.db import transaction
 from django.db.models import Sum
 from django.db.models.query_utils import Q
 from django.forms import modelform_factory
-from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseNotAllowed,
+    HttpResponseRedirect,
+)
+from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -27,15 +35,15 @@ from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Event, Rule
 
-from .. import models, serializers
 from ...games.models import AvailableCalendar
+from .. import models, serializers
 from ..forms import (
     BlankDistructiveForm,
     GamerAvailabilityForm,
     GamerProfileForm,
     KickUserForm,
     ModelFormWithSwitchPaddles,
-    OwnershipTransferForm
+    OwnershipTransferForm,
 )
 
 logger = logging.getLogger("gamer_profiles")
@@ -524,7 +532,7 @@ class CommunityToggleGameNotifications(LoginRequiredMixin, generic.edit.UpdateVi
         logger.debug("Checking to see if there is a different url")
         if request.GET:
             logger.debug("Grabbing next value from GET")
-            next_url = request.GET['next']
+            next_url = request.GET["next"]
             if next_url:
                 logger.debug("Saving {} as success url".format(next_url))
                 self.success_url = next_url
@@ -1011,6 +1019,8 @@ class CommunityDeleteBan(
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, slug=comm_pk)
+        if self.community != self.get_permission_object():
+            raise Http404
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1052,6 +1062,8 @@ class CommunityUpdateBan(
     def dispatch(self, request, *args, **kwargs):
         comm_pk = self.kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, slug=comm_pk)
+        if self.community != self.get_permission_object():
+            raise Http404
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1300,6 +1312,8 @@ class DeleteKickRecord(
     def dispatch(self, request, *args, **kwargs):
         comm_pk = kwargs.pop("community", None)
         self.community = get_object_or_404(models.GamerCommunity, slug=comm_pk)
+        if self.community != self.get_permission_object():
+            raise Http404
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1641,7 +1655,7 @@ class GamerFriendRequestView(
             )
             if prev_request:
                 logger.debug("Request found, accepting it instead of making a new one.")
-                prev_request.approve()
+                prev_request.accept()
                 messages.info(
                     self.request,
                     _(

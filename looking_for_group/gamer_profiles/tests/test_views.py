@@ -2,10 +2,8 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
-from test_plus import TestCase
 
 from ...invites.models import Invite
 from .. import models
@@ -61,37 +59,25 @@ def test_toggle_notifications_view(
             assert "error" in messages[0].tags
 
 
-class BaseAbstractViewTest(object):
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [(None, 302, "/accounts/login/"), ("gamer1", 200, None)],
+)
+def test_create_community(
+    client, social_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
     """
-    Does initial setup for all the following tests,
-    which will subclass it.
+    Test community creation views.
     """
-
-    def setUp(self):
-        self.gamer1 = factories.GamerProfileFactory()
-        self.gamer2 = factories.GamerProfileFactory()
-        self.gamer3 = factories.GamerProfileFactory(private=False)
-        self.community1 = factories.GamerCommunityFactory(owner=self.gamer1)
-        self.community2 = factories.GamerCommunityFactory(
-            owner=factories.GamerProfileFactory(), private=False
-        )
-        self.community2.add_member(self.gamer2)
-        self.gamer3.friends.add(self.gamer1)
-
-
-class AbstractViewTest(BaseAbstractViewTest, TestCase):
-    pass
-
-
-class TestCommunityCreate(AbstractViewTest):
-    """
-    Test creating a community.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community-create"
-        self.post_data = {
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse("gamer_profiles:community-create")
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_response == 200:
+        post_data = {
             "name": "My cool new community",
             "description": "We play fun games.",
             "url": "",
@@ -99,1236 +85,1169 @@ class TestCommunityCreate(AbstractViewTest):
             "application_approval": "admin",
             "invites_allowed": "admin",
         }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_name)
-            previous_amount = models.GamerCommunity.objects.count()
-            self.post(self.view_name, data=self.post_data)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert models.GamerCommunity.objects.count() - previous_amount == 1
+        prev_count = models.GamerCommunity.objects.count()
+        response = client.post(url, data=post_data)
+        assert response.status_code == 302
+        assert models.GamerCommunity.objects.count() - prev_count == 1
 
 
-class TestCommunityEdit(AbstractViewTest):
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_text, expected_not_text",
+    [
+        (None, None, None),
+        ("gamer2", [b"<span class='membership label secondary'>Member</span>"], None),
+        ("gamer1", [b"<span class='membership label primary'>Admin</span>"], None),
+        (
+            "gamer3",
+            [b"class='button small'>Apply", b"class='button small'>Apply"],
+            b"<span class='membership'>",
+        ),
+    ],
+)
+def test_comm_List_view(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    gamer_to_use,
+    expected_text,
+    expected_not_text,
+):
     """
-    Test for editing a community.
+    Try loading the list view for various uses and test that the controls for each one are rendered correctly.
     """
+    if gamer_to_use:
+        client.force_login(getattr(social_testdata, gamer_to_use).user)
+    with django_assert_max_num_queries(50):
+        response = client.get(reverse("gamer_profiles:community-list"))
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+    if expected_text:
+        for text in expected_text:
+            print("Checking for {}".format(text))
+            assert text in response.content
+    if expected_not_text:
+        assert expected_not_text not in response.content
 
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community-edit"
-        self.url_kwargs = {"community": self.community1.slug}
-        self.post_data = {
-            "name": "Can anyone hear me?",
-            "description": "I've been so lost.",
-            "url": "https://www.google.com",
-            "private": "",
-            "application_approval": "admin",
-            "invites_allowed": "admin",
-        }
 
-    def test_login_required(self):
-        print(self.url_kwargs)
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_count", [("gamer1", 2), ("gamer2", 1), ("gamer3", 0)]
+)
+def test_my_community_list(
+    client, social_testdata, django_assert_max_num_queries, gamer_to_use, expected_count
+):
+    client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    response = client.get(reverse("gamer_profiles:my-community-list"))
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == expected_count
 
-    def test_invalid_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
 
-    def test_community_owner(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.GamerCommunity.objects.get(pk=self.community1.pk).name
-                == "Can anyone hear me?"
+@pytest.mark.parametrize(
+    "gamer_to_use, comm_to_test, expected_get_response, expected_get_location",
+    [
+        (None, "community1", 302, "/accounts/login/"),
+        ("gamer1", "community1", 200, None),
+        ("gamer1", "community2", 200, None),
+        ("gamer2", "community1", 302, None),
+        ("gamer2", "community2", 200, None),
+        ("gamer3", "community1", 302, None),
+        ("gamer3", "community2", 200, None),
+    ],
+)
+def test_community_detail_view(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    gamer_to_use,
+    comm_to_test,
+    expected_get_response,
+    expected_get_location,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    with django_assert_max_num_queries(50):
+        response = client.get(
+            reverse(
+                "gamer_profiles:community-detail",
+                kwargs={"community": getattr(social_testdata, comm_to_test).slug},
             )
-
-
-class TestCommunityList(AbstractViewTest):
-    """
-    Test viewing list of all communities with limited details.
-    Note, this does not require any special permissions. However,
-    it should be noted that unauthenticated users should not see any
-    controls. Private communities should be noted accordingly.
-    """
-
-    def test_unauthenticated_view(self):
-        self.assertGoodView("gamer_profiles:community-list")
-        len(self.get_context("object_list")) == 2
-
-    def test_logged_in_user(self):
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView("gamer_profiles:community-list")
-            self.assertResponseContains(
-                "<span class='membership label secondary'>Member</span>"
-            )
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView("gamer_profiles:community-list")
-            self.assertResponseContains(
-                "<span class='membership label primary'>Admin</span>"
-            )
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView("gamer_profiles:community-list")
-            self.assertResponseNotContains("<span class='membership'>")
-            self.assertResponseContains("class='button small'>Apply", html=False)
-            self.assertResponseContains("class='button small'>Join", html=False)
-
-
-class MyCommunityListView(AbstractViewTest):
-    """
-    Only a user's communities should be listed.
-    """
-
-    def test_unauthenticated_view(self):
-        self.assertLoginRequired("gamer_profiles:my-community-list")
-
-    def test_logged_in_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView("gamer_profiles:my-community-list")
-            assert len(self.get_context("object_list")) == 1
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView("gamer_profiles:my-community-list")
-            assert len(self.get_context("object_list")) == 1
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView("gamer_profiles:my-community-list")
-            assert not self.get_context("object_list")
-
-
-class CommunityDetailViewTest(AbstractViewTest):
-    """
-    Test the community detail view.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community-detail"
-
-    def test_unauthenticated(self):
-        self.assertLoginRequired(self.view_name, community=self.community1.slug)
-
-    def test_authenticated(self):
-        with self.login(username=self.gamer1.username):
-            print(self.community1.slug)
-            print(reverse(self.view_name, kwargs={"community": self.community1.slug}))
-            assert models.GamerCommunity.objects.get(pk=self.community1.pk)
-            self.assertGoodView(self.view_name, community=self.community1.slug)
-            self.assertGoodView(self.view_name, community=self.community2.slug)
-        with self.login(username=self.gamer2.username):
-            self.assertGoodView(self.view_name, community=self.community2.slug)
-            self.get(self.view_name, self.community1.slug)
-            self.response_302()
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_name, community=self.community2.slug)
-            self.get(self.view_name, community=self.community1.slug)
-            self.response_302()
-
-
-class CommunityMemberListTest(AbstractViewTest):
-    """
-    Test for viewing community members.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community-member-list"
-        self.url_kwargs = {"community": self.community1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_invalid_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-
-
-class CommunityMemberListPaginated(AbstractViewTest):
-    """
-    Test for memberlist when paginated.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community-member-list"
-        self.url_kwargs = {"community": self.community1.slug, "page": 2}
-
-    def test_404_result(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_404()
-
-    def test_with_more_members(self):
-        for x in range(40):
-            tempgamer = factories.GamerProfileFactory()
-            self.community1.add_member(tempgamer)
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_200()
-
-
-class CommunityDeleteTest(AbstractViewTest):
-    """
-    Test for deleting a community.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community-delete"
-        self.url_kwargs = {"community": self.community1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-
-    def test_deletion(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_name, data={}, **self.url_kwargs)
-            with pytest.raises(ObjectDoesNotExist):
-                models.GamerCommunity.objects.get(pk=self.community1.pk)
-
-
-class TestCommunityJoinView(AbstractViewTest):
-    """
-    Test joining a community. Public communities should be
-    easily joinable, but privates should redirect to the apply page.
-    People who try to join a community they already belong to, are up
-    to somethign malicious (since that isn't in the UI), and should be
-    denied. Ensure that bans and kicks are enforced.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.community2.set_role(self.gamer2, role="admin")
-        self.form_data = {"confirm": "confirm"}
-
-    def test_login_required(self):
-        self.assertLoginRequired(
-            "gamer_profiles:community-join", community=self.community2.slug
         )
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
 
-    def test_private_community(self):
-        with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-join", community=self.community1.slug)
-            self.response_302()
-            assert "apply" in self.last_response["location"]
-            self.post("gamer_profiles:community-join", community=self.community1.slug)
-            self.response_302()
-            assert "apply" in self.last_response["location"]
-            with pytest.raises(models.NotInCommunity):
-                self.community1.get_role(self.gamer3)
 
-    def test_public_community(self):
-        for user in [self.gamer3.user, self.gamer1.user]:
-            with self.login(username=user.username):
-                self.assertGoodView(
-                    "gamer_profiles:community-join", community=self.community2.slug
-                )
-                self.post(
-                    "gamer_profiles:community-join",
-                    data={},
-                    community=self.community2.slug,
-                )
-                self.response_302()
-                assert self.community2.get_role(user.gamerprofile)
-
-    def test_join_community_already_in(self):
-        with self.login(username=self.gamer2.username):
-            self.get("gamer_profiles:community-join", community=self.community2.slug)
-            self.response_302()
-
-    def test_kicked_user(self):
-        self.community2.add_member(self.gamer3)
-        self.community2.kick_user(
-            kicker=self.gamer2,
-            gamer=self.gamer3,
-            reason="test",
-            earliest_reapply=timezone.now() + timedelta(days=1),
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [(None, 302, "/accounts/login/"), ("gamer1", 200, None), ("gamer2", 403, None)],
+)
+def test_community_member_list(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    gamer_to_use,
+    expected_get_response,
+    expected_get_location,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    with django_assert_max_num_queries(50):
+        response = client.get(
+            reverse(
+                "gamer_profiles:community-member-list",
+                kwargs={"community": social_testdata.community1.slug},
+            )
         )
-        assert models.KickedUser.objects.filter(
-            community=self.community2,
-            kicked_user=self.gamer3,
-            end_date__gt=timezone.now(),
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+
+
+def test_member_list_paginated(client, social_testdata, django_assert_max_num_queries):
+    client.force_login(user=social_testdata.gamer1.user)
+    url = reverse(
+        "gamer_profiles:community-member-list",
+        kwargs={"community": social_testdata.community1.slug, "page": 2},
+    )
+    response = client.get(url)
+    assert response.status_code == 404
+    for x in range(40):
+        tempgamer = factories.GamerProfileFactory()
+        social_testdata.community1.add_member(tempgamer)
+    with django_assert_max_num_queries(80):
+        response = client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [(None, 302, "/accounts/login/"), ("gamer3", 403, None), ("gamer1", 200, None)],
+)
+def test_community_edit(
+    client, social_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:community-edit",
+        kwargs={"community": social_testdata.community1.slug},
+    )
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_response == 200:
+        response = client.post(
+            url,
+            data={
+                "name": "Can anyone hear me?",
+                "description": "I've been so lost.",
+                "url": "https://www.google.com",
+                "private": "",
+                "application_approval": "admin",
+                "invites_allowed": "admin",
+            },
         )
-        with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-join", community=self.community2.slug)
-            self.response_403()
-            self.post("gamer_profiles:community-join", community=self.community2.slug)
-            self.response_403()
-            with pytest.raises(models.NotInCommunity):
-                self.community2.get_role(self.gamer3)
-
-    def test_kicked_user_no_date(self):
-        self.community2.add_member(self.gamer3)
-        self.community2.kick_user(kicker=self.gamer2, gamer=self.gamer3, reason="test")
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(
-                "gamer_profiles:community-join", community=self.community2.slug
-            )
-            self.post("gamer_profiles:community-join", community=self.community2.slug)
-            assert self.community2.get_role(self.gamer3) == "Member"
-
-    def test_banned_gamer(self):
-        self.community2.add_member(self.gamer3)
-        self.community2.ban_user(banner=self.gamer2, gamer=self.gamer3, reason="test")
-        assert models.BannedUser.objects.filter(
-            banned_user=self.gamer3, community=self.community2
-        )
-        with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-join", community=self.community2.slug)
-            self.response_403()
-            self.post("gamer_profiles:community-join", community=self.community2.slug)
-            self.response_403()
-            with pytest.raises(models.NotInCommunity):
-                self.community2.get_role(self.gamer3)
-
-
-class TestCommunityChangeRole(AbstractViewTest):
-    """
-    Test changing a community member's role.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community-edit-gamer-role"
-        self.community2.add_member(self.gamer1)
-        self.url_kwargs = {
-            "community": self.community2.slug,
-            "gamer": self.gamer1.username,
-        }
-        self.post_data = {"community_role": "admin"}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_edit_self(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_valid_user(self):
-        with self.login(username=self.community2.owner.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-            self.post(self.view_name, data=self.post_data, **self.url_kwargs)
-            if self.last_response.status_code == 200:
-                self.print_form_errors()
-            self.response_302()
-            assert (
-                models.CommunityMembership.objects.get(
-                    community=self.community2, gamer=self.gamer1
-                ).community_role
-                == "admin"
-            )
-
-
-class TestCommunityApplyView(AbstractViewTest):
-    """
-    Apply is always available. But not if you are banned or on
-    suspension. And if you are already a member, redirect to the community
-    detail view without creating an application.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.apply_data = {"message": "Hi there."}
-
-    def test_login_required(self):
-        self.assertLoginRequired(
-            "gamer_profiles:community-apply", community=self.community1.slug
-        )
-        self.post(
-            "gamer_profiles:community-apply",
-            community=self.community1.slug,
-            data=self.apply_data,
-        )
-        self.response_302()
-        assert "login" in self.last_response["location"]
-
-    def test_restrict_suspended_user(self):
-        self.community1.add_member(self.gamer3)
-        self.community1.kick_user(
-            kicker=self.community1.owner,
-            gamer=self.gamer3,
-            earliest_reapply=timezone.now() + timedelta(days=10),
-            reason="annoying",
-        )
-        with self.login(username=self.gamer3.username):
-            self.get("gamer_profiles:community-apply", community=self.community1.slug)
-            self.response_403()
-            current_apps = models.CommunityApplication.objects.filter(
-                community=self.community1
-            ).count()
-            assert current_apps == 0
-            self.post(
-                "gamer_profiles:community-apply",
-                community=self.community1.slug,
-                data=self.apply_data,
-            )
-            self.response_403()
-            assert (
-                current_apps
-                == models.CommunityApplication.objects.filter(
-                    community=self.community1
-                ).count()
-            )
-
-    def test_restrict_banned_user(self):
-        self.community1.add_member(self.gamer3)
-        self.community1.ban_user(
-            banner=self.community1.owner, gamer=self.gamer3, reason="Harassment"
-        )
-        with self.login(username=self.gamer3.username):
-            current_apps = models.CommunityApplication.objects.filter(
-                community=self.community1
-            ).count()
-            self.get("gamer_profiles:community-apply", community=self.community1.slug)
-            self.response_403()
-            self.post(
-                "gamer_profiles:community-apply",
-                community=self.community1.slug,
-                data=self.apply_data,
-            )
-            self.response_403()
-            assert (
-                current_apps
-                == models.CommunityApplication.objects.filter(
-                    community=self.community1
-                ).count()
-            )
-
-    def test_normal_user(self):
-        with self.login(username=self.gamer3.username):
-            current_apps = models.CommunityApplication.objects.filter(
-                community=self.community1
-            ).count()
-            assert current_apps == 0
-            self.assertGoodView(
-                "gamer_profiles:community-apply", community=self.community1.slug
-            )
-            self.post(
-                "gamer_profiles:community-apply",
-                community=self.community1.slug,
-                data=self.apply_data,
-            )
-            self.response_302()
-            assert (
-                current_apps
-                < models.CommunityApplication.objects.filter(
-                    community=self.community1
-                ).count()
-            )
-
-    def test_normal_user_submit(self):
-        with self.login(username=self.gamer3.username):
-            submit_data = self.apply_data
-            submit_data["submit_app"] = ""
-            self.post(
-                "gamer_profiles:community-apply",
-                community=self.community1.slug,
-                data=submit_data,
-            )
-            self.response_302()
-            assert (
-                models.CommunityApplication.objects.filter(
-                    community=self.community1, gamer=self.gamer3
-                )
-                .order_by("-modified")[0]
-                .status
-                == "review"
-            )
-
-    def test_user_kicked_no_suspension(self):
-        self.community1.add_member(self.gamer3)
-        self.community1.kick_user(
-            kicker=self.community1.owner, gamer=self.gamer3, reason="Bam!"
-        )
-        self.test_normal_user()
-
-
-class UpdateApplicationTest(AbstractViewTest):
-    """
-    Test that only the author of an application can edit its message.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.application = models.CommunityApplication.objects.create(
-            gamer=self.gamer3, message="Not me", community=self.community1, status="new"
-        )
-        self.update_data = {"message": "This is better"}
-
-    def test_login_required(self):
-        self.assertLoginRequired(
-            "gamer_profiles:update-application", application=self.application.pk
-        )
-
-    def test_non_owner(self):
-        with self.login(username=self.gamer2.username):
-            self.get(
-                "gamer_profiles:update-application", application=self.application.pk
-            )
-            self.response_403()
-            self.post(
-                "gamer_profiles:update-application",
-                application=self.application.pk,
-                data=self.update_data,
-            )
-            self.response_403()
-            assert (
-                models.CommunityApplication.objects.get(pk=self.application.pk).message
-                == "Not me"
-            )
-
-    def test_owner(self):
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(
-                "gamer_profiles:update-application", application=self.application.pk
-            )
-            self.post(
-                "gamer_profiles:update-application",
-                application=self.application.pk,
-                data=self.update_data,
-            )
-            self.response_302()
-            assert (
-                models.CommunityApplication.objects.get(pk=self.application.pk).message
-                == "This is better"
-            )
-
-    def test_owner_submit(self):
-        with self.login(username=self.gamer3.username):
-            submit_data = self.update_data
-            submit_data["submit_app"] = ""
-            self.post(
-                "gamer_profiles:community-apply",
-                community=self.community1.slug,
-                data=submit_data,
-            )
-            self.response_302()
-            assert (
-                models.CommunityApplication.objects.filter(
-                    community=self.community1, gamer=self.gamer3
-                )
-                .order_by("-modified")[0]
-                .status
-                == "review"
-            )
-
-
-class CommunityApplicationWithdrawTest(AbstractViewTest):
-    """
-    Test withdraw/delete view for Community Application objects.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.application = models.CommunityApplication.objects.create(
-            gamer=self.gamer3, message="Not me", community=self.community1, status="new"
-        )
-
-    def test_login_required(self):
-        self.assertLoginRequired(
-            "gamer_profiles:delete-application", application=self.application.pk
-        )
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(
-                "gamer_profiles:delete-application", application=self.application.pk
-            )
-            self.response_403()
-            self.post(
-                "gamer_profiles:delete-application", application=self.application.pk
-            )
-            self.response_403()
-            assert models.CommunityApplication.objects.get(pk=self.application.pk)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(
-                "gamer_profiles:delete-application", application=self.application.pk
-            )
-            self.post(
-                "gamer_profiles:delete-application", application=self.application.pk
-            )
-            with pytest.raises(ObjectDoesNotExist):
-                models.CommunityApplication.objects.get(pk=self.application.pk)
-
-
-class CommunityApplicantListTest(AbstractViewTest):
-    """
-    Test a community moderator ability to see pending applications.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.application1 = models.CommunityApplication.objects.create(
-            gamer=self.gamer3,
-            message="Notice me, Senpai!",
-            community=self.community1,
-            status="review",
-        )
-        self.application2 = models.CommunityApplication.objects.create(
-            gamer=self.gamer2,
-            message="I want to play!",
-            community=self.community1,
-            status="new",
-        )
-        self.view_str = "gamer_profiles:community-applicant-list"
-        self.url_kwargs = {"community": self.community1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            applicants = self.get_context("applicants")
-            assert len(applicants) == 1
-            self.application2.submit_application()
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            assert len(self.get_context("applicants")) == 2
-
-
-class CommunityApplicationDetail(AbstractViewTest):
-    """
-    Test a community admin reviewing an application.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.application1 = models.CommunityApplication.objects.create(
-            gamer=self.gamer3,
-            message="Notice me, Senpai!",
-            community=self.community1,
-            status="review",
-        )
-        self.application2 = models.CommunityApplication.objects.create(
-            gamer=self.gamer2,
-            message="I want to play!",
-            community=self.community1,
-            status="new",
-        )
-        self.view_str = "gamer_profiles:community-applicant-detail"
-        self.url_kwargs = {"community": self.community1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(
-            self.view_str, application=self.application1.pk, **self.url_kwargs
-        )
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, application=self.application1.pk, **self.url_kwargs)
-            self.response_403()
-            self.get(self.view_str, application=self.application2.pk, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_can_only_see_submitted(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, application=self.application2.pk, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(
-                self.view_str, application=self.application1.pk, **self.url_kwargs
-            )
-
-
-class ApproveApplicationTest(AbstractViewTest):
-    """
-    Approve view for community admins.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.application1 = models.CommunityApplication.objects.create(
-            gamer=self.gamer3,
-            message="Notice me, Senpai!",
-            community=self.community1,
-            status="review",
-        )
-        self.application2 = models.CommunityApplication.objects.create(
-            gamer=self.gamer2,
-            message="I want to play!",
-            community=self.community1,
-            status="new",
-        )
-        self.view_str = "gamer_profiles:community-applicant-approve"
-        self.valid_url_kwargs = {
-            "community": self.community1.slug,
-            "application": self.application1.pk,
-        }
-        self.invalid_url_kwargs = {
-            "community": self.community1.slug,
-            "application": self.application2.pk,
-        }
-
-    def test_login_required(self):
-        self.get(self.view_str, **self.valid_url_kwargs)
-        self.response_405()
+        assert response.status_code == 302
         assert (
-            models.CommunityApplication.objects.get(pk=self.application1.pk).status
-            == "review"
-        )
-        self.post(self.view_str, **self.valid_url_kwargs)
-        self.response_302()
-        assert "login" in self.last_response["location"]
-        assert (
-            models.CommunityApplication.objects.get(pk=self.application1.pk).status
-            == "review"
+            models.GamerCommunity.objects.get(pk=social_testdata.community1.pk).name
+            == "Can anyone hear me?"
         )
 
-    def test_unauthorized_users(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.valid_url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.valid_url_kwargs)
-            self.response_403()
+
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_get_location",
+    [(None, 302, "/accounts/login/"), ("gamer3", 403, None), ("gamer1", 200, None)],
+)
+def test_community_delete(
+    client, social_testdata, gamer_to_use, expected_get_response, expected_get_location
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:community-delete",
+        kwargs={"community": social_testdata.community1.slug},
+    )
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if expected_get_response == 200:
+        response = client.post(url, data={})
+        assert response.status_code == 302
+        with pytest.raises(ObjectDoesNotExist):
+            models.GamerCommunity.objects.get(pk=social_testdata.community1.pk)
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, community_to_test, expected_get_response, expected_get_location, expected_post_response, should_join",
+    [
+        (None, "community1", 302, "/accounts/login/", None, False),
+        ("gamer4", "community1", 302, "apply", 302, False),  # Private community
+        ("gamer4", "community2", 200, None, 302, True),  # Public community
+        ("gamer2", "community2", 302, None, 302, True),  # Already in community
+        (
+            "gamer3",
+            "community2",
+            403,
+            None,
+            403,
+            False,
+        ),  # Kicked gamer with future expiration
+        (
+            "gamer2",
+            "community1",
+            302,
+            "apply",
+            302,
+            False,
+        ),  # Kicked gamer whose kick has expired
+        ("gamer4", "community", 302, None, 302, False),  # Banned gamer
+    ],
+)
+def test_community_join_view(
+    client,
+    social_testdata_with_kicks,
+    gamer_to_use,
+    community_to_test,
+    expected_get_response,
+    expected_get_location,
+    expected_post_response,
+    should_join,
+):
+    gamer = None
+    if gamer_to_use:
+        gamer = getattr(social_testdata_with_kicks, gamer_to_use)
+        client.force_login(user=gamer.user)
+    comm = getattr(social_testdata_with_kicks, community_to_test)
+    url = reverse("gamer_profiles:community-join", kwargs={"community": comm.slug})
+    response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    if gamer:
+        response = client.post(url, data={"confirm": "confirm"})
+        assert response.status_code == expected_post_response
+        if not should_join:
+            with pytest.raises(models.NotInCommunity):
+                comm.get_role(gamer)
+        else:
+            assert comm.get_role(gamer)
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, gamer_to_update, expected_get_response, should_update",
+    [
+        (None, "gamer2", 302, False),
+        ("gamer3", "gamer2", 403, False),
+        ("gamer1", "gamer1", 403, False),
+        ("gamer5", "gamer2", 200, True),
+    ],
+)
+def test_community_change_role(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    gamer_to_use,
+    gamer_to_update,
+    expected_get_response,
+    should_update,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:community-edit-gamer-role",
+        kwargs={
+            "community": social_testdata.community2.slug,
+            "gamer": social_testdata.gamer2.username,
+        },
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={"community_role": "admin"})
+        if should_update:
             assert (
-                models.CommunityApplication.objects.get(pk=self.application1.pk).status
-                == "review"
+                social_testdata.community2.get_role(social_testdata.gamer2) == "Admin"
             )
-
-    def test_auth_user_with_invalid_target(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.invalid_url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.invalid_url_kwargs)
-            self.response_404()
+        else:
             assert (
-                models.CommunityApplication.objects.get(pk=self.application2.pk).status
-                == "new"
-            )
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.valid_url_kwargs)
-            self.response_405()
-            assert (
-                models.CommunityApplication.objects.get(pk=self.application1.pk).status
-                == "review"
-            )
-            self.post(self.view_str, **self.valid_url_kwargs)
-            self.response_302()
-            assert (
-                models.CommunityApplication.objects.get(pk=self.application1.pk).status
-                == "approve"
-            )
-            assert models.CommunityMembership.objects.get(
-                community=self.community1, gamer=self.gamer3
+                social_testdata.community2.get_role(social_testdata.gamer2) != "Admin"
             )
 
 
-class RejectApplicationTest(ApproveApplicationTest):
-    """
-    Run the same tests as approval but for rejection.
-    """
+@pytest.mark.parametrize(
+    "gamer_to_use, community_to_use, expected_get_response, should_submit, should_succeed",
+    [
+        (None, "community1", 302, False, False),
+        ("gamer2", "community1", 200, False, True),  # Kicked user without a suspension
+        ("gamer3", "community1", 403, False, False),  # Suspended user
+        ("gamer4", "community", 403, False, False),  # banned user
+        ("gamer5", "community1", 200, False, True),  # Normal user without submit
+        ("gamer5", "community1", 200, True, True),  # Normal user with submit.
+    ],
+)
+def test_community_apply_view(
+    client,
+    social_testdata_with_kicks,
+    assert_login_redirect,
+    gamer_to_use,
+    community_to_use,
+    expected_get_response,
+    should_submit,
+    should_succeed,
+):
+    gamer = None
+    if gamer_to_use:
+        gamer = getattr(social_testdata_with_kicks, gamer_to_use)
+        client.force_login(user=gamer.user)
+    comm = getattr(social_testdata_with_kicks, community_to_use)
+    url = reverse("gamer_profiles:community-apply", kwargs={"community": comm.slug})
+    response = client.get(url)
+    if not gamer:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        post_data = {"message": "Hi there"}
+        if should_submit:
+            post_data["submit_app"] = ""
+        response = client.post(url, data=post_data)
+        if should_succeed:
+            appl = models.CommunityApplication.objects.get(community=comm, gamer=gamer)
+            assert appl
+            if should_submit:
+                assert appl.status == "review"
+            else:
+                assert appl.status == "new"
 
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:community-applicant-reject"
 
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.valid_url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.valid_url_kwargs)
-            self.response_302()
-            assert (
-                models.CommunityApplication.objects.get(pk=self.application1.pk).status
-                == "reject"
-            )
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, should_submit, should_succeed",
+    [
+        (None, 302, False, False),
+        ("gamer2", 403, False, False),  # Non application owner
+        ("gamer3", 200, False, True),  # Owner without submit
+        ("gamer3", 200, True, True),  # Owner with submit.
+    ],
+)
+def test_update_application(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_get_response,
+    should_submit,
+    should_succeed,
+):
+    application = models.CommunityApplication.objects.create(
+        gamer=social_testdata.gamer3,
+        message="Not me",
+        community=social_testdata.community1,
+        status="new",
+    )
+    url = reverse(
+        "gamer_profiles:update-application", kwargs={"application": application.pk}
+    )
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        update_data = {"message": "This is better"}
+        if should_submit:
+            update_data["submit_app"] = ""
+        response = client.post(url, data=update_data)
+        appl = models.CommunityApplication.objects.get(pk=application.pk)
+        if should_succeed:
+            assert appl.message == "This is better"
+            if should_submit:
+                assert appl.status == "review"
+            else:
+                assert appl.status == "new"
+        else:
+            assert appl.message == "Not me"
+            assert appl.status == "new"
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, should_succeed",
+    [
+        (None, 302, False),
+        ("gamer2", 403, False),  # Not application owner
+        ("gamer3", 200, True),  # Application owner
+    ],
+)
+def test_application_withdrawl(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_get_response,
+    should_succeed,
+):
+    application = models.CommunityApplication.objects.create(
+        gamer=social_testdata.gamer3,
+        message="Not me",
+        community=social_testdata.community1,
+        status="new",
+    )
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:delete-application", kwargs={"application": application.pk}
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={})
+        if should_succeed:
             with pytest.raises(ObjectDoesNotExist):
-                models.CommunityMembership.objects.get(
-                    community=self.community1, gamer=self.gamer3
-                )
+                models.CommunityApplication.objects.get(pk=application.pk)
+        else:
+            assert models.CommunityApplication.objects.get(pk=application.pk)
 
 
-class CommunityKickListTest(AbstractViewTest):
-    """
-    Test viewing the list of kicked users from a given community.
-    """
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_list_response, expected_detail1_response, expected_detail2_response",
+    [
+        (None, 302, 302, 302),
+        ("gamer2", 403, 403, 403),  # Not an admin
+        ("gamer1", 200, 200, 403),  # Admin can only see submitted apps
+        (
+            "gamer3",
+            403,
+            403,
+            403,
+        ),  # Owner can't see the details since it's only for review
+    ],
+)
+def test_community_applicant_list_detail(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_list_response,
+    expected_detail1_response,
+    expected_detail2_response,
+):
+    application1 = models.CommunityApplication.objects.create(
+        gamer=social_testdata.gamer3,
+        message="Notice me, Senpai!",
+        community=social_testdata.community1,
+        status="review",
+    )
+    application2 = models.CommunityApplication.objects.create(
+        gamer=social_testdata.gamer2,
+        message="I want to play!",
+        community=social_testdata.community1,
+        status="new",
+    )
+    list_url = reverse(
+        "gamer_profiles:community-applicant-list",
+        kwargs={"community": social_testdata.community1.slug},
+    )
+    detail1_url = reverse(
+        "gamer_profiles:community-applicant-detail",
+        kwargs={
+            "community": social_testdata.community1.slug,
+            "application": application1.pk,
+        },
+    )
+    detail2_url = reverse(
+        "gamer_profiles:community-applicant-detail",
+        kwargs={
+            "community": social_testdata.community1.slug,
+            "application": application2.pk,
+        },
+    )
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    response = client.get(list_url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+        assert assert_login_redirect(client.get(detail1_url))
+        assert assert_login_redirect(client.get(detail2_url))
+    else:
+        assert expected_list_response == response.status_code
+        if expected_list_response == 200:
+            assert len(response.context["applicants"]) == 1
+    response = client.get(detail1_url)
+    assert response.status_code == expected_detail1_response
+    response = client.get(detail2_url)
+    assert response.status_code == expected_detail2_response
 
-    def setUp(self):
-        super().setUp()
-        self.community1.add_member(self.gamer2)
-        self.community1.add_member(self.gamer3)
-        self.bad_kick = self.community1.kick_user(self.gamer1, self.gamer2, "Bad apple")
-        self.good_kick = self.community1.kick_user(
-            self.gamer1,
-            self.gamer3,
-            "Jerk",
-            earliest_reapply=timezone.now() + timedelta(days=2),
+
+@pytest.mark.parametrize(
+    "gamer_to_use, application_to_use, view_name, expected_response, expected_status",
+    [
+        (
+            None,
+            "application1",
+            "gamer_profiles:community-applicant-approve",
+            302,
+            "review",
+        ),  # Login required
+        (
+            None,
+            "application1",
+            "gamer_profiles:community-applicant-reject",
+            302,
+            "review",
+        ),  # Login required
+        (
+            "gamer2",
+            "application1",
+            "gamer_profiles:community-applicant-approve",
+            403,
+            "review",
+        ),  # Unauthorized
+        (
+            "gamer2",
+            "application1",
+            "gamer_profiles:community-applicant-reject",
+            403,
+            "review",
+        ),  # Unauthorized
+        (
+            "gamer1",
+            "application2",
+            "gamer_profiles:community-applicant-approve",
+            404,
+            "new",
+        ),  # Authorized but invalid target
+        (
+            "gamer1",
+            "application2",
+            "gamer_profiles:community-applicant-reject",
+            404,
+            "new",
+        ),  # Authorized but invalid target
+        (
+            "gamer1",
+            "application1",
+            "gamer_profiles:community-applicant-approve",
+            302,
+            "approve",
+        ),  # Authorized but invalid target
+        (
+            "gamer1",
+            "application1",
+            "gamer_profiles:community-applicant-reject",
+            302,
+            "reject",
+        ),  # Authorized but invalid target
+    ],
+)
+def test_application_approve_reject(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    gamer_to_use,
+    application_to_use,
+    view_name,
+    expected_response,
+    expected_status,
+):
+    previous_member_count = models.CommunityMembership.objects.filter(
+        community=social_testdata.community1
+    ).count()
+    application1 = models.CommunityApplication.objects.create(
+        gamer=social_testdata.gamer3,
+        message="Notice me, Senpai!",
+        community=social_testdata.community1,
+        status="review",
+    )
+    application2 = models.CommunityApplication.objects.create(
+        gamer=social_testdata.gamer2,
+        message="I want to play!",
+        community=social_testdata.community1,
+        status="new",
+    )
+    if application_to_use == "application1":
+        pk_to_check = application1.pk
+    else:
+        pk_to_check = application2.pk
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        view_name,
+        kwargs={
+            "community": social_testdata.community1.slug,
+            "application": pk_to_check,
+        },
+    )
+    response = client.get(url)
+    assert response.status_code == 405
+    response = client.post(url, data={})
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_response
+    assert (
+        models.CommunityApplication.objects.get(pk=pk_to_check).status
+        == expected_status
+    )
+    if expected_status == "approve":
+        assert (
+            models.CommunityMembership.objects.filter(
+                community=social_testdata.community1
+            ).count()
+            - previous_member_count
+            == 1
         )
-        self.view_str = "gamer_profiles:community-kick-list"
-        self.url_kwargs = {"community": self.community1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            assert self.get_context("kick_list").count() == 1
-            assert self.get_context("expired_kicks").count() == 1
 
 
-class CommunityKickUserTest(AbstractViewTest):
-    """
-    Test creating a kick record
-    """
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response",
+    [(None, 302), ("gamer2", 403), ("gamer1", 200)],
+)
+def test_kick_list(
+    client,
+    social_testdata_with_kicks,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_get_response,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata_with_kicks, gamer_to_use).user)
+    response = client.get(
+        reverse(
+            "gamer_profiles:community-kick-list",
+            kwargs={"community": social_testdata_with_kicks.community1.slug},
+        )
+    )
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        if expected_get_response == 200:
+            assert len(response.context["kick_list"]) == 1
+            assert len(response.context["expired_kicks"]) == 1
 
-    def setUp(self):
-        super().setUp()
-        self.community1.add_member(self.gamer2)
-        self.view_str = "gamer_profiles:community-kick-gamer"
-        self.url_kwargs = {
-            "community": self.community1.slug,
-            "gamer": self.gamer2.username,
-        }
-        self.bad_url_kwargs = {
-            "community": self.community1.slug,
-            "gamer": self.gamer3.username,
-        }
-        self.post_data = {
-            "reason": "Jerk",
-            "end_date": (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%d %H:%M"),
-        }
-        self.bad_post_data = {
-            "end_date": (timezone.now() + timedelta(days=2)).strftime("%Y-%m-%d %H:%M")
-        }
 
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
-            self.response_403()
+@pytest.mark.parametrize(
+    "gamer_to_use, gamer_to_kick, expected_get_response, post_data, expected_post_response",
+    [
+        (None, "gamer2", 302, None, None),  # Login required
+        (
+            "gamer3",
+            "gamer2",
+            403,
+            {
+                "reason": "Jerk",
+                "end_date": (timezone.now() + timedelta(days=2)).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+            },
+            403,
+        ),  # Unauthorized
+        (
+            "gamer1",
+            "gamer3",
+            403,
+            {
+                "end_date": (timezone.now() + timedelta(days=2)).strftime(
+                    "%Y-%m-%d %H:%M"
+                )
+            },
+            403,
+        ),  # Authorized but invalid target
+        (
+            "gamer1",
+            "gamer2",
+            200,
+            {
+                "reason": "Jerk",
+                "end_date": (timezone.now() + timedelta(days=2)).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+            },
+            302,
+        ),  # Authorized and valid
+    ],
+)
+def test_kick_user(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    gamer_to_use,
+    gamer_to_kick,
+    expected_get_response,
+    post_data,
+    expected_post_response,
+):
+    social_testdata.community1.add_member(social_testdata.gamer2)
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    kickee = getattr(social_testdata, gamer_to_kick)
+    url = reverse(
+        "gamer_profiles:community-kick-gamer",
+        kwargs={"community": social_testdata.community1.slug, "gamer": kickee.username},
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        prev_kicks = models.KickedUser.objects.filter(
+            community=social_testdata.community1
+        ).count()
+        response = client.post(url, data=post_data)
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
             assert (
                 models.KickedUser.objects.filter(
-                    community=self.community1, kicked_user=self.gamer2
+                    community=social_testdata.community1
                 ).count()
-                == 0
-            )
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_str, data=self.post_data, **self.bad_url_kwargs)
-            self.response_403()
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
-            self.response_200()
-            assert (
-                models.KickedUser.objects.filter(
-                    community=self.community1, kicked_user=self.gamer2
-                ).count()
-                == 0
-            )
-            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
-            self.response_302()
-            assert (
-                models.KickedUser.objects.filter(
-                    community=self.community1, kicked_user=self.gamer2
-                ).count()
+                - prev_kicks
                 == 1
             )
+            with pytest.raises(models.NotInCommunity):
+                social_testdata.community1.get_role(kickee)
 
 
-class CommunityUpdateKickTest(CommunityKickListTest):
-    """
-    Test attempts to update a kick record.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:community-kick-edit"
-        self.url_kwargs = {"community": self.community1.slug, "kick": self.good_kick.pk}
-        self.bad_url_kwargs = {
-            "community": self.community1.slug,
-            "kick": self.bad_kick.pk,
-        }
-        self.bad_comm_url_kwargs = {
-            "community": self.community2.slug,
-            "kick": self.good_kick.pk,
-        }
-        self.bad_post_data = {"gamer": self.gamer2.pk}
-        self.good_post_data = {
-            "reason": "Posting adult games without CW",
-            "end_date": self.good_kick.end_date.strftime("%Y-%m-%d %H:%M"),
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-            self.get(self.view_str, **self.bad_comm_url_kwargs)
-            self.response_403()
-            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
-            self.response_403()
-            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == "Jerk"
-            self.post(
-                self.view_str, data=self.good_post_data, **self.bad_comm_url_kwargs
-            )
-            self.response_403()
-            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == "Jerk"
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
-            self.response_200()
-            assert models.KickedUser.objects.get(pk=self.good_kick.pk).reason == "Jerk"
-            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
-            self.response_302()
+@pytest.mark.parametrize(
+    "gamer_to_use, community_to_use, kick_record_to_use, expected_get_response, post_data, expected_post_response",
+    [
+        (None, "community1", "kick2", 302, None, None),  # Login required
+        (
+            "gamer2",
+            "community1",
+            "kick2",
+            403,
+            {
+                "reason": "Posting adult games without CW",
+                "end_date": (timezone.now() + timedelta(days=5)).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+            },
+            403,
+        ),  # Unauthorized user
+        (
+            "gamer2",
+            "community2",
+            "kick2",
+            403,
+            {
+                "reason": "Posting adult games without CW",
+                "end_date": (timezone.now() + timedelta(days=5)).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+            },
+            403,
+        ),  # Unauthorized and bad urls
+        (
+            "gamer1",
+            "community2",
+            "kick1",
+            403,
+            {
+                "reason": "Posting adult games without CW",
+                "end_date": (timezone.now() + timedelta(days=5)).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+            },
+            403,
+        ),  # Authorized but with bad url
+        (
+            "gamer1",
+            "community1",
+            "kick1",
+            403,
+            {
+                "reason": "Posting adult games without CW",
+                "end_date": (timezone.now() + timedelta(days=5)).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+            },
+            403,
+        ),  # Authroized but kick already expired
+        (
+            "gamer1",
+            "community1",
+            "kick2",
+            200,
+            {"gamer": "jonathan"},
+            200,
+        ),  # Authorized but with bad post data
+        (
+            "gamer1",
+            "community1",
+            "kick2",
+            200,
+            {
+                "reason": "Posting adult games without CW",
+                "end_date": (timezone.now() + timedelta(days=5)).strftime(
+                    "%Y-%m-%d %H:%M"
+                ),
+            },
+            302,
+        ),  # valid!
+    ],
+)
+def update_kick_record(
+    client,
+    social_testdata_with_kicks,
+    assert_login_redirect,
+    gamer_to_use,
+    community_to_use,
+    kick_record_to_use,
+    expected_get_response,
+    post_data,
+    expected_post_response,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata_with_kicks, gamer_to_use).user)
+    kick_record = getattr(social_testdata_with_kicks, kick_record_to_use)
+    community = getattr(social_testdata_with_kicks, community_to_use)
+    url = reverse(
+        "gamer_profiles:community-kick-edit",
+        kwargs={"community": community.slug, "kick": kick_record.pk},
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data=post_data)
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
             assert (
-                models.KickedUser.objects.get(pk=self.good_kick.pk).reason
-                == "Posting adult games without CW"
+                models.KickedUser.objects.get(pk=kick_record.pk).reason
+                == post_data["reason"]
             )
-
-    def test_authorized_user_with_expired_kick(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.bad_url_kwargs)
-            self.response_403()
-            self.post(self.view_str, data=self.good_post_data, **self.bad_url_kwargs)
-            self.response_403()
+        else:
             assert (
-                models.KickedUser.objects.get(pk=self.bad_kick.pk).reason == "Bad apple"
+                models.KickedUser.objects.get(pk=kick_record.pk).reason
+                != post_data["reason"]
             )
 
 
-class CommunityKickDeleteTest(CommunityUpdateKickTest):
-    """
-    Only authorized users should be able to delete a kick.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:community-kick-delete"
-        self.url_kwargs = {"community": self.community1.slug, "kick": self.good_kick.pk}
-        self.bad_comm_url_kwargs = {
-            "community": self.community2.slug,
-            "kick": self.good_kick.pk,
-        }
-        self.good_post_data = {}  # Allows us to reuse methods from CommunityUpdateKickTest
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
+@pytest.mark.parametrize(
+    "gamer_to_use, community_to_use, kick_record_to_use, expected_get_response, expected_post_response",
+    [
+        (None, "community1", "kick2", 302, None),  # Login required
+        ("gamer2", "community1", "kick2", 403, 403),  # Unauthorized user
+        ("gamer2", "community2", "kick2", 404, 404),  # Unauthorized and bad urls
+        ("gamer1", "community2", "kick1", 404, 404),  # Bad url
+        (
+            "gamer1",
+            "community1",
+            "kick1",
+            200,
+            302,
+        ),  # Authorized users can delete an expired kick
+        ("gamer1", "community1", "kick2", 200, 302),  # valid!
+    ],
+)
+def test_delete_kick_test(
+    client,
+    social_testdata_with_kicks,
+    assert_login_redirect,
+    gamer_to_use,
+    community_to_use,
+    kick_record_to_use,
+    expected_get_response,
+    expected_post_response,
+):
+    kick_record = getattr(social_testdata_with_kicks, kick_record_to_use)
+    community = getattr(social_testdata_with_kicks, community_to_use)
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata_with_kicks, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:community-kick-delete",
+        kwargs={"community": community.slug, "kick": kick_record.pk},
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={})
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
             with pytest.raises(ObjectDoesNotExist):
-                models.KickedUser.objects.get(pk=self.good_kick.pk)
-
-    def test_authorized_user_with_expired_kick(self):
-        """
-        Not valid for this test.
-        """
-        pass
+                models.KickedUser.objects.get(pk=kick_record.pk)
+        else:
+            assert models.KickedUser.objects.get(pk=kick_record.pk)
 
 
-class CommunityBanListTest(AbstractViewTest):
-    """
-    Test viewing the list of banned users from a given community.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.community1.add_member(self.gamer2)
-        self.ban_file = self.community1.ban_user(self.gamer1, self.gamer2, "Jerk")
-        self.view_str = "gamer_profiles:community-ban-list"
-        self.url_kwargs = {"community": self.community1.slug}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            assert self.get_context("ban_list").count() == 1
-
-
-class CommunityBanUserTest(AbstractViewTest):
-    """
-    Test creating a ban record
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.community1.add_member(self.gamer2)
-        self.view_str = "gamer_profiles:community-ban-gamer"
-        self.url_kwargs = {
-            "community": self.community1.slug,
-            "gamer": self.gamer2.username,
-        }
-        self.bad_url_kwargs = {
-            "community": self.community1.slug,
-            "gamer": self.gamer3.username,
-        }
-        self.post_data = {"reason": "Jerk"}
-        self.bad_post_data = {}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
-            self.response_403()
-            assert (
-                models.BannedUser.objects.filter(
-                    community=self.community1, banned_user=self.gamer2
-                ).count()
-                == 0
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response",
+    [(None, 302), ("gamer1", 403), ("gamer5", 200)],
+)
+def test_ban_list(
+    client,
+    social_testdata_with_kicks,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_get_response,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata_with_kicks, gamer_to_use).user)
+    with django_assert_max_num_queries(50):
+        response = client.get(
+            reverse(
+                "gamer_profiles:community-ban-list",
+                kwargs={"community": social_testdata_with_kicks.community.slug},
             )
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_str, data=self.post_data, **self.bad_url_kwargs)
-            self.response_403()
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
-            self.response_200()
-            assert (
-                models.BannedUser.objects.filter(
-                    community=self.community1, banned_user=self.gamer2
-                ).count()
-                == 0
-            )
-            self.post(self.view_str, data=self.post_data, **self.url_kwargs)
-            self.response_302()
-            assert (
-                models.BannedUser.objects.filter(
-                    community=self.community1, banned_user=self.gamer2
-                ).count()
-                == 1
-            )
-
-
-class CommunityUpdateBanTest(CommunityBanListTest):
-    """
-    Test attempts to update a ban record.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.community2.add_member(self.gamer3)
-        self.bad_ban_file = self.community2.ban_user(
-            self.community2.owner, self.gamer3, "Jerkhole"
         )
-        self.view_str = "gamer_profiles:community-ban-edit"
-        self.url_kwargs = {"community": self.community1.slug, "ban": self.ban_file.pk}
-        self.bad_url_kwargs = {
-            "community": self.community1.slug,
-            "ban": self.bad_ban_file.pk,
-        }
-        self.bad_comm_url_kwargs = {
-            "community": self.community2.slug,
-            "ban": self.ban_file.pk,
-        }
-        self.bad_post_data = {"gamer": self.gamer2.pk}
-        self.good_post_data = {"reason": "Posting adult games without CW"}
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        if expected_get_response == 200:
+            assert len(response.context["ban_list"]) == 1
 
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
 
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-            self.get(self.view_str, **self.bad_comm_url_kwargs)
-            self.response_403()
-            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
-            self.response_403()
-            assert models.BannedUser.objects.get(pk=self.ban_file.pk).reason == "Jerk"
-            self.post(
-                self.view_str, data=self.good_post_data, **self.bad_comm_url_kwargs
+@pytest.mark.parametrize(
+    "gamer_to_use, gamer_to_ban, community_to_use, expected_get_response, post_data, expected_post_response",
+    [
+        (None, "gamer1", "community1", 302, None, None),  # Login required
+        (
+            "gamer3",
+            "gamer2",
+            "community1",
+            403,
+            {"reason": "Jerk"},
+            403,
+        ),  # User not authorized
+        (
+            "gamer1",
+            "gamer5",
+            "community1",
+            403,
+            {"reason": "Jerk"},
+            403,
+        ),  # User is authorized but target not in community.
+        (
+            "gamer1",
+            "gamer2",
+            "community1",
+            200,
+            {},
+            200,
+        ),  # User is authorized but post data is bad
+        (
+            "gamer1",
+            "gamer2",
+            "community1",
+            200,
+            {"reason": "Jerk"},
+            302,
+        ),  # Authroized and valid
+    ],
+)
+def test_ban_user(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    gamer_to_use,
+    gamer_to_ban,
+    community_to_use,
+    expected_get_response,
+    post_data,
+    expected_post_response,
+):
+    social_testdata.community1.add_member(social_testdata.gamer2)
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    bad_gamer = getattr(social_testdata, gamer_to_ban)
+    community = getattr(social_testdata, community_to_use)
+    url = reverse(
+        "gamer_profiles:community-ban-gamer",
+        kwargs={"community": community.slug, "gamer": bad_gamer.username},
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, post_data)
+        assert response.status_code == expected_post_response
+        if response.status_code == 302:
+            assert models.BannedUser.objects.get(
+                community=community, banned_user=bad_gamer
             )
-            self.response_403()
-            assert models.BannedUser.objects.get(pk=self.ban_file.pk).reason == "Jerk"
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, data=self.bad_post_data, **self.url_kwargs)
-            self.response_200()
-            assert models.BannedUser.objects.get(pk=self.ban_file.pk).reason == "Jerk"
-            self.post(self.view_str, data=self.good_post_data, **self.url_kwargs)
-            self.response_302()
-            assert (
-                models.BannedUser.objects.get(pk=self.ban_file.pk).reason
-                == "Posting adult games without CW"
-            )
-
-
-class CommunityBanDeleteTest(CommunityUpdateBanTest):
-    """
-    Only authorized users should be able to delete a ban.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:community-ban-delete"
-        self.url_kwargs = {"community": self.community1.slug, "ban": self.ban_file.pk}
-        self.bad_comm_url_kwargs = {
-            "community": self.community2.slug,
-            "ban": self.bad_ban_file.pk,
-        }
-        self.good_post_data = {}  # Allows us to reuse methods from CommunityUpdateBanTest
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
+        else:
             with pytest.raises(ObjectDoesNotExist):
-                models.BannedUser.objects.get(pk=self.ban_file.pk)
+                models.BannedUser.objects.get(
+                    community=community, banned_user=bad_gamer
+                )
 
 
-class GamerProfileDetailTest(AbstractViewTest):
-    """
-    Tests for viewing gamer profile.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.gamer_friend = factories.GamerProfileFactory()
-        self.gamer1.friends.add(self.gamer_friend)
-        self.gamer3.friends.remove(self.gamer1)
-        self.gamer_jerk = factories.GamerProfileFactory()
-        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
-        self.gamer_public = factories.GamerProfileFactory(private=False)
-        self.view_str = "gamer_profiles:profile-detail"
-        self.url_kwargs = {"gamer": self.gamer1.username}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_public_profile(self):
-        with self.login(username=self.gamer3.username):
-            with self.assertNumQueriesLessThan(70):
-                self.get(self.view_str, gamer=self.gamer_public.username)
-                self.response_200()
-
-    def test_private_but_stranger(self):
-        """
-        If a profile is private and the user has no existing connection, it should be redirected
-        to an option to friend the player.
-        """
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert "friend" in self.last_response["location"]
-
-    def test_public_but_blocked(self):
-        with self.login(username=self.gamer_jerk.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-
-    def test_private_same_comm_blocked(self):
-        """
-        Even if you are in the same community, a blocked user
-        cannot see the profile.
-        """
-        self.community1.add_member(self.gamer_jerk)
-        with self.login(username=self.gamer_jerk.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-
-    def test_private_friend_but_blocked(self):
-        """
-        If someone is a friend, but then subsequently blocked,
-        they should be removed from friends and added to blocked users.
-        """
-        assert self.gamer_friend in self.gamer1.friends.all()
-        models.BlockedUser.objects.create(
-            blocker=self.gamer1, blockee=self.gamer_friend
-        )
-        assert self.gamer_friend not in self.gamer1.friends.all()
-        with self.login(username=self.gamer_friend.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-
-    def test_private_but_friend(self):
-        """
-        If profile is private, but user is a friend, show the profile.
-        """
-        with self.login(username=self.gamer_friend.username):
-            with self.assertNumQueriesLessThan(80):
-                self.get(self.view_str, **self.url_kwargs)
-                self.response_200()
-
-    def test_private_but_same_comm(self):
-        """
-        If in the same community, see the profile.
-        """
-        self.community1.add_member(self.gamer3)
-        with self.login(username=self.gamer3.username):
-            with self.assertNumQueriesLessThan(80):
-                self.get(self.view_str, **self.url_kwargs)
-                self.response_200()
+@pytest.mark.parametrize(
+    "gamer_to_use, community_to_use, expected_get_response, post_data, expected_post_response",
+    [
+        (None, "community", 302, None, None),  # Login required
+        ("gamer2", "community", 403, {"reason": "He's pure evil"}, 403),  # Unauthorized
+        (
+            "gamer5",
+            "community2",
+            404,
+            {"reason": "He's pure evil"},
+            404,
+        ),  # Community mismatch
+        ("gamer5", "community", 200, {"gamer": "monkey"}, 200),  # Bad post data
+        ("gamer5", "community", 200, {"reason": "He's pure evil"}, 302),  # Valid!
+    ],
+)
+def test_ban_update(
+    client,
+    social_testdata_with_kicks,
+    assert_login_redirect,
+    gamer_to_use,
+    community_to_use,
+    expected_get_response,
+    post_data,
+    expected_post_response,
+):
+    community = getattr(social_testdata_with_kicks, community_to_use)
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata_with_kicks, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:community-ban-edit",
+        kwargs={
+            "community": community.slug,
+            "ban": social_testdata_with_kicks.banned1.pk,
+        },
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data=post_data)
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
+            assert (
+                models.BannedUser.objects.get(
+                    pk=social_testdata_with_kicks.banned1.pk
+                ).reason
+                == post_data["reason"]
+            )
+        else:
+            if "reason" in post_data.keys():
+                assert (
+                    models.BannedUser.objects.get(
+                        pk=social_testdata_with_kicks.banned1.pk
+                    ).reason
+                    != post_data["reason"]
+                )
 
 
-class GamerProfileUpdateTest(AbstractViewTest):
-    """
-    Test the updating of both user model and gamer profile
-    in save view.
-    """
+@pytest.mark.parametrize(
+    "gamer_to_use, community_to_use, expected_get_response, expected_post_response",
+    [
+        (None, "community", 302, None),
+        ("gamer1", "community", 403, 403),
+        ("gamer5", "community2", 404, 404),
+        ("gamer5", "community", 200, 302),
+    ],
+)
+def test_delete_ban(
+    client,
+    social_testdata_with_kicks,
+    assert_login_redirect,
+    gamer_to_use,
+    community_to_use,
+    expected_get_response,
+    expected_post_response,
+):
+    community = getattr(social_testdata_with_kicks, community_to_use)
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata_with_kicks, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:community-ban-delete",
+        kwargs={
+            "community": community.slug,
+            "ban": social_testdata_with_kicks.banned1.pk,
+        },
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={})
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
+            with pytest.raises(ObjectDoesNotExist):
+                models.BannedUser.objects.get(
+                    community=social_testdata_with_kicks.community,
+                    banned_user=social_testdata_with_kicks.gamer4,
+                )
+        else:
+            assert models.BannedUser.objects.get(
+                pk=social_testdata_with_kicks.banned1.pk
+            )
 
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:profile-edit"
-        self.valid_post = {
+
+@pytest.mark.parametrize(
+    "gamer_to_use, gamer_to_view, expected_get_response, expected_get_location",
+    [
+        (None, "gamer1", 302, None),  # Login required
+        ("gamer2", "public_gamer", 200, None),  # Public profile
+        ("gamer2", "gamer5", 200, None),  # Same community
+        ("gamer2", "gamer1", 302, "friend"),  # Not connected redriect to friend
+        ("gamer3", "gamer1", 200, None),  # Already friends
+        ("blocked_gamer", "gamer1", 403, None),  # Blocked
+    ],
+)
+def test_gamer_profile_detail(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    gamer_to_view,
+    expected_get_response,
+    expected_get_location,
+):
+    gamer_target = getattr(social_testdata, gamer_to_view)
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:profile-detail", kwargs={"gamer": gamer_target.username}
+    )
+    with django_assert_max_num_queries(80):
+        response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        if expected_get_location:
+            assert expected_get_location in response["Location"]
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, post_data_key, expected_post_response",
+    [
+        (None, None, None),  # Login required
+        ("gamer1", "invalid_user_post", 200),  # Invalid data in the user form
+        ("gamer1", "invalid_profile_post", 200),  # Invalid data in the profile form
+        ("gamer1", "valid_post", 302),  # Valid!
+    ],
+)
+def test_profile_update(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    post_data_key,
+    expected_post_response,
+):
+    post_data_dict = {
+        "valid_post": {
             "display_name": "Charles",
             "bio": "Born in the USA",
             "homepage_url": "https://www.google.com",
@@ -1338,8 +1257,8 @@ class GamerProfileUpdateTest(AbstractViewTest):
             "profile-player_status": "searching",
             "profile-one_shots": 1,
             "profile-online_games": 1,
-        }
-        self.invalid_user_post = {
+        },
+        "invalid_user_post": {
             "display_name": "Charles",
             "bio": """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ipsum nibh, tempus et feugiat sit amet, egestas tincidunt tortor. Fusce pellentesque laoreet ultrices. Proin luctus ullamcorper erat, in rhoncus ipsum semper sit amet. Suspendisse felis risus, placerat a semper sed, commodo eu velit. Sed feugiat venenatis ultricies. Vivamus ullamcorper, leo eget mollis mollis, libero nisl pulvinar nisi, non pharetra nulla odio vitae purus. Pellentesque et libero eros, sed tincidunt ligula. Phasellus id metus justo. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Ut mollis tincidunt bibendum.
 
@@ -1357,8 +1276,8 @@ Nunc auctor rutrum ligula ut consectetur. Integer eget lorem elementum diam hend
             "profile-player_status": "searching",
             "profile-one_shots": 1,
             "profile-online_games": 1,
-        }
-        self.invalid_profile_post = {
+        },
+        "invalid_profile_post": {
             "display_name": "Charles",
             "bio": "Born in the USA",
             "homepage_url": "https://www.google.com",
@@ -1368,604 +1287,440 @@ Nunc auctor rutrum ligula ut consectetur. Integer eget lorem elementum diam hend
             "profile-player_status": "ooga shakka",
             "profile-one_shots": 1,
             "profile-online_games": 1,
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str)
-
-    def test_invalid_user_form(self):
-        orig_bio = self.gamer1.user.bio
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_str, data=self.invalid_user_post)
-            self.response_200()
-            assert (
-                type(self.gamer1.user).objects.get(pk=self.gamer1.user.pk).bio
-                == orig_bio
-            )
-
-    def test_invalid_profile_form(self):
-        orig_status = self.gamer1.player_status
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_str, data=self.invalid_profile_post)
-            self.response_200()
-            assert (
-                models.GamerProfile.objects.get(pk=self.gamer1.pk).player_status
-                == orig_status
-            )
-
-    def test_valid_form(self):
-        with self.login(username=self.gamer1.username):
-            self.post(self.view_str, data=self.valid_post)
-            # form = self.get_context('form')
-            # if form.errors:
-            #     print(form.errors.as_data())
-            # profile_form = self.get_context('profile_form')
-            # if profile_form.errors:
-            #     print(profile_form.errors.as_data())
-            self.response_302()
-            assert (
-                type(self.gamer1.user).objects.get(pk=self.gamer1.user.pk).display_name
-                == "Charles"
-            )
-            assert (
-                models.GamerProfile.objects.get(pk=self.gamer1.pk).player_status
-                == "searching"
-            )
+        },
+    }
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+    url = reverse("gamer_profiles:profile-edit")
+    with django_assert_max_num_queries(80):
+        response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        orig_status = gamer.player_status
+        orig_bio = gamer.user.bio
+        assert response.status_code == 200
+        response = client.post(url, data=post_data_dict[post_data_key])
+        assert response.status_code == expected_post_response
+        gamer.refresh_from_db()
+        if expected_post_response == 302:
+            assert gamer.player_status == "searching"
+            assert gamer.user.display_name == "Charles"
+        else:
+            assert gamer.user.bio == orig_bio
+            assert gamer.player_status == orig_status
 
 
-class GamerFriendRequestTest(AbstractViewTest):
-    """
-    Tests the view for submitting friend requests.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.gamer_friend = factories.GamerProfileFactory()
-        self.gamer1.friends.add(self.gamer_friend)
-        self.gamer3.friends.remove(self.gamer1)
-        self.gamer_jerk = factories.GamerProfileFactory()
-        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
-        self.gamer_public = factories.GamerProfileFactory(private=False)
-        self.view_str = "gamer_profiles:gamer-friend"
-        self.url_kwargs = {"gamer": self.gamer1.username}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_blocked_user(self):
-        with self.login(username=self.gamer_jerk.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_403()
-
-    def test_already_friends(self):
-        with self.login(username=self.gamer_friend.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_302()
-            current_requests = models.GamerFriendRequest.objects.filter(
-                requestor=self.gamer_friend, recipient=self.gamer1
-            ).count()
-            assert current_requests == 0
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert (
-                current_requests
-                == models.GamerFriendRequest.objects.filter(
-                    requestor=self.gamer_friend, recipient=self.gamer1
-                ).count()
-            )
-
-    def reverse_request_already_received(self):
-        assert self.gamer3 not in self.gamer1.friends.all()
-        test_request = models.GamerFriendRequest.objects.create(
-            requestor=self.gamer1, recipient=self.gamer3, status="new"
-        )
-        with self.login(username=self.gamer3.username):
-            self.post(self.view_str, **self.url_kwargs)
-            test_request.refresh_from_db()
-            assert test_request.status == "approve"
-            assert self.gamer3 in self.gamer1.friends.all()
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer3.username):
-            with transaction.atomic():
-                with pytest.raises(ObjectDoesNotExist):
-                    models.GamerFriendRequest.objects.get(
-                        requestor=self.gamer3, recipient=self.gamer1
-                    )
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert models.GamerFriendRequest.objects.get(
-                requestor=self.gamer3, recipient=self.gamer1
-            )
-
-    def test_request_already_queued(self):
-        models.GamerFriendRequest.objects.create(
-            requestor=self.gamer3, recipient=self.gamer1, status="new"
-        )
+@pytest.mark.parametrize(
+    "gamer_to_use, gamer_to_friend, expected_get_response, expected_post_response, should_friend, new_requests",
+    [
+        (None, "gamer1", 302, None, False, 0),
+        ("gamer3", "gamer1", 302, 302, True, 0),
+        ("blocked_gamer", "gamer1", 403, 403, False, 0),
+        ("gamer1", "prospective_friend", 200, 302, True, 0),
+        ("prospective_friend", "gamer1", 200, 302, False, 1),
+        ("gamer2", "gamer1", 200, 302, False, 1),
+    ],
+)
+def test_gamer_friend_request(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    gamer_to_friend,
+    expected_get_response,
+    expected_post_response,
+    should_friend,
+    new_requests,
+):
+    gamer_friend = getattr(social_testdata, gamer_to_friend)
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+    url = reverse(
+        "gamer_profiles:gamer-friend", kwargs={"gamer": gamer_friend.username}
+    )
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url)
+        assert response.status_code == expected_post_response
+        gamer.refresh_from_db()
         assert (
             models.GamerFriendRequest.objects.filter(
-                requestor=self.gamer3, recipient=self.gamer1
+                requestor=gamer, recipient=gamer_friend
             ).count()
-            == 1
+            == new_requests
         )
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.assertInContext("pending_request")
-            self.post(self.view_str, **self.url_kwargs)
-            assert (
-                models.GamerFriendRequest.objects.filter(
-                    requestor=self.gamer3, recipient=self.gamer1
-                ).count()
-                == 1
-            )
+        if should_friend:
+            assert gamer_friend in gamer.friends.all()
+        else:
+            assert gamer_friend not in gamer.friends.all()
 
 
-class GamerFriendRequestWithdrawTest(AbstractViewTest):
-    """
-    Test that only the creator of a friend request can delete it.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.gamer_friend = factories.GamerProfileFactory()
-        self.gamer1.friends.add(self.gamer_friend)
-        self.gamer3.friends.remove(self.gamer1)
-        self.request_obj = models.GamerFriendRequest.objects.create(
-            requestor=self.gamer3, recipient=self.gamer1, status="new"
-        )
-        self.gamer_jerk = factories.GamerProfileFactory()
-        models.BlockedUser.objects.create(blocker=self.gamer1, blockee=self.gamer_jerk)
-        self.gamer_public = factories.GamerProfileFactory(private=False)
-        self.view_str = "gamer_profiles:gamer-friend-request-delete"
-        self.url_kwargs = {"friend_request": self.request_obj.pk}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_403()
-            assert models.GamerFriendRequest.objects.get(pk=self.request_obj.pk)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_post_response",
+    [(None, 302, None), ("gamer2", 405, 403), ("prospective_friend", 405, 302)],
+)
+def test_friend_request_withdraw(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_get_response,
+    expected_post_response,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:gamer-friend-request-delete",
+        kwargs={"friend_request": social_testdata.fr.pk},
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={})
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
             with pytest.raises(ObjectDoesNotExist):
-                models.GamerFriendRequest.objects.get(pk=self.request_obj.pk)
+                models.GamerFriendRequest.objects.get(pk=social_testdata.fr.pk)
+        else:
+            assert models.GamerFriendRequest.objects.get(pk=social_testdata.fr.pk)
 
 
-class GamerFriendRequestApproveTest(AbstractViewTest):
-    """
-    Test request approvals.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.new_frand = factories.GamerProfileFactory()
-        self.friend_request = models.GamerFriendRequest.objects.create(
-            requestor=self.new_frand, recipient=self.gamer1, status="new"
-        )
-        self.view_str = "gamer_profiles:gamer-friend-request-approve"
-        self.url_kwargs = {"friend_request": self.friend_request.pk}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_403()
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use, expected_get_response, expected_post_response",
+    [
+        ("approve", None, 302, None),
+        ("reject", None, 302, None),
+        ("approve", "gamer2", 405, 403),
+        ("reject", "gamer2", 405, 403),
+        ("approve", "gamer1", 405, 302),
+        ("reject", "gamer1", 405, 302),
+    ],
+)
+def test_friend_request_approve_deny(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    view_name,
+    gamer_to_use,
+    expected_get_response,
+    expected_post_response,
+):
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+    url = reverse(
+        "gamer_profiles:gamer-friend-request-{}".format(view_name),
+        kwargs={"friend_request": social_testdata.fr.pk},
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={})
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
             assert (
-                models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status
+                models.GamerFriendRequest.objects.get(pk=social_testdata.fr.pk).status
+                != "new"
+            )
+            if "approve" in view_name:
+                assert social_testdata.prospective_friend in gamer.friends.all()
+            else:
+                assert social_testdata.prospective_friend not in gamer.friends.all()
+        else:
+            assert (
+                models.GamerFriendRequest.objects.get(pk=social_testdata.fr.pk).status
                 == "new"
             )
 
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert (
-                models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status
-                != "new"
-            )
-            assert self.new_frand in self.gamer1.friends.all()
 
-
-class GamerFriendRequestDenyTest(GamerFriendRequestApproveTest):
-    """
-    Test request denials
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:gamer-friend-request-reject"
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert (
-                models.GamerFriendRequest.objects.get(pk=self.friend_request.pk).status
-                != "new"
-            )
-            assert self.new_frand not in self.gamer1.friends.all()
-
-
-class GamerFriendRequestListTest(AbstractViewTest):
-    """
-    View requests.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.new_frand = factories.GamerProfileFactory()
-        self.new_frand2 = factories.GamerProfileFactory()
-        self.new_frand3 = factories.GamerProfileFactory()
-        self.friend_request = models.GamerFriendRequest.objects.create(
-            requestor=self.new_frand, recipient=self.gamer1, status="new"
+@pytest.mark.parametrize("gamer_to_use", [(None), ("gamer1")])
+def test_friend_request_list(
+    client, social_testdata, assert_login_redirect, gamer_to_use
+):
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+        models.GamerFriendRequest.objects.create(
+            requestor=gamer, recipient=social_testdata.gamer5, status="new"
         )
-        self.friend_request2 = models.GamerFriendRequest.objects.create(
-            requestor=self.new_frand2, recipient=self.gamer1, status="new"
-        )
-        self.sent_request = models.GamerFriendRequest.objects.create(
-            requestor=self.gamer1, recipient=self.gamer2, status="new"
-        )
-        self.extra_request = models.GamerFriendRequest.objects.create(
-            requestor=self.gamer1, recipient=self.new_frand3, status="new"
-        )
-        self.extra_request.accept()
-        self.view_str = "gamer_profiles:my-gamer-friend-requests"
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str)
-
-    def test_authenticated_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str)
-            assert self.get_context("pending_requests").count() == 2
-            assert self.get_context("sent_requests").count() == 1
-            self.friend_request.accept()
-            self.assertGoodView(self.view_str)
-            assert self.get_context("pending_requests").count() == 1
+    response = client.get(reverse("gamer_profiles:my-gamer-friend-requests"))
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == 200
+        assert response.context["pending_requests"].count() == 1
+        assert response.context["sent_requests"].count() == 1
+        response.context["pending_requests"][0].accept()
+        response = client.get(reverse("gamer_profiles:my-gamer-friend-requests"))
+        assert response.context["pending_requests"].count() == 0
 
 
-class MuteGamerTest(AbstractViewTest):
-    """
-    A post only method to mute a gamer. If arg 'next' is provided,
-    will redirect to that, otherwise goes to target's profile page.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:mute-gamer"
-        self.url_kwargs = {
-            "gamer": self.gamer3.username,
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use",
+    [
+        ("mute-gamer", None),
+        ("block-gamer", None),
+        ("mute-gamer", "gamer1"),
+        ("block-gamer", "gamer1"),
+    ],
+)
+def test_mute_block_gamer(
+    client, social_testdata, assert_login_redirect, view_name, gamer_to_use
+):
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+    url = reverse(
+        "gamer_profiles:{}".format(view_name),
+        kwargs={
+            "gamer": social_testdata.gamer3.username,
             "next": reverse("gamer_profiles:my-community-list"),
-        }
-
-    def test_login_required(self):
-        self.get(self.view_str, **self.url_kwargs)
-        self.response_302()
-        assert "accounts/login" in self.last_response["location"]
-
-    def test_auth_user(self):
-        assert (
-            models.MutedUser.objects.filter(
-                muter=self.gamer1, mutee=self.gamer3
-            ).count()
-            == 0
-        )
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert "communities" in self.last_response["location"]
-            assert (
-                models.MutedUser.objects.filter(
-                    muter=self.gamer1, mutee=self.gamer3
-                ).count()
-                == 1
+        },
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == 405
+        response = client.post(url, data={})
+        assert response.status_code == 302
+        assert "communities" in response["Location"]
+        if "mute" in view_name:
+            assert models.MutedUser.objects.get(
+                muter=gamer, mutee=social_testdata.gamer3
+            )
+        else:
+            assert models.BlockedUser.objects.get(
+                blocker=gamer, blockee=social_testdata.gamer3
             )
 
 
-class RemoveMuteTest(AbstractViewTest):
-    """
-    Only the person who created a given mute record can remove it.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.mute_record = models.MutedUser.objects.create(
-            muter=self.gamer1, mutee=self.gamer3
-        )
-        self.view_str = "gamer_profiles:unmute-gamer"
-        self.url_kwargs = {
-            "mute": self.mute_record.pk,
-            "next": reverse(
-                "gamer_profiles:profile-detail",
-                kwargs={"gamer": self.mute_record.mutee.pk},
-            ),
-        }
-        print(reverse(self.view_str, kwargs=self.url_kwargs))
-
-    def test_login_required(self):
-        self.get(self.view_str, **self.url_kwargs)
-        self.response_302()
-        assert "accounts/login" in self.last_response["location"]
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_403()
-            assert models.MutedUser.objects.get(pk=self.mute_record.pk)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert "profile" in self.last_response["location"]
-            with pytest.raises(ObjectDoesNotExist):
-                models.MutedUser.objects.get(pk=self.mute_record.pk)
-
-
-class BlockGamerTest(AbstractViewTest):
-    """
-    A post only method to block a gamer. If arg 'next' is provided,
-    will redirect to that, otherwise goes to target's profile page.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:block-gamer"
-        self.url_kwargs = {
-            "gamer": self.gamer3.username,
+@pytest.mark.parametrize(
+    "view_name, gamer_to_use, expected_get_response, expected_post_response",
+    [
+        ("unmute-gamer", None, 302, None),
+        ("unblock-gamer", None, 302, None),
+        ("unmute-gamer", "gamer2", 405, 403),
+        ("unblock-gamer", "gamer2", 405, 403),
+        ("unmute-gamer", "gamer1", 405, 302),
+        ("unblock-gamer", "gamer1", 405, 302),
+    ],
+)
+def test_remove_mute_block(
+    client,
+    social_testdata,
+    assert_login_redirect,
+    view_name,
+    gamer_to_use,
+    expected_get_response,
+    expected_post_response,
+):
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+    if "mute" in view_name:
+        record_to_remove = social_testdata.mute_record
+        urlkwarg = "mute"
+    else:
+        record_to_remove = social_testdata.block_record
+        urlkwarg = "block"
+    url = reverse(
+        "gamer_profiles:{}".format(view_name),
+        kwargs={
+            urlkwarg: record_to_remove.pk,
             "next": reverse("gamer_profiles:my-community-list"),
-        }
+        },
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={})
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
+            assert "communities" in response["Location"]
+            with pytest.raises(ObjectDoesNotExist):
+                type(record_to_remove).objects.get(pk=record_to_remove.pk)
+        else:
+            assert type(record_to_remove).objects.get(pk=record_to_remove.pk)
 
-    def test_login_required(self):
-        self.get(self.view_str, **self.url_kwargs)
-        self.response_302()
-        assert "accounts/login" in self.last_response["location"]
 
-    def test_auth_user(self):
+@pytest.mark.parametrize("gamer_to_use", [(None), ("gamer1")])
+def test_create_gamer_note(
+    client, social_testdata, assert_login_redirect, gamer_to_use
+):
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+    url = reverse(
+        "gamer_profiles:add-gamer-note",
+        kwargs={"gamer": social_testdata.gamer3.username},
+    )
+    response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == 200
+        prev_count = models.GamerNote.objects.filter(
+            gamer=social_testdata.gamer3
+        ).count()
+        response = client.post(
+            url, data={"title": "Test note", "body": "Hi **there**!"}
+        )
+        assert response.status_code == 302
         assert (
-            models.BlockedUser.objects.filter(
-                blocker=self.gamer1, blockee=self.gamer3
-            ).count()
-            == 0
+            models.GamerNote.objects.filter(gamer=social_testdata.gamer3).count()
+            - prev_count
+            == 1
         )
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert "communities" in self.last_response["location"]
+
+
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, post_data, expected_post_response",
+    [
+        (None, 302, None, None),
+        (
+            "gamer3",
+            403,
+            {"title": "Test note", "body": "I at a whole chicken once."},
+            403,
+        ),
+        ("gamer1", 200, {"monkeys": "Are furry"}, 200),
+        (
+            "gamer1",
+            200,
+            {"title": "Test note", "body": "I at a whole chicken once."},
+            302,
+        ),
+    ],
+)
+def test_update_gamer_note(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_get_response,
+    post_data,
+    expected_post_response,
+):
+    if gamer_to_use:
+        gamer = getattr(social_testdata, gamer_to_use)
+        client.force_login(user=gamer.user)
+    url = reverse(
+        "gamer_profiles:edit-gamernote", kwargs={"gamernote": social_testdata.gn.pk}
+    )
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data=post_data)
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
             assert (
-                models.BlockedUser.objects.filter(
-                    blocker=self.gamer1, blockee=self.gamer3
-                ).count()
-                == 1
+                models.GamerNote.objects.get(pk=social_testdata.gn.pk).body
+                == post_data["body"]
+            )
+        else:
+            assert (
+                models.GamerNote.objects.get(pk=social_testdata.gn.pk).body
+                == "This is someone new."
             )
 
 
-class RemoveBlockTest(AbstractViewTest):
-    """
-    Only the person who created a given block record can remove it.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.block_record = models.BlockedUser.objects.create(
-            blocker=self.gamer1, blockee=self.gamer3
-        )
-        self.view_str = "gamer_profiles:unblock-gamer"
-        self.url_kwargs = {
-            "block": self.block_record.pk,
-            "next": reverse(
-                "gamer_profiles:profile-detail",
-                kwargs={"gamer": self.block_record.blockee.pk},
-            ),
-        }
-        print(reverse(self.view_str, kwargs=self.url_kwargs))
-
-    def test_login_required(self):
-        self.get(self.view_str, **self.url_kwargs)
-        self.response_302()
-        assert "accounts/login" in self.last_response["location"]
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_403()
-            assert models.BlockedUser.objects.get(pk=self.block_record.pk)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_405()
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            assert "profile" in self.last_response["location"]
+@pytest.mark.parametrize(
+    "gamer_to_use, expected_get_response, expected_post_response",
+    [(None, 302, None), ("gamer2", 403, 403), ("gamer1", 200, 302)],
+)
+def test_delete_gamer_note(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    expected_get_response,
+    expected_post_response,
+):
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:delete-gamernote", kwargs={"gamernote": social_testdata.gn.pk}
+    )
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
+        response = client.post(url, data={})
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
             with pytest.raises(ObjectDoesNotExist):
-                models.BlockedUser.objects.get(pk=self.block_record.pk)
+                models.GamerNote.objects.get(pk=social_testdata.gn.pk)
+        else:
+            assert models.GamerNote.objects.get(pk=social_testdata.gn.pk)
 
 
-class CreateGamerNoteTest(AbstractViewTest):
-    """
-    Test create view for gamer notes.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_str = "gamer_profiles:add-gamer-note"
-        self.url_kwargs = {"gamer": self.gamer3.username}
-        self.post_url_kwargs = {
-            "gamer": self.gamer3.username,
-            "data": {"title": "Test note", "body": "Hi **there**!"},
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            assert models.GamerNote.objects.filter(gamer=self.gamer3).count() == 0
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            assert models.GamerNote.objects.filter(gamer=self.gamer3).count() == 0
-            self.post(self.view_str, **self.post_url_kwargs)
-            self.response_302()
-            assert models.GamerNote.objects.filter(gamer=self.gamer3).count() == 1
-
-
-class UpdateGamerNoteTest(AbstractViewTest):
-    """
-    Test updating a gamer note.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.gn = models.GamerNote.objects.create(
-            author=self.gamer1,
-            gamer=self.gamer3,
-            title="Test Note",
-            body="Hi **there**!",
-        )
-        self.view_str = "gamer_profiles:edit-gamernote"
-        self.url_kwargs = {"gamernote": self.gn.pk}
-        self.post_url_kwargs = {
-            "gamernote": self.gn.pk,
-            "data": {
-                "title": "New Title",
-                "body": "Something [new](https://www.google.com)",
-            },
-        }
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-            self.post(self.view_str, **self.post_url_kwargs)
-            self.response_403()
-            assert models.GamerNote.objects.get(pk=self.gn.pk).title == "Test Note"
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            # test invalid form
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_200()  # Form errors
-            assert models.GamerNote.objects.get(pk=self.gn.pk).title == "Test Note"
-            self.post(self.view_str, **self.post_url_kwargs)
-            self.response_302()
-            assert models.GamerNote.objects.get(pk=self.gn.pk).title == "New Title"
-
-
-class DeleteGamerNoteTest(AbstractViewTest):
-    """
-    Test deleting a gamer note.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.gn = models.GamerNote.objects.create(
-            author=self.gamer1,
-            gamer=self.gamer3,
-            title="Test Note",
-            body="Hi **there**!",
-        )
-        self.view_str = "gamer_profiles:delete-gamernote"
-        self.url_kwargs = {"gamernote": self.gn.pk}
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_str, **self.url_kwargs)
-
-    def test_unauthorized_user(self):
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_str, **self.url_kwargs)
-            self.response_403()
-            assert models.GamerNote.objects.get(pk=self.gn.pk)
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_403()
-            assert models.GamerNote.objects.get(pk=self.gn.pk)
-
-    def test_authorized_user(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_str, **self.url_kwargs)
-            self.post(self.view_str, **self.url_kwargs)
-            self.response_302()
-            with pytest.raises(ObjectDoesNotExist):
-                models.GamerNote.objects.get(pk=self.gn.pk)
-
-
-class CommunityInviteTest(AbstractViewTest):
-    """
-    Abstract view test.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "gamer_profiles:community_invite_list"
-        self.url_kwargs = {"slug": self.community1.slug}
-        for x in range(3):
-            Invite.objects.create(
-                creator=self.gamer1.user,
-                label="test {}".format(x),
-                content_object=self.community1,
-            )
-        self.community1.add_member(self.gamer3)
-        self.community1.invites_allowed = "member"
-        self.community1.save()
+@pytest.mark.parametrize(
+    "gamer_to_use, invite_level, expected_get_response",
+    [
+        (None, "member", 302),
+        ("muted_gamer", "member", 403),
+        ("gamer3", "member", 200),
+        ("gamer3", "admin", 403),
+        ("gamer1", "member", 200),
+        ("gamer1", "admin", 200),
+    ],
+)
+def test_community_invite_view(
+    client,
+    social_testdata,
+    django_assert_max_num_queries,
+    assert_login_redirect,
+    gamer_to_use,
+    invite_level,
+    expected_get_response,
+):
+    for x in range(3):
         Invite.objects.create(
-            creator=self.gamer3.user,
-            label="test gamer 3",
-            content_object=self.community1,
+            creator=social_testdata.gamer1.user,
+            label="test {}".format(x),
+            content_object=social_testdata.community1,
         )
-
-    def test_login_required(self):
-        self.assertLoginRequired(self.view_name, **self.url_kwargs)
-
-    def test_view_for_non_member(self):
-        with self.login(username=self.gamer2.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_view_with_member(self):
-        with self.login(username=self.gamer3.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
-        self.community1.invites_allowed = "admin"
-        self.community1.save()
-        with self.login(username=self.gamer3.username):
-            self.get(self.view_name, **self.url_kwargs)
-            self.response_403()
-
-    def test_view_with_admin(self):
-        with self.login(username=self.gamer1.username):
-            self.assertGoodView(self.view_name, **self.url_kwargs)
+    social_testdata.community1.add_member(social_testdata.gamer3)
+    social_testdata.community1.invites_allowed = "member"
+    social_testdata.community1.save()
+    Invite.objects.create(
+        creator=social_testdata.gamer3.user,
+        label="Test invite",
+        content_object=social_testdata.community1,
+    )
+    social_testdata.community1.invites_allowed = invite_level
+    social_testdata.community1.save()
+    if gamer_to_use:
+        client.force_login(user=getattr(social_testdata, gamer_to_use).user)
+    url = reverse(
+        "gamer_profiles:community_invite_list",
+        kwargs={"slug": social_testdata.community1.slug},
+    )
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    if not gamer_to_use:
+        assert assert_login_redirect(response)
+    else:
+        assert response.status_code == expected_get_response
