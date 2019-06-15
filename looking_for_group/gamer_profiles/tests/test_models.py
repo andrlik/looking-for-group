@@ -2,7 +2,14 @@ import pytest
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 
-from ..models import AlreadyInCommunity, BannedUser, CommunityMembership, GamerFriendRequest, KickedUser, NotInCommunity
+from ..models import (
+    AlreadyInCommunity,
+    BannedUser,
+    CommunityMembership,
+    GamerFriendRequest,
+    KickedUser,
+    NotInCommunity,
+)
 from .factories import GamerProfileFactory, GamerProfileWithCommunityFactory
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -159,7 +166,7 @@ def test_not_permitted_ban(social_testdata):
 
 
 def test_friend_requests_check(social_testdata):
-    assert social_testdata.gamer1.friend_requests_received.count() == 0
+    assert social_testdata.gamer1.friend_requests_received.count() == 1
     assert social_testdata.gamer1.friend_requests_sent.count() == 0
     req = GamerFriendRequest.objects.create(
         requestor=social_testdata.gamer1, recipient=social_testdata.gamer2

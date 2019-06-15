@@ -29,17 +29,17 @@ class MyAxe(Axe):
             return violations
         for viol in violations:
             if (
-                    viol["id"] == "label"
-                    and len(viol["nodes"][0]["target"]) == 1
-                    and viol["nodes"][0]["target"][0] == "#id_q"
+                viol["id"] == "label"
+                and len(viol["nodes"][0]["target"]) == 1
+                and viol["nodes"][0]["target"][0] == "#id_q"
             ):
                 ids_to_remove.append(x)
             if (
-                    viol["id"] == "color-contrast"
-                    and len(viol["nodes"][0]["target"]) == 1
-                    and len(viol["nodes"][0]["any"]) == 1
-                    and "#1779ba" in viol["nodes"][0]["any"][0]["message"]
-                    and "#2c3840" in viol["nodes"][0]["any"][0]["message"]
+                viol["id"] == "color-contrast"
+                and len(viol["nodes"][0]["target"]) == 1
+                and len(viol["nodes"][0]["any"]) == 1
+                and "#1779ba" in viol["nodes"][0]["any"][0]["message"]
+                and "#2c3840" in viol["nodes"][0]["any"][0]["message"]
             ):
                 ids_to_remove.append(x)
             x += 1
@@ -82,6 +82,15 @@ def axe_class():
 @pytest.fixture(autouse=True)
 def enable_db_access(db):
     pass
+
+
+def login_redirect_check(response):
+    return response.status_code == 302 and "/accounts/login/" in response["Location"]
+
+
+@pytest.fixture
+def assert_login_redirect():
+    return login_redirect_check
 
 
 @pytest.fixture(autouse=True)
