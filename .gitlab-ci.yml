@@ -12,9 +12,9 @@ test:
     - curl -sL https://deb.nodesource.com/setup_11.x | bash -
     - apt-get install -y nodejs
     - python -V
-    - pip install pipenv
+    - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
     - npm install
     - npm prune --production
-    - pipenv sync --dev
+    - poetry install
   script:
-  - pipenv run pytest -n 2
+  - poetry run pytest -n 2
