@@ -13,6 +13,7 @@ test:
     - apt-get install -y nodejs
     - python -V
     - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+    - source $HOME/.poetry/env
     - npm install
     - npm prune --production
     - poetry install
