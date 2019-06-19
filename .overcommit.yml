@@ -31,11 +31,6 @@
 #
 #  IndexTags:
 #    enabled: true # Generate a tags file with `ctags` each time HEAD changes
-PreCommit:
-  CustomScript:
-    enabled: true
-    required_executable: './bin/verify_valid_requirements'
-
 CommitMsg:
   CapitalizedSubject:
     enabled: false
