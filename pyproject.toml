@@ -5,7 +5,7 @@ description = "An RPG group finding and campaign management application."
 authors = ["Daniel Andrlik <daniel@andrlik.org>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "~3.6"
 pytz = "=2019.1"
 text-unidecode = "=1.2"
 pillow = "=6.0.0"
