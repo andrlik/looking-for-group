@@ -5,7 +5,7 @@ description = "An RPG group finding and campaign management application."
 authors = ["Daniel Andrlik <daniel@andrlik.org>"]
 
 [tool.poetry.dependencies]
-python = "<3.8"
+python = "~3.6 || ^3.7 || ^3.8"
 pytz = "=2019.1"
 text-unidecode = "=1.2"
 pillow = "=6.0.0"
@@ -24,7 +24,6 @@ django-redis = "~4.10.0"
 djangorestframework = "~3.9.4"
 coreapi = "~2.3.3"
 waitress = "~1.3.0"
-raven = "~6.10.0"
 django-anymail = "~6.0.1"
 django-storages = "~1.7.1"
 django-avatar = "~4.1.0"
@@ -62,6 +61,7 @@ numpy = "~1.16.4"
 geopy = "~1.20.0"
 django-haystack = { git = "https://github.com/andrlik/django-haystack.git", rev = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8" }
 django-scheduler = { git = "https://github.com/andrlik/django-scheduler.git", rev = "4ae1fcf09065f0c9b7380685772549c70d2e78ff" }
+sentry-sdk = "^0.9.0"
 
 [tool.poetry.dev-dependencies]
 sphinx = "~2.1.1"
@@ -72,15 +72,15 @@ pytest-xdist = "~1.28.0"
 flake8 = "^3.7.7"
 coverage = "~4.5.3"
 django-test-plus = "~1.2.0"
-django-debug-toolbar = "~1.11"
 django-coverage-plugin = "~1.6.0"
-pytest-django = "~3.5.0"
 pytest-env = "~0.6.2"
-isort = "~4.3.20"
 bumpversion = "~0.5.3"
 pypom = "~2.2.0"
 pytest-selenium = "~1.16.0"
 axe-selenium-python = "~2.1.6"
+isort = "^4.3"
+pytest-django = "^3.5"
+django-debug-toolbar = "^1.11"
 
 [build-system]
 requires = ["poetry>=0.12"]
