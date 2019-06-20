@@ -1,6 +1,8 @@
-import logging
 import os
 from urllib.parse import urlparse
+
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 import looking_for_group
 
@@ -149,7 +151,7 @@ ANYMAIL = {
 # WhiteNoise
 # ------------------------------------------------------------------------------
 # http://whitenoise.evans.io/en/latest/django.html#enable-whitenoise
-MIDDLEWARE.insert(2, 'whitenoise.middleware.WhiteNoiseMiddleware')  # noqa F405
+MIDDLEWARE.insert(2, "whitenoise.middleware.WhiteNoiseMiddleware")  # noqa F405
 # django-compressor
 # ------------------------------------------------------------------------------
 # https://django-compressor.readthedocs.io/en/latest/settings/#django.conf.settings.COMPRESS_ENABLED
@@ -157,29 +159,23 @@ COMPRESS_ENABLED = env.bool("COMPRESS_ENABLED", default=True)
 # https://django-compressor.readthedocs.io/en/latest/settings/#django.conf.settings.COMPRESS_STORAGE
 COMPRESS_STORAGE = "compressor.storage.GzipCompressorFileStorage"
 # https://django-compressor.readthedocs.io/en/latest/settings/#django.conf.settings.COMPRESS_URL
-COMPRESS_URL = STATIC_URL  # noqa F405# raven
+COMPRESS_URL = STATIC_URL  # noqa F405
 COMPRESS_OFFLINE = env.bool("COMPRESS_OFFLINE", default=True)
 # ------------------------------------------------------------------------------
 # https://docs.sentry.io/clients/python/integrations/django/
-INSTALLED_APPS += ["raven.contrib.django.raven_compat"]  # noqa F405
 
-MIDDLEWARE = [
-    "allow_cidr.middleware.AllowCIDRMiddleware",
-    "raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware",
-] + MIDDLEWARE  # noqa: F405
+MIDDLEWARE = ["allow_cidr.middleware.AllowCIDRMiddleware"] + MIDDLEWARE  # noqa: F405
 ALLOWED_CIDR_NETS = env.list(
     "DJANGO_ALLOWED_CIDR_NETS", default=["12.0.0.0/11", "172.31.0.0/11"]
 )
 # Sentry
 # ------------------------------------------------------------------------------
 SENTRY_DSN = env("DJANGO_SENTRY_DSN")
-SENTRY_CLIENT = env(
-    "DJANGO_SENTRY_CLIENT", default="raven.contrib.django.raven_compat.DjangoClient"
-)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
-    "root": {"level": "WARNING", "handlers": ["sentry"]},
+    "root": {"level": "WARNING", "handlers": ["console"]},
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s "
@@ -187,15 +183,11 @@ LOGGING = {
         }
     },
     "handlers": {
-        "sentry": {
-            "level": "ERROR",
-            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
-        },
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
-        },
+        }
     },
     "loggers": {
         "django.db.backends": {
@@ -203,42 +195,30 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "raven": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "sentry.errors": {
-            "level": "DEBUG",
-            "handlers": ["console"],
-            "propagate": False,
-        },
-        "django.security.DisallowedHost": {
             "level": "ERROR",
-            "handlers": ["console", "sentry"],
+            "handlers": ["console"],
             "propagate": False,
         },
         "gamer_profiles": {
             "level": "ERROR",
-            "handlers": ["console", "sentry"],
+            "handlers": ["console"],
             "propagate": False,
         },
-        "rules": {
-            "level": "ERROR",
-            "handlers": ["console", "sentry"],
-            "propagate": False,
-        },
-        "discord": {
-            "level": "INFO",
-            "handlers": ["console", "sentry"],
-            "propagate": False,
-        },
+        "games": {"level": "ERROR", "handlers": ["console"], "propagate": False},
+        "rules": {"level": "ERROR", "handlers": ["console"], "propagate": False},
+        "discord": {"level": "ERROR", "handlers": ["console"], "propagate": False},
     },
 }
 
-SENTRY_CELERY_LOGLEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
 
-RAVEN_CONFIG = {
-    "dsn": SENTRY_DSN,
-    "release": looking_for_group.__version__,
-    "ignore_exceptions": ["django.exceptions.http.DisallowedHost"],
-}
+# SENTRY_CELERY_LOGLEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    integrations=[DjangoIntegration()],
+    release=looking_for_group.__version__,
+)
+
 # Your stuff...
 # ------------------------------------------------------------------------------
 Q_CLUSTER["django_redis"] = "default"  # noqa:F405
