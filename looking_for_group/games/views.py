@@ -25,9 +25,9 @@ from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar, Occurrence
 from schedule.periods import Day, Month
 
-from . import forms, models, serializers
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..gamer_profiles.models import GamerProfile
+from . import forms, models, serializers
 from .mixins import JSONResponseMixin
 from .utils import mkfirstOfmonth, mkLastOfMonth
 
@@ -758,7 +758,7 @@ class GamePostingDeleteView(
 
     model = models.GamePosting
     select_related = ["event", "published_game", "game_system", "published_module"]
-    prefetch_related = ["players", "communities", "players__character_set"]
+    prefetch_related = ["players", "communities"]
     permission_required = "game.can_edit_listing"
     template_name = "games/game_delete.html"
     slug_url_kwarg = "gameid"
@@ -774,7 +774,7 @@ class GamePostingDeleteView(
         )
         obj = self.get_object()
         if obj.players.count() > 0:
-            for player in obj.players:
+            for player in obj.players.all():
                 notify.send(obj.gm, recipient=player.user, verb="deleted", target=obj)
         return super().delete(request, *args, **kwargs)
 

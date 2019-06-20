@@ -277,7 +277,7 @@ def generate_master_event_occurrence_for_adhoc_session(
             master_event = models.GameEvent.objects.create(
                 start=instance.scheduled_time,
                 end=instance.scheduled_time
-                + timedelta(minutes=instance.game.session_length * 60),
+                + timedelta(minutes=int(instance.game.session_length * 60)),
                 title="Ad hoc session for {}".format(instance.game.title),
                 description=instance.game.game_description,
                 creator=instance.game.gm.user,

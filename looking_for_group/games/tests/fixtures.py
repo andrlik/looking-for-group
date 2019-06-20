@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import m2m_changed
 from django.utils import timezone
 from factory.django import mute_signals
-from schedule.models import Rule
+from schedule.models import Calendar, Rule
 
 from ...gamer_profiles.tests import factories
 from .. import models
@@ -24,6 +24,8 @@ class GamesTData(object):
         self.gamer2 = factories.GamerProfileFactory()
         self.gamer3 = factories.GamerProfileFactory()
         self.gamer4 = factories.GamerProfileFactory()
+        self.blocked_gamer = factories.GamerProfileFactory()
+        self.blocked_gamer.block(self.gamer1)
         self.comm1 = factories.GamerCommunityFactory(owner=self.gamer1)
         self.comm2 = factories.GamerCommunityFactory(owner=self.gamer2)
         self.comm1.add_member(self.gamer3)
@@ -96,6 +98,7 @@ class GamesTData(object):
         self.gp2.refresh_from_db()
         self.session2 = self.gp2.create_next_session()
         self.player1 = models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
+        self.player2 = models.Player.objects.create(gamer=self.gamer3, game=self.gp2)
         self.character1 = models.Character.objects.create(
             player=self.player1,
             name="Magic Brian",
@@ -107,6 +110,22 @@ class GamesTData(object):
             initial_author=self.gamer4,
             title="Mystery in the deep",
             body="Our heroes encountered a lot of **stuff**",
+        )
+        self.calendar1, created = Calendar.objects.get_or_create(
+            slug=self.gamer1.username,
+            defaults={"name": "{}'s calendar".format(self.gamer1.username)},
+        )
+        self.calendar2, created = Calendar.objects.get_or_create(
+            slug=self.gamer2.username,
+            defaults={"name": "{}'s calendar".format(self.gamer2.username)},
+        )
+        self.calendar3, created = Calendar.objects.get_or_create(
+            slug=self.gamer3.username,
+            defaults={"name": "{}'s calendar".format(self.gamer3.username)},
+        )
+        self.calendar4, created = Calendar.objects.get_or_create(
+            slug=self.gamer4.username,
+            defaults={"name": "{}'s calendar".format(self.gamer4.username)},
         )
 
 

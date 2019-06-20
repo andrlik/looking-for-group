@@ -1,21 +1,14 @@
-from .test_views import AbstractGameSessionTest
+import pytest
+from django.urls import reverse
+
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
-class iCalFeedTest(AbstractGameSessionTest):
-    """
-    Tests to ensure that ical feeds load appropriately.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.view_name = "games:calendar_ical"
-
-    def test_gm(self):
-        with self.assertNumQueriesLessThan(250):
-            self.get(self.view_name, gamer=self.gamer1.pk)
-            self.response_200()
-
-    def test_player(self):
-        with self.assertNumQueriesLessThan(250):
-            self.get(self.view_name, gamer=self.gamer4.pk)
-            self.response_200()
+@pytest.mark.parametrize("gamer_to_use", ["gamer1", "gamer4"])
+def test_gm(client, game_testdata, django_assert_max_num_queries, gamer_to_use):
+    gamer = getattr(game_testdata, gamer_to_use)
+    with django_assert_max_num_queries(250):
+        response = client.get(
+            reverse("games:calendar_ical", kwargs={"gamer": gamer.pk})
+        )
+    assert response.status_code == 200
