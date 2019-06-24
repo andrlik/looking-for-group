@@ -11,14 +11,15 @@ from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfil
 from .. import forms
 from ..models import GamePosting, Player
 
+pytestmark = pytest.mark.django_db(transaction=True)
 
-class AbstractFormTest(TestCase):
+
+class TFormData(object):
     """
-    Make our setup less tedious.
+    Store some reusable values.
     """
 
-    def setUp(self):
-        ContentType.objects.clear_cache()
+    def __init__(self):
         self.gamer1 = GamerProfileFactory()
         self.gamer2 = GamerProfileFactory()
         self.gamer3 = GamerProfileFactory()
@@ -26,36 +27,10 @@ class AbstractFormTest(TestCase):
         self.comm2 = GamerCommunityFactory(owner=self.gamer2)
         self.gamer4 = GamerProfileFactory()
 
-    def tearDown(self):
-        ContentType.objects.clear_cache()
-        super().tearDown()
 
-
-class GamePostingFormTest(AbstractFormTest):
-    def test_commmunity_queryset(self):
-        form = forms.GamePostingForm(gamer=self.gamer1)
-        assert form.fields["communities"].queryset.count() == 1
-        assert form.fields["communities"].queryset.all()[0] == self.comm1
-        self.comm2.add_member(self.gamer1)
-        self.gamer1.refresh_from_db()
-        form2 = forms.GamePostingForm(gamer=self.gamer1)
-        assert form2.fields["communities"].queryset.count() == 2
-        assert self.comm2 in form2.fields["communities"].queryset.all()
-        form3 = forms.GamePostingForm(gamer=self.gamer4)
-        assert "communities" not in form3.fields.keys()
-
-    def test_invalid_call(self):
-        with pytest.raises(KeyError):
-            forms.GamePostingForm()
-
-
-class GameSessionFormTest(AbstractFormTest):
-    """
-    Tests for game session call.
-    """
-
-    def setUp(self):
-        super().setUp()
+class TSessionFormData(TFormData):
+    def __init__(self):
+        super().__init__()
         self.game = GamePosting.objects.create(
             gm=self.gamer1,
             game_type="campaign",
@@ -81,56 +56,103 @@ class GameSessionFormTest(AbstractFormTest):
         )
         self.player4 = Player.objects.create(gamer=self.gamer1, game=self.game2)
 
-    def test_player_queryset(self):
-        form = forms.GameSessionForm(game=self.game)
-        assert form.fields["players_expected"].queryset.count() == 3
-        assert form.fields["players_missing"].queryset.count() == 3
-        form2 = forms.GameSessionForm(game=self.game2)
-        assert form2.fields["players_expected"].queryset.count() == 1
-        assert form2.fields["players_missing"].queryset.count() == 1
 
-    def test_invalid_init_data(self):
-        with pytest.raises(KeyError):
-            forms.GameSessionForm()
+@pytest.fixture
+def gameform_testdata():
+    ContentType.objects.clear_cache()
+    yield TFormData()
+    ContentType.objects.clear_cache()
 
-    def test_validate_only_valid_players(self):
-        form = forms.GameSessionForm(
-            {
-                "scheduled_time": timezone.now() + timedelta(days=1),
-                "players_expected": [self.player1, self.player2, self.player4],
-                "players_missing": [],
-            },
-            game=self.game,
-        )
-        assert not form.is_valid()
 
-    def test_validate_missing_not_exceed_expected(self):
-        form = forms.GameSessionForm(
-            {
-                "scheduled_time": timezone.now() + timedelta(days=1),
-                "players_expected": [self.player1, self.player2],
-                "players_missing": [self.player3],
-            },
-            game=self.game,
-        )
-        assert not form.is_valid()
-        form2 = forms.GameSessionForm(
-            {
-                "scheduled_time": timezone.now() + timedelta(days=1),
-                "players_expected": [],
-                "players_missing": [self.player3],
-            },
-            game=self.game,
-        )
-        assert not form2.is_valid()
+@pytest.fixture
+def sessionform_testdata():
+    ContentType.objects.clear_cache()
+    yield TSessionFormData()
+    ContentType.objects.clear_cache()
 
-    def test_validate_good_data(self):
-        form = forms.GameSessionForm(
-            {
-                "scheduled_time": timezone.now() + timedelta(days=1),
-                "players_expected": [self.player1, self.player2, self.player3],
-                "players_missing": [self.player3],
-            },
-            game=self.game,
-        )
-        assert form.is_valid()
+
+def test_gameform_community_queryset(gameform_testdata):
+    form = forms.GamePostingForm(gamer=gameform_testdata.gamer1)
+    assert form.fields["communities"].queryset.count() == 1
+    assert form.fields["communities"].queryset.all()[0] == gameform_testdata.comm1
+    gameform_testdata.comm2.add_member(gameform_testdata.gamer1)
+    gameform_testdata.gamer1.refresh_from_db()
+    form2 = forms.GamePostingForm(gamer=gameform_testdata.gamer1)
+    assert form2.fields["communities"].queryset.count() == 2
+    form3 = forms.GamePostingForm(gamer=gameform_testdata.gamer4)
+    assert "communities" not in form3.fields.keys()
+
+
+def test_gamerform_invalid_call():
+    with pytest.raises(KeyError):
+        forms.GamePostingForm()
+
+
+def test_sessionform_player_queryset(sessionform_testdata):
+    form = forms.GameSessionForm(game=sessionform_testdata.game)
+    assert form.fields["players_expected"].queryset.count() == 3
+    assert form.fields["players_missing"].queryset.count() == 3
+    form2 = forms.GameSessionForm(game=sessionform_testdata.game2)
+    assert form2.fields["players_expected"].queryset.count() == 1
+    assert form2.fields["players_missing"].queryset.count() == 1
+
+
+def test_sessonform_validate_initiial_data():
+    with pytest.raises(KeyError):
+        forms.GameSessionForm()
+
+
+def test_sessionform_validate_players(sessionform_testdata):
+    form = forms.GameSessionForm(
+        {
+            "scheduled_time": timezone.now() + timedelta(days=1),
+            "players_expected": [
+                sessionform_testdata.player1,
+                sessionform_testdata.player2,
+                sessionform_testdata.player4,
+            ],
+            "players_missing": [],
+        },
+        game=sessionform_testdata.game,
+    )
+    assert not form.is_valid()
+
+
+def test_sessionform_missing_not_exceed_expected(sessionform_testdata):
+    form = forms.GameSessionForm(
+        {
+            "scheduled_time": timezone.now() + timedelta(days=1),
+            "players_expected": [
+                sessionform_testdata.player1,
+                sessionform_testdata.player2,
+            ],
+            "players_missing": [sessionform_testdata.player3],
+        },
+        game=sessionform_testdata.game,
+    )
+    assert not form.is_valid()
+    form2 = forms.GameSessionForm(
+        {
+            "scheduled_time": timezone.now() + timedelta(days=1),
+            "players_expected": [],
+            "players_missing": [sessionform_testdata.player3],
+        },
+        game=sessionform_testdata.game,
+    )
+    assert not form2.is_valid()
+
+
+def test_sessionform_validate_good_data(sessionform_testdata):
+    form = forms.GameSessionForm(
+        {
+            "scheduled_time": timezone.now() + timedelta(days=1),
+            "players_expected": [
+                sessionform_testdata.player1,
+                sessionform_testdata.player2,
+                sessionform_testdata.player3,
+            ],
+            "players_missing": [sessionform_testdata.player3],
+        },
+        game=sessionform_testdata.game,
+    )
+    assert form.is_valid()
