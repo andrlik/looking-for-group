@@ -59,7 +59,7 @@ psycopg2-binary = "~2.8.2"
 django = "~2.2.2"
 numpy = "~1.16.4"
 geopy = "~1.20.0"
-django-haystack = { git = "https://github.com/andrlik/django-haystack.git", rev = "6de6cba3311dd551f2f98e7a9d845a5d7dd0adb8" }
+django-haystack = { git = "https://github.com/andrlik/django-haystack.git", rev = "de8279680f74380085f61e247b2c4964c39db8e8" }
 django-scheduler = { git = "https://github.com/andrlik/django-scheduler.git", rev = "4ae1fcf09065f0c9b7380685772549c70d2e78ff" }
 sentry-sdk = "^0.9.0"
 
