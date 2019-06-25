@@ -9,6 +9,7 @@ test:
     DJANGO_SETTINGS_MODULE: "config.settings.test"
     REDISCLOUD_URL: "redis://redis/1"
   before_script:
+    - apt-get install -y optipng libjpeg-progs
     - curl -sL https://deb.nodesource.com/setup_11.x | bash -
     - apt-get install -y nodejs
     - python -V
