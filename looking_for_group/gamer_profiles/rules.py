@@ -108,7 +108,9 @@ def is_community_member(user, community):
 
 
 def in_same_community_as_gamer(user, gamer):
-    communities_to_check = gamer.communities.all()
+    communities_to_check = gamer.communities.filter(
+        private=True
+    )  # Only private communities count for a connection.
     logger.debug("found {} communities to check".format(len(communities_to_check)))
     user_communities = user.gamerprofile.communities.all()
     for community in communities_to_check:
@@ -123,14 +125,24 @@ def in_same_community_as_gamer(user, gamer):
 def is_in_same_game_as_gamer(user, gamer):
     user_gamer = user.gamerprofile
     user_gm_games = user_gamer.gmed_games.exclude(status__in=["closed", "cancel"])
-    user_player_games = Player.objects.select_related("game").filter(gamer=user_gamer, game__status__in=["open", "started", "replace"])
-    gamer_player_games = Player.objects.select_related("game").filter(gamer=gamer, game__status__in=["open", "started", "replace"])
+    user_player_games = Player.objects.select_related("game").filter(
+        gamer=user_gamer, game__status__in=["open", "started", "replace"]
+    )
+    gamer_player_games = Player.objects.select_related("game").filter(
+        gamer=gamer, game__status__in=["open", "started", "replace"]
+    )
     gamer_gm_games = gamer.gmed_games.exclude(status__in=["closed", "cancel"])
-    gamer_games = gamer_gm_games.union(Game.objects.filter(id__in=[p.game.id for p in gamer_player_games]))
-    gamer_apps = GamePostingApplication.objects.filter(gamer=gamer, status="pending", game__in=user_gm_games)
+    gamer_games = gamer_gm_games.union(
+        Game.objects.filter(id__in=[p.game.id for p in gamer_player_games])
+    )
+    gamer_apps = GamePostingApplication.objects.filter(
+        gamer=gamer, status="pending", game__in=user_gm_games
+    )
     if gamer_apps.count() > 0:
         return True
-    user_games = user_gm_games.union(Game.objects.filter(id__in=[p.game.id for p in user_player_games]))
+    user_games = user_gm_games.union(
+        Game.objects.filter(id__in=[p.game.id for p in user_player_games])
+    )
     matching_games = user_games.filter(id__in=[g.id for g in gamer_games])
     if matching_games.count() > 0:
         return True
@@ -185,7 +197,9 @@ def is_profile_owner(user, gamer):
     return user.gamerprofile == gamer
 
 
-is_profile_viewer_eligible = is_profile_owner | is_connected_to_gamer | is_in_same_game_as_gamer
+is_profile_viewer_eligible = (
+    is_profile_owner | is_connected_to_gamer | is_in_same_game_as_gamer
+)
 
 is_profile_viewer = is_user & is_profile_viewer_eligible
 

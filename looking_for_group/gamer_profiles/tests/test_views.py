@@ -120,7 +120,7 @@ def test_comm_List_view(
     with django_assert_max_num_queries(50):
         response = client.get(reverse("gamer_profiles:community-list"))
     assert response.status_code == 200
-    assert len(response.context["object_list"]) == 3
+    assert len(response.context["object_list"]) == 4
     if expected_text:
         for text in expected_text:
             print("Checking for {}".format(text))
@@ -130,7 +130,7 @@ def test_comm_List_view(
 
 
 @pytest.mark.parametrize(
-    "gamer_to_use, expected_count", [("gamer1", 2), ("gamer2", 1), ("gamer3", 0)]
+    "gamer_to_use, expected_count", [("gamer1", 3), ("gamer2", 1), ("gamer3", 1)]
 )
 def test_my_community_list(
     client, social_testdata, django_assert_max_num_queries, gamer_to_use, expected_count
@@ -1196,8 +1196,15 @@ def test_delete_ban(
     [
         (None, "gamer1", 302, None),  # Login required
         ("gamer2", "public_gamer", 200, None),  # Public profile
-        ("gamer2", "gamer5", 200, None),  # Same community
+        ("gamer2", "gamer5", 302, "friend"),  # Public community, not connected
+        ("gamer5", "gamer1", 200, None),  # Same private community
         ("gamer2", "gamer1", 302, "friend"),  # Not connected redriect to friend
+        (
+            "gamer1",
+            "gamer6",
+            302,
+            "friend",
+        ),  # A public community doens't count as a personal connection.
         ("gamer3", "gamer1", 200, None),  # Already friends
         ("blocked_gamer", "gamer1", 403, None),  # Blocked
     ],
