@@ -2,14 +2,7 @@ import pytest
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 
-from ..models import (
-    AlreadyInCommunity,
-    BannedUser,
-    CommunityMembership,
-    GamerFriendRequest,
-    KickedUser,
-    NotInCommunity,
-)
+from ..models import AlreadyInCommunity, BannedUser, CommunityMembership, GamerFriendRequest, KickedUser, NotInCommunity
 from .factories import GamerProfileFactory, GamerProfileWithCommunityFactory
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -116,7 +109,7 @@ def test_kick_user_no_delay(social_testdata):
     )
     social_testdata.community.refresh_from_db()
     assert social_testdata.community.member_count == 2
-    assert CommunityMembership.objects.filter(gamer=social_testdata.gamer1).count() == 1
+    assert CommunityMembership.objects.filter(gamer=social_testdata.gamer1).count() == 2
     assert KickedUser.objects.all().count() == 1
     assert KickedUser.objects.all()[0].kicked_user == social_testdata.gamer1
 
@@ -144,7 +137,7 @@ def test_ban_user(social_testdata):
     )
     social_testdata.community.refresh_from_db()
     assert social_testdata.community.member_count == 2
-    assert CommunityMembership.objects.filter(gamer=social_testdata.gamer1).count() == 1
+    assert CommunityMembership.objects.filter(gamer=social_testdata.gamer1).count() == 2
     assert BannedUser.objects.all().count() == 1
     assert BannedUser.objects.all()[0].banned_user == social_testdata.gamer1
 

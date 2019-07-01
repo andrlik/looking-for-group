@@ -14,6 +14,7 @@ class SocialTData(object):
         self.gamer3 = factories.GamerProfileFactory(private=False)
         self.gamer4 = factories.GamerProfileFactory()
         self.gamer5 = factories.GamerProfileFactory()
+        self.gamer6 = factories.GamerProfileFactory()
         self.public_gamer = factories.GamerProfileFactory()
         self.public_gamer.private = False
         self.public_gamer.save()
@@ -33,6 +34,11 @@ class SocialTData(object):
             owner=self.gamer5, private=False
         )
         self.community2.add_member(self.gamer2)
+        self.community_public = factories.GamerCommunityFactory(
+            owner=self.gamer3, private=False
+        )
+        self.community_public.add_member(self.gamer1)
+        self.community_public.add_member(self.gamer6)
         self.gamer3.friends.add(self.gamer1)
         self.prospective_friend = factories.GamerProfileFactory()
         self.fr = models.GamerFriendRequest.objects.create(
