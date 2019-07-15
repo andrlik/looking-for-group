@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.db.models import F
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
@@ -369,3 +370,31 @@ def fire_new_game_notification_task(
             comms = models.GamerCommunity.objects.filter(id__in=pk_set)
             game = instance
             async_task(notify_subscribers_of_new_game, comms, game)
+
+
+@receiver(pre_save, sender=models.GamePosting)
+def remove_event_for_cancelled_game(sender, instance, *args, **kwargs):
+    """
+    If a game is cancelled, check to see if it already had completed game sessions.
+    If so, delete the incomplete game sessions and change the end date for the game and game event to now.
+    If not, remove the start and end date for the game and remove the event.
+    """
+    if instance.status == "cancel" and instance.event:
+        existing_sessions = models.GameSession.objects.filter(game=instance)
+        if existing_sessions.count() > 0:
+            with transaction.atomic():
+                for session in existing_sessions:
+                    if (
+                        session.status not in ["complete"]
+                        and session.scheduled_time > timezone.now()
+                    ):
+                        session.delete()
+            instance.end_date = timezone.now().date()
+            instance.event.end = timezone.now()
+            instance.event.save()
+        else:
+            instance.start_time = None
+            instance.end_date = None
+            ev = instance.event
+            instance.event = None
+            ev.delete()
