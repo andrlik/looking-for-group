@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 import pytest
@@ -13,6 +14,8 @@ from ...gamer_profiles.tests import factories
 from .. import models
 
 pytestmark = pytest.mark.django_db(transaction=True)
+
+logger = logging.getLogger("games")
 
 
 class ReceiverTData(object):
@@ -176,3 +179,76 @@ def test_gmnotes_markdown(game_receiver_testdata):
         session.gm_notes = "I am very **strong**!"
         session.save()
         assert session.gm_notes_rendered == "<p>I am very <strong>strong</strong>!</p>"
+
+
+def test_cancel_game_without_event(game_receiver_testdata):
+    game_receiver_testdata.game.game_frequency = "weekly"
+    game_receiver_testdata.game.start_time = timezone.now() - timedelta(days=2)
+    game_receiver_testdata.game.status = "cancel"
+    game_receiver_testdata.game.save()
+    game_receiver_testdata.game.refresh_from_db()
+    assert (
+        not game_receiver_testdata.game.event
+        and not game_receiver_testdata.game.start_time
+        and not game_receiver_testdata.game.end_date
+    )
+
+
+def test_cancel_game_with_past_events(game_receiver_testdata):
+    with mute_signals(post_save):
+        game_receiver_testdata.game.game_frequency = "weekly"
+        game_receiver_testdata.game.start_time = timezone.now() - timedelta(days=2)
+        game_receiver_testdata.game.save()
+        session = game_receiver_testdata.game.create_session_from_occurrence(
+            game_receiver_testdata.game.get_next_scheduled_session_occurrence()
+        )
+        assert session.scheduled_time < timezone.now()
+        game_receiver_testdata.game.status = "cancel"
+        game_receiver_testdata.game.save()
+        game_receiver_testdata.game.refresh_from_db()
+        assert (
+            game_receiver_testdata.game.event
+            and game_receiver_testdata.game.start_time
+            and game_receiver_testdata.game.end_date
+        )
+        assert game_receiver_testdata.game.end_date == timezone.now().date()
+        assert models.GameSession.objects.get(pk=session.pk)
+
+
+def test_cancel_game_with_past_and_future_events(game_receiver_testdata):
+    game_receiver_testdata.game.game_frequency = "weekly"
+    game_receiver_testdata.game.start_time = timezone.now() - timedelta(days=2)
+    game_receiver_testdata.game.end_date = timezone.now() + timedelta(days=30)
+    game_receiver_testdata.game.save()
+    logger.debug(
+        "Event is {} with end date of {}, using recurrence rule {},  and game end date is {}".format(
+            game_receiver_testdata.game.event,
+            game_receiver_testdata.game.event.end_recurring_period,
+            game_receiver_testdata.game.event.rule,
+            game_receiver_testdata.game.end_date,
+        )
+    )
+    session = game_receiver_testdata.game.create_session_from_occurrence(
+        game_receiver_testdata.game.get_next_scheduled_session_occurrence()
+    )
+    assert session.scheduled_time < timezone.now()
+    session.status = "complete"
+    session.save()
+    game_receiver_testdata.game.sessions = 1
+    game_receiver_testdata.game.save()
+    session2 = game_receiver_testdata.game.create_session_from_occurrence(
+        game_receiver_testdata.game.get_next_scheduled_session_occurrence()
+    )
+    assert session2.scheduled_time > timezone.now()
+    game_receiver_testdata.game.status = "cancel"
+    game_receiver_testdata.game.save()
+    game_receiver_testdata.game.refresh_from_db()
+    assert (
+        game_receiver_testdata.game.event
+        and game_receiver_testdata.game.start_time
+        and game_receiver_testdata.game.end_date
+    )
+    assert game_receiver_testdata.game.end_date == timezone.now().date()
+    assert models.GameSession.objects.get(pk=session.pk)
+    with pytest.raises(ObjectDoesNotExist):
+        models.GameSession.objects.get(pk=session2.pk)
