@@ -5,7 +5,7 @@ test:
     - redis:latest
   variables:
     POSTGRES_DB: looking_for_group
-    DATABASE_URL: "postgresql://postgres:postgres@mdillon__postgis:5432/$POSTGRES_DB"
+    DATABASE_URL: "postgis://postgres:postgres@mdillon__postgis:5432/$POSTGRES_DB"
     DJANGO_SETTINGS_MODULE: "config.settings.test"
     REDISCLOUD_URL: "redis://redis/1"
   before_script:
