@@ -62,7 +62,7 @@ DJANGO_APPS = [
     "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
     "django.contrib.admindocs",
-    "django.contrib.gis",
+    #   "django.contrib.gis",
 ]
 
 THIRD_PARTY_APPS = [
@@ -103,7 +103,7 @@ LOCAL_APPS = [
     "looking_for_group.mailnotify.apps.MailnotifyConfig",
     "looking_for_group.rpgcollections.apps.RpgcollectionsConfig",
     "looking_for_group.tours.apps.ToursConfig",
-    "looking_for_group.world.apps.WorldConfig",
+    #    "looking_for_group.world.apps.WorldConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
