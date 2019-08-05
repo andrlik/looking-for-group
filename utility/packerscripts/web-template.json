@@ -108,7 +108,7 @@
     },
     {
       "type": "shell-local",
-      "inline": ["rm -rf ../../../tmpbuild/lfg", "git clone ../../ ../../../tmpbuild/lfg"]
+      "inline": ["rm -rf ../../../tmpbuild/lfg", "git clone ../../ ../../../tmpbuild/lfg", "cd ../../../tmpbuild/lfg && git checkout {{user `tag_to_use`}}"]
     },
     {
       "type": "file",
@@ -121,12 +121,22 @@
     },
     {
       "type": "shell",
+      "inline": [
+        "curl https://pyenv.run | bash",
+        "exec $SHELL",
+        "pyenv update",
+        "pyenv install 3.7.0",
+        "pyenv global 3.7.0",
+        "curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python"
+      ]
+    },
+    {
+      "type": "shell",
       "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
       "environment_vars": [
         "LFG_TAG={{user `tag_to_use`}}"
       ],
       "scripts": [
-        "install-poetry.sh",
         "install_code_and_set_permissions.sh"
       ]
     },

@@ -5,19 +5,19 @@ cd /opt/lfg/django
 
 . /opt/lfg/env
 
-echo "Setting code base version to use..."
+# echo "Setting code base version to use..."
 
-CHECKOUT_TARGET=""
+# CHECKOUT_TARGET=""
 
-if [[ -z "${LFG_TAG}" ]]; then
-    echo "No target tag specified... falling back to master. Please let this NOT be a production release!"
-    CHECKOUT_TARGET="master" # Falling back to using master: PLEASE DON'T DO THIS IN PRODUCTION!!!
-else
-    echo "Using ${LFG_TAG} as deployment target..."
-    CHECKOUT_TARGET="${LFG_TAG}"
-fi
+# if [[ -z "${LFG_TAG}" ]]; then
+#     echo "No target tag specified... falling back to master. Please let this NOT be a production release!"
+#     CHECKOUT_TARGET="master" # Falling back to using master: PLEASE DON'T DO THIS IN PRODUCTION!!!
+# else
+#     echo "Using ${LFG_TAG} as deployment target..."
+#     CHECKOUT_TARGET="${LFG_TAG}"
+# fi
 
-git checkout "${CHECKOUT_TARGET}"
+# git checkout "${CHECKOUT_TARGET}"
 
 echo "Install python requirements"
 
@@ -26,8 +26,8 @@ echo "Installing application requirements to virtualenv..."
 # Install requirements for production use.
 
 export PIP_DISABLE_PIP_VERSION_CHECK=1
-poetry config settings.virtualenvs.create false
-poetry install --no-dev
+sudo -u www-data poetry config settings.virtualenvs.create false
+sudo -u www-data poetry install --no-dev
 
 echo "All python dependencies are now installed. Showing current package list:"
 
