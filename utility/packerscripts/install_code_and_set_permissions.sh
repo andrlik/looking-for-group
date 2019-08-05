@@ -26,8 +26,8 @@ echo "Installing application requirements to virtualenv..."
 # Install requirements for production use.
 
 export PIP_DISABLE_PIP_VERSION_CHECK=1
-sudo -u www-data poetry config settings.virtualenvs.create false
-sudo -u www-data poetry install --no-dev
+poetry config settings.virtualenvs.create false
+poetry install --no-dev
 
 echo "All python dependencies are now installed. Showing current package list:"
 
