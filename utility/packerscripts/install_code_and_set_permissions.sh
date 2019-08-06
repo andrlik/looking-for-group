@@ -19,10 +19,15 @@ cd /opt/lfg/django
 
 # git checkout "${CHECKOUT_TARGET}"
 
+echo "Reloading pyenv"
+
+export PATH=/home/ubuntu/.pyenv/bin:"$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 echo "Install python requirements"
 
 
-echo "Installing application requirements to virtualenv..."
+echo "Installing application requirements to pyenv site packages..."
 # Install requirements for production use.
 
 . /home/ubuntu/.poetry/env
@@ -52,3 +57,5 @@ poetry run ./manage.py compress --force
 poetry run ./manage.py collectstatic --noinput
 
 echo "Codebase setup!"
+
+exit 0
