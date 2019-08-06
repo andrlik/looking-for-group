@@ -40,21 +40,36 @@ echo "All python dependencies are now installed. Showing current package list:"
 
 pip list
 
-echo "Installing node dependencies..."
+# echo "Installing node dependencies..."
 
-exec npm install
+# exec npm install --no-audit  --only-prod
 
-echo "Prune out dev..."
+# echo "Prune out dev..."
 
-exec npm prune --production
+# exec npm prune --production
+
+. /opt/lfg/env
+
+echo "Sourced env, now providing debug output"
+
+env
 
 echo "Running collect static"
 
-poetry run ./manage.py collectstatic --noinput
+./manage.py collectstatic --noinput
 
-poetry run ./manage.py compress --force
+./manage.py compress --force
 
-poetry run ./manage.py collectstatic --noinput
+./manage.py collectstatic --noinput
+
+cat<<EOF > /opt/lfg/django/config/run.py
+from waitress import serve
+from config import wsgi
+
+open("/opt/lfg/app-initialized", "w").close()
+
+serve(wsgi.application, unix_socket="/opt/lfg/nginx.socket")
+EOF
 
 echo "Codebase setup!"
 

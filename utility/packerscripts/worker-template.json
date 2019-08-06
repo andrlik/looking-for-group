@@ -1,23 +1,23 @@
 {
   "variables": {
     "vpc_to_use": "vpc-02a48aa867267d915",
-    "subnet_to_use": "subnet-06f2a14431edecefd",
+    "subnet_to_use": "subnet-033b0d1d89e1a6501",
     "tag_to_use": "",
     "base_ami": "ami-0c468b19b6325c8a3",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
-    "aws_access_key": "{{env `AWS_ACCESS_KEY`}}",
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
     "database_url": "{{env `PROD_DATABASE_URL`}}",
     "allow_registration": "{{env `PROD_DJANGO_ACCOUNT_ALLOW_REGISTRATION`}}",
     "admin_url": "{{env `PROD_DJANGO_ADMIN_URL`}}",
     "allowed_hosts": "{{env `PROD_DJANGO_ALLOWED_HOSTS`}}",
-    "django_aws_access_key": "{{env `PROD_DJANGO_AWS_ACCESS_KEY`}}",
+    "django_aws_access_key": "{{env `PROD_DJANGO_AWS_ACCESS_KEY_ID`}}",
     "django_aws_secret_key": "{{env `PROD_DJANGO_AWS_SECRET_ACCESS_KEY`}}",
     "django_is_gzipped": "{{env `PROD_DJANGO_AWS_IS_GZIPPED`}}",
     "django_storage_bucket": "{{env `PROD_DJANGO_AWS_STORAGE_BUCKET_NAME`}}",
     "from_email": "{{env `PROD_DJANGO_DEFAULT_FROM_EMAIL`}}",
     "django_secret_key": "{{env `PROD_DJANGO_SECRET_KEY`}}",
     "sentry_dsn": "{{env `PROD_DJANGO_SENTRY_DSN`}}",
-    "settings_module": "{{env `PROD_DJANGO_SETTINGS_MODULE`}}",
+    "django_settings_module": "{{env `PROD_DJANGO_SETTINGS_MODULE`}}",
     "mailgun_api_key": "{{env `PROD_MAILGUN_API_KEY`}}",
     "mailgun_domain": "{{env `PROD_MAILGUN_DOMAIN`}}",
     "mailgun_publickey": "{{env `PROD_MAILGUN_PUBLIC_KEY`}}",
@@ -32,19 +32,21 @@
   "builders": [
     {
       "type": "amazon-ebs",
-      "access_key": "{{env `AWS_ACCESS_KEY`}}",
-      "secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+      "access_key": "{{user `aws_access_key`}}",
+      "secret_key": "{{user `aws_secret_access_key`}}",
       "region": "us-east-1",
       "source_ami": "{{user `base_ami`}}",
       "vpc_id": "{{user `vpc_to_use`}}",
-      "subnet_id": "{{user `subnet_id`}}",
+      "subnet_id": "{{user `subnet_to_use`}}",
       "security_group_ids": [
         "sg-095429e7f2b07d58d",
         "sg-03da496a15440bf39"
       ],
+      "ssh_agent_auth": true,
+      "ssh_keypair_name": "aws-eb",
       "instance_type": "t2.micro",
       "ssh_username": "ubuntu",
-      "ami_name": "lfg-{{user `tag_to_use`}}-{{timestamp}}",
+      "ami_name": "lfg-worker-{{user `tag_to_use`}}-{{timestamp}}",
       "tags": {
         "project": "lfg"
       }
@@ -53,20 +55,27 @@
   "provisioners": [
     {
       "type": "shell",
-      "script": "make_aws_directories.sh"
+      "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "script": "make_aws_directories.sh",
+      "pause_before": "10s"
     },
     {
       "type": "shell",
-      "inline": [
-        "echo 'Install packages'",
-        "sudo apt-get update",
-        "sudo apt-get install -y supervisor"
-      ]
+      "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "script": "shutdown-apt-services.sh"
     },
     {
-      "type": "file",
-      "source": "files/start_worker.sh",
-      "destination": "/opt/lfg/start_worker.sh"
+      "type": "shell",
+      "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "inline": [
+        "echo 'Install packages'",
+        "apt-get update",
+        "apt-get install -y supervisor make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl git",
+        "service postgresql stop",
+        "systemctl disable postgresql",
+        "systemctl enable apt-daily.timer",
+        "systemctl enable apt-daily-upgrade.timer"
+      ]
     },
     {
       "type": "shell",
@@ -77,7 +86,7 @@
         "PROD_DJANGO_ALLOWED_HOSTS={{user `allowed_hosts`}}",
         "PROD_DJANGO_AWS_ACCESS_KEY={{user `django_aws_access_key`}}",
         "PROD_DJANGO_AWS_IS_GZIPPED={{user `django_is_gzipped`}}",
-        "PROD_DJANGO_AWS_SECRET_ACCESS_KEY={{user `django_aws_secret_access_key`}}",
+        "PROD_DJANGO_AWS_SECRET_ACCESS_KEY={{user `django_aws_secret_key`}}",
         "PROD_DJANGO_AWS_STORAGE_BUCKET_NAME={{user `django_storage_bucket`}}",
         "PROD_DJANGO_DEFAULT_FROM_EMAIL={{user `from_email`}}",
         "PROD_DJANGO_SECRET_KEY={{user `django_secret_key`}}",
@@ -97,32 +106,65 @@
       "script": "make_environment.sh"
     },
     {
+      "type": "shell-local",
+      "inline": ["rm -rf ../../../tmpbuild/lfg", "git clone ../../ ../../../tmpbuild/lfg", "cd ../../../tmpbuild/lfg && git checkout {{user `tag_to_use`}}", "npm install --no-audit --only=prod", "npm prune --production"]
+    },
+    {
       "type": "file",
-      "source": "../../",
+      "source": "../../../tmpbuild/lfg/",
       "destination": "/opt/lfg/django"
     },
     {
-      "type": "shell",
-      "inline": ["rm /opt/lfg/django/.envrc"]
+      "type": "shell-local",
+      "inline": ["rm -rf ../../../tmpbuild/lfg/*"]
+    },
+     {
+      "type": "file",
+      "source": "files/start_worker.sh",
+      "destination": "/opt/lfg/django/start_worker.sh"
     },
     {
       "type": "shell",
-      "environment_vars": [
-        "LFG_TAG={{user `tag_to_use`}}"
-      ],
-      "scripts": [
-        "install_code_and_set_permissions.sh",
-        "install_poetry.sh"
+      "inline": ["chmod +x /opt/lfg/django/start_worker.sh"]
+    },
+    {
+      "type": "shell",
+      "script": "install-poetry.sh"
+    },
+    {
+      "type": "shell",
+      "script": "install_code_and_set_permissions.sh"
+    },
+
+    {
+      "type": "shell",
+      "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "inline": [
+        "echo Updating permissions...",
+        "chown -R www-data /opt/lfg",
+        "chgrp -R www-data /opt/lfg"
       ]
     },
     {
       "type": "file",
       "source": "files/djangoq.conf",
-      "destination": "/etc/supervisor/conf.d/djangoq.conf"
+      "destination": "/home/ubuntu/djangoq.conf"
     },
     {
       "type": "shell",
-      "inline": ["supervisorctl reread", "supervisorctl update"]
+      "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "inline": [
+        "cp /home/ubuntu/djangoq.conf /etc/supervisor/conf.d/djangoq.conf",
+        "rm /home/ubuntu/djangoq.conf"
+      ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "inline": [
+        "supervisorctl reread",
+        "supervisorctl update"
+      ]
     }
   ]
 }
