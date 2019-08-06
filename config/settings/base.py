@@ -37,7 +37,7 @@ USE_TZ = True
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
-DATABASES = {"default": env.db("DATABASE_URL", default="postgres:///looking_for_group")}
+DATABASES = {"default": env.db("DATABASE_URL", default="postgis:///looking_for_group")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
 # URLS
@@ -62,6 +62,7 @@ DJANGO_APPS = [
     "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
     "django.contrib.admindocs",
+    #   "django.contrib.gis",
 ]
 
 THIRD_PARTY_APPS = [
@@ -102,6 +103,7 @@ LOCAL_APPS = [
     "looking_for_group.mailnotify.apps.MailnotifyConfig",
     "looking_for_group.rpgcollections.apps.RpgcollectionsConfig",
     "looking_for_group.tours.apps.ToursConfig",
+    #    "looking_for_group.world.apps.WorldConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
