@@ -12,7 +12,7 @@ function killService() {
     # do
     #     sleep 10
     # done
-    sleep 10
+    sleep 20
 }
 
 function disableTimers() {

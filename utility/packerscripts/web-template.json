@@ -68,7 +68,7 @@
       "inline": [
         "echo 'Install packages'",
         "apt-get update",
-        "apt-get install -y nginx supervisor",
+        "apt-get install -y nginx supervisor make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl git",
         "systemctl enable apt-daily.timer",
         "systemctl enable apt-daily-upgrade.timer"
       ]
@@ -125,12 +125,16 @@
     },
     {
       "type": "shell",
+      "script": "install_code_and_set_permissions.sh"
+    },
+
+    {
+      "type": "shell",
       "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
-      "environment_vars": [
-        "LFG_TAG={{user `tag_to_use`}}"
-      ],
-      "scripts": [
-        "install_code_and_set_permissions.sh"
+      "inline": [
+        "echo Updating permissions...",
+        "chown -R www-data /opt/lfg",
+        "chgrp -R www-data /opt/lfg"
       ]
     },
     {

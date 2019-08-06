@@ -4,8 +4,7 @@ set -e
 echo "First installing pyenv..."
 
 curl https://pyenv.run | bash
-PATH="/home/ubuntu/.pyenv/bin:$PATH"
-export $PATH
+export PATH=/home/ubuntu/.pyenv/bin:"$PATH"
 eval "$(pyenv init  -)"
 eval "$(pyenv virtualenv-init -)"
 pyenv update

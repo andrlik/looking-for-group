@@ -25,6 +25,8 @@ echo "Install python requirements"
 echo "Installing application requirements to virtualenv..."
 # Install requirements for production use.
 
+. /home/ubuntu/.poetry/env
+
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 poetry config settings.virtualenvs.create false
 poetry install --no-dev
@@ -48,9 +50,5 @@ poetry run ./manage.py collectstatic --noinput
 poetry run ./manage.py compress --force
 
 poetry run ./manage.py collectstatic --noinput
-
-echo "Updating ownership permissions..."
-sudo chown -R www-data /opt/lfg
-sudo chgrp -R www-data /opt/lfg
 
 echo "Codebase setup!"

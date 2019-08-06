@@ -2,8 +2,13 @@
 
 set -e
 
+echo "Loading pyenv for user www-data"
+export PATH=/home/ubuntu/.pyenv/bin:"$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+. /home/ubuntu/.poetry/env
 echo "Reloading env variables..."
-source /opt/lfg/env
+. /opt/lfg/env
 cd /opt/lfg/django
 echo "Starting server..."
-exec poetry run config/run.py
+exec python config/run.py
