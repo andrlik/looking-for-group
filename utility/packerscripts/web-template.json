@@ -1,7 +1,7 @@
 {
   "variables": {
     "vpc_to_use": "vpc-02a48aa867267d915",
-    "subnet_to_use": "subnet-033b0d1d89e1a6501",
+    "subnet_to_use": "subnet-0557280ba5463f531",
     "tag_to_use": "",
     "base_ami": "ami-0c468b19b6325c8a3",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
