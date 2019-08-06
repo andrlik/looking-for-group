@@ -166,7 +166,7 @@ COMPRESS_OFFLINE = env.bool("COMPRESS_OFFLINE", default=True)
 
 MIDDLEWARE = ["allow_cidr.middleware.AllowCIDRMiddleware"] + MIDDLEWARE  # noqa: F405
 ALLOWED_CIDR_NETS = env.list(
-    "DJANGO_ALLOWED_CIDR_NETS", default=["12.0.0.0/11", "172.31.0.0/11"]
+    "DJANGO_ALLOWED_CIDR_NETS", default=["12.0.0.0/11", "10.0.0.0/16", "172.31.0.0/11"]
 )
 # Sentry
 # ------------------------------------------------------------------------------
