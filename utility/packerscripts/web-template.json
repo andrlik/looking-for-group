@@ -82,7 +82,7 @@
       "environment_vars": [
         "PROD_DATABASE_URL={{user `database_url`}}",
         "PROD_DJANGO_ACCOUNT_ALLOW_REGISTRATION={{user `allow_registration`}}",
-        "PROD_DJANGO_ADMIN_URL={{user `django_admin_url`}}",
+        "PROD_DJANGO_ADMIN_URL={{user `admin_url`}}",
         "PROD_DJANGO_ALLOWED_HOSTS={{user `allowed_hosts`}}",
         "PROD_DJANGO_AWS_ACCESS_KEY={{user `django_aws_access_key`}}",
         "PROD_DJANGO_AWS_IS_GZIPPED={{user `django_is_gzipped`}}",
