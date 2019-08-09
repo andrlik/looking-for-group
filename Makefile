@@ -30,6 +30,15 @@ devserver: ## Run development server
 shell: ## Load python shell
 	@poetry run ./manage.py shell_plus
 
+db: ## Load DB Shell
+	@poetry run ./manage.py dbshell
+
+migrations: ## Make any migration files for schema changes
+	@poetry run ./manage.py makemigrations
+
+migrate: ## Apply any pending migrations
+	@poetry run ./manage.py migrate
+
 web: ## Build a web ami image
 	@cd utility/packerscripts
 	@packer build -var "tag_to_use=${TAG_TO_USE}" web-template.json
