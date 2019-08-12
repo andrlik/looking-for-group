@@ -46,7 +46,7 @@
       "ssh_keypair_name": "aws-eb",
       "instance_type": "t2.micro",
       "ssh_username": "ubuntu",
-      "ami_name": "lfg-web-{{user `tag_to_use`}}-{{timestamp}}",
+      "ami_name": "lfg-worker-{{user `tag_to_use`}}-{{timestamp}}",
       "tags": {
         "project": "lfg"
       }
@@ -65,7 +65,7 @@
       "inline": [
         "echo 'Install packages'",
         "apt-get update",
-        "apt-get install -y nginx supervisor make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl git",
+        "apt-get install -y supervisor make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl git",
         "service postgresql stop",
         "systemctl disable postgresql",
         "systemctl enable apt-daily.timer",
@@ -102,25 +102,25 @@
     },
     {
       "type": "shell-local",
-      "inline": ["rm -rf ../../../tmpbuild/lfg", "git clone ../../ ../../../tmpbuild/lfg", "cd ../../../tmpbuild/lfg && git checkout {{user `tag_to_use`}}", "npm install --no-audit --only=prod", "npm prune --production"]
+      "inline": ["rm -rf ../../tmpbuild/lfg", "git clone ../ ../../tmpbuild/lfg", "cd ../../tmpbuild/lfg && git checkout {{user `tag_to_use`}}", "npm install --no-audit --only=prod", "npm prune --production"]
     },
     {
       "type": "file",
-      "source": "../../../tmpbuild/lfg/",
+      "source": "../../tmpbuild/lfg/",
       "destination": "/opt/lfg/django"
     },
     {
       "type": "shell-local",
-      "inline": ["rm -rf ../../../tmpbuild/lfg/*"]
+      "inline": ["rm -rf ../../tmpbuild/lfg/*"]
     },
      {
       "type": "file",
-      "source": "files/start_web.sh",
-      "destination": "/opt/lfg/django/start_web.sh"
+      "source": "files/start_worker.sh",
+      "destination": "/opt/lfg/django/start_worker.sh"
     },
     {
       "type": "shell",
-      "inline": ["chmod +x /opt/lfg/django/start_web.sh"]
+      "inline": ["chmod +x /opt/lfg/django/start_worker.sh"]
     },
     {
       "type": "shell",
@@ -142,27 +142,15 @@
     },
     {
       "type": "file",
-      "source": "files/nginx.conf",
-      "destination": "/home/ubuntu/nginx.conf"
-    },
-    {
-      "type": "file",
-      "source": "files/lfg.conf",
-      "destination": "/home/ubuntu/lfg.conf"
-    },
-    {
-      "type": "file",
-      "source": "files/django.conf",
-      "destination": "/home/ubuntu/django.conf"
+      "source": "files/djangoq.conf",
+      "destination": "/home/ubuntu/djangoq.conf"
     },
     {
       "type": "shell",
       "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
       "inline": [
-        "cp /home/ubuntu/nginx.conf /etc/nginx/nginx.conf",
-        "cp /home/ubuntu/lfg.conf /etc/nginx/sites-available/lfg.conf",
-        "cp /home/ubuntu/django.conf /etc/supervisor/conf.d/django.conf",
-        "rm /home/ubuntu/nginx.conf /home/ubuntu/lfg.conf /home/ubuntu/django.conf"
+        "cp /home/ubuntu/djangoq.conf /etc/supervisor/conf.d/djangoq.conf",
+        "rm /home/ubuntu/djangoq.conf"
       ]
     },
     {
@@ -172,11 +160,6 @@
         "supervisorctl reread",
         "supervisorctl update"
       ]
-    },
-    {
-      "type": "shell",
-      "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
-      "script": "install_nginx_configure.sh"
     }
   ]
 }

@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# Launch qcluster django_q worker
-
-source /opt/python/current/env
-
-exec django-admin.py qcluster

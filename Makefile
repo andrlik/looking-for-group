@@ -40,10 +40,10 @@ migrate: ## Apply any pending migrations
 	@poetry run ./manage.py migrate
 
 web: ## Build a web ami image
-	@cd utility/packerscripts; packer build -var "tag_to_use=${TAG_TO_USE}" web-template.json
+	@cd packerscripts; packer build -var "tag_to_use=${TAG_TO_USE}" web-template.json
 
 worker: ## Build a worker ami image
-	@cd utility/packerscripts; packer build -var "tag_to_use=${TAG_TO_USE}" worker-template.json
+	@cd packerscripts; packer build -var "tag_to_use=${TAG_TO_USE}" worker-template.json
 
 amis: web worker ## Build both a web and worker image
 
