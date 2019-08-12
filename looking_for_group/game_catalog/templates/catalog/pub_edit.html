@@ -1,6 +1,6 @@
 {% extends "catalog/base.html" %}
 {% load i18n foundation_formtags %}
-{% block subtitle %}{% trans "Edit publisher" %} {{ publisher.name - {% endblock %}
+{% block subtitle %}{% trans "Edit publisher" %} {{ publisher.name }} - {% endblock %}
 {% block pubactive %}{% include "is_active_definition.html" %}{% endblock %}
 {% block sectiontitle %}{% trans "Edit" %} {{ publisher.name }}{% endblock %}
 {% block mobileheader %}{% trans "Edit" %} {{ publisher.name }}{% endblock %}
