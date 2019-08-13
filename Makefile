@@ -1,43 +1,53 @@
 TAG_TO_USE=master
 WORKERS=4
+PYEXEC="poetry run"
+ifneq ($(PYCOMMAND),)
+	PYEXEC="$(PYCOMMAND)"
+endif
 
 .PHONY: help prep_static ace_test test devserver shell web worker amis
 .DEFAULT_GOAL := help
 
 install_dev_deps: package-lock.json package.json poetry.lock ## Install development AND production requirements using poetry
-	@poetry install
-	@npm install
+	@echo "Installing development python requirements..."; poetry install
+	@echo "Installing development node requirements..."; npm install
 
 install_prod_deps: package-lock.json package.json poetry.lock ## Only install production dependencies
-	@poetry install --no-dev
-	@npm install --only-prod
+	@echo "Installing production python requirements..."; poetry install --no-dev
+	@echo "Installing production node requirements..."; npm install --only-prod
 	@npm prune --production
 
 prep_static: ## Collect and compress static files accordingly (uses poetry)
-	@poetry run ./manage.py collectstatic --noinput
-	@poetry run ./manage.py compress --force
-	@poetry run ./manage.py collectstatic --noinput
+	@echo "Running initial collect static..."; "$(PYEXEC)" ./manage.py collectstatic --noinput
+	@echo "Compressing static blocks..."; "$(PYEXEC)" ./manage.py compress --force
+	@echo "Running collect static again to grab compressed blocks..."; "$(PYEXEC)" ./manage.py collectstatic --noinput
 
 ace_test: ## Run accessiblity tests
-	@poetry run pytest -n $(WORKERS) --a11y --driver=Firefox
+	@echo "Running accessibility tests..."; "$(PYEXEC)" pytest -n $(WORKERS) --a11y --driver=Firefox
 
 test: ## Run non-accessiblity tests
-	@poetry run pytest -n $(WORKERS)
+	@echo "Running test suite..."; "$(PYEXEC)" pytest -n $(WORKERS)
 
 devserver: ## Run development server
-	@poetry run npm run dev
+	@echo "Running development server..."; poetry run npm run dev
+
+prodserver: ## Run production server using waitress
+	@echo "Starting production server using waitress..."; "$(PYEXEC)" config/run.py
+
+qcluster: ## Run the django_q worker cluster
+	@echo "Starting workers with django_q..."; "$(PYEXEC)" ./manage.py qcluster
 
 shell: ## Load python shell
-	@poetry run ./manage.py shell_plus
+	@echo "Loading interactive python shell..."; "$(PYEXEC)" ./manage.py shell_plus
 
 db: ## Load DB Shell
-	@poetry run ./manage.py dbshell
+	@echo "Connecting to DB shell..."; "$(PYEXEC)" ./manage.py dbshell
 
 migrations: ## Make any migration files for schema changes
-	@poetry run ./manage.py makemigrations
+	@echo "Creating migration files..."; "$(PYEXEC)" ./manage.py makemigrations
 
 migrate: ## Apply any pending migrations
-	@poetry run ./manage.py migrate
+	@echo "Applying pending migrations..."; "$(PYEXEC)" ./manage.py migrate
 
 web: ## Build a web ami image
 	@cd packerscripts; packer build -var "tag_to_use=${TAG_TO_USE}" web-template.json
