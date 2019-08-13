@@ -34,19 +34,6 @@ echo "Installing application requirements to pyenv site packages..."
 
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 poetry config settings.virtualenvs.create false
-poetry install --no-dev
-
-echo "All python dependencies are now installed. Showing current package list:"
-
-pip list
-
-# echo "Installing node dependencies..."
-
-# exec npm install --no-audit  --only-prod
-
-# echo "Prune out dev..."
-
-# exec npm prune --production
 
 . /opt/lfg/env
 
@@ -54,13 +41,17 @@ echo "Sourced env, now providing debug output"
 
 env
 
-echo "Running collect static"
+echo "Installing all dependencies..."
 
-./manage.py collectstatic --noinput
+make install_prod_deps
 
-./manage.py compress --force
+echo "Showing current python packages..."
 
-./manage.py collectstatic --noinput
+pip list
+
+echo "Prepping static files..."
+
+make prep_static
 
 cat<<EOF > /opt/lfg/django/config/run.py
 from waitress import serve

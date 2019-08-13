@@ -9,4 +9,4 @@ echo "Reloading env variables..."
 echo "Displaying env vars for debugging..."
 env
 echo "Starting server..."
-exec /home/ubuntu/.pyenv/versions/3.7.0/bin/python config/run.py
+make prodserver
