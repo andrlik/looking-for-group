@@ -43,7 +43,7 @@ env
 
 echo "Installing all dependencies..."
 
-make install_prod_deps
+poetry install --no-dev
 
 echo "Showing current python packages..."
 
