@@ -56,8 +56,7 @@
     {
       "type": "shell",
       "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
-      "script": "make_aws_directories.sh",
-      "pause_before": "10s"
+      "script": "make_aws_directories.sh"
     },
     {
       "type": "shell",
