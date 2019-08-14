@@ -28,9 +28,7 @@ CACHES = {
     "DJRedis": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": env("REDISCLOUD_URL", default="redis://127.0.0.1:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     },
 }
 
@@ -96,17 +94,18 @@ LOGGING = {
         "rules": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "games": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }
 
-Q_CLUSTER['sync'] = True  # noqa:F405
-Q_CLUSTER['django_redis'] = 'DJRedis'  # noqa: F405
+Q_CLUSTER["sync"] = True  # noqa:F405
+Q_CLUSTER["django_redis"] = "DJRedis"  # noqa: F405
 
 
 HAYSTACK_CONNECTIONS = {
-    'default': {
-        "ENGINE": 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+    "default": {
+        "ENGINE": "haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine",
         "URL": "http://127.0.0.1:9200/",
-        'INDEX_NAME': 'haystack',
-    },
+        "INDEX_NAME": "haystack",
+    }
 }

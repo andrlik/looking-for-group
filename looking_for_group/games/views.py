@@ -27,6 +27,8 @@ from schedule.periods import Day, Month
 
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..gamer_profiles.models import GamerProfile
+from ..locations.forms import LocationForm
+from ..locations.models import Location
 from . import forms, models, serializers
 from .mixins import JSONResponseMixin
 from .utils import mkfirstOfmonth, mkLastOfMonth
@@ -301,6 +303,11 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["allowed_communities"] = self.get_allowed_communties()
+        if self.request.POST:
+            location_form = LocationForm(self.request.POST, prefix="location")
+        else:
+            location_form = LocationForm()
+        context["location_form"] = location_form
         return context
 
     def get_form_kwargs(self):
@@ -323,6 +330,28 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
                         ),
                     )
                     return self.form_invalid(form)
+        location_form = LocationForm(self.request.POST, prefix="location")
+        if (
+            self.game_posting.game_mode == "irl"
+            and location_form.is_valid()
+            and (
+                location_form.cleaned_data["google_place_id"]
+                or location_form.cleaned_data["formatted_address"]
+            )
+        ):
+            game_location, created = Location.objects.get_or_create(
+                google_place_id=location_form.cleaned_data["google_place_id"],
+                defaults={
+                    "formatted_address": location_form.cleaned_data["formatted_address"]
+                },
+            )
+            game_location.geocode()
+            if not game_location.is_geocoded:
+                messages.error(
+                    "Your game was saved, but we were not able to locate the address you specified for the game, and so it was omitted."
+                )
+            else:
+                self.game_posting.game_location = game_location
         self.game_posting.save()
         self.game_posting.gm.games_created = F("gamed_created") + 1
         return HttpResponseRedirect(reverse_lazy("games:game_list"))
@@ -698,11 +727,57 @@ class GamePostingUpdateView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["allowed_communities"] = self.get_allowed_communities()
+        if self.request.POST:
+            context["location_form"] = LocationForm(
+                self.request.POST,
+                prefix="location",
+                instance=self.get_object().game_location,
+            )
+        else:
+            context["location_form"] = LocationForm(
+                context["game"].game_location,
+                prefix="location",
+                instance=self.get_object().game_location,
+            )
         return context
 
     def form_valid(self, form):
         prev_version = self.get_object()
         obj_to_save = form.save(commit=False)
+        if obj_to_save.game_mode == "irl":
+            logger.debug("This is an IRL game. Checking for supplied address.")
+            location_form = LocationForm(
+                self.request.POST,
+                prefix="location",
+                instance=prev_version.game_location,
+            )
+            if (
+                location_form.is_valid()
+                and (
+                    location_form.cleaned_data["formatted_address"]
+                    or location_form.cleaned_data["google_place_id"]
+                )
+                and location_form.cleaned_data["google_place_id"]
+                != prev_version.game_location.google_place_id
+            ):
+                location, created = Location.objects.get_or_create(
+                    google_place_id=location_form.cleaned_data["google_place_id"],
+                    defaults={
+                        "formatted_address": location_form.cleaned_data[
+                            "formatted_address"
+                        ]
+                    },
+                )
+                location.geocode()
+                if not location.is_geocoded:
+                    messages.error(
+                        _(
+                            "We could not locate the address you specified so it has not been changed."
+                        )
+                    )
+                else:
+                    logger.debug("Updating location association for game.")
+                    obj_to_save.game_location = location
         if prev_version.status != obj_to_save.status and "closed" in [
             prev_version.status,
             obj_to_save.status,
