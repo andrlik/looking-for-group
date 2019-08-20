@@ -1,0 +1,20 @@
+{% load location_tags %}
+<script type="text/javascript">
+  function initSearchField() {
+    var pac_input = document.getElementById("id_location-formatted_address");
+    var pac_id_input = document.getElementById("id_location-google_place_id");
+    var autocomplete = new google.maps.places.Autocomplete(pac_input);
+    autocomplete.setFields(["formatted_address", "place_id", "geometry"]);
+
+    autocomplete.addListener('place_changed', function () {
+      var place = autocomplete.getPlace();
+      if (!place.geometry) {
+        // Do nothing. Let the server side geocoder try.
+        return;
+      }
+      pac_input.value = place.formatted_address;
+      pac_id_input.value = place.place_id
+    });
+  }
+</script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key={% google_maps_api %}&libraries=places&callback=initSearchField" async defer></script>

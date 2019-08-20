@@ -1,23 +1,33 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from . import models
 from ..game_catalog import models as cat_models
 from ..gamer_profiles.forms import BooleanSwitchPaddleFormMixin, SwitchInput
+from . import models
 
 DUMMY_CHOICES = [("", "")]
 
 
 def get_edition_choices():
-    return [("", "")] + [(e.slug, "{} ({})".format(e.game.title, e.name)) for e in cat_models.GameEdition.objects.all().select_related("game").order_by("game__title", "name")]
+    return [("", "")] + [
+        (e.slug, "{} ({})".format(e.game.title, e.name))
+        for e in cat_models.GameEdition.objects.all()
+        .select_related("game")
+        .order_by("game__title", "name")
+    ]
 
 
 def get_system_choices():
-    return [("", "")] + [(s.pk, s.name) for s in cat_models.GameSystem.objects.all().order_by('name')]
+    return [("", "")] + [
+        (s.pk, s.name) for s in cat_models.GameSystem.objects.all().order_by("name")
+    ]
 
 
 def get_module_choices():
-    return [("", "")] + [(m.pk, m.title) for m in cat_models.PublishedModule.objects.all().order_by('title')]
+    return [("", "")] + [
+        (m.pk, m.title)
+        for m in cat_models.PublishedModule.objects.all().order_by("title")
+    ]
 
 
 class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
@@ -41,11 +51,13 @@ class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
         cleaned_data = super().clean()
         if "communities" in self.fields.keys():
             communities = cleaned_data.get("communities")
-            privacy = cleaned_data.get('privacy_level')
+            privacy = cleaned_data.get("privacy_level")
             if privacy == "private" and len(communities) > 0:
-                msg = _("A game cannot be both private and posted in communities. None of your community members would be able to see it. Maximum privacy method allowed for community games is 'Friends/Selected Communities'.")
-                self.add_error('privacy_level', msg)
-                self.add_error('privacy_level', msg)
+                msg = _(
+                    "A game cannot be both private and posted in communities. None of your community members would be able to see it. Maximum privacy method allowed for community games is 'Friends/Selected Communities'."
+                )
+                self.add_error("privacy_level", msg)
+                self.add_error("privacy_level", msg)
 
     class Meta:
         model = models.GamePosting
@@ -56,6 +68,7 @@ class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
             "featured_image",
             "featured_image_description",
             "featured_image_cw",
+            "game_mode",
             "min_players",
             "max_players",
             "adult_themes",
@@ -73,8 +86,12 @@ class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
             "tags",
         ]
         widgets = {
-            "start_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"}, format="%Y-%m-%d %H:%M"),
-            "end_date": forms.widgets.DateTimeInput(attrs={"class": "dp"}, format="%Y-%m-%d"),
+            "start_time": forms.widgets.DateTimeInput(
+                attrs={"class": "dtp"}, format="%Y-%m-%d %H:%M"
+            ),
+            "end_date": forms.widgets.DateTimeInput(
+                attrs={"class": "dp"}, format="%Y-%m-%d"
+            ),
         }
 
 
@@ -90,14 +107,16 @@ class GameFilterForm(forms.Form):
     edition = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
     system = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
     module = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
-    similar_availability = forms.BooleanField(label="Filter by GM availability?", widget=SwitchInput(), required=False)
+    similar_availability = forms.BooleanField(
+        label="Filter by GM availability?", widget=SwitchInput(), required=False
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["filter_present"] = 1
-        self.fields['edition'].choices = get_edition_choices()
-        self.fields['system'].choices = get_system_choices()
-        self.fields['module'].choices = get_module_choices()
+        self.fields["edition"].choices = get_edition_choices()
+        self.fields["system"].choices = get_system_choices()
+        self.fields["module"].choices = get_module_choices()
 
 
 class GameSessionForm(forms.ModelForm):
@@ -134,23 +153,24 @@ class GameSessionForm(forms.ModelForm):
 
 
 class AdHocGameSessionForm(GameSessionForm):
-    '''
+    """
     Much like the normal form except provides direct access to the scheduled_time field.
-    '''
+    """
 
     class Meta:
         model = models.GameSession
         fields = ["scheduled_time", "players_expected", "players_missing", "gm_notes"]
         widgets = {
-            "scheduled_time": forms.widgets.DateTimeInput(attrs={'class': 'dtp'}, format="%Y-%m-%d %H:%M")
+            "scheduled_time": forms.widgets.DateTimeInput(
+                attrs={"class": "dtp"}, format="%Y-%m-%d %H:%M"
+            )
         }
 
 
 class GameSessionCompleteUncompleteForm(forms.ModelForm):
-
     class Meta:
         model = models.GameSession
-        fields = ['status']
+        fields = ["status"]
 
 
 class GameSessionRescheduleForm(forms.ModelForm):
@@ -158,5 +178,7 @@ class GameSessionRescheduleForm(forms.ModelForm):
         model = models.GameSession
         fields = ["scheduled_time"]
         widgets = {
-            "scheduled_time": forms.widgets.DateTimeInput(attrs={"class": "dtp"}, format="%Y-%m-%d %H:%M")
+            "scheduled_time": forms.widgets.DateTimeInput(
+                attrs={"class": "dtp"}, format="%Y-%m-%d %H:%M"
+            )
         }

@@ -50,7 +50,7 @@ class Location(AbstractUUIDGISModel, models.Model):
         max_length=255,
         null=True,
         blank=True,
-        help_text=_("The full address in one line."),
+        help_text=_("Only accepted players can see this."),
     )
     latlong = models.PointField(
         _("Geolocation"),
@@ -131,6 +131,28 @@ class Location(AbstractUUIDGISModel, models.Model):
         if self.geocode_method == "forward" and self.latlong:
             return True
         return False
+
+    @property
+    def google_map_url(self):
+        if not self.is_geocoded:
+            return None
+        url = "https://www.google.com/maps/search/?api=1&query={},{}".format(
+            self.latlong.y, self.latlong.x
+        )
+        if self.google_place_id:
+            url = url + "&query_place_id={}".format(self.google_place_id)
+        return url
+
+    @property
+    def google_map_embed_url(self):
+        if not self.is_geocoded:
+            return None
+        url = "https://www.google.com/maps/embed/v1/search?q={},{}".format(
+            self.latlong.y, self.latlong.x
+        )
+        # if self.google_place_id:
+        #    url = url + "&query_place_id={}".format(self.google_place_id)
+        return url + "&key={}".format(settings.GOOGLE_MAPS_API_KEY)
 
     def geocode(self):
         """

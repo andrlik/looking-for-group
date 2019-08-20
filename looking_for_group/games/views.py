@@ -306,7 +306,7 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
         if self.request.POST:
             location_form = LocationForm(self.request.POST, prefix="location")
         else:
-            location_form = LocationForm()
+            location_form = LocationForm(prefix="location")
         context["location_form"] = location_form
         return context
 
@@ -735,9 +735,7 @@ class GamePostingUpdateView(
             )
         else:
             context["location_form"] = LocationForm(
-                context["game"].game_location,
-                prefix="location",
-                instance=self.get_object().game_location,
+                prefix="location", instance=self.get_object().game_location
             )
         return context
 

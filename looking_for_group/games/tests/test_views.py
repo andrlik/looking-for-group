@@ -2,19 +2,14 @@ import urllib
 from datetime import timedelta
 
 import pytest
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import m2m_changed, post_save, pre_delete
-from django.test import TransactionTestCase
+from django.db.models.signals import post_save, pre_delete
 from django.urls import reverse
 from django.utils import timezone
 from factory.django import mute_signals
-from test_plus import APITestCase, TestCase
-from test_plus.test import BaseTestCase
 
-from .. import models
-from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
 from ...invites.models import Invite
+from .. import models
 from ..utils import mkfirstOfmonth, mkLastOfMonth
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -1458,7 +1453,7 @@ def test_character_list_views(
     expected_get_response,
     expected_items,
 ):
-    character2 = models.Character.objects.create(
+    models.Character.objects.create(
         player=game_testdata.player2,
         game=game_testdata.gp2,
         name="Taako",

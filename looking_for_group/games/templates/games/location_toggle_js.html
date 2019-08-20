@@ -1,0 +1,13 @@
+<script type="text/javascript">
+  var mode_type = jQuery("#id_game_mode")
+  function toggle_location_fields () {
+    if (jQuery("#id_game_mode").val() != "irl") {
+      jQuery("#location_form").css("display", "none")
+    }
+    else {
+      jQuery("#location_form").css("display", "block")
+    }
+  }
+  toggle_location_fields()
+  mode_type.change(toggle_location_fields)
+</script>

@@ -18,7 +18,7 @@
     "django_secret_key": "{{env `PROD_DJANGO_SECRET_KEY`}}",
     "sentry_dsn": "{{env `PROD_DJANGO_SENTRY_DSN`}}",
     "django_settings_module": "{{env `PROD_DJANGO_SETTINGS_MODULE`}}",
-    "maps_key": "{{env `GOOGLE_MAPS_API_KEY`}}",
+    "maps_key": "{{env `PROD_GOOGLE_MAPS_API_KEY`}}",
     "mailgun_api_key": "{{env `PROD_MAILGUN_API_KEY`}}",
     "mailgun_domain": "{{env `PROD_MAILGUN_DOMAIN`}}",
     "mailgun_publickey": "{{env `PROD_MAILGUN_PUBLIC_KEY`}}",

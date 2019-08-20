@@ -12,7 +12,7 @@ from .. import models
 
 
 class GamesTData(object):
-    def __init__(self):
+    def __init__(self, geocoded_location=None):
         ContentType.objects.clear_cache()
         self.rule1, created = Rule.objects.get_or_create(
             name="weekly", defaults={"description": "Weekly", "frequency": "WEEKLY"}
@@ -88,6 +88,20 @@ class GamesTData(object):
             session_length=2.5,
             game_description="We are fond of rolling dice.",
         )
+        self.gp_irl = models.GamePosting.objects.create(
+            game_type="campaign",
+            status="open",
+            title="Let's play in person!",
+            gm=self.blocked_gamer,
+            privacy_level="private",
+            min_players=2,
+            max_players=5,
+            game_frequency="weekly",
+            session_length=2.5,
+            game_description="Let's play at my house",
+            game_mode="irl",
+            game_location=geocoded_location,
+        )
         self.gp2.refresh_from_db()
         self.gp2.start_time = timezone.now() - timedelta(days=6)
         self.gp2.save()
@@ -130,8 +144,8 @@ class GamesTData(object):
 
 
 @pytest.fixture
-def game_testdata(transactional_db):
-    yield GamesTData()
+def game_testdata(transactional_db, location_testdata):
+    yield GamesTData(location_testdata.geocoded_location)
     ContentType.objects.clear_cache()
 
 

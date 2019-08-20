@@ -631,7 +631,7 @@ class GamePosting(
         null=True,
     )
     game_mode = models.CharField(
-        max_length=25, default="online", choices=GAMEPLAY_MODE_CHOICES
+        max_length=25, default="online", choices=GAMEPLAY_MODE_CHOICES, db_index=True
     )
     game_location = models.ForeignKey(
         Location,
