@@ -634,12 +634,12 @@ class GamePosting(
         max_length=25, default="online", choices=GAMEPLAY_MODE_CHOICES
     )
     game_location = models.ForeignKey(
-        _("Game Location"),
         Location,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         help_text=_("For an IRL game, where will we play?"),
+        verbose_name=_("Game Location"),
     )
     min_players = models.PositiveIntegerField(
         default=1,
