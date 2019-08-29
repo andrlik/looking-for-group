@@ -339,12 +339,19 @@ class GamePostingCreateView(LoginRequiredMixin, generic.CreateView):
                 or location_form.cleaned_data["formatted_address"]
             )
         ):
-            game_location, created = Location.objects.get_or_create(
-                google_place_id=location_form.cleaned_data["google_place_id"],
-                defaults={
-                    "formatted_address": location_form.cleaned_data["formatted_address"]
-                },
-            )
+            if location_form.cleaned_data["google_place_id"]:
+                game_location, created = Location.objects.get_or_create(
+                    google_place_id=location_form.cleaned_data["google_place_id"],
+                    defaults={
+                        "formatted_address": location_form.cleaned_data[
+                            "formatted_address"
+                        ]
+                    },
+                )
+            else:
+                game_location, created = Location.objects.get_or_create(
+                    formatted_address=location_form.cleaned_data["formatted_address"]
+                )
             game_location.geocode()
             if not game_location.is_geocoded:
                 messages.error(
@@ -755,18 +762,29 @@ class GamePostingUpdateView(
                     location_form.cleaned_data["formatted_address"]
                     or location_form.cleaned_data["google_place_id"]
                 )
-                and location_form.cleaned_data["google_place_id"]
-                != prev_version.game_location.google_place_id
+                and (
+                    not prev_version.game_location
+                    or location_form.cleaned_data["google_place_id"]
+                    != prev_version.game_location.google_place_id
+                )
             ):
-                location, created = Location.objects.get_or_create(
-                    google_place_id=location_form.cleaned_data["google_place_id"],
-                    defaults={
-                        "formatted_address": location_form.cleaned_data[
+                if location_form.cleaned_data["google_place_id"]:
+                    location, created = Location.objects.get_or_create(
+                        google_place_id=location_form.cleaned_data["google_place_id"],
+                        defaults={
+                            "formatted_address": location_form.cleaned_data[
+                                "formatted_address"
+                            ]
+                        },
+                    )
+                else:
+                    location, created = Location.objects.get_or_create(
+                        formatted_address=location_form.cleaned_data[
                             "formatted_address"
                         ]
-                    },
-                )
-                location.geocode()
+                    )
+                if created or not location.is_geocoded:
+                    location.geocode()
                 if not location.is_geocoded:
                     messages.error(
                         _(

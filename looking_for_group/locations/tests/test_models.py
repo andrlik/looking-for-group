@@ -1,5 +1,7 @@
 import pytest
 
+from ..tasks import refresh_all_place_ids
+
 pytestmark = pytest.mark.django_db(transaction=True)
 
 
@@ -95,3 +97,28 @@ def test_geocode_locations(
     assert loc.state == expected_state
     assert loc.postal_code == expected_postal_code
     assert loc.country == expected_country
+
+
+def test_refresh_place_id(location_testdata):
+    """
+    Ensure that we can refresh the place_id without an error.
+    """
+    current_place_id = location_testdata.geocoded_location.google_place_id
+    location_testdata.geocoded_location.refresh_place_id()
+    location_testdata.geocoded_location.refresh_from_db()
+    if current_place_id != location_testdata.geocoded_location.google_place_id:
+        print(
+            "The place id has changed to {}. Please update your test fixtures!".format(
+                location_testdata.geocoded_location.google_place_id
+            )
+        )
+        assert not current_place_id  # Force a test failure
+
+
+def test_refresh_all_place_ids(location_testdata):
+    """
+    Test maintenance of google refresh ids.
+
+    All we care about here is that we don't get an unhandled exception.
+    """
+    refresh_all_place_ids(age=0)

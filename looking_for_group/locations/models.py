@@ -1,6 +1,7 @@
 import logging
 from uuid import uuid4
 
+import requests
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
@@ -153,6 +154,42 @@ class Location(AbstractUUIDGISModel, models.Model):
         # if self.google_place_id:
         #    url = url + "&query_place_id={}".format(self.google_place_id)
         return url + "&key={}".format(settings.GOOGLE_MAPS_API_KEY)
+
+    def refresh_place_id(self):
+        """
+        Query google and get a refresh of the location place id.
+        """
+        if self.google_place_id:
+            response = requests.get(
+                "https://maps.googleapis.com/maps/api/place/details/json?key={}&placeid={}&fields=place_id".format(
+                    settings.GOOGLE_MAPS_API_KEY, self.google_place_id
+                )
+            )
+            try:
+                jr = response.json()
+            except ValueError as ve:  # pragma: no cover
+                logger.debug(
+                    "There was not a valid response returned from google, so not making any changes. Error was: {}".format(
+                        str(ve)
+                    )
+                )
+                return
+            try:
+                place_id = jr["result"]["place_id"]
+            except KeyError as ke:  # pragma: no cover
+                logger.debug(
+                    "Google did not include the results or place id in their json response, so not making changes. Error was: {}".format(
+                        str(ke)
+                    )
+                )
+                return
+            logger.debug("Comparing place_id response...")
+            if place_id == self.google_place_id:
+                logger.debug("Same place id. No changes are required.")
+            else:
+                logger.debug("New place id! Updating record.")
+                self.google_place_id = place_id
+                self.save()
 
     def geocode(self):
         """
