@@ -106,9 +106,14 @@ class GameFilterForm(forms.Form):
     )
     edition = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
     system = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
+    venue = forms.ChoiceField(
+        choices=DUMMY_CHOICES + list(models.GAMEPLAY_MODE_CHOICES), required=False
+    )
     module = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
     similar_availability = forms.BooleanField(
-        label="Filter by GM availability?", widget=SwitchInput(), required=False
+        label="Filter by GM availability?",
+        widget=SwitchInput(label=_("Filter by GM Availability")),
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):

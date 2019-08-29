@@ -59,6 +59,7 @@ class GamePostingListView(
     filter_module = None
     filter_availability = None
     filter_querystring = None
+    filter_venue = None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -72,6 +73,7 @@ class GamePostingListView(
                     "system": self.filter_system,
                     "module": self.filter_module,
                     "similar_availability": self.filter_availability,
+                    "venue": self.filter_venue,
                 }
             )
         else:
@@ -104,6 +106,11 @@ class GamePostingListView(
             print(system)
             module = get_dict.pop("module", None)
             avail = get_dict.pop("similar_availability", None)
+            self.filter_venue = get_dict.pop("venue", None)
+            if self.filter_venue and self.filter_venue[0] != "":
+                self.is_filtered = True
+                queryset = queryset.filter(game_mode=self.filter_venue[0])
+                query_string_data["venue"] = self.filter_venue[0]
             if self.filter_game_status and self.filter_game_status[0] != "":
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
@@ -189,6 +196,7 @@ class MyGameList(
     filter_edition = None
     filter_system = None
     filter_module = None
+    filter_venue = None
     filter_querystring = None
 
     def get_stub_queryset(self):
@@ -214,6 +222,11 @@ class MyGameList(
             system = get_dict.pop("system", None)
             print(system)
             module = get_dict.pop("module", None)
+            self.filter_venue = get_dict.pop("venue", None)
+            if self.filter_venue and self.filter_venue[0] != "":
+                self.is_filtered = True
+                queryset = queryset.filter(game_mode=self.filter_venue[0])
+                query_string_data["venue"] = self.filter_venue[0]
             if self.filter_game_status and self.filter_game_status[0] != "":
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
@@ -277,6 +290,7 @@ class MyGameList(
                     "edition": self.filter_edition,
                     "system": self.filter_system,
                     "module": self.filter_module,
+                    "venue": self.filter_venue,
                 }
             )
         else:

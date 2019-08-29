@@ -6,15 +6,14 @@
 {% if field.label %}
 
 {% if "switch" in field.field.widget.attrs.class %}
-<br />
-<span class="fake-label{% if field.errors %} is-invalid-label{% endif %}">
+<div><span class="fake-label{% if field.errors %} is-invalid-label{% endif %}">
   {{ field.label|safe }}
   {% if not field.field.required and use_optional %}
   <span class="optional">(optional)</span>
   {% elif field.field.required and not use_optional %}
   <span class="required">*</span>
   {% endif %}
-</span>
+</span></div>
 {% else %}
         <label for="{{ field.auto_id }}" class="{% if field.errors %}is-invalid-label{% endif %}">
             {{ field.label|safe }}

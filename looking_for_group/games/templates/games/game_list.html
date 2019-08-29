@@ -25,7 +25,7 @@
 {% if filter_form %}
 
 <form class="inline-form" action="" method="get">
-  <div class="grid-x grid-margin-x"><input type="hidden" id="id_filter_present" name="filter_present" value="1" /> <div class="cell medium-auto"> {% render_field filter_form.game_status %}</div><div class="cell medium-auto"> {% render_field filter_form.edition %}</div><div class="cell medium-auto"> {% render_field filter_form.system %}</div><div class="cell medium-auto"> {% render_field filter_form.module %}</div> <div class="cell medium-auto">{% render_field filter_form.similar_availability %}</div> <div class="cell medium-auto"><label for="id_submit_filter">&nbsp;</label> <input id="id_submit_filter" type="submit" class="button secondary" value="{% trans 'Filter results' %}" /></div></div></form>
+  <div class="grid-x grid-margin-x"><input type="hidden" id="id_filter_present" name="filter_present" value="1" /><div class="cell medium-auto">{% render_field filter_form.game_status %}</div><div class="cell medium-auto">{% render_field filter_form.edition %}</div><div class="cell medium-auto">{% render_field filter_form.system %}</div><div class="cell medium-auto">{% render_field filter_form.module %}</div><div class="cell medium-auto">{% render_field filter_form.venue %}</div><div class="cell medium-auto">{% render_field filter_form.similar_availability %}</div><div class="cell medium-auto"><label for="id_submit_filter">&nbsp;</label> <input id="id_submit_filter" type="submit" class="button secondary" value="{% trans 'Filter results' %}" /></div></div></form>
 {% endif %}
 <table class="scroll hover">
   <thead>
@@ -48,6 +48,9 @@
       <th>{% trans "Game" %}</th>
       <th>{% trans "System" %}</th>
       <th>{% trans "Module" %}</th>
+      <th id="venue">{% trans "Venue" %}</th>
+      <th id="game_city"><abbr title="{% trans 'City if an IRL game' %}">{% trans "City" %}</abbr></th>
+
     </tr>
   </thead>
   <tbody>
@@ -71,6 +74,8 @@
       <td>{% if game.published_game %}<a href="{{ game.published_game.get_absolute_url }}">{{ game.published_game.game.title }} ({{ game.published_game.name }})</a>{% else %}{% if game.published_module %}<a href="{{ game.published_module.parent_game_edition.get_absolute_url }}">{{ game.published_module.parent_game_edition }}</a>{% else %}{% trans "Homebrew" %}{% endif %}{% endif %}</td>
       <td>{% if game.game_system %}<a href="{{ game.game_system.get_absolute_url }}">{{ game.game_system.name }}</a>{% else %}{% if not game.published_game and not game.published_module %}{% trans 'Homebrew' %}{% else %}{% if game.published_game.game_system %}<a href="{{ game.published_game.game_system.get_absolute_url }}">{{ game.published_game.game_system.name }}</a>{% elif game.published_module and game.published_module.parent_game_edition.game_system %}<a href="{{ game.published_module.parent_game_edition.game_system.get_absolute_url }}">{{ game.published_module.parent_game_edition.game_system.name }}</a>{% endif %}{% endif %}{% endif %}</td>
       <td>{% if game.published_module %}<a href="{{ game.published_module.get_absolute_url }}">{{ game.published_module.title }}</a>{% else %}N/A{% endif %}</td>
+      <td>{{ game.get_game_mode_display }}</td>
+      <td>{% if game.game_location %}{{ game.game_location.city }}, {{ game.game_location.state }}{% else %}{% trans "N/A" %}{% endif %}</td>
     </tr>
     {% empty %}
     <!-- No results -->
