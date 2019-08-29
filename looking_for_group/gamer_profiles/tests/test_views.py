@@ -1242,6 +1242,7 @@ def test_gamer_profile_detail(
         ("gamer1", "invalid_user_post", 200),  # Invalid data in the user form
         ("gamer1", "invalid_profile_post", 200),  # Invalid data in the profile form
         ("gamer1", "valid_post", 302),  # Valid!
+        ("gamer1", "valid_post_with_city", 302),
     ],
 )
 def test_profile_update(
@@ -1295,6 +1296,32 @@ Nunc auctor rutrum ligula ut consectetur. Integer eget lorem elementum diam hend
             "profile-one_shots": 1,
             "profile-online_games": 1,
         },
+        "valid_post_with_city": {
+            "display_name": "Charles",
+            "bio": "Born in the USA",
+            "homepage_url": "https://www.google.com",
+            "profile-private": 1,
+            "profile-rpg_experience": "I dabble",
+            "profile-ttg_experience": "A few rounds of Catan",
+            "profile-player_status": "searching",
+            "profile-one_shots": 1,
+            "profile-online_games": 1,
+            "location-google_place_id": "ChIJWdFuG9mUxokRqf9iBQ1uzZI",
+            "location-city": "Wayne, PA, USA",
+        },
+        "valid_post_remove_city": {
+            "display_name": "Charles",
+            "bio": "Born in the USA",
+            "homepage_url": "https://www.google.com",
+            "profile-private": 1,
+            "profile-rpg_experience": "I dabble",
+            "profile-ttg_experience": "A few rounds of Catan",
+            "profile-player_status": "searching",
+            "profile-one_shots": 1,
+            "profile-online_games": 1,
+            "location-google_place_id": "ChIJWdFuG9mUxokRqf9iBQ1uzZI",
+            "location-city": "",
+        },
     }
     if gamer_to_use:
         gamer = getattr(social_testdata, gamer_to_use)
@@ -1314,6 +1341,14 @@ Nunc auctor rutrum ligula ut consectetur. Integer eget lorem elementum diam hend
         if expected_post_response == 302:
             assert gamer.player_status == "searching"
             assert gamer.user.display_name == "Charles"
+            if "city" in post_data_key:
+                assert gamer.city and gamer.city.is_geocoded
+                response = client.post(
+                    url, data=post_data_dict["valid_post_remove_city"]
+                )
+                assert response.status_code == expected_post_response
+                gamer.refresh_from_db()
+                assert not gamer.city
         else:
             assert gamer.user.bio == orig_bio
             assert gamer.player_status == orig_status

@@ -191,7 +191,7 @@ class Location(AbstractUUIDGISModel, models.Model):
                 self.google_place_id = place_id
                 self.save()
 
-    def geocode(self):
+    def geocode(self, city_only=False):
         """
         Given the values in the record, run the geocoding if it has not already been done.
         """

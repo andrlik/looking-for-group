@@ -57,7 +57,7 @@ class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
                     "A game cannot be both private and posted in communities. None of your community members would be able to see it. Maximum privacy method allowed for community games is 'Friends/Selected Communities'."
                 )
                 self.add_error("privacy_level", msg)
-                self.add_error("privacy_level", msg)
+                self.add_error("communities", msg)
 
     class Meta:
         model = models.GamePosting
@@ -109,19 +109,40 @@ class GameFilterForm(forms.Form):
     venue = forms.ChoiceField(
         choices=DUMMY_CHOICES + list(models.GAMEPLAY_MODE_CHOICES), required=False
     )
+    distance = forms.ChoiceField(
+        label=_("Miles from you"),
+        choices=[
+            ("", ""),
+            (5, _("5")),
+            (10, _("10")),
+            (15, _("15")),
+            (20, _("20")),
+            (25, _("25")),
+        ],
+        required=False,
+    )
     module = forms.ChoiceField(choices=DUMMY_CHOICES, required=False)
     similar_availability = forms.BooleanField(
-        label="Filter by GM availability?",
-        widget=SwitchInput(label=_("Filter by GM Availability")),
+        label=_("Filter by GM Sched?"),
+        widget=SwitchInput(label=_("Filter by GM Sched?")),
         required=False,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, profile_has_city=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["filter_present"] = 1
         self.fields["edition"].choices = get_edition_choices()
         self.fields["system"].choices = get_system_choices()
         self.fields["module"].choices = get_module_choices()
+        if not profile_has_city:
+            self.fields["distance"].disabled = True
+            self.fields["distance"].widget = forms.Select(
+                attrs={
+                    "title": _(
+                        "You don't have your city set in your profile so distance searches cannot be done."
+                    )
+                }
+            )
 
 
 class GameSessionForm(forms.ModelForm):

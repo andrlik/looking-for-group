@@ -16,6 +16,7 @@ from star_ratings.models import AbstractBaseRating
 from ..game_catalog.models import GameSystem, PublishedGame
 from ..game_catalog.utils import AbstractUUIDModel
 from ..invites.models import Invite
+from ..locations.models import Location
 
 
 class NotInCommunity(Exception):
@@ -371,6 +372,15 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
     private = models.BooleanField(
         default=True,
         help_text=_("Only allow GMs and communities I belong/apply to see profile."),
+    )
+    city = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        help_text=_(
+            "You can optionally list the city where you are to find similar gamers. If your profile is set to private, only your fellow community members and people you are playing games with can see this information."
+        ),
     )
     friends = models.ManyToManyField("self", blank=True, help_text=_("Other friends."))
     rpg_experience = models.TextField(

@@ -1,19 +1,38 @@
 {% load location_tags %}
 <script type="text/javascript">
   function initSearchField() {
-    var pac_input = document.getElementById("id_location-formatted_address");
+    {% if location_form %}
+    var id_to_use = "id_location-formatted_address";
+    var options = {}
+    {% else %}
+    var id_to_use = "id_location-city";
+    var options = {
+      types: ["(cities)"]
+    }
+    {% endif %}
+    var pac_input = document.getElementById(id_to_use);
     var pac_id_input = document.getElementById("id_location-google_place_id");
-    var autocomplete = new google.maps.places.Autocomplete(pac_input);
+    var autocomplete = new google.maps.places.Autocomplete(pac_input, options);
     autocomplete.setFields(["formatted_address", "place_id", "geometry"]);
 
     autocomplete.addListener('place_changed', function () {
       var place = autocomplete.getPlace();
       if (!place.geometry) {
         // Do nothing. Let the server side geocoder try.
+       // console.log("No geometry retreived!");
         return;
       }
+      //console.log("Retrieved a valid place.");
       pac_input.value = place.formatted_address;
       pac_id_input.value = place.place_id
+    });
+
+    jQuery("#" + id_to_use).keydown(function (e) {
+      if (e.keyCode == 13) {
+        //console.log("Hit enter key in location search: firing place changed event");
+        e.preventDefault();
+        jQuery("#" + id_to_use).trigger("place_changed");
+      }
     });
   }
 </script>

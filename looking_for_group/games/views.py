@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.measure import Distance
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
@@ -60,13 +61,18 @@ class GamePostingListView(
     filter_availability = None
     filter_querystring = None
     filter_venue = None
+    filter_distance = None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["is_filterd"] = self.is_filtered
         context["querystring"] = self.filter_querystring
+        has_city = False
+        if self.request.user.gamerprofile.city:
+            has_city = True
         if self.is_filtered:
             filter_form = forms.GameFilterForm(
+                profile_has_city=has_city,
                 initial={
                     "game_status": self.filter_game_status,
                     "edition": self.filter_edition,
@@ -74,10 +80,11 @@ class GamePostingListView(
                     "module": self.filter_module,
                     "similar_availability": self.filter_availability,
                     "venue": self.filter_venue,
-                }
+                    "distance": self.filter_distance,
+                },
             )
         else:
-            filter_form = forms.GameFilterForm()
+            filter_form = forms.GameFilterForm(profile_has_city=has_city)
         context["filter_form"] = filter_form
         return context
 
@@ -111,6 +118,37 @@ class GamePostingListView(
                 self.is_filtered = True
                 queryset = queryset.filter(game_mode=self.filter_venue[0])
                 query_string_data["venue"] = self.filter_venue[0]
+            if self.filter_venue and self.filter_venue[0] == "irl":
+                self.filter_distance = get_dict.pop("distance", None)
+                if self.filter_distance and self.filter_distance[0] != "":
+                    if (
+                        self.request.user.gamerprofile.city
+                        and self.request.user.gamerprofile.city.is_geocoded
+                    ):
+                        queryset = queryset.filter(
+                            game_location__latlong__distance_lte=(
+                                self.request.user.gamerprofile.city.latlong,
+                                Distance(mi=self.filter_distance[0]),
+                            )
+                        )
+                        query_string_data["distance"] = self.filter_distance[0]
+                    else:
+                        messages.error(
+                            self.request,
+                            _(
+                                "You don't have a city associated with your profile so we cannot do distance based searches for irl games."
+                            ),
+                        )
+                if (
+                    not self.request.user.gamerprofile.city
+                    or not self.request.user.gamerprofile.city.is_geocoded
+                ):
+                    messages.info(
+                        self.request,
+                        _(
+                            "You are searching for in-person games, but since you don't have a city defined in your profile we will be unable to do distance based searches. However, all face-to-face games that match the rest of your criteria are displayed below."
+                        ),
+                    )
             if self.filter_game_status and self.filter_game_status[0] != "":
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
@@ -198,6 +236,7 @@ class MyGameList(
     filter_module = None
     filter_venue = None
     filter_querystring = None
+    filter_distance = None
 
     def get_stub_queryset(self):
         if not self.stub_queryset:
@@ -227,6 +266,27 @@ class MyGameList(
                 self.is_filtered = True
                 queryset = queryset.filter(game_mode=self.filter_venue[0])
                 query_string_data["venue"] = self.filter_venue[0]
+                if self.filter_venue[0] == "irl":
+                    if (
+                        self.request.user.gamerprofile.city
+                        or self.request.user.gamerprofile.city.is_geocoded
+                    ):
+                        self.filter_distance = get_dict.pop("distance", None)
+                        if self.filter_distance and self.filter_distance != "":
+                            queryset = queryset.filter(
+                                game_location__latlong__distance_lte(
+                                    self.request.user.gamerprofile.city.latlong,
+                                    Distance(mi=self.filter_distance[0]),
+                                )
+                            )
+                            query_string_data["distance"] = self.filter_distance[0]
+                    else:
+                        messages.info(
+                            self.request,
+                            _(
+                                "You are searching for a face-to-face game, but you don't have a city in your profile, so we won't be able to provide distance based searches. However, all face-to-face games matching your other criteria are displayed below."
+                            ),
+                        )
             if self.filter_game_status and self.filter_game_status[0] != "":
                 self.is_filtered = True
                 queryset = queryset.filter(status=self.filter_game_status[0])
@@ -283,18 +343,26 @@ class MyGameList(
         )
         context["is_filterd"] = self.is_filtered
         context["querystring"] = self.filter_querystring
+        has_city = False
+        if (
+            self.request.user.gamerprofile.city
+            and self.request.user.gamerprofile.city.is_geocoded
+        ):
+            has_city = True
         if self.is_filtered:
             filter_form = forms.GameFilterForm(
+                profile_has_city=has_city,
                 initial={
                     "game_status": self.filter_game_status,
                     "edition": self.filter_edition,
                     "system": self.filter_system,
                     "module": self.filter_module,
                     "venue": self.filter_venue,
-                }
+                    "distance": self.filter_distance,
+                },
             )
         else:
-            filter_form = forms.GameFilterForm()
+            filter_form = forms.GameFilterForm(profile_has_city=has_city)
         context["filter_form"] = filter_form
         return context
 
@@ -765,49 +833,48 @@ class GamePostingUpdateView(
         obj_to_save = form.save(commit=False)
         if obj_to_save.game_mode == "irl":
             logger.debug("This is an IRL game. Checking for supplied address.")
-            location_form = LocationForm(
-                self.request.POST,
-                prefix="location",
-                instance=prev_version.game_location,
-            )
-            if (
-                location_form.is_valid()
-                and (
-                    location_form.cleaned_data["formatted_address"]
-                    or location_form.cleaned_data["google_place_id"]
-                )
-                and (
-                    not prev_version.game_location
-                    or location_form.cleaned_data["google_place_id"]
-                    != prev_version.game_location.google_place_id
-                )
-            ):
-                if location_form.cleaned_data["google_place_id"]:
-                    location, created = Location.objects.get_or_create(
-                        google_place_id=location_form.cleaned_data["google_place_id"],
-                        defaults={
-                            "formatted_address": location_form.cleaned_data[
-                                "formatted_address"
-                            ]
-                        },
-                    )
+            location_form = LocationForm(self.request.POST, prefix="location")
+            if location_form.is_valid():
+                if (
+                    not location_form.cleaned_data["formatted_address"]
+                    or location_form.cleaned_data["formatted_address"] == ""
+                ):
+                    logger.debug("Address is not present, clearing location.")
+                    obj_to_save.game_location = None
                 else:
-                    location, created = Location.objects.get_or_create(
-                        formatted_address=location_form.cleaned_data[
-                            "formatted_address"
-                        ]
-                    )
-                if created or not location.is_geocoded:
-                    location.geocode()
-                if not location.is_geocoded:
-                    messages.error(
-                        _(
-                            "We could not locate the address you specified so it has not been changed."
-                        )
-                    )
-                else:
-                    logger.debug("Updating location association for game.")
-                    obj_to_save.game_location = location
+                    if (
+                        not prev_version.game_location
+                        or location_form.cleaned_data["google_place_id"]
+                        != prev_version.game_location.google_place_id
+                    ):
+                        if location_form.cleaned_data["google_place_id"]:
+                            location, created = Location.objects.get_or_create(
+                                google_place_id=location_form.cleaned_data[
+                                    "google_place_id"
+                                ],
+                                defaults={
+                                    "formatted_address": location_form.cleaned_data[
+                                        "formatted_address"
+                                    ]
+                                },
+                            )
+                        else:
+                            location, created = Location.objects.get_or_create(
+                                formatted_address=location_form.cleaned_data[
+                                    "formatted_address"
+                                ]
+                            )
+                        if created or not location.is_geocoded:
+                            location.geocode()
+                        if not location.is_geocoded:
+                            messages.error(
+                                _(
+                                    "We could not locate the address you specified so it has not been changed."
+                                )
+                            )
+                        else:
+                            logger.debug("Updating location association for game.")
+                            obj_to_save.game_location = location
         if prev_version.status != obj_to_save.status and "closed" in [
             prev_version.status,
             obj_to_save.status,
