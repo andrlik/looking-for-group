@@ -66,7 +66,7 @@
     {% if not page_obj.has_next %}
     <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span> </li>
     {% else %}
-    <li class="pagination-next"><a href="{% url 'games:session_list' gameid=game.slug page=page_obj.next_page_number %}" aria-label="Next page">{{ trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+    <li class="pagination-next"><a href="{% url 'games:session_list' gameid=game.slug page=page_obj.next_page_number %}" aria-label="Next page">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
     {% endif %}
   </ul>
 </nav>
