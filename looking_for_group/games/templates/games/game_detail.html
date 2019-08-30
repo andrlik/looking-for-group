@@ -58,6 +58,16 @@
         <table class="hover scroll">
           <tbody>
             <tr>
+              <td>{% trans "Gameplay will be" %}</td>
+              <td>{{ game.get_game_mode_display }}</td>
+            </tr>
+            {% if game.game_mode == "irl" and game.game_location and game.game_location.is_geocoded %}
+            <tr>
+              <td>{% trans "Play location" %}</td>
+              <td>{% if is_member %}{{ game.game_location.formatted_address }} <iframe title="{% trans 'Google map for address' %} {{ game.game_location.formatted_address }}" frameborder="0" style="border:0" src="{{ game.game_location.google_map_embed_url }}" allowfullscreen></iframe>{% else %}{{ game.game_location.city }}, {{ game.game_location.state }} {{ game.game_location.country }} <small>Only game members may see the full address.</small>{% endif %}</td>
+            </tr>
+            {% endif %}
+            <tr>
               <td>{% trans "Game Master" %}</td>
               <td>{% avatar game.gm.user 30 class="avatar" %} <a href="{{ game.gm.get_absolute_url }}">{{ game.gm }}</a></td>
             </tr>

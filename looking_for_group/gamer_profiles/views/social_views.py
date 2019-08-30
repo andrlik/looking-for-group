@@ -1,29 +1,21 @@
 import logging
 import urllib
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
+
 import pytz
+from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-from django.core.exceptions import (
-    ImproperlyConfigured,
-    ObjectDoesNotExist,
-    PermissionDenied,
-)
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import Sum
 from django.db.models.query_utils import Q
 from django.forms import modelform_factory
-from django.http import (
-    Http404,
-    HttpResponse,
-    HttpResponseNotAllowed,
-    HttpResponseRedirect,
-)
-from braces.views import SelectRelatedMixin, PrefetchRelatedMixin
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -36,6 +28,8 @@ from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Event, Rule
 
 from ...games.models import AvailableCalendar
+from ...locations.forms import CityLocationForm
+from ...locations.models import Location
 from .. import models, serializers
 from ..forms import (
     BlankDistructiveForm,
@@ -43,7 +37,7 @@ from ..forms import (
     GamerProfileForm,
     KickUserForm,
     ModelFormWithSwitchPaddles,
-    OwnershipTransferForm,
+    OwnershipTransferForm
 )
 
 logger = logging.getLogger("gamer_profiles")
@@ -1848,6 +1842,7 @@ class GamerProfileUpdateView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["gamer"] = self.get_object().gamerprofile
+        loc_instance = context["gamer"].city
         if self.request.POST:
             profile_form = GamerProfileForm(
                 self.request.POST,
@@ -1855,10 +1850,18 @@ class GamerProfileUpdateView(
                 instance=self.get_object().gamerprofile,
             )
             profile_form.is_valid()  # Just to trigger validation.
+            location_form = CityLocationForm(
+                self.request.POST, prefix="location", instance=loc_instance
+            )
+            location_form.is_valid()
             context["profile_form"] = profile_form
+            context["location_form"] = location_form
         else:
             context["profile_form"] = GamerProfileForm(
                 instance=self.get_object().gamerprofile, prefix="profile"
+            )
+            context["city_form"] = CityLocationForm(
+                instance=loc_instance, prefix="location"
             )
         return context
 
@@ -1870,11 +1873,60 @@ class GamerProfileUpdateView(
         return super().form_invalid(form)
 
     def form_valid(self, form):
+        gamer = self.get_object().gamerprofile
         profile_form = GamerProfileForm(
-            self.request.POST, prefix="profile", instance=self.get_object().gamerprofile
+            self.request.POST, prefix="profile", instance=gamer
         )
         if not profile_form.is_valid():
             return self.form_invalid(form)
+        loc_instance = gamer.city
+        location_form = CityLocationForm(self.request.POST, prefix="location")
+        if location_form.has_changed() and location_form.is_valid():
+            if loc_instance and (
+                not location_form.cleaned_data["city"]
+                or location_form.cleaned_data["city"] == ""
+            ):
+                logger.debug(
+                    "User removed the city from the form. Clearing from profile."
+                )
+                messages.info(
+                    self.request,
+                    _(
+                        "You have removed the city from your profile. You can still search for in-person games, but you won't be able to use distance from you as a filter."
+                    ),
+                )
+                gamer.city = None
+                gamer.save()
+            if not loc_instance or (
+                location_form.cleaned_data["city"]
+                and (
+                    location_form.cleaned_data["city"] != loc_instance.formatted_address
+                    or loc_instance.google_place_id
+                    != location_form.cleaned_data["google_place_id"]
+                )
+            ):
+                if location_form.cleaned_data["google_place_id"]:
+                    location, created = Location.objects.get_or_create(
+                        google_place_id=location_form.cleaned_data["google_place_id"],
+                        defaults={
+                            "formatted_address": location_form.cleaned_data["city"]
+                        },
+                    )
+                else:
+                    location, created = Location.objects.get_or_create(
+                        formatted_address=location_form.cleaned_data["city"]
+                    )
+                location.geocode(city_only=True)
+                if not location.is_geocoded:
+                    messages.error(
+                        self.request,
+                        _(
+                            "We couldn't find your city within the Google Hivemind, so we have not updated it in your profile."
+                        ),
+                    )
+                else:
+                    gamer.city = location
+                    gamer.save()
         with transaction.atomic():
             form.save()
             profile_form.save()

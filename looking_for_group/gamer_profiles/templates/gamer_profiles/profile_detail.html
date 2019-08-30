@@ -29,6 +29,7 @@
         </div>
         {% endif %}
         {% endif %}
+        {% has_perm "profile.view_detail" request.user gamer as is_connected %}
 <dl>
   <dt>{% trans "Display Name" %}</dt>
   <dd>{{ gamer }}</dd>
@@ -40,6 +41,10 @@
   {% endif %}
   <dt>{% trans "Timezone" %}</dt>
   <dd>{{ gamer.user.get_timezone_display }}</dd>
+  {% if is_connected %}
+  <dt>{% trans "City" %}</dt>
+  <dd>{{ gamer.city|default_if_none:"Not known" }}</dd>
+  {% endif %}
   <dt>{% trans "RPG Experience" %}</dt>
   <dd>{{ gamer.rpg_experience|default:"No info"|markdownify|safe }}</dd>
   <dt>{% trans "Tabletop Game Experience" %}</dt>
