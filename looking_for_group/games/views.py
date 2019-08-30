@@ -39,19 +39,18 @@ from .utils import mkfirstOfmonth, mkLastOfMonth
 logger = logging.getLogger("games")
 
 
-class GamePostingListView(
+class GameListAbstractView(
     LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, generic.ListView
 ):
     """
-    A generic list view for game postings.
+    A generic view that can be used to load the game lists and handle all the filtering.
     """
 
     model = models.GamePosting
     select_related = ["game_system", "published_game", "published_module", "gm"]
     prefetch_related = ["players", "communities"]
-    template_name = "games/game_list.html"
-    context_object_name = "game_list"
     paginate_by = 15
+    context_object_name = "game_list"
     paginate_orphans = 3
     is_filtered = False
     filter_game_status = None
@@ -62,13 +61,17 @@ class GamePostingListView(
     filter_querystring = None
     filter_venue = None
     filter_distance = None
+    stub_queryset = None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["is_filterd"] = self.is_filtered
         context["querystring"] = self.filter_querystring
         has_city = False
-        if self.request.user.gamerprofile.city:
+        if (
+            self.request.user.gamerprofile.city
+            and self.request.user.gamerprofile.city.is_geocoded
+        ):
             has_city = True
         if self.is_filtered:
             filter_form = forms.GameFilterForm(
@@ -88,159 +91,11 @@ class GamePostingListView(
         context["filter_form"] = filter_form
         return context
 
-    def get_queryset(self):
-        gamer = self.request.user.gamerprofile
-        friends = gamer.friends.all()
-        communities = [f.id for f in gamer.communities.all()]
-        game_player_ids = [
-            obj.game.id
-            for obj in models.Player.objects.filter(gamer=gamer).select_related("game")
-        ]
-        q_gm = Q(gm=gamer)
-        q_gm_is_friend = Q(gm__in=friends) & Q(privacy_level="community")
-        q_isplayer = Q(id__in=game_player_ids)
-        q_community = Q(communities__id__in=communities) & Q(privacy_level="community")
-        q_public = Q(privacy_level="public")
-        get_dict = self.request.GET.copy()
-        query_string_data = {}
-        queryset = models.GamePosting.objects.filter(
-            q_gm | q_public | q_gm_is_friend | q_isplayer | q_community
-        ).distinct()
-        if get_dict.pop("filter_present", None):
-            self.filter_game_status = get_dict.pop("game_status", None)
-            edition = get_dict.pop("edition", None)
-            system = get_dict.pop("system", None)
-            print(system)
-            module = get_dict.pop("module", None)
-            avail = get_dict.pop("similar_availability", None)
-            self.filter_venue = get_dict.pop("venue", None)
-            if self.filter_venue and self.filter_venue[0] != "":
-                self.is_filtered = True
-                queryset = queryset.filter(game_mode=self.filter_venue[0])
-                query_string_data["venue"] = self.filter_venue[0]
-            if self.filter_venue and self.filter_venue[0] == "irl":
-                self.filter_distance = get_dict.pop("distance", None)
-                if self.filter_distance and self.filter_distance[0] != "":
-                    if (
-                        self.request.user.gamerprofile.city
-                        and self.request.user.gamerprofile.city.is_geocoded
-                    ):
-                        queryset = queryset.filter(
-                            game_location__latlong__distance_lte=(
-                                self.request.user.gamerprofile.city.latlong,
-                                Distance(mi=self.filter_distance[0]),
-                            )
-                        )
-                        query_string_data["distance"] = self.filter_distance[0]
-                    else:
-                        messages.error(
-                            self.request,
-                            _(
-                                "You don't have a city associated with your profile so we cannot do distance based searches for irl games."
-                            ),
-                        )
-                if (
-                    not self.request.user.gamerprofile.city
-                    or not self.request.user.gamerprofile.city.is_geocoded
-                ):
-                    messages.info(
-                        self.request,
-                        _(
-                            "You are searching for in-person games, but since you don't have a city defined in your profile we will be unable to do distance based searches. However, all face-to-face games that match the rest of your criteria are displayed below."
-                        ),
-                    )
-            if self.filter_game_status and self.filter_game_status[0] != "":
-                self.is_filtered = True
-                queryset = queryset.filter(status=self.filter_game_status[0])
-                query_string_data["game_status"] = self.filter_game_status[0]
-            else:
-                queryset = queryset.exclude(status__in=["cancel", "closed"])
-            if edition and edition[0] != "":
-                query_string_data["edition"] = edition[0]
-                self.is_filtered = True
-                try:
-                    ed = GameEdition.objects.get(slug=edition[0])
-                    queryset = queryset.filter(published_game=ed)
-                    self.filter_edition = ed.slug
-                except ObjectDoesNotExist:
-                    pass
-            if system and system[0] != "":
-                query_string_data["system"] = system[0]
-                self.is_filtered = True
-                try:
-                    sys_obj = GameSystem.objects.get(pk=system[0])
-                    queryset = queryset.filter(game_system=sys_obj)
-                    self.filter_system = sys_obj.pk
-                except ObjectDoesNotExist:
-                    pass
-            if module and module[0] != "":
-                query_string_data["module"] = module[0]
-                self.is_filtered = True
-                try:
-                    mod_obj = PublishedModule.objects.get(pk=module[0])
-                    queryset = queryset.filter(published_module=mod_obj)
-                    self.filter_module = mod_obj.pk
-                except ObjectDoesNotExist:
-                    pass
-            if avail and avail[0] != "":
-                query_string_data["similar_availability"] = avail[0]
-                self.is_filtered = True
-                self.filter_availability = True
-                acal = models.AvailableCalendar.objects.get_or_create_availability_calendar_for_gamer(
-                    self.request.user.gamerprofile
-                )
-                if (
-                    acal.events.filter(
-                        rule__isnull=False, end_recurring_period__isnull=True
-                    ).count()
-                    > 0
-                ):
-                    similar_gms = models.AvailableCalendar.objects.find_compatible_schedules(
-                        acal,
-                        GamerProfile.objects.filter(
-                            id__in=[
-                                g.gm.id
-                                for g in models.GamePosting.objects.select_related(
-                                    "gm"
-                                ).exclude(status__in=["closed", "cancel"])
-                            ]
-                        ),
-                    )
-                    queryset = queryset.filter(gm__in=similar_gms)
-            if query_string_data:
-                self.filter_querystring = urllib.parse.urlencode(query_string_data)
-        else:
-            queryset = queryset.exclude(status__in=["cancel", "closed"])
-        return queryset
-
-
-class MyGameList(
-    LoginRequiredMixin, SelectRelatedMixin, PrefetchRelatedMixin, generic.ListView
-):
-    """
-    A list for games that the current user is involved with.
-    """
-
-    model = models.GamePosting
-    select_related = ["game_system", "published_game", "published_module", "gm"]
-    prefetch_related = ["players", "communities"]
-    template_name = "games/my_game_list.html"
-    context_object_name = "active_game_list"
-    paginate_by = 15
-    paginate_orphans = 3
-    stub_queryset = None
-    is_filtered = False
-    filter_game_status = None
-    filter_edition = None
-    filter_system = None
-    filter_module = None
-    filter_venue = None
-    filter_querystring = None
-    filter_distance = None
-
     def get_stub_queryset(self):
         if not self.stub_queryset:
             gamer = self.request.user.gamerprofile
+            friends = gamer.friends.all()
+            communities = [f.id for f in gamer.communities.all()]
             game_player_ids = [
                 obj.game.id
                 for obj in models.Player.objects.filter(gamer=gamer).select_related(
@@ -248,8 +103,15 @@ class MyGameList(
                 )
             ]
             q_gm = Q(gm=gamer)
-            q_is_player = Q(id__in=game_player_ids)
-            self.stub_queryset = models.GamePosting.objects.filter(q_gm | q_is_player)
+            q_gm_is_friend = Q(gm__in=friends) & Q(privacy_level="community")
+            q_isplayer = Q(id__in=game_player_ids)
+            q_community = Q(communities__id__in=communities) & Q(
+                privacy_level="community"
+            )
+            q_public = Q(privacy_level="public")
+            self.stub_queryset = models.GamePosting.objects.filter(
+                q_gm | q_public | q_gm_is_friend | q_isplayer | q_community
+            ).distinct()
         return self.stub_queryset
 
     def handle_form_filters(self, queryset):
@@ -269,12 +131,12 @@ class MyGameList(
                 if self.filter_venue[0] == "irl":
                     if (
                         self.request.user.gamerprofile.city
-                        or self.request.user.gamerprofile.city.is_geocoded
+                        and self.request.user.gamerprofile.city.is_geocoded
                     ):
                         self.filter_distance = get_dict.pop("distance", None)
-                        if self.filter_distance and self.filter_distance != "":
+                        if self.filter_distance and self.filter_distance[0] != "":
                             queryset = queryset.filter(
-                                game_location__latlong__distance_lte(
+                                game_location__latlong__distance_lte=(
                                     self.request.user.gamerprofile.city.latlong,
                                     Distance(mi=self.filter_distance[0]),
                                 )
@@ -329,6 +191,37 @@ class MyGameList(
             .order_by("-modified")
         )
 
+
+class GamePostingListView(GameListAbstractView):
+    """
+    A generic list view for game postings.
+    """
+
+    template_name = "games/game_list.html"
+
+
+class MyGameList(GameListAbstractView):
+    """
+    A list for games that the current user is involved with.
+    """
+
+    template_name = "games/my_game_list.html"
+    context_object_name = "active_game_list"
+
+    def get_stub_queryset(self):
+        if not self.stub_queryset:
+            gamer = self.request.user.gamerprofile
+            game_player_ids = [
+                obj.game.id
+                for obj in models.Player.objects.filter(gamer=gamer).select_related(
+                    "game"
+                )
+            ]
+            q_gm = Q(gm=gamer)
+            q_is_player = Q(id__in=game_player_ids)
+            self.stub_queryset = models.GamePosting.objects.filter(q_gm | q_is_player)
+        return self.stub_queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["completed_game_list"] = self.handle_form_filters(
@@ -341,29 +234,6 @@ class MyGameList(
         ] = models.GamePostingApplication.objects.filter(
             gamer=self.request.user.gamerprofile, status="pending"
         )
-        context["is_filterd"] = self.is_filtered
-        context["querystring"] = self.filter_querystring
-        has_city = False
-        if (
-            self.request.user.gamerprofile.city
-            and self.request.user.gamerprofile.city.is_geocoded
-        ):
-            has_city = True
-        if self.is_filtered:
-            filter_form = forms.GameFilterForm(
-                profile_has_city=has_city,
-                initial={
-                    "game_status": self.filter_game_status,
-                    "edition": self.filter_edition,
-                    "system": self.filter_system,
-                    "module": self.filter_module,
-                    "venue": self.filter_venue,
-                    "distance": self.filter_distance,
-                },
-            )
-        else:
-            filter_form = forms.GameFilterForm(profile_has_city=has_city)
-        context["filter_form"] = filter_form
         return context
 
 
