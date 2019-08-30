@@ -64,6 +64,11 @@ urlpatterns = [
         name="session_list",
     ),
     path(
+        "game/<slug:gameid>/sessions/page/<int:page>/",
+        view=views.GameSessionList.as_view(),
+        name="session_list",
+    ),
+    path(
         "game/<slug:gameid>/export/",
         view=views.ExportGameDataView.as_view(),
         name="game_export",
@@ -207,7 +212,15 @@ urlpatterns = [
         name="player_kick",
     ),
     path("create/", views.GamePostingCreateView.as_view(), name="game_create"),
-    path("sessions/<slug:session>/checkconflicts/", view=views.GameSessionRescheduleCheckConflicts.as_view(), name='check_existing_session_conflict'),
-    path("game/<slug:game>/adhoc/checkconflicts/", view=views.AdHocSessionCheckConflicts.as_view(), name='adhoc_check_conflicts'),
+    path(
+        "sessions/<slug:session>/checkconflicts/",
+        view=views.GameSessionRescheduleCheckConflicts.as_view(),
+        name="check_existing_session_conflict",
+    ),
+    path(
+        "game/<slug:game>/adhoc/checkconflicts/",
+        view=views.AdHocSessionCheckConflicts.as_view(),
+        name="adhoc_check_conflicts",
+    ),
     path("", views.GamePostingListView.as_view(), name="game_list"),
 ]
