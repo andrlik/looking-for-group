@@ -19,6 +19,7 @@ from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..game_catalog.utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from ..invites.models import Invite
+from ..locations.models import Location
 from .utils import check_table_exists
 
 logger = logging.getLogger("games")
@@ -468,6 +469,9 @@ class GameEvent(Event):
             return GamePosting.objects.get(event=self)
         return GamePosting.objects.get(event=self.get_master_event())
 
+    def get_location(self):
+        return self.get_related_game().game_location
+
     def is_master_event(self):
         if not self.get_master_event():
             return True
@@ -536,6 +540,12 @@ GAME_STATUS_CHOICES = [
     ("cancel", _("Cancelled")),
     ("closed", _("Completed")),
 ]
+
+GAMEPLAY_MODE_CHOICES = (
+    ("online", _("Discord/Roll20/Other")),
+    ("irl", _("IRL/Face to Face")),
+    ("post", _("Play by Post")),
+)
 
 GAME_PRIVACY_CHOICES = (
     ("private", _("Private Link (unlisted)")),
@@ -619,6 +629,17 @@ class GamePosting(
         ),
         blank=True,
         null=True,
+    )
+    game_mode = models.CharField(
+        max_length=25, default="online", choices=GAMEPLAY_MODE_CHOICES, db_index=True
+    )
+    game_location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text=_("For an IRL game, where will we play?"),
+        verbose_name=_("Game Location"),
     )
     min_players = models.PositiveIntegerField(
         default=1,

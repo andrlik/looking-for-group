@@ -2,19 +2,14 @@ import urllib
 from datetime import timedelta
 
 import pytest
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import m2m_changed, post_save, pre_delete
-from django.test import TransactionTestCase
+from django.db.models.signals import post_save, pre_delete
 from django.urls import reverse
 from django.utils import timezone
 from factory.django import mute_signals
-from test_plus import APITestCase, TestCase
-from test_plus.test import BaseTestCase
 
-from .. import models
-from ...gamer_profiles.tests.factories import GamerCommunityFactory, GamerProfileFactory
 from ...invites.models import Invite
+from .. import models
 from ..utils import mkfirstOfmonth, mkLastOfMonth
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -76,8 +71,13 @@ def test_my_game_list(
 
 
 @pytest.mark.parametrize(
-    "gamer_to_use, expected_post_response",
-    [(None, 302), ("gamer2", 200), ("gamer1", 302)],
+    "gamer_to_use,post_data_key,expected_post_response",
+    [
+        (None, "online", 302),
+        ("gamer2", "online", 200),
+        ("gamer1", "online", 302),
+        ("gamer1", "irl", 302),
+    ],
 )
 def test_game_create_view(
     client,
@@ -85,8 +85,39 @@ def test_game_create_view(
     django_assert_max_num_queries,
     assert_login_redirect,
     gamer_to_use,
+    post_data_key,
     expected_post_response,
 ):
+    post_data = {
+        "irl": {
+            "title": "A Valid Campaign",
+            "status": "open",
+            "game_mode": "irl",
+            "location-formatted_address": "520 Chestnut St, Philadelphia, PA 19106",
+            "location-google_place_id": "ChIJd8kca4PIxokRqW59OWceihQ",
+            "game_type": "campaign",
+            "privacy_level": "community",
+            "min_players": 1,
+            "max_players": 3,
+            "game_description": "We like pie.",
+            "session_length": 2.5,
+            "game_frequency": "weekly",
+            "communities": [game_testdata.comm1.pk],
+        },
+        "online": {
+            "title": "A Valid Campaign",
+            "status": "open",
+            "game_mode": "online",
+            "game_type": "campaign",
+            "privacy_level": "community",
+            "min_players": 1,
+            "max_players": 3,
+            "game_description": "We like pie.",
+            "session_length": 2.5,
+            "game_frequency": "weekly",
+            "communities": [game_testdata.comm1.pk],
+        },
+    }
     if gamer_to_use:
         client.force_login(user=getattr(game_testdata, gamer_to_use).user)
     url = reverse("games:game_create")
@@ -97,21 +128,7 @@ def test_game_create_view(
     else:
         assert response.status_code == 200
     prev_count = models.GamePosting.objects.count()
-    response = client.post(
-        url,
-        data={
-            "title": "A Valid Campaign",
-            "status": "open",
-            "game_type": "campaign",
-            "privacy_level": "community",
-            "min_players": 1,
-            "max_players": 3,
-            "game_description": "We like pie.",
-            "session_length": 2.5,
-            "game_frequency": "weekly",
-            "communities": [game_testdata.comm1.pk],
-        },
-    )
+    response = client.post(url, data=post_data[post_data_key])
     if not gamer_to_use:
         assert assert_login_redirect(response)
         assert models.GamePosting.objects.count() == prev_count
@@ -119,6 +136,10 @@ def test_game_create_view(
         assert response.status_code == expected_post_response
         if expected_post_response == 302:
             assert models.GamePosting.objects.count() - prev_count == 1
+            if post_data_key == "irl":
+                assert models.GamePosting.objects.latest(
+                    "created"
+                ).game_location.is_geocoded
 
 
 @pytest.mark.parametrize(
@@ -154,6 +175,8 @@ def test_game_detail_view(
         ("gamer2", 403, "valid", 403),
         ("gamer1", 200, "invalid", 200),
         ("gamer1", 200, "valid", 302),
+        ("gamer1", 200, "valid_without_place_id", 302),
+        ("gamer1", 200, "valid_with_place_id", 302),
     ],
 )
 def test_game_update_view(
@@ -171,6 +194,7 @@ def test_game_update_view(
             "title": "A Valid Campaign",
             "game_type": "campaign",
             "status": "open",
+            "game_mode": "online",
             "privacy_level": "community",
             "min_players": 1,
             "max_players": 3,
@@ -183,6 +207,36 @@ def test_game_update_view(
             "title": "A Valid Campaign",
             "game_type": "campaign",
             "status": "open",
+            "game_mode": "online",
+            "privacy_level": "community",
+            "min_players": 1,
+            "max_players": 3,
+            "game_description": "Some of us enjoy cake, too.",
+            "session_length": 2.5,
+            "game_frequency": "weekly",
+            "communities": [game_testdata.comm1.pk],
+        },
+        "valid_without_place_id": {
+            "title": "A Valid Campaign",
+            "game_type": "campaign",
+            "status": "open",
+            "game_mode": "irl",
+            "location-formatted_address": "1600 Pennsylvania Ave NW, Washington, DC",
+            "privacy_level": "community",
+            "min_players": 1,
+            "max_players": 3,
+            "game_description": "Some of us enjoy cake, too.",
+            "session_length": 2.5,
+            "game_frequency": "weekly",
+            "communities": [game_testdata.comm1.pk],
+        },
+        "valid_with_place_id": {
+            "title": "A Valid Campaign",
+            "game_type": "campaign",
+            "status": "open",
+            "game_mode": "irl",
+            "location-formatted_address": "520 Chestnut St, Philadelphia, PA 19106",
+            "location-google_place_id": "ChIJd8kca4PIxokRqW59OWceihQ",
             "privacy_level": "community",
             "min_players": 1,
             "max_players": 3,
@@ -209,6 +263,10 @@ def test_game_update_view(
                 models.GamePosting.objects.get(id=game_testdata.gp2.id).title
                 == "A Valid Campaign"
             )
+            if "place_id" in post_data_key:
+                assert models.GamePosting.objects.get(
+                    id=game_testdata.gp2.id
+                ).game_location.is_geocoded
         else:
             assert (
                 models.GamePosting.objects.get(id=game_testdata.gp2.id).title
@@ -1458,7 +1516,7 @@ def test_character_list_views(
     expected_get_response,
     expected_items,
 ):
-    character2 = models.Character.objects.create(
+    models.Character.objects.create(
         player=game_testdata.player2,
         game=game_testdata.gp2,
         name="Taako",

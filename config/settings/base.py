@@ -104,6 +104,7 @@ LOCAL_APPS = [
     "looking_for_group.rpgcollections.apps.RpgcollectionsConfig",
     "looking_for_group.tours.apps.ToursConfig",
     "looking_for_group.world.apps.WorldConfig",
+    "looking_for_group.locations.apps.LocationsConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -395,3 +396,4 @@ MARKDOWNIFY_FILTER_WHITELIST_TAGS = [
     "strong",
     "ul",
 ]
+GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")

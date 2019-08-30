@@ -14,7 +14,14 @@
 <p>{% trans "Add in your game details below." %}</p>
 <form enctype="multipart/form-data" data-abide novalidate action="" method="post">
   {% csrf_token %}
-  {{ form|as_foundation }}
+  {% for field in form %}
+  {% render_field field %}
+  {% if field.name == "game_mode" %}
+  <div id="location_form">
+    {{ location_form|as_foundation }}
+  </div>
+  {% endif %}
+  {% endfor %}
   <p> <a class="button secondary" href="{% url 'games:game_list' %}">{% trans "Cancel and return to game listings" %}</a> <input type="submit" class="button success" value="{% trans 'Create' %}"></p>
 </form>
   </div>
@@ -40,4 +47,6 @@
     }
   });
 </script>
+{% include "games/location_toggle_js.html" %}
+{% include "locations/autocomplete_js.html" %}
 {% endblock %}

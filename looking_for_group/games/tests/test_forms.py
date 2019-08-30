@@ -83,6 +83,28 @@ def test_gameform_community_queryset(gameform_testdata):
     assert "communities" not in form3.fields.keys()
 
 
+def test_gameform_privacyvscommunities(gameform_testdata):
+    """
+    Ensures that a private form where a community is selected is not valid.
+    """
+    data = {
+        "gm": gameform_testdata.gamer1.id,
+        "title": "A new fun game",
+        "game_type": "campaign",
+        "game_mode": "online",
+        "min_players": 1,
+        "max_players": 4,
+        "game_frequency": "weekly",
+        "session_length": 2.5,
+        "privacy_level": "private",
+        "communities": [gameform_testdata.comm1.pk],
+    }
+    form = forms.GamePostingForm(data, gamer=gameform_testdata.gamer1)
+    assert not form.is_valid()
+    assert len(form["privacy_level"].errors) == 1
+    assert len(form["communities"].errors) == 1
+
+
 def test_gamerform_invalid_call():
     with pytest.raises(KeyError):
         forms.GamePostingForm()
@@ -156,3 +178,13 @@ def test_sessionform_validate_good_data(sessionform_testdata):
         game=sessionform_testdata.game,
     )
     assert form.is_valid()
+
+
+def test_filter_form_render(gameform_testdata):
+    """
+    Test that the filter form disables distance correctly.
+    """
+    filter_form = forms.GameFilterForm()
+    assert filter_form.fields["distance"].disabled
+    filter_form2 = forms.GameFilterForm(profile_has_city=True)
+    assert not filter_form2.fields["distance"].disabled

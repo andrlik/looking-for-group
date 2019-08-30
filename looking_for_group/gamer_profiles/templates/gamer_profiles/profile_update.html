@@ -19,7 +19,12 @@
 <form action="" method="post">
   {% csrf_token %}
   {{ form|as_foundation }}
-  {{ profile_form|as_foundation }}
+  {% for field in profile_form %}
+  {% render_field field %}
+  {% if field.name == "private" %}
+  {{ city_form|as_foundation }}
+  {% endif %}
+  {% endfor %}
   <div class="clearfix">
     <a href="{{ gamer.get_absolute_url }}" class="button secondary float-left">{% trans "Go Back" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}" />
   </div>
@@ -82,4 +87,5 @@
     }
   });
 </script>
+{% include "locations/autocomplete_js.html" %}
 {% endblock %}

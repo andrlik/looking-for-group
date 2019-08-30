@@ -16,7 +16,14 @@
     <p>{% trans "You can edit the details of your game below." %}</p>
   <form enctype="multipart/form-data" action="" method="post">
   {% csrf_token %}
-  {{ form|as_foundation }}
+    {% for field in form %}
+    {% render_field field %}
+    {% if field.name == "game_mode" %}
+    <div id="location_form">
+      {{ location_form|as_foundation }}
+    </div>
+    {% endif %}
+    {% endfor %}
   <div class="clearfix">
     <a class="button float-left secondary" href="{% url 'games:game_detail' gameid=game.slug %}">{% trans "Cancel and return to game detail" %}</a> <input type="submit" class="button float-right success" value="{% trans 'Save changes' %}">
   </div>
@@ -180,4 +187,6 @@
   $schedule_reveal_button.appendTo(starttimelabel);
   {% endif %}
 </script>
+{% include "games/location_toggle_js.html" %}
+{% include "locations/autocomplete_js.html" %}
 {% endblock %}

@@ -18,6 +18,7 @@
     "django_secret_key": "{{env `PROD_DJANGO_SECRET_KEY`}}",
     "sentry_dsn": "{{env `PROD_DJANGO_SENTRY_DSN`}}",
     "django_settings_module": "{{env `PROD_DJANGO_SETTINGS_MODULE`}}",
+    "maps_key": "{{env `PROD_GOOGLE_MAPS_API_KEY`}}",
     "mailgun_api_key": "{{env `PROD_MAILGUN_API_KEY`}}",
     "mailgun_domain": "{{env `PROD_MAILGUN_DOMAIN`}}",
     "mailgun_publickey": "{{env `PROD_MAILGUN_PUBLIC_KEY`}}",
@@ -95,7 +96,8 @@
         "PROD_MAILGUN_SMTP_PORT={{user `mailgun_smtp_port`}}",
         "PROD_REDISCLOUD_URL={{user `rediscloud_url`}}",
         "PROD_SEARCHBOX_SSL_URL={{user `search_ssl_url`}}",
-        "PROD_SEARCHBOX_URL={{user `search_url`}}"
+        "PROD_SEARCHBOX_URL={{user `search_url`}}",
+        "GOOGLE_MAPS_API_KEY={{user `maps_key`}}"
       ],
       "script": "make_environment.sh"
     },
