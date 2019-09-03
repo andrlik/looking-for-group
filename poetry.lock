@@ -1244,6 +1244,18 @@ six = ">=1.5"
 
 [[package]]
 category = "main"
+description = "Interact with GitLab API"
+name = "python-gitlab"
+optional = false
+python-versions = "*"
+version = "1.11.0"
+
+[package.dependencies]
+requests = ">=2.4.2"
+six = "*"
+
+[[package]]
+category = "main"
 description = "Python module to handle standardized numbers and codes"
 name = "python-stdnum"
 optional = false
@@ -1625,7 +1637,7 @@ setuptools = "*"
 "zope.interface" = "*"
 
 [metadata]
-content-hash = "9c94831877d88fe6d13d772ea754a5dae8815a0ec52962091f446218e2b4319c"
+content-hash = "523992999b34dd78851d59e71276bce3c861b0e127bb164f859e2893e9675844"
 python-versions = "~3.6 || ^3.7 || ^3.8"
 
 [metadata.hashes]
@@ -1744,6 +1756,7 @@ pytest-sugar = ["26cf8289fe10880cbbc130bd77398c4e6a8b936d8393b116a5c16121d95ab28
 pytest-variables = ["59c00b95779657532ac5f8209b28b5d447c8b4bc4210c1d6bdf9a42aa201f9b0", "7808b77b643b9f8a24f1ee1c32132648b1c62ab93956f20fe101dde66db6d09a"]
 pytest-xdist = ["b0bb4b0293ee8657b9eb3ff334a3b6aac4db74fd4a86b81e1982c879237a47eb", "f83a485293e81fd57c8a5a85a3f12473a532c5ca7dec518857cbb72766bb526c"]
 python-dateutil = ["7e6584c74aeed623791615e26efd690f29817a27c73085b78e4bad02493df2fb", "c89805f6f4d64db21ed966fda138f8a5ed7a4fdbc1a8ee329ce1b74e3c74da9e"]
+python-gitlab = ["499c0effa60880412f8172c27bbb49c3e39f0b139346cc0fc91c4566b3437575", "fe356d084927477b7bf695191287474919db8cb6eb0d7832a4afd9cc8f7096c5"]
 python-stdnum = ["d5f0af1bee9ddd9a20b398b46ce062dbd4d41fcc9646940f2667256a44df3854", "f445ec32bf5246c90389204cabba465f494545371c29a83fa2d30e6c872a6763"]
 python3-openid = ["0086da6b6ef3161cfe50fb1ee5cceaf2cda1700019fda03c2c5c440ca6abe4fa", "628d365d687e12da12d02c6691170f4451db28d6d68d050007e4a40065868502"]
 pytz = ["303879e36b721603cc54604edcac9d20401bdbe31e1e4fdee5b9f98d5d31dfda", "d747dd3d23d77ef44c6a3526e274af6efeb0a6f1afd5a69ba4d5be4098c8e141"]
