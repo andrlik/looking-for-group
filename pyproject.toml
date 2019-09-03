@@ -62,6 +62,7 @@ geopy = "~1.20.0"
 django-haystack = { git = "https://github.com/andrlik/django-haystack.git", rev = "de8279680f74380085f61e247b2c4964c39db8e8" }
 django-scheduler = { git = "https://github.com/andrlik/django-scheduler.git", rev = "4ae1fcf09065f0c9b7380685772549c70d2e78ff" }
 sentry-sdk = "^0.9.0"
+python-gitlab = "^1.11"
 
 [tool.poetry.dev-dependencies]
 sphinx = "~2.1.1"
