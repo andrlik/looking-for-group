@@ -57,6 +57,18 @@ class HelpDeskConnector(object):
         """
         raise NotImplementedError
 
+    def get_issue_comments(self, issue, *args, **kwargs):
+        """
+        Get all the comments on an issue in chronological order.
+        """
+        raise NotImplementedError
+
+    def get_issue_comment(self, issue, comment_id):
+        """
+        Get the details for a given note for a specific issue.
+        """
+        raise NotImplementedError
+
     def comment_on_issue(self, issue, comment_text, *args, **kwargs):
         """
         Add a comment to an issue from the user.
