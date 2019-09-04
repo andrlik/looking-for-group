@@ -28,7 +28,10 @@
     "mailgun_smtp_port": "{{env `PROD_MAILGUN_SMTP_PORT`}}",
     "rediscloud_url": "{{env `PROD_REDISCLOUD_URL`}}",
     "search_ssl_url": "{{env `PROD_SEARCHBOX_SSL_URL`}}",
-    "search_url": "{{env `PROD_SEARCHBOX_URL`}}"
+    "search_url": "{{env `PROD_SEARCHBOX_URL`}}",
+    "gitlab_url": "{{env `GITLAB_URL`}}",
+    "gitlab_token": "{{env `GITLAB_TOKEN`}}",
+    "gitlab_project_id": "{{env `GITLAB_PROJECT_ID`}}"
   },
   "builders": [
     {
@@ -97,7 +100,10 @@
         "PROD_REDISCLOUD_URL={{user `rediscloud_url`}}",
         "PROD_SEARCHBOX_SSL_URL={{user `search_ssl_url`}}",
         "PROD_SEARCHBOX_URL={{user `search_url`}}",
-        "GOOGLE_MAPS_API_KEY={{user `maps_key`}}"
+        "GOOGLE_MAPS_API_KEY={{user `maps_key`}}",
+        "GITLAB_URL={{user `gitlab_url`}}",
+        "GITLAB_TOKEN={{user `gitlab_token`}}",
+        "GITLAB_PROJECT_ID={{user `gitlab_project_id`}}"
       ],
       "script": "make_environment.sh"
     },

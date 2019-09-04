@@ -79,10 +79,10 @@ class GitlabConnector(HelpDeskConnector):
         try:
             if issue_id_list:
                 issues = self.project.issues.list(
-                    iids=issue_id_list, state=filter_status
+                    iids=issue_id_list, state=filter_status, all=True
                 )
             else:
-                issues = self.project.issues.list(state=filter_status)
+                issues = self.project.issues.list(state=filter_status, all=True)
         except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
             raise OperationError(str(goe))
         if not include_confidential:
@@ -168,6 +168,38 @@ class GitlabConnector(HelpDeskConnector):
         except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
             raise OperationError(str(goe))
         return issue, note
+
+    def get_issue_comments(self, issue, *args, **kwargs):
+        """
+        Get the comments for a specific issue.
+
+        :param issue: The issue in question
+        :type issue: :class:`gitlab.v4.objects.ProjectIssue`
+        :return: A list of :class:`gitlab.v4.objects.ProjectIssueNote`
+        :rtype: list
+        """
+        try:
+            comment_list = issue.notes.list(all=True)
+        except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
+            raise OperationError(str(goe))
+        return comment_list
+
+    def get_issue_comment(self, issue, comment_id, *args, **kwargs):
+        """
+        Get a single comment from a given issue.
+
+        :param issue: The issue the comment belongs to.
+        :param comment_id: The id of the comment to query.
+        :type issue: :class:`gitlab.v4.objects.ProjectIssue`
+        :type comment_id: string
+        :return: The comment object
+        :rtype: :class:`gitlab.v4.objects.ProjectIssueNote`
+        """
+        try:
+            comment = issue.notes.get(comment_id)
+        except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
+            raise OperationError(str(goe))
+        return comment
 
     def comment_on_issue(self, issue, comment_text, *args, **kwargs):
         """
