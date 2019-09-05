@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
@@ -7,6 +8,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
+from pytz import timezone as ptimezone
 
 from ..game_catalog.utils import AbstractUUIDModel
 from .backends import OperationError
@@ -172,7 +174,12 @@ class IssueLink(TimeStampedModel, AbstractUUIDModel, models.Model):
         except SyncInProgressException:
             return False
         updated = False
-        if issue.updated_at > self.last_sync:
+        if (
+            datetime.strptime(issue.updated_at, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=ptimezone("UTC")
+            )
+            > self.last_sync
+        ):
             self.cached_status = issue.state
             self.cached_title = issue.title
             self.cached_description = issue.description

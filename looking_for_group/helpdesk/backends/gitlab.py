@@ -104,7 +104,7 @@ class GitlabConnector(HelpDeskConnector):
         """
         try:
             issue = self.project.issues.get(issue_id, lazy=lazy)
-        except gitlab.exceptions.GitlabOperationError as goe:
+        except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
             raise OperationError(str(goe))
         return issue
 
@@ -144,11 +144,11 @@ class GitlabConnector(HelpDeskConnector):
             issue.title = title
             issue.description = description
             issue.save()
-        except gitlab.exceptions.GitlabOperationError as goe:
+        except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
             raise OperationError(str(goe))
         return issue
 
-    def reopen_issue(issue, *args, **kwargs):
+    def reopen_issue(self, issue, *args, **kwargs):
         """
         Reopen a given issue.
 
@@ -160,11 +160,11 @@ class GitlabConnector(HelpDeskConnector):
         try:
             issue.state_event = "reopen"
             issue.save()
-        except gitlab.exceptions.GitlabOperationError as goe:
+        except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
             raise OperationError(str(goe))
         return issue
 
-    def close_issue(issue, comment_text=None, *args, **kwargs):
+    def close_issue(self, issue, comment_text=None, *args, **kwargs):
         """
         Close a given issue.
 
