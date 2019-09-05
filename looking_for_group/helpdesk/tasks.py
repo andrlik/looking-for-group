@@ -40,6 +40,7 @@ def create_remote_issue(issuelink):
     issuelink.sync_status = "sync"
     issuelink.last_sync = timezone.now()
     issuelink.save()
+    cache.set("helpdesk-{}".format(issuelink.external_id), issue, 30)
 
 
 def update_remote_issue(issuelink):
@@ -60,12 +61,11 @@ def update_remote_issue(issuelink):
     try:
         gl = get_backend_client()
         issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
-        new_issue = gl.update_issue(
+        new_issue = gl.edit_issue(
             issue,
             title=issuelink.cached_title,
             description=issuelink.cached_description,
         )
-        cache.incr_version("helpdesk-{}".format(issue.iid))
     except OperationError as oe:
         logger.error(
             "There was an error trying to send the new data to github. Leaving it in updating state until a worker can resolve."
@@ -76,6 +76,7 @@ def update_remote_issue(issuelink):
     issuelink.sync_status = "sync"
     issuelink.last_sync = timezone.now()
     issuelink.save()
+    cache.set("helpdesk-{}".format(issue.iid), new_issue, 30)
 
 
 def delete_remote_issue(issuelink):
@@ -160,7 +161,7 @@ def reopen_remote_issue(issuelink):
         gl = get_backend_client()
         issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
         new_issue = gl.reopen_issue(issue)
-        cache.incr_version("helpdesk-{}".format(issuelink.external_id))
+        cache.set("helpdesk-{}".format(issuelink.external_id), new_issue, 30)
     except OperationError as oe:
         logger.error(
             "There was an error trying to update the issue. Will try again later. Error message was: {}".format(
@@ -238,10 +239,12 @@ def update_remote_comment(commentlink):
     commentlink.last_sync = timezone.now()
     commentlink.sync_status = "sync"
     commentlink.save()
-    cache.incr_version(
+    cache.set(
         "helpdesk-{}-comment-{}".format(
             commentlink.master_issue.external_id, commentlink.external_id
-        )
+        ),
+        new_comment,
+        30,
     )
 
 
