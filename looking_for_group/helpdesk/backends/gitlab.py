@@ -34,7 +34,7 @@ class GitlabConnector(HelpDeskConnector):
             raise AuthenticationError(str(gae))
 
         try:
-            self.project = self.authenticated_client.projects.get(project)
+            self.project = self.authenticated_client.projects.get(project, lazy=True)
         except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
             raise OperationError(
                 "You have to specify a project, and your supplied project id/namespace failed with error: {}".format(
@@ -93,7 +93,7 @@ class GitlabConnector(HelpDeskConnector):
             objects_to_return = issues
         return objects_to_return
 
-    def get_issue(self, issue_id, *args, **kwargs):
+    def get_issue(self, issue_id, lazy=False, *args, **kwargs):
         """
         Retrieve the issue for a given id
 
@@ -103,7 +103,7 @@ class GitlabConnector(HelpDeskConnector):
         :rtype: :class:`gitlab.v4.objects.ProjectIssue`
         """
         try:
-            issue = self.project.issues.get(issue_id)
+            issue = self.project.issues.get(issue_id, lazy=lazy)
         except gitlab.exceptions.GitlabOperationError as goe:
             raise OperationError(str(goe))
         return issue
@@ -148,6 +148,22 @@ class GitlabConnector(HelpDeskConnector):
             raise OperationError(str(goe))
         return issue
 
+    def reopen_issue(issue, *args, **kwargs):
+        """
+        Reopen a given issue.
+
+        :param issue: The issue to reopen.
+        :type issue: :class:`gitlab.v4.objects.ProjectIssue`
+        :return: The updated issue
+        :rtype: :class:`gitlab.v4.objects.ProjectIssue`
+        """
+        try:
+            issue.state_event = "reopen"
+            issue.save()
+        except gitlab.exceptions.GitlabOperationError as goe:
+            raise OperationError(str(goe))
+        return issue
+
     def close_issue(issue, comment_text=None, *args, **kwargs):
         """
         Close a given issue.
@@ -184,7 +200,7 @@ class GitlabConnector(HelpDeskConnector):
             raise OperationError(str(goe))
         return comment_list
 
-    def get_issue_comment(self, issue, comment_id, *args, **kwargs):
+    def get_issue_comment(self, issue, comment_id, lazy=False, *args, **kwargs):
         """
         Get a single comment from a given issue.
 
@@ -196,7 +212,7 @@ class GitlabConnector(HelpDeskConnector):
         :rtype: :class:`gitlab.v4.objects.ProjectIssueNote`
         """
         try:
-            comment = issue.notes.get(comment_id)
+            comment = issue.notes.get(comment_id, lazy=lazy)
         except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
             raise OperationError(str(goe))
         return comment
