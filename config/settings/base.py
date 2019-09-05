@@ -404,6 +404,6 @@ GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")
 # HelpDesk Credentials
 # ----------------------------------------------------------------------------
 
-GITLAB_URL = env.url("GITLAB_URL", default="https://gitlab.com")
+GITLAB_URL = env("GITLAB_URL", default="https://gitlab.com")
 GITLAB_TOKEN = env("GITLAB_TOKEN", default=None)
 GITLAB_PROJECT_ID = env("GITLAB_PROJECT_ID", default=None)
