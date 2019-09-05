@@ -109,3 +109,4 @@ HAYSTACK_CONNECTIONS = {
         "INDEX_NAME": "haystack",
     }
 }
+GITLAB_PROJECT_ID = env("GITLAB_TEST_PROJECT_ID", default=None)
