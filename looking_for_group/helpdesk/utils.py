@@ -2,8 +2,8 @@ import logging
 
 from django.conf import settings
 
+from . import models
 from .backends import AuthenticationError, GitlabConnector, NotImplementedError
-from .models import IssueLink
 
 logger = logging.getLogger("helpdesk")
 
@@ -50,7 +50,7 @@ def create_issuelink_from_remote_issue(remote_issue, creator=None, backend_clien
     """
     if not backend_client:
         backend_client = get_backend_client()
-    return IssueLink.objects.create(
+    return models.IssueLink.objects.create(
         external_id=remote_issue.iid,
         creator=creator,
         cached_status=remote_issue.state,

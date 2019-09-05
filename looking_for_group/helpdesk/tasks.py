@@ -59,7 +59,7 @@ def update_remote_issue(issuelink):
         issuelink.save()
     try:
         gl = get_backend_client()
-        issue = issuelink.get_external_issue(backend_object=gl)
+        issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
         new_issue = gl.update_issue(
             issue,
             title=issuelink.cached_title,
@@ -78,6 +78,102 @@ def update_remote_issue(issuelink):
     issuelink.save()
 
 
+def delete_remote_issue(issuelink):
+    """
+    Delete the remote issue to match the new records in the issue.
+
+    :param issuelink: The issue link for the corresponding external issue.
+    :type issuelink: :class:`looking_for_group.helpdesk.models.IssueLink`
+    """
+    if issuelink.sync_status not in ["sync", "deleting", "delete_err"]:
+        logger.debug("Was asked to delete a record that is currently syncing. Skpping.")
+        return
+    issuelink.sync_status = "deleting"
+    issuelink.save()
+    try:
+        gl = get_backend_client()
+        issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
+        issue.delete()
+    except OperationError as oe:
+        logger.error(
+            "Error encountered when deleteing issue. Leeting another worker take care of it later. Message was: {}".format(
+                str(oe)
+            )
+        )
+        issuelink.sync_status = "delete_err"
+        issuelink.save()
+        return
+    issuelink.sync_status = "deleted"
+    issuelink.last_sync = timezone.now()
+    issuelink.save()
+
+
+def close_remote_issue(issuelink, comment_text=None):
+    """
+    Update the status of the remote issue according to the status within the given issuelink.
+
+    :param issuelink: The model instance to use.
+    :type issuelink: :class:`looking_for_group.helpdesk.models.IssueLink`
+    :param comment_text: The text to be used as the comment for closing.
+    :type comment_text: string or None
+    """
+    if issuelink.sync_status not in ["sync", "close_err"] or not issuelink.external_id:
+        logger.debug(
+            "Was asked to change an issue status, but the remote issue isn't created yet. Skipping..."
+        )
+        return
+    issuelink.sync_status = "closing"
+    issuelink.sync_status.save()
+    try:
+        gl = get_backend_client()
+        issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
+        new_issue = gl.close_issue(issue, comment_text=comment_text)
+        cache.incr_version("helpdesk-{}".format(issuelink.external_id))
+    except OperationError as oe:
+        logger.error(
+            "There was an error trying to update the issue. Will try again later. Error message was: {}".format(
+                str(oe)
+            )
+        )
+        issuelink.sync_status = "close_err"
+        issuelink.save()
+        return
+    issuelink.sync_status = "sync"
+    issuelink.save()
+
+
+def reopen_remote_issue(issuelink):
+    """
+    Update the status of the remote issue according to the status within the given issuelink.
+
+    :param issuelink: The model instance to use.
+    :type issuelink: :class:`looking_for_group.helpdesk.models.IssueLink`
+    """
+    if issuelink.sync_status not in ["sync", "reopen_err"] or not issuelink.external_id:
+        logger.debug(
+            "Was asked to change an issue status, bu tth eremote issue isn't created yet. Skipping..."
+        )
+        return
+    issuelink.sync_status = "reopen"
+    issuelink.sync_status.save()
+    try:
+        gl = get_backend_client()
+        issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
+        new_issue = gl.reopen_issue(issue)
+        cache.incr_version("helpdesk-{}".format(issuelink.external_id))
+    except OperationError as oe:
+        logger.error(
+            "There was an error trying to update the issue. Will try again later. Error message was: {}".format(
+                str(oe)
+            )
+        )
+        issuelink.sync_status = "reopen_err"
+        issuelink.save()
+        return
+    issuelink.sync_status = "sync"
+    issuelink.save()
+
+
 def create_remote_comment(commentlink):
     """
     Create a remote comment based on the submitted comment link info.
@@ -92,7 +188,9 @@ def create_remote_comment(commentlink):
     commentlink.save()
     gl = get_backend_client()
     try:
-        issue = commentlink.master_issue.get_external_issue(backend_object=gl)
+        issue = commentlink.master_issue.get_external_issue(
+            lazy=True, backend_object=gl
+        )
         new_comment = gl.comment_on_issue(issue, commentlink.cached_body)
     except OperationError as oe:
         logger.error(
@@ -116,12 +214,17 @@ def update_remote_comment(commentlink):
     :param commentlink: The Django model instance of the comment link
     :type commentlink: :class:`looking_for_group.helpdesk.models.IssueCommentLink`
     """
+    if commentlink.sync_status not in ["sync", "update_err"]:
+        logger.debug(
+            "We were asked to update a comment that's already syncing. Try again later."
+        )
+        return
     logger.debug("Starting update of remote comment {}".format(commentlink.external_id))
     commentlink.sync_status = "updating"
     commentlink.save()
     gl = get_backend_client()
     try:
-        comment = commentlink.get_external_comment(backend_object=gl)
+        comment = commentlink.get_external_comment(lazy=True, backend_object=gl)
         new_comment = gl.edit_comment(comment, commentlink.cached_body)
     except OperationError as oe:
         logger.error(

@@ -3,12 +3,13 @@ import logging
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from game_catalog.utils import AbstractUUIDModel
 from model_utils.models import TimeStampedModel
 
-from .backend import OperationError
+from ..game_catalog.utils import AbstractUUIDModel
+from .backends import OperationError
 from .utils import get_backend_client
 
 logger = logging.getLogger("helpdesk")
@@ -19,10 +20,16 @@ ISSUE_STATUS_CHOICES = (("opened", _("Open")), ("closed", _("Closed")))
 
 SYNC_STATUS_CHOICES = (
     ("pending", _("Pending creation in remote repo")),
-    ("peding_err", _("Remote creation failed. Awaiting next try."))(
-        "updating", _("Pending updates to push to remote repo")
-    ),
-    ("update_err", _("Update failed. Awaiting next try.")),
+    ("pending_err", _("Remote creation failed. Awaiting next try.")),
+    ("updating", _("Pending updates to push to remote repo")),
+    ("updating_err", _("Update failed. Awaiting next try.")),
+    ("closing", _("In process of closing remote ticket")),
+    ("close_err", _("Close failed, awaiting next try")),
+    ("deleting", _("In process of deleting remote ticket.")),
+    ("delete_err", _("Deletion failed. Awaiting next try.")),
+    ("deleted", _("Deleted object awaiting local copy deletion.")),
+    ("reopen", _("Reopening remote ticket")),
+    ("reopen_err", _("Reopen failed. Awaiting next try.")),
     ("sync", _("In Sync")),
 )
 
@@ -37,40 +44,67 @@ class IssueLink(TimeStampedModel, AbstractUUIDModel, models.Model):
     """
 
     source_type = models.CharField(max_length=25, default="gitlab", db_index=True)
-    external_id = models.CharField(max_length=25, db_index=True)
+    external_id = models.CharField(
+        max_length=25, db_index=True, unique=True, null=True, blank=True
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name="issues_created",
         help_text=_(
             "The LFG user that created this. If not specified, you should display it as simple an anonymous admin user."
         ),
     )
     cached_status = models.CharField(
-        max_length=25, default="opened", choices=ISSUE_STATUS_CHOICES
+        max_length=25,
+        default="opened",
+        choices=ISSUE_STATUS_CHOICES,
+        verbose_name=_("Status"),
     )
-    cached_title = models.CharField(max_length=255, null=True, blank=True)
-    cached_description = models.TextField(null=True, blank=True)
+    cached_title = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_("Title"),
+        help_text=_("Title for the issue."),
+    )
+    cached_description = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Description"),
+        help_text=_("Descrition of the issue. Please be as detailed as possible."),
+    )
     cached_comment_count = models.IntegerField(default=0)
     external_url = models.URLField(null=True, blank=True)
     sync_status = models.CharField(
         max_length=15, default="pending", choices=SYNC_STATUS_CHOICES, db_index=True
     )
     last_sync = models.DateTimeField(default=timezone.now)
-    subscribers = models.ManyToManyField(settings.AUTH_USER_MODEL)
+    subscribers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="subscribed_issues"
+    )
 
     def __str__(self):
         return "#{}: {}".format(self.external_id, self.cached_title)
 
-    def get_external_issue(self, backend_object=None):
+    def get_absolute_url(self):
+        if self.external_id:
+            return reverse_lazy(
+                "helpdesk:issue-detail", kwargs={"ext_id": self.external_id}
+            )
+        else:
+            return reverse_lazy("helpdesk:pending-issue", kwargs={"pk": self.id})
+
+    def get_external_issue(self, lazy=False, backend_object=None):
         """
         Fetch the external issue through the backend. We cache the result to prevent hitting the API too hard.
         :param backend_object: An existing backend object. If not supplied, a one-off version will be created.
         :return: The external issue object
         :rtype: :class:`gitlab.v4.objects.ProjectIssue`
         """
-        if self.sync_status != "sync":
+        if not self.external_id or (not lazy and self.sync_status != "sync"):
             logger.debug(
                 "This object is still syncing. Wait for it to be finished before retrieving."
             )
@@ -79,6 +113,8 @@ class IssueLink(TimeStampedModel, AbstractUUIDModel, models.Model):
             )
         if not backend_object:
             backend_object = get_backend_client()
+        if lazy:
+            return backend_object.get_issue(self.external_id, lazy=lazy)
         return cache.get_or_set(
             "helpdesk-{}".format(self.external_id),
             backend_object.get_issue(self.external_id),
@@ -93,15 +129,16 @@ class IssueLink(TimeStampedModel, AbstractUUIDModel, models.Model):
         :return: A list of :class:`gitlab.v4.objects.ProjectIssueNote` objects
         :rtype: list
         """
-        if self.sync_status != "sync":
-            logger.debug("This object is still being updated. Wait until finished.")
+        if self.sync_status != "sync" or not self.external_id:
+            logger.debug("This object is still being created. Wait until finished.")
+            return None
         if not backend_object:
             backend_object = get_backend_client()
         try:
             comments = cache.get_or_set(
                 "helpdesk-{}-comments".format(self.external_id),
                 backend_object.get_issue_comments(
-                    self.get_external_issue(backend_object=backend_object)
+                    self.get_external_issue(lazy=True, backend_object=backend_object)
                 ),
                 30,
             )
@@ -160,9 +197,11 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     source_type = models.CharField(max_length=25, default="gitlab", db_index=True)
     master_issue = models.ForeignKey(
-        IssueLink, on_delete=models.CASCADE, releated_name="comments"
+        "IssueLink", on_delete=models.CASCADE, related_name="comments"
     )
-    external_id = models.CharField(max_length=50, db_index=True)
+    external_id = models.CharField(
+        max_length=50, db_index=True, null=True, blank=True, unique=True
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -172,8 +211,13 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
             "Which LFG user created this comment. If this is set to null it should be displayed as some sort of anonymous user."
         ),
     )
-    cached_body = models.TextField(null=True, blank=True)
-    sync_status = models.Charfield(
+    cached_body = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Body"),
+        help_text=_("Enter your comment."),
+    )
+    sync_status = models.CharField(
         max_length=15, default="pending", choices=SYNC_STATUS_CHOICES, db_index=True
     )
     last_sync = models.DateTimeField(default=timezone.now)
@@ -183,7 +227,7 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
             self.master_issue.external_id, self.external_id
         )
 
-    def get_external_comment(self, backend_object=None):
+    def get_external_comment(self, lazy=False, backend_object=None):
         """
         Grab the remote object. We cache this value so that we don't slam the Gitlab API.
 
@@ -198,27 +242,34 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
         if not backend_object:
             backend_object = get_backend_client()
         try:
-            issue = self.master_issue.get_external_issue(backend_object=backend_object)
+            issue = self.master_issue.get_external_issue(
+                lazy=True, backend_object=backend_object
+            )
         except SyncInProgressException:
             logger.debug(
                 "The issue is still being synced. You'll need to rely on cached values until finished."
             )
             return None
-        try:
-            comment = cache.get_or_set(
-                "helpdesk-{}-comment-{}".format(
-                    self.master_issue.external_id, self.external_id
-                ),
-                backend_object.get_issue_comment(issue, self.external_id),
-                30,
+        if lazy:
+            comment = backend_object.get_issue_comment(
+                issue, self.external_id, lazy=lazy
             )
-        except OperationError:
-            logger.error(
-                "There was an error retriveing the value for comment {} from Gitlab.".format(
-                    self.id
+        else:
+            try:
+                comment = cache.get_or_set(
+                    "helpdesk-{}-comment-{}".format(
+                        self.master_issue.external_id, self.external_id
+                    ),
+                    backend_object.get_issue_comment(issue, self.external_id),
+                    30,
                 )
-            )
-            return None
+            except OperationError:
+                logger.error(
+                    "There was an error retriveing the value for comment {} from Gitlab.".format(
+                        self.id
+                    )
+                )
+                return None
         return comment
 
     def sync_with_source(self, backend_object=None):

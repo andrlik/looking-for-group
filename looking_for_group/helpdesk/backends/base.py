@@ -92,3 +92,9 @@ class HelpDeskConnector(object):
         Close an issue.
         """
         raise NotImplementedError
+
+    def reopen_issue(self, issue, *args, **kwargs):
+        """
+        Reopen an issue
+        """
+        raise NotImplementedError
