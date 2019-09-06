@@ -41,9 +41,46 @@ class IssueListView(
     select_related = ["creator"]
     prefetch_related = ["subscribers"]
     template_name = "helpdesk/issue_list.html"
+    status_type = "opened"
+
+    def dispatch(self, request, *args, **kwargs):
+        get_dict = request.GET.copy()
+        user_info = get_dict.pop("status", None)
+        if user_info and user_info in ["opened", "closed"]:
+            self.status_type = user_info
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self.model.objects.exclude(sync_status__in=["delete_err", "deleted"])
+        return self.model.objects.exclude(
+            sync_status__in=["delete_err", "deleted"]
+        ).filter(cached_status=self.status_type)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_issues_not_deleted = self.model.objects.exclude(
+            sync_status__in=["delete_err", "deleted"]
+        )
+        context["total_open"] = all_issues_not_deleted.filter(
+            cached_status="opened"
+        ).count()
+        context["total_closed"] = all_issues_not_deleted.filter(
+            cached_status="closed"
+        ).count()
+        context["your_open"] = (
+            context["total_open"].filter(creator=self.request.user).count()
+        )
+        context["your_closed"] = (
+            context["total_closed"].filter(creator=self.request.user).count()
+        )
+        return context
+
+
+class MyIssueListView(IssueListView):
+
+    template_name = "helpdesk/my_issue_list.html"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(creator=self.request.user)
 
 
 class IssueCreateView(LoginRequiredMixin, generic.CreateView):

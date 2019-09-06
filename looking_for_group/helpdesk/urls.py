@@ -5,6 +5,7 @@ from . import views
 app_name = "helpdesk"
 urlpatterns = [
     path("issues/", view=views.IssueListView.as_view(), name="issue-list"),
+    path("issues/my/", view=views.MyIssueListView.as_view(), name="my-issue-list"),
     path("issues/create/", view=views.IssueCreateView.as_view(), name="issue-create"),
     path(
         "issues/issue/<ext_id>/",
