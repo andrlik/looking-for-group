@@ -62,9 +62,9 @@ def create_issuelink_from_remote_issue(remote_issue, creator=None, backend_clien
         external_url=remote_issue.web_url,
         sync_status="sync",
         created=datetime.strptime(
-            remote_issue.created_at, "%Y-%m-%dT%H:%M:%SZ"
+            remote_issue.created_at, "%Y-%m-%dT%H:%M:%S.%fZ"
         ).replace(tzinfo=ptimezone("UTC")),
         modified=datetime.strptime(
-            remote_issue.updated_at, "%Y-%m-%dT%H:%M:%SZ"
+            remote_issue.updated_at, "%Y-%m-%dT%H:%M:%S.%fZ"
         ).replace(tzinfo=ptimezone("UTC")),
     )
