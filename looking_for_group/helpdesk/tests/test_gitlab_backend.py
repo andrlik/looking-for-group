@@ -1,23 +1,7 @@
-import pytest
 from django.conf import settings
 
 from ..backends.gitlab import GitlabConnector
 from ..utils import get_backend_client
-
-
-@pytest.fixture
-def gl():
-    return get_backend_client()
-
-
-@pytest.fixture
-def test_issues(gl):
-    issue1 = gl.create_issue(title="Monkey", description="test this stuff")
-    issue2 = gl.create_issue(title="Test 2", description="Another test!")
-    issue_list = [issue1, issue2]
-    yield issue_list
-    issue1.delete()
-    issue2.delete()
 
 
 def test_gitlab_init():

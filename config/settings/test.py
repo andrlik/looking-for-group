@@ -95,6 +95,7 @@ LOGGING = {
         "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "games": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "helpdesk": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }
 

@@ -175,10 +175,9 @@ class IssueLink(TimeStampedModel, AbstractUUIDModel, models.Model):
             return False
         updated = False
         if (
-            datetime.strptime(issue.updated_at, "%Y-%m-%dT%H:%M:%SZ").replace(
-                tzinfo=ptimezone("UTC")
-            )
-            > self.last_sync
+            self.cached_status != issue.state
+            or self.cached_title != issue.title
+            or self.cached_description != issue.description
         ):
             self.cached_status = issue.state
             self.cached_title = issue.title
@@ -256,7 +255,9 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
             logger.debug(
                 "The issue is still being synced. You'll need to rely on cached values until finished."
             )
-            return None
+            raise SyncInProgressException(
+                "The issue is still being synced. You'll need to rely on cached values until finished."
+            )
         if lazy:
             comment = backend_object.get_issue_comment(
                 issue, self.external_id, lazy=lazy
@@ -270,7 +271,7 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
                     backend_object.get_issue_comment(issue, self.external_id),
                     30,
                 )
-            except OperationError:
+            except OperationError:  # pragma: no cover
                 logger.error(
                     "There was an error retriveing the value for comment {} from Gitlab.".format(
                         self.id
@@ -298,6 +299,8 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
             external_comment = self.get_external_comment(backend_object=backend_object)
         except SyncInProgressException as se:
             logger.debug(str(se))
+            return False
+        if not external_comment:
             return False
         updated = False
         if self.cached_body != external_comment.body:
