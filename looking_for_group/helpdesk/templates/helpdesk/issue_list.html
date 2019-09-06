@@ -1,0 +1,68 @@
+{% extends "helpdesk/base.html" %}
+{% load i18n avatar_tags %}
+{% block sectiontitle %}{% trans "Issues" %}{% endblock %}
+{% block subtitle %}{% trans "Issues" %}{% endblock %}
+{% block mobileheader %}{% trans "Issues" %}{% endblock %}
+{% block hdcrumbs %}
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Issues" %}</li>
+{% endblock %}
+{% block content %}
+{% block tab_control %}
+<ul class="tabs" data-tabs data-tabs-deep-link="true" data-tabs-deep-link-smudge="true" id="issue-tabs">
+  {% if listmode == "opened" %}
+  <li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Open Issues" %} ({{ total_open }})</a></li>
+  {% else %}
+  <li class="tabs-title"><a href="{% url 'helpdesk:issue-list' %}" data-tabs-target="active_panel">{% trans "Open Issues" %} ({{ total_open }})</a></li>
+  {% endif %}
+  {% if listmode == "closed" %}
+  <<li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Closed Issues" %} ({{ total_closed }})</a></li>
+  {% else %}
+  <li class="tabs-title"><a href="{% url 'helpdesk:issue-list' %}?status=closed" data-tabs-target="active_panel">{% trans "Closed Issues" %} ({{ total_closed }})</a></li>
+  {% endif %}
+  {% listmode == "myopened" %}
+  <li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Your Open Issues" %} ({{ your_open }})</a></li>
+  {% else %}
+  <li class="tabs-title"><a href="{% url 'helpdesk:my-issue-list' %}" data-tabs-target="active_panel">{% trans "Your Open Issues" %} ({{ your_open }})</a></li>
+  {% endif %}
+  {% if listmode == "myclosed" %}
+  <li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Your Closed Issues" %} ({{ your_closed }})</a></li>
+  {% else %}
+  <li class="tabs-title"><a href="{% url 'helpdesk:my-issue-list' %}?status=closed" data-tabs-target="active_panel">{% trans "Your Closed Issues" %} ({{ your_closed }})</a></li>
+  {% endif %}
+</ul>
+{% endblock %}
+<div class="tabs-content" data-tabs-content="issue-tabs">
+  <div class="tabs-panel is-active" id="active-panel">
+    {% if not issue_list %}
+    <p>{% trans "No matching issues found." %}</p>
+    {% endif %}
+    <table class="scroll hover">
+      <thead>
+        <tr>
+          <th class="text-right">{% trans "Issue ID" %}</th>
+          <th>{% trans "Created by" %}</th>
+          <th>{% trans "Created at" %}</th>
+          <th>{% trans "Issue" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th class="test-right">{% trans "Comments" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for issue in issue_list %}
+        <tr>
+          <td class="text-right"><a href="{{ issue.get_absolute_url }}">{{ issue.external_id }}</a></td>
+          <td><a href="{{ issue.creator.gamerprofile.get_absolute_url }}">{% avatar issue.creator 30 class="avatar" %} {{ issue.creator.gamerprofile }}</a></td>
+          <td>{{ issue.created|date:"E d, Y H:i e" }}</td>
+          <td><a href="{{ issue.get_absolute_url }}">{{ issue.title|truncatewords_html:20|safe }}</a></td>
+          <td><span class="label{% if issue.cached_status == 'closed' %} success{% endif %}">{{ issue.get_cached_status_display }}</span></td>
+          <td class="text-right">{{ issue.cached_comment_count }}</td>
+          <td><a href="{{ issue.get_absolute_url }}" class="button">{% trans "View" %}</a></td>
+        </tr>
+        {% empty %}
+        {% endfor %]
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
