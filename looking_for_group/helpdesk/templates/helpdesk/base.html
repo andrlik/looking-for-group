@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block extracrumbs %}
+<li><a href="{% url 'helpdesk:issue-list' %}">{% trans "Help Desk" %}</a></li>
+{% block hdcrumbs %}
+{% endblock %}
+{% endblock %}
+{% block innernav %}
+<div class="titlebar" data-responsive-toggle="section-menu" data-hide-for="medium">
+  <button class="menu-icon" type="button" data-toggle="section-menu"></button>
+  <div class="title-bar-title">{% trans "Controls" %}</div>
+</div>
+<div class="title-bar" role="region" data-sticky data-options="marginTop:0;" style="width:100%;" data-top-anchor="1" data-bottom-anchor="content:bottom" id="section-menu">
+  <div class="title-bar-left show-for-medium">
+    <h1>{% block sectiontitle %}{% endblock %}</h1>
+  </div>
+  <div class="title-bar-right">
+    <nav>
+      <ul class="menu align-right">
+        {% block innernavmenu %}
+        <li{% block issues %}{% endblock %}><a href="{% url 'helpdesk:issue-list' %}"><i class="fas fa-satellite-dish"></i></a></li>
+        <li{% block issuecreate %}{% enblock %}><a href="{% url 'helpdesk:issue-create' %}"><i class="fas fa-meteor"></i></a></li>
+        {% endblock %}
+      </ul>
+    </nav>
+  </div>
+</div>
