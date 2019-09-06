@@ -57,6 +57,7 @@ class IssueListView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["listmode"] = self.status_type
         all_issues_not_deleted = self.model.objects.exclude(
             sync_status__in=["delete_err", "deleted"]
         )
@@ -76,11 +77,13 @@ class IssueListView(
 
 
 class MyIssueListView(IssueListView):
-
-    template_name = "helpdesk/my_issue_list.html"
-
     def get_queryset(self):
         return super().get_queryset().filter(creator=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["listmode"] = "my{}".format(self.status_type)
+        return context
 
 
 class IssueCreateView(LoginRequiredMixin, generic.CreateView):
