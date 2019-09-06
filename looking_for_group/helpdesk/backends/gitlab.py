@@ -178,7 +178,18 @@ class GitlabConnector(HelpDeskConnector):
         note = None
         try:
             if comment_text:
+                logger.debug(
+                    "Close issue was also sent with a comment. Creating comment with body '{}'".format(
+                        comment_text
+                    )
+                )
                 note = issue.notes.create({"body": comment_text})
+                if note and hasattr(note, "id"):
+                    logger.debug(
+                        "Succesfully created the comment to use in closing the issue. Comment id is {}".format(
+                            note.id
+                        )
+                    )
             issue.state_event = "close"
             issue.save()
         except gitlab.exceptions.GitlabOperationError as goe:  # pragma: no cover
