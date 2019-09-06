@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
@@ -8,7 +7,6 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
-from pytz import timezone as ptimezone
 
 from ..game_catalog.utils import AbstractUUIDModel
 from .backends import OperationError
@@ -131,7 +129,7 @@ class IssueLink(TimeStampedModel, AbstractUUIDModel, models.Model):
         :return: A list of :class:`gitlab.v4.objects.ProjectIssueNote` objects
         :rtype: list
         """
-        if self.sync_status != "sync" or not self.external_id:
+        if self.sync_status == "pending" or not self.external_id:
             logger.debug("This object is still being created. Wait until finished.")
             return None
         if not backend_object:
@@ -241,7 +239,7 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
         :return: The comment as a single object.
         :rtype: :class:`gitlab.v4.objects.ProjectIssueNote`
         """
-        if self.sync_status != "sync":
+        if self.sync_status == "pending" or not self.external_id:
             raise SyncInProgressException(
                 "This comment is currently awaiting pushing data to the backend. Please wait until a worker finishes."
             )

@@ -28,7 +28,7 @@ def get_backend_client(backend="gitlab"):
             personal_token=settings.GITLAB_TOKEN,
             project=settings.GITLAB_PROJECT_ID,
         )
-    except AuthenticationError as ae:
+    except AuthenticationError as ae:  # pragma: no cover
         logger.error(
             "Authentication error creating gitlab connector. Message was: {}".format(
                 str(ae)
@@ -50,7 +50,7 @@ def create_issuelink_from_remote_issue(remote_issue, creator=None, backend_clien
     :return: The IssueLink object
     :rtype: :class:`looking_for_group.helpdesk.models.IssueLink`
     """
-    if not backend_client:
+    if not backend_client:  # pragma: no cover
         backend_client = get_backend_client()
     return models.IssueLink.objects.create(
         external_id=remote_issue.iid,

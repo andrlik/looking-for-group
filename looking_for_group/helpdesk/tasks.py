@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from . import models
@@ -26,7 +27,7 @@ def create_remote_issue(issuelink):
         issue = gl.create_issue(
             title=issuelink.cached_title, description=issuelink.cached_description
         )
-    except OperationError as oe:
+    except OperationError as oe:  # pragma: no cover
         logger.error(
             "Tried to create remote issue, but got an operational error. Will try again later. Mesage was: {}".format(
                 str(oe)
@@ -66,7 +67,7 @@ def update_remote_issue(issuelink):
             title=issuelink.cached_title,
             description=issuelink.cached_description,
         )
-    except OperationError as oe:
+    except OperationError:  # pragma: no cover
         logger.error(
             "There was an error trying to send the new data to github. Leaving it in updating state until a worker can resolve."
         )
@@ -95,7 +96,9 @@ def delete_remote_issue(issuelink):
         gl = get_backend_client()
         issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
         issue.delete()
-    except OperationError as oe:
+        issuelink.external_id = None
+        issuelink.external_url = None
+    except OperationError as oe:  # pragma: no cover
         logger.error(
             "Error encountered when deleteing issue. Leeting another worker take care of it later. Message was: {}".format(
                 str(oe)
@@ -123,14 +126,27 @@ def close_remote_issue(issuelink, comment_text=None):
             "Was asked to change an issue status, but the remote issue isn't created yet. Skipping..."
         )
         return
+    logger.debug(
+        "Begining attempt to close remote issue {}".format(issuelink.external_id)
+    )
     issuelink.sync_status = "closing"
-    issuelink.sync_status.save()
+    issuelink.save()
     try:
         gl = get_backend_client()
         issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
-        new_issue = gl.close_issue(issue, comment_text=comment_text)
-        cache.incr_version("helpdesk-{}".format(issuelink.external_id))
-    except OperationError as oe:
+        new_issue, note = gl.close_issue(issue, comment_text=comment_text)
+        if note:
+            models.IssueCommentLink.objects.create(
+                external_id=note.id,
+                master_issue=issuelink,
+                cached_body=comment_text,
+                sync_status="sync",
+            )
+        cache.set("helpdesk-{}".format(issuelink.external_id), new_issue, 30)
+        if issuelink.cached_status != "closed":
+            logger.debug("Local issue copy wasn't set to closed yet... updating.")
+            issuelink.cached_status = "closed"
+    except OperationError as oe:  # pragma: no cover
         logger.error(
             "There was an error trying to update the issue. Will try again later. Error message was: {}".format(
                 str(oe)
@@ -139,6 +155,7 @@ def close_remote_issue(issuelink, comment_text=None):
         issuelink.sync_status = "close_err"
         issuelink.save()
         return
+    logger.debug("Successfully closed remote issue.")
     issuelink.sync_status = "sync"
     issuelink.save()
 
@@ -156,13 +173,18 @@ def reopen_remote_issue(issuelink):
         )
         return
     issuelink.sync_status = "reopen"
-    issuelink.sync_status.save()
+    issuelink.save()
     try:
         gl = get_backend_client()
         issue = issuelink.get_external_issue(lazy=True, backend_object=gl)
         new_issue = gl.reopen_issue(issue)
         cache.set("helpdesk-{}".format(issuelink.external_id), new_issue, 30)
-    except OperationError as oe:
+        if issuelink.cached_status != "opened":
+            logger.debug(
+                "This issue didn't already have it's cached status set to opened. Doing so now."
+            )
+            issuelink.cached_status = "opened"
+    except OperationError as oe:  # pragma: no cover
         logger.error(
             "There was an error trying to update the issue. Will try again later. Error message was: {}".format(
                 str(oe)
@@ -193,7 +215,7 @@ def create_remote_comment(commentlink):
             lazy=True, backend_object=gl
         )
         new_comment = gl.comment_on_issue(issue, commentlink.cached_body)
-    except OperationError as oe:
+    except OperationError as oe:  # pragma: no cover
         logger.error(
             "Could not create remote comment from {}. Will try again later. Message was: {}".format(
                 commentlink.id, str(oe)
@@ -227,7 +249,7 @@ def update_remote_comment(commentlink):
     try:
         comment = commentlink.get_external_comment(lazy=True, backend_object=gl)
         new_comment = gl.edit_comment(comment, commentlink.cached_body)
-    except OperationError as oe:
+    except OperationError as oe:  # pragma: no cover
         logger.error(
             "Could not update remote comment with external id {}. Will try again later. Message was: {}".format(
                 commentlink.external_id, str(oe)
@@ -236,6 +258,8 @@ def update_remote_comment(commentlink):
         commentlink.sync_status = "updating_err"
         commentlink.save()
         return
+    except models.SyncInProgressException:
+        logger.debug("Cannot update remote comment that's issue is still syncing.")
     commentlink.last_sync = timezone.now()
     commentlink.sync_status = "sync"
     commentlink.save()
@@ -246,6 +270,48 @@ def update_remote_comment(commentlink):
         new_comment,
         30,
     )
+
+
+def delete_remote_comment(commentlink):
+    """
+    Delete the remote comment associated with this object and clear the external id
+
+    :param commentlink: The comment link object tied to the remote comment.
+    :type commentlink: :class:`looking_for_group.helpdesk.models.IssueCommentLink`
+    """
+    if commentlink.sync_status not in ["sync", "delete_err"]:
+        logger.debug(
+            "We were asked to delete a comment that still has pending sync tasks. Try again later."
+        )
+        return
+    logger.debug(
+        "Beginning delettion of remote comment {}".format(commentlink.external_id)
+    )
+    commentlink.sync_status = "deleting"
+    commentlink.save()
+    gl = get_backend_client()
+    try:
+        comment = commentlink.get_external_comment(lazy=True, backend_object=gl)
+        comment.delete()
+    except OperationError as oe:  # pragma: no cover
+        logger.error(
+            "Could not delete remote comment with external id {}. Will try again later. Message was: {}".format(
+                commentlink.external_id, str(oe)
+            )
+        )
+        commentlink.sync_status = "delete_err"
+        commentlink.save()
+        return
+    except models.SyncInProgressException:
+        logger.debug(
+            "The comment or its issue are currently still pending another sync task. Will try gain later."
+        )
+        commentlink.sync_status = "delete_err"
+        commentlink.save()
+        return
+    commentlink.external_id = None
+    commentlink.sync_status = "deleted"
+    commentlink.save()
 
 
 def sync_all_issues(sync_closed=False):
@@ -265,7 +331,7 @@ def sync_all_issues(sync_closed=False):
             cached_status="closed", last_sync__lte=timezone.now() - timedelta(days=14)
         )
     for il in issues:
-        updated = il.sync_from_souce(backend_object=gl)
+        updated = il.sync_with_source(backend_object=gl)
         if updated:
             updated_records += 1
     logger.debug("Sync finished with {} issue records updated.".format(updated_records))
@@ -292,7 +358,7 @@ def sync_all_comments(sync_closed=False):
             master_issue__last_sync__lte=timezone.now() - timedelta(days=14),
         )
     for cl in comments:
-        updated = cl.sync_from_source(backend_object=gl)
+        updated = cl.sync_with_source(backend_object=gl)
         if updated:
             updated_records += 1
     logger.debug("Sync finished with {} comments updated.".format(updated_records))
@@ -310,11 +376,13 @@ def import_new_issues(sync_closed=False, default_creator=None):
     new_issues = 0
     new_closed_issues = 0
     gl = get_backend_client()
-    ids_to_exclude = [il.external_id for il in models.IssueLink.objects.all()]
+    # ids_to_exclude = [il.external_id for il in models.IssueLink.objects.all()]
     try:
         issues_to_import = gl.get_issues()
         for issue in issues_to_import:
-            if issue.iid not in ids_to_exclude:
+            try:
+                models.IssueLink.objects.get(external_id=issue.iid)
+            except ObjectDoesNotExist:
                 logger.debug(
                     "New issue found with external id of {}. Creating link...".format(
                         issue.iid
@@ -331,7 +399,9 @@ def import_new_issues(sync_closed=False, default_creator=None):
             )
             issues_to_import = gl.get_issues(filter_status="closed")
             for issue in issues_to_import:
-                if issue.iid not in ids_to_exclude:
+                try:
+                    models.IssueLink.objects.get(external_id=issue.iid)
+                except ObjectDoesNotExist:
                     logger.debug(
                         "Found a new closed issue with external id of {}. Creating link...".format(
                             issue.iid
@@ -351,7 +421,7 @@ def import_new_issues(sync_closed=False, default_creator=None):
                 new_issues + new_closed_issues
             )
         )
-    except OperationError as oe:
+    except OperationError as oe:  # pragma: no cover
         logger.error(
             "An operation error was raised when trying to import records. Message was: {}".format(
                 str(oe)
