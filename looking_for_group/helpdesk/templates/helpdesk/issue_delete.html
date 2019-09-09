@@ -1,0 +1,27 @@
+{% extends "helpdesk/base.html" %}
+{% load i18n avatar_tags foundation_formtags %}
+{% block sectiontitle %}{% trans "Delete issue" %}{% endblock %}
+{% block subtitle %}{% trans "Delete issue" %}{% endblock %}
+{% block mobileheader %}{% trans "Delete issue" %}{% endblock %}
+{% block hdcrumbs %}
+<li><a href="{% url 'helpdesk:issue-list' %}">{% trans "Issues" %}</a></li>
+<li><a href="{{ issue.get_absolute_url }}">{{ issue.external_id }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete issue" %}</li>
+{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
+    <div class="callout alert">
+      <h1>{% trans "Are you sure?" %}</h1>
+      <p>{% blocktrans with ticknum=issue.external_id %}This will permanently delete issue #{{ ticknum }} and any comments associated with it.{% endblocktrans %}</p>
+      <form method="post" action="">
+        {% csrf_token %}
+        <div class="clearfix">
+          <a class="button secondary float-left" href="{{ issue.get_absolute_url }}">{% trans "Cancel and return to issue details" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Delete issue' %}" />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
