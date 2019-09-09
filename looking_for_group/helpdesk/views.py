@@ -1,5 +1,4 @@
 import logging
-from datetime import timedelta
 
 from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
@@ -8,10 +7,10 @@ from django.core.cache import cache
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
+from rules.permissions import has_perm
 
 from . import models
 from .backends import AuthenticationError, OperationError
@@ -25,7 +24,7 @@ from .tasks import (
     update_remote_comment,
     update_remote_issue
 )
-from .utils import get_backend_client
+from .utils import get_backend_client, reconcile_comments
 
 logger = logging.getLogger("helpdesk")
 # Create your views here.
@@ -128,9 +127,9 @@ class IssueDetailView(
             context["gl_issue"] = cache.get_or_set(
                 "helpdesk-{}", gl.get_issue(context["issue"].external_id), 20
             )
-            context["gl_issue_comments"] = cache.get_or_set(
-                "helpdesk-{}-comments".format(context["gl_issue"].iid),
-                gl.get_issue_comments(context["gl_issue"]),
+            context["reconciled_comments"] = cache.get_or_set(
+                "helpdesk-{}-reconciled-comments".format(context["gl_issue"].iid),
+                reconcile_comments(context["issue"]),
             )
         except AuthenticationError:
             logger.error(
@@ -351,11 +350,20 @@ class IssueCommentCreateView(LoginRequiredMixin, generic.CreateView):
         obj.master_issue = self.master_issue
         obj.save()
         create_remote_comment(obj)
+        if "close_issue" in self.request.POST.keys() and has_perm(
+            "helpdesk.close_issue", self.request.user, self.master_issue
+        ):
+            close_remote_issue(self.master_issue)
         obj.refresh_from_db()
         if obj.sync_status != "sync":
             messages.info(self.request, _("Your comment has been queued for creation."))
         else:
             messages.success(self.request, _("Your comment has been added."))
+        self.master_issue.refresh_from_db()
+        if self.master_issue.sync_status != "sync":
+            messages.info(self.request, _("Issue has been queued for closing."))
+        else:
+            messages.success(self.request, _("Issue has been closed."))
         return HttpResponseRedirect(obj.master_issue.get_absolute_url())
 
     def get_queryset(self):
