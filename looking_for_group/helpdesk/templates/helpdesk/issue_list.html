@@ -1,5 +1,5 @@
 {% extends "helpdesk/base.html" %}
-{% load i18n avatar_tags %}
+{% load i18n avatar_tags helpdesk_tags %}
 {% block sectiontitle %}{% trans "Issues" %}{% endblock %}
 {% block subtitle %}{% trans "Issues" %}{% endblock %}
 {% block mobileheader %}{% trans "Issues" %}{% endblock %}
@@ -63,6 +63,29 @@
         {% endfor %]
       </tbody>
     </table>
+    {% if paginated %}
+    <nav aria-label="Pagination">
+      <ul class="pagination">
+        {% if not page_obj.has_previous %}
+        <li class="pagination-previous disabled">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+        {% else %}
+        <li class="pagination-previous"><a href="{% get_url_from_listmode listmode page_obj.previous_page_number %}" aria-label="{% trans 'Previous Page' %}">{% trans "Previous" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+        {% endif %}
+        {% for page_num in paginator.page_range %}
+        {% if page_obj.number == page_num %}
+        <li class="current"><span class="show-for-sr">{% trans "You are on page" %} </span>{{ page_num }}</li>
+        {% else %}
+        <li><a href="{% get_url_from_listmode listmode page_num %}" aria-label="{% trans 'Page' %} {{ page_num }}">{{ page_num }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if not page_obj.has_next %}
+        <li class="pagination-next disabled">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></li>
+        {% else %}
+        <li class="pagination-next"><a href="{% get_url_from_listmode listmode page_obj.next_page_number %}" aria-label="{% trans 'Next page' %}">{% trans "Next" %} <span class="show-for-sr">{% trans "page" %}</span></a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
