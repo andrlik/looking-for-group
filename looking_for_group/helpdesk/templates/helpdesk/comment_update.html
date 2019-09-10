@@ -1,0 +1,46 @@
+{% extends "helpdesk/issue_detail.html" %}
+{% load i18n helpdesk_tags avatar_tags foundation_formtags %}
+{% block sectiontitle %}{% trans "Edit comment on" %} {{ issue.external_id }}{% endblock %}
+{% block subtitle %}{% trans "Edit comment on" %} {{ issue.external_id }}{% endblock %}
+{% block mobileheader %}{% trans "Edit comment on" %} {{ issue.external_id }}{% endblock %}
+{% block hdcrumbs %}
+<li><a href="{% url 'helpdesk:issue-list' %}">{% trans "Issues" %}</a></li>
+<li><a href="{{ issue.get_absolute_url }}">{{ issue.external_id }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span> {% trans "Edit comment" %}</li>
+{% endblock %}
+{% block comments %}
+<div class="card">
+  <div class="card-divider"><h2>{% trans "Edit comment" %}</h2></div>
+  <div class="card-section">
+    <p>{% trans "You can edit the body of your comment below." %}</p>
+    <form method="post" action="">
+      {% csrf_token %}
+      {{ form|as_foundation }}
+      <div class="clearfix">
+        <a href="{{ issue.get_absolute_url }}" class="button secondary float-left">{% trans "Cancel and return to issue details" %}</a>
+        <input type="submit" class="button success" value="{% trans 'Update comment' %}" />
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block simplemde %}
+<script type="text/javascript">
+  var easymde = new EasyMDE({
+    element: $('#id_cached_body')[0],
+    autosave: {
+      enabled: true,
+      uniqueId: "issue_{{ issue.external_id }}_comment_{{ comment.external_id }}_body",
+    },
+    tabSize: 4,
+    indentWithTabs: false,
+    forceSync: true,
+    spellChecker:false,
+    renderingConfig: {
+      markedOptions: {
+        sanitize: true,
+      }
+    }
+  });
+</script>
+{% endblock %}

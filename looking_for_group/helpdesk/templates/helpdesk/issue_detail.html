@@ -29,17 +29,37 @@
         {% has_perm "helpdesk.delete_issue" request.user issue as is_deleter %}
         {% has_perm "helpdesk.add_comment" request.user issue as is_commenter %}
         {% if is_editor or is_deleter %}
-        <div class="clearfix">
+        <div class="grid-x grid-margin-x">
           {% if is_editor %}
-          <a class="button float-left" href="{% url 'helpdesk:issue-update' ext_id=issue.external_id %}">{% trans "Edit issue" %}</a>
+          <div class="cell medium-auto">
+            <a class="button" href="{% url 'helpdesk:issue-update' ext_id=issue.external_id %}">{% trans "Edit issue" %}</a>
+          </div>
+          {% endif %}
+          {% if is_closer %}
+          <div class="cell medium-auto">
+            {% if issue.cached_status == "opened" %}
+            <form action="{% url 'helpdesk:issue-close' ext_id=issue.external_id %}" method="post">
+              {% csrf_token %}
+              <input type="submit" class="button warning" value="{% trans 'Close issue' %}" />
+            </form>
+            {% else %}
+            <form action="{% url 'helpdesk:issue-reopen' ext_id=issue.external_id %}" method="post">
+              {% csrf_token %}
+              <input type="submit" class="button warning" value="{% trans 'Reopen issue' %}" />
+            </form>
+            {% endif %}
+          </div>
           {% endif %}
           {% if is_deleter %}
-          <a class="button alert float-right" href="{% url 'helpdesk:issue-delete' ext_id=issue.external_id %}">{% trans "Delete issue" %}</a>
+          <div class="cell medium-auto">
+            <a class="button alert" href="{% url 'helpdesk:issue-delete' ext_id=issue.external_id %}">{% trans "Delete issue" %}</a>
+          </div>
           {% endif %}
         </div>
         {% endif %}
       </div>
     </div>
+    {% block comments %}
     <div class="card">
       <div class="card-divder"><h2>{% trans "Issue comments" %} ({{ issue.cached_comment_count }})</h2></div>
       <div class="card-section">
@@ -80,6 +100,7 @@
       </div>
     </div>
     {% endif %}
+    {% endblock %}
     </div>
   </div>
 {% endblock %}
