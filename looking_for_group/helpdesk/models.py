@@ -10,7 +10,8 @@ from model_utils.models import TimeStampedModel
 
 from ..game_catalog.utils import AbstractUUIDModel
 from .backends import OperationError
-from .utils import get_backend_client
+from .signals import issue_state_changed
+from .utils import get_backend_client, get_default_actor_for_syncs
 
 logger = logging.getLogger("helpdesk")
 
@@ -177,6 +178,14 @@ class IssueLink(TimeStampedModel, AbstractUUIDModel, models.Model):
             or self.cached_title != issue.title
             or self.cached_description != issue.description
         ):
+            if self.cached_status != issue.state:
+                issue_state_changed.send(
+                    self,
+                    issue=self,
+                    user=get_default_actor_for_syncs(),
+                    old_status=self.cached_status,
+                    new_status=issue.state,
+                )
             self.cached_status = issue.state
             self.cached_title = issue.title
             self.cached_description = issue.description

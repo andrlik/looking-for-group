@@ -14,6 +14,7 @@ from rules.permissions import has_perm
 
 from . import models
 from .backends import AuthenticationError, OperationError
+from .signals import issue_state_changed
 from .tasks import (
     close_remote_issue,
     create_remote_comment,
@@ -296,6 +297,13 @@ class IssueCloseView(
         obj.status = "closed"
         obj.save()
         messages.success(self.request, _("Issue has been closed."))
+        issue_state_changed.send(
+            obj,
+            issue=obj,
+            user=self.request.user,
+            old_status="opened",
+            new_status="closed",
+        )
         return HttpResponseRedirect(obj.get_absolute_url())
 
     def get_queryset(self):
@@ -322,6 +330,13 @@ class IssueReopenView(
         obj.save()
         reopen_remote_issue(obj)
         messages.success(self.request, _("This issue has been reopened."))
+        issue_state_changed.send(
+            obj,
+            issue=obj,
+            user=self.request.user,
+            old_status="closed",
+            new_status="opened",
+        )
         return HttpResponseRedirect(obj.get_absolute_url())
 
     def get_queryset(self):
@@ -360,10 +375,21 @@ class IssueCommentCreateView(LoginRequiredMixin, generic.CreateView):
         else:
             messages.success(self.request, _("Your comment has been added."))
         self.master_issue.refresh_from_db()
-        if self.master_issue.sync_status != "sync":
-            messages.info(self.request, _("Issue has been queued for closing."))
-        else:
-            messages.success(self.request, _("Issue has been closed."))
+        if self.master_issue.cached_status == "closed":
+            if self.master_issue.sync_status != "sync":
+                messages.info(self.request, _("Issue has been queued for closing."))
+            else:
+                messages.success(self.request, _("Issue has been closed."))
+            issue_state_changed.send(
+                obj,
+                issue=obj,
+                user=self.request.user,
+                old_status="opened",
+                new_status="closed",
+            )
+        self.master_issue.subscribers.add(
+            self.request.user
+        )  # Subscribe them to updates.
         return HttpResponseRedirect(obj.master_issue.get_absolute_url())
 
     def get_queryset(self):
@@ -384,6 +410,7 @@ class IssueCommentUpdateView(
     slug_field = "external_id"
     slug_url_kwarg = "cext_id"
     permission_required = "helpdesk.edit_comment"
+    context_object_name = "comment"
 
     def dispatch(self, request, *args, **kwargs):
         issue_id = kwargs.pop("ext_id", None)
@@ -391,6 +418,11 @@ class IssueCommentUpdateView(
         if self.master_issue != self.get_object().master_issue:
             raise Http404
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["issue"] = self.master_issue
+        return context
 
     def form_valid(self, form):
         obj = form.save()
@@ -427,6 +459,11 @@ class IssueCommentDeleteView(
         if self.master_issue != self.get_object().master_issue:
             raise Http404
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["issue"] = self.master_issue
+        return context
 
     def get_success_url(self):
         return self.master_issue.get_absolute_url()
