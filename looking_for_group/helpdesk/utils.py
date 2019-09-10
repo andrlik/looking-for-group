@@ -3,6 +3,7 @@ from datetime import datetime
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from pytz import timezone as ptimezone
 
@@ -96,13 +97,14 @@ def reconcile_comments(issuelink, use_emails=True):
             "external_id": comment.id,
             "body": comment.body,
             "db_version": None,
-            "creator": None,
+            "creator": comment.author.email,
             "created": datetime.strptime(
                 comment.created_at, "%Y-%m-%dT%H:%M:%S.%f"
             ).replace(tzinfo=ptimezone("UTC")),
             "modified": datetime.strptime(
                 comment.updated_at, "%Y-%m-%dT%H:%M:%S.%f"
             ).replace(tzinfo=ptimezone("UTC")),
+            "gl_version": comment,
         }
         if comment.id in local_comment_ids:
             lcom = local_comments.get(external_id=comment.id)
@@ -145,3 +147,7 @@ def reconcile_comments(issuelink, use_emails=True):
     if not comments_to_return:
         return []
     return sorted(comments_to_return, key=lambda i: i["created"])
+
+
+def get_default_actor_for_syncs():
+    return get_user_model().objects.get(username=settings.GITLAB_DEFAULT_USERNAME)
