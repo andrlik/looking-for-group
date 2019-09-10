@@ -4,10 +4,11 @@ from datetime import timedelta
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from notifications.signals import notify
 
 from . import models
 from .backends import OperationError
-from .utils import create_issuelink_from_remote_issue, get_backend_client
+from .utils import create_issuelink_from_remote_issue, get_backend_client, get_default_actor_for_syncs
 
 logger = logging.getLogger("helpdesk")
 
@@ -373,6 +374,8 @@ def import_new_issues(sync_closed=False, default_creator=None):
     :type sync_closed: bool
     """
     logger.debug("Beginning import of issues from backend...")
+    if not default_creator:
+        default_creator = get_default_actor_for_syncs()
     new_issues = 0
     new_closed_issues = 0
     gl = get_backend_client()
@@ -427,3 +430,22 @@ def import_new_issues(sync_closed=False, default_creator=None):
                 str(oe)
             )
         )
+
+
+def notify_subscribers_of_new_comment(comment):
+    """
+    Send notifications to all the subscribers of an issue that a new comment was added.
+    """
+    recipients = comment.master_issue.subscribers.all()
+    notify.send(comment.creator, recipients, "commented on", comment.master_issue)
+
+
+def notify_subscribers_of_issue_state_change(issue, user, old_status, new_status):
+    """
+    Send notifications to all the subscribers of an issue that a new comment was added.
+    """
+    recipients = issue.subscribers.all()
+    verb = "closed issue"
+    if new_status == "opened" and old_status == "closed":
+        verb = "reopened issue"
+    notify.send(user, recipients, verb, issue)
