@@ -6,4 +6,4 @@ class HelpdeskConfig(AppConfig):
     verbose_name = "Help Desk"
 
     def ready(self):
-        from .receivers import *  # noqa
+        from . import receivers  # noqa
