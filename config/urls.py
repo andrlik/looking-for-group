@@ -15,7 +15,7 @@ from .api_routers import router
 
 
 def trigger_error(request):
-    division_by_zero = 1 / 0
+    divide_by_zero = 1 / 0  # noqa
 
 
 urlpatterns = [
