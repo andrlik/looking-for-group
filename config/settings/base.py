@@ -89,6 +89,7 @@ THIRD_PARTY_APPS = [
     "ajax_select",
     "postman",
     "markdownify",
+    "keybase_proofs",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -397,3 +398,5 @@ MARKDOWNIFY_FILTER_WHITELIST_TAGS = [
     "ul",
 ]
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")
+
+KEYBASE_PROOFS_DOMAIN = "app.lfg.directory"
