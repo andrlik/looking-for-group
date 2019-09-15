@@ -400,7 +400,6 @@ MARKDOWNIFY_FILTER_WHITELIST_TAGS = [
 ]
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")
 
-
 # ----------------------------------------------------------------------------
 # HelpDesk Credentials
 # ----------------------------------------------------------------------------
