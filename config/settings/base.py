@@ -89,6 +89,7 @@ THIRD_PARTY_APPS = [
     "ajax_select",
     "postman",
     "markdownify",
+    "keybase_proofs",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -411,3 +412,4 @@ GITLAB_DEFAULT_USERNAME = env("GITLAB_DEFAULT_USERNAME", default="daniel")
 GITLAB_DEFAULT_REMOTE_USERNAME = env(
     "GITLAB_DEFAULT_REMOTE_USERNAME", default="andrlik"
 )
+KEYBASE_PROOFS_DOMAIN = "app.lfg.directory"
