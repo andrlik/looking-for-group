@@ -13,6 +13,11 @@ urlpatterns = [
         name="issue-detail",
     ),
     path(
+        "issues/pending/<uuid:pk>/",
+        view=views.IssuePendingDetailView.as_view(),
+        name="pending-issue",
+    ),
+    path(
         "issues/issue/<ext_id>/edit/",
         view=views.IssueUpdateView.as_view(),
         name="issue-update",

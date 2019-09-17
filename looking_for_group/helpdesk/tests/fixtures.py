@@ -37,6 +37,9 @@ class IssueTData(object):
         if not backend_client:
             backend_client = get_backend_client()
         self.gl = backend_client
+        self.super_gamer = GamerProfileFactory()
+        self.super_gamer.user.is_superuser = True
+        self.super_gamer.user.save()
         self.gamer1 = GamerProfileFactory()
         self.gamer2 = GamerProfileFactory()
         self.gamer3 = GamerProfileFactory()

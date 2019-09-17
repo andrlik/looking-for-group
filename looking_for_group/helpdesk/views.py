@@ -42,12 +42,13 @@ class IssueListView(
     prefetch_related = ["subscribers"]
     template_name = "helpdesk/issue_list.html"
     status_type = "opened"
+    ordering = ["-created"]
 
     def dispatch(self, request, *args, **kwargs):
         get_dict = request.GET.copy()
         user_info = get_dict.pop("status", None)
-        if user_info and user_info in ["opened", "closed"]:
-            self.status_type = user_info
+        if user_info and user_info[0] in ["opened", "closed"]:
+            self.status_type = user_info[0]
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -67,12 +68,12 @@ class IssueListView(
         context["total_closed"] = all_issues_not_deleted.filter(
             cached_status="closed"
         ).count()
-        context["your_open"] = (
-            context["total_open"].filter(creator=self.request.user).count()
-        )
-        context["your_closed"] = (
-            context["total_closed"].filter(creator=self.request.user).count()
-        )
+        context["your_open"] = all_issues_not_deleted.filter(
+            creator=self.request.user
+        ).count()
+        context["your_closed"] = all_issues_not_deleted.filter(
+            creator=self.request.user
+        ).count()
         return context
 
 

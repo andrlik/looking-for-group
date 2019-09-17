@@ -19,9 +19,10 @@
       <ul class="menu align-right">
         {% block innernavmenu %}
         <li{% block issues %}{% endblock %}><a href="{% url 'helpdesk:issue-list' %}"><i class="fas fa-satellite-dish"></i></a></li>
-        <li{% block issuecreate %}{% enblock %}><a href="{% url 'helpdesk:issue-create' %}"><i class="fas fa-meteor"></i></a></li>
+        <li{% block issuecreate %}{% endblock %}><a href="{% url 'helpdesk:issue-create' %}"><i class="fas fa-meteor"></i></a></li>
         {% endblock %}
       </ul>
     </nav>
   </div>
 </div>
+{% endblock %}

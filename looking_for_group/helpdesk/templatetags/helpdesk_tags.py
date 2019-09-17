@@ -52,13 +52,24 @@ def render_commenter_id(reconciled_comment):
         reconciled_comment["creator"], size=30, **{"class": "avatar"}
     )
     if isinstance(reconciled_comment["creator"], get_user_model()):
+        avatar_val = avatar_tag(
+            reconciled_comment["creator"], size=30, **{"class": "avatar"}
+        )
         creator_str = '<a href="{}">{} {}</a>'.format(
             reconciled_comment["creator"].gamerprofile.get_absolute_url(),
-            avatar_value,
+            avatar_val,
             reconciled_comment["creator"].gamerprofile,
         )
     else:
+        avatar_val = "nobody"
+        if (
+            "creator_email" in reconciled_comment.keys()
+            and reconciled_comment["creator_email"]
+        ):
+            avatar_val = avatar_tag(
+                reconciled_comment["creator_email"], size=30, **{"class": "avatar"}
+            )
         creator_str = "{} {} (Remote)".format(
-            avatar_val, reconciled_comment["gl_version"].author.name
+            avatar_val, reconciled_comment["gl_version"].author["name"]
         )
     return safe(creator_str)
