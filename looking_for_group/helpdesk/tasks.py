@@ -437,7 +437,12 @@ def notify_subscribers_of_new_comment(comment):
     Send notifications to all the subscribers of an issue that a new comment was added.
     """
     recipients = comment.master_issue.subscribers.all()
-    notify.send(comment.creator, recipients, "commented on", comment.master_issue)
+    notify.send(
+        comment.creator,
+        recipient=recipients,
+        verb="commented on",
+        action_item=comment.master_issue,
+    )
 
 
 def notify_subscribers_of_issue_state_change(issue, user, old_status, new_status):
@@ -448,4 +453,4 @@ def notify_subscribers_of_issue_state_change(issue, user, old_status, new_status
     verb = "closed issue"
     if new_status == "opened" and old_status == "closed":
         verb = "reopened issue"
-    notify.send(user, recipients, verb, issue)
+    notify.send(user, recipient=recipients, verb=verb, action_item=issue)

@@ -1,5 +1,5 @@
 {% extends "helpdesk/base.html" %}
-{% load i18n avatar_tags markdownify rules helpdesk_tags %}
+{% load i18n avatar_tags markdownify foundation_formtags rules helpdesk_tags %}
 {% block sectiontitle %}{% trans "Issue" %} {{ issue.external_id }}{% endblock %}
 {% block subtitle %}{% trans "Issue" %} {{ issue.external_id }}{% endblock %}
 {% block mobileheader %}{% trans "Issue" %} {{ issue.external_id }}{% endblock %}
@@ -68,7 +68,7 @@
         {% has_perm "helpdesk.delete_comment" comment.db_version request.user as is_comment_deleter %}
         <div class="grid-margin-x grid-x">
           <div class="cell medium-3">
-            <p>{% render_commenter_id %}</p>
+            <p>{% render_commenter_id comment %}</p>
             <p>{{ comment.created|date:"E d, Y H:i e" }}</p>
             {% if is_comment_editor %}
             <p><a class="button" href="{% url 'helpdesk:comment-edit' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Edit comment" %}</a></p>
@@ -77,7 +77,7 @@
             <p><a class="button alert" href="{% url 'helpdesk:comment-delete' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Delete comment" %}</a></p>
             {% endif %}
           </div>
-          <div class="cell medium-6">{{ comment.body|mardownify|linebreaksbr|safe }}</div>
+          <div class="cell medium-6">{{ comment.body|markdownify|linebreaksbr|safe }}</div>
         </div>
         {% empty %}
         <p>{% trans "There are no comments on this issue yet" %}</p>
@@ -89,11 +89,11 @@
       <div class="card-divider"><h2>{% trans "Add comment" %}</h2></div>
       <div class="card-section">
         <p>{% trans "Add your comment below." %}</p>
-        <form action="{% url 'helpdesk:comment-create' ext_id=issue.external_id %}" method="post">
+        <form action="{% url 'helpdesk:issue-add-comment' ext_id=issue.external_id %}" method="post">
           {% csrf_token %}
           {{ comment_form|as_foundation }}
           <div class="clearfix">
-            <input type="submit" class="button float-left" value="{% 'Add comment' %}" />
+            <input type="submit" class="button float-left" value="{% trans 'Add comment' %}" />
             {% if is_closer %}<input type="submit" class="button alert float-right" name="close_issue" value="{% trans 'Comment and close issue' %}" />{% endif %}
           </div>
         </form>
