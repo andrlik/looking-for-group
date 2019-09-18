@@ -1,9 +1,11 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.signals import post_save
 from django.urls import reverse
+from factory.django import mute_signals
 
 from .. import models
-from ..tasks import create_remote_issue, delete_remote_issue
+from ..tasks import create_remote_issue, delete_remote_issue, queue_issue_for_sync
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -197,3 +199,69 @@ def test_delete_issue(
             assert models.IssueLink.objects.get(pk=issue.pk)
             delete_remote_issue(issue)
             issue.delete()
+
+
+@pytest.mark.parametrize(
+    "issue_to_use,gamertouse,expected_get_response,expected_get_location,post_data,expected_post_response",
+    [
+        ("issue2", None, 302, "/accounts/login/", None, None),
+        (
+            "issue2",
+            "gamer1",
+            200,
+            None,
+            {"cached_body": "Hi there. I am a comment."},
+            302,
+        ),
+        (
+            "issue2",
+            "super_gamer",
+            200,
+            None,
+            {
+                "cached_body": "Hi, I'm a commment that will close this issue.",
+                "close_issue": 1,
+            },
+            302,
+        ),
+    ],
+)
+def test_add_comment_to_issue(
+    client,
+    helpdesk_testdata,
+    django_assert_max_num_queries,
+    issue_to_use,
+    gamertouse,
+    expected_get_response,
+    expected_get_location,
+    post_data,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(helpdesk_testdata, gamertouse)
+        client.force_login(gamer.user)
+    issue = getattr(helpdesk_testdata, issue_to_use)
+    url = reverse("helpdesk:issue-add-comment", kwargs={"ext_id": issue.external_id})
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    else:
+        comment_count = models.IssueCommentLink.objects.count()
+        old_issue_comment_count = issue.cached_comment_count
+        response = client.post(url, data=post_data)
+        with mute_signals(post_save):
+            assert response.status_code == expected_post_response
+        if expected_post_response == 302:
+            queue_issue_for_sync(issue)
+            assert models.IssueCommentLink.objects.count() - comment_count == 1
+            issue.refresh_from_db()
+            assert issue.cached_comment_count - old_issue_comment_count == 1
+            assert models.IssueCommentLink.objects.latest("created").external_id
+            assert gamer.user in issue.subscribers.all()
+            if "close_issue" in post_data.keys():
+                assert issue.cached_status == "closed"
+            else:
+                assert issue.cached_status == "opened"
