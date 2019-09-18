@@ -366,11 +366,15 @@ class IssueCommentCreateView(LoginRequiredMixin, generic.CreateView):
         obj.master_issue = self.master_issue
         obj.save()
         create_remote_comment(obj)
-        if "close_issue" in self.request.POST.keys() and has_perm(
-            "helpdesk.close_issue", self.request.user, self.master_issue
-        ):
-            close_remote_issue(self.master_issue)
-        obj.refresh_from_db()
+        if "close_issue" in self.request.POST.keys():
+            if has_perm("helpdesk.close_issue", self.request.user, self.master_issue):
+                close_remote_issue(self.master_issue)
+                obj.refresh_from_db()
+            else:
+                messages.error(
+                    self.request,
+                    _("You do not have the necessary rights to close this issue."),
+                )
         if obj.sync_status != "sync":
             messages.info(self.request, _("Your comment has been queued for creation."))
         else:

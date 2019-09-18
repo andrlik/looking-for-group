@@ -161,6 +161,10 @@ def close_remote_issue(issuelink, comment_text=None):
     issuelink.save()
 
 
+def queue_issue_for_sync(issuelink):
+    issuelink.sync_with_source()
+
+
 def reopen_remote_issue(issuelink):
     """
     Update the status of the remote issue according to the status within the given issuelink.
