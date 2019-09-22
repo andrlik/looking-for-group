@@ -24,7 +24,7 @@
 {% get_tour "gamedetail" as tour %}
 {% if game.featured_image %}
 <div id="feature-image">
-  <img alt="{% if game.featured_image_description %}{{ game.featured_image_description }}{% else %}{% blocktrans with gname=game.title %}Featured image for {{ gname }}{% endblocktrans %}{% endif %}" class="thumbnail logo" src="{{ game.featured_image.url }}" />
+  <img alt="{% if game.featured_image_description %}{{ game.featured_image_description }}{% else %}{% blocktrans with gname=game.title %}Featured image for {{ gname }}{% endblocktrans %}{% endif %}" class="thumbnail" src="{{ game.featured_image.url }}" />
   {% if game.featured_image_cw %}
   <div id="cw_overlay" onclick="cw_off()">
     <div id="overlay_text"><p>{% trans 'CW:' %} {{ game.featured_image_cw }}</p><p>{% trans "Click to reveal" %}</p></div>
