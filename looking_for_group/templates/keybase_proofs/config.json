@@ -7,10 +7,10 @@
     "min": 2,
     "max": 150
   },
-  "brand_color": "#000100",
+  "brand_color": "#1779ba",
   "logo": {
-    "svg_black": null,
-    "svg_full": null
+    "full_color": "https://app.lfg.directory/static/images/full_color.svg",
+    "small_black": "https://app.lfg.directory/static/images/small_black.svg"
   },
   "description": "A tabletop RPG campaign manager and group finder.",
   "prefill_url": "https://app.lfg.directory/keybase-proofs/new-proof?kb_username=%{kb_username}&username=%{username}&sig_hash=%{sig_hash}&kb_ua=%{kb_ua}",
