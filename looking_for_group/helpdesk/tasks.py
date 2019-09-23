@@ -445,16 +445,25 @@ def notify_subscribers_of_new_comment(comment):
         comment.creator,
         recipient=recipients,
         verb="commented on",
-        action_item=comment.master_issue,
+        action_object=comment.master_issue,
     )
 
 
 def notify_subscribers_of_issue_state_change(issue, user, old_status, new_status):
     """
-    Send notifications to all the subscribers of an issue that a new comment was added.
+    Send notifications to all the subscribers of an issue that an issue changed state was added.
     """
-    recipients = issue.subscribers.all()
-    verb = "closed issue"
-    if new_status == "opened" and old_status == "closed":
-        verb = "reopened issue"
-    notify.send(user, recipient=recipients, verb=verb, action_item=issue)
+    logger.debug("Notifying subscribers of issue state change. Fetching subscribers...")
+    if issue.subscribers.count() == 0:
+        logger.debug("There are no subscribers to this issue.")
+    else:
+        recipients = issue.subscribers.all()
+        logger.debug("Subscribers fetched...")
+        logger.debug(
+            "Notifying {} subscribers of issue state change.".format(len(recipients))
+        )
+        verb = "closed issue"
+        if new_status == "opened" and old_status == "closed":
+            verb = "reopened issue"
+        notify.send(user, recipient=recipients, verb=verb, action_object=issue)
+        logger.debug("Successfully sent notifications!")

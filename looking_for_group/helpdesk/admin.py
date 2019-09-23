@@ -26,12 +26,14 @@ class IssueLinkAdmin(admin.ModelAdmin):
         "sync_status",
         "last_sync",
     ]
+    ordering = ["-created"]
     actions = [sync_from_source]
 
 
 class IssueCommentLinkAdmin(admin.ModelAdmin):
     list_display = ["master_issue", "creator", "created", "sync_status", "last_sync"]
     actions = [sync_from_source]
+    ordering = ["-created"]
 
 
 admin.site.register(IssueLink, IssueLinkAdmin)

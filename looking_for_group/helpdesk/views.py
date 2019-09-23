@@ -52,9 +52,11 @@ class IssueListView(
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self.model.objects.exclude(
-            sync_status__in=["delete_err", "deleted"]
-        ).filter(cached_status=self.status_type)
+        return (
+            self.model.objects.exclude(sync_status__in=["delete_err", "deleted"])
+            .filter(cached_status=self.status_type)
+            .order_by("-created")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -367,10 +369,16 @@ class IssueCommentCreateView(LoginRequiredMixin, generic.CreateView):
         obj.save()
         create_remote_comment(obj)
         if "close_issue" in self.request.POST.keys():
+            logger.debug(
+                "Request to add comment also includes request to close issue. Checking permissions..."
+            )
             if has_perm("helpdesk.close_issue", self.request.user, self.master_issue):
+                logger.debug("User has permissions. Closing the remote issue...")
                 close_remote_issue(self.master_issue)
+                logger.debug("Issue was closed. Refreshing the object from the DB")
                 obj.refresh_from_db()
             else:
+                logger.debug("User did not have the correct permissions...")
                 messages.error(
                     self.request,
                     _("You do not have the necessary rights to close this issue."),
@@ -387,7 +395,7 @@ class IssueCommentCreateView(LoginRequiredMixin, generic.CreateView):
                 messages.success(self.request, _("Issue has been closed."))
             issue_state_changed.send(
                 obj,
-                issue=obj,
+                issue=obj.master_issue,
                 user=self.request.user,
                 old_status="opened",
                 new_status="closed",

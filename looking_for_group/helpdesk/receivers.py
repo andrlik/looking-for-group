@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import F
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
@@ -6,6 +8,8 @@ from django_q.tasks import async_task
 from . import models
 from .signals import issue_state_changed
 from .tasks import notify_subscribers_of_issue_state_change, notify_subscribers_of_new_comment, queue_issue_for_sync
+
+logger = logging.getLogger("helpdesk")
 
 
 @receiver(post_save, sender=models.IssueCommentLink)
@@ -36,6 +40,7 @@ def update_issue_on_new_comment(sender, instance, created, *args, **kwargs):
 
 @receiver(post_delete, sender=models.IssueCommentLink)
 def update_issue_on_comment_delete(sender, instance, *args, **kwargs):
+    logger.debug("Firing notifications of new comment.")
     async_task(queue_issue_for_sync, instance.master_issue)
 
 
@@ -43,6 +48,7 @@ def update_issue_on_comment_delete(sender, instance, *args, **kwargs):
 def fire_state_change_notfication(
     sender, issue, user, old_status, new_status, *args, **kwargs
 ):
+    logger.debug("Firing state change and sending notificaitons of issue change.")
     async_task(
         notify_subscribers_of_issue_state_change, issue, user, old_status, new_status
     )
