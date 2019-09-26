@@ -5,6 +5,7 @@ from django.urls import reverse
 from factory.django import mute_signals
 
 from .. import models
+from ..signals import issue_state_changed
 from ..tasks import create_remote_issue, delete_remote_issue, queue_issue_for_sync
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -255,11 +256,11 @@ def test_add_comment_to_issue(
         ).count()
         old_issue_comment_count = issue.cached_comment_count
         assert old_issue_comment_count == comment_count
-        with mute_signals(post_save):
+        with mute_signals(post_save, issue_state_changed):
             response = client.post(url, data=post_data)
         assert response.status_code == expected_post_response
         if expected_post_response == 302:
-            queue_issue_for_sync(issue)
+            # queue_issue_for_sync(issue)
             assert (
                 models.IssueCommentLink.objects.filter(master_issue=issue).count()
                 - comment_count

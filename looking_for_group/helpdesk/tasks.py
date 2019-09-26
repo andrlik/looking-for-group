@@ -453,8 +453,30 @@ def notify_subscribers_of_issue_state_change(issue, user, old_status, new_status
     """
     Send notifications to all the subscribers of an issue that an issue changed state was added.
     """
+    logger.debug("Running debug query...")
+    logger.debug(
+        "Checking to see if issue is the right kind of object... {}".format(
+            isinstance(issue, models.IssueLink)
+        )
+    )
+    logger.debug(
+        "Testing is issue has the subscribers attribute... {}".format(
+            hasattr(issue, "subscribers")
+        )
+    )
+    logger.debug(
+        "Checking that subscribers is the right type... Type = {}".format(
+            type(issue.subscribers)
+        )
+    )
+    logger.debug(
+        "Checking that the subscribers queryset is what is expected... Type of {} for object {}".format(
+            type(issue.subscribers.all()), issue.subscribers.all()
+        )
+    )
+    logger.debug(str(len(issue.subscribers.all())))
     logger.debug("Notifying subscribers of issue state change. Fetching subscribers...")
-    if issue.subscribers.count() == 0:
+    if issue.subscribers.all().count() == 0:
         logger.debug("There are no subscribers to this issue.")
     else:
         recipients = issue.subscribers.all()
