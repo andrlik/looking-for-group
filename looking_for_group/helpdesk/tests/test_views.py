@@ -278,3 +278,66 @@ def test_add_comment_to_issue(
                 assert issue.cached_status == "closed"
             else:
                 assert issue.cached_status == "opened"
+
+
+@pytest.mark.parametrize(
+    "comment_to_use,gamertouse,expected_get_response,expected_get_location,post_data,expected_post_response",
+    [
+        ("comment1", None, 302, "/accounts/login/", None, None),
+        (
+            "comment1",
+            "gamer1",
+            403,
+            None,
+            {"cached_body": "I am a nefarious user"},
+            403,
+        ),
+        ("comment1", "gamer2", 200, None, {"cached_body": "I am a legit user."}, 302),
+        (
+            "comment1",
+            "super_gamer",
+            200,
+            None,
+            {"cached_body": "I am a super user."},
+            302,
+        ),
+    ],
+)
+def test_update_comment(
+    client,
+    django_assert_max_num_queries,
+    helpdesk_testdata,
+    comment_to_use,
+    gamertouse,
+    expected_get_response,
+    expected_get_location,
+    post_data,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(helpdesk_testdata, gamertouse)
+        client.force_login(gamer.user)
+    comment = getattr(helpdesk_testdata, comment_to_use)
+    previous_sync = comment.last_sync
+    url = reverse(
+        "helpdesk:issue-edit-comment",
+        kwargs={
+            "ext_id": comment.master_issue.external_id,
+            "cext_id": comment.external_id,
+        },
+    )
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    else:
+        response = client.post(url, post_data)
+        assert response.status_code == expected_post_response
+        if expected_post_response == 302:
+            comment.refresh_from_db()
+            assert comment.cached_body == post_data["cached_body"]
+            assert comment.sync_status in ["sync", "updating", "update_err"]
+            if comment.sync_status == "sync":
+                assert comment.last_sync > previous_sync

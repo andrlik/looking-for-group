@@ -260,7 +260,7 @@ def update_remote_comment(commentlink):
                 commentlink.external_id, str(oe)
             )
         )
-        commentlink.sync_status = "updating_err"
+        commentlink.sync_status = "update_err"
         commentlink.save()
         return
     except models.SyncInProgressException:

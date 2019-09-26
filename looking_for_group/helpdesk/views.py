@@ -441,7 +441,7 @@ class IssueCommentUpdateView(
         obj = form.save()
         update_remote_comment(obj)
         obj.refresh_from_db()
-        if obj.status == "sync":
+        if obj.sync_status == "sync":
             messages.success(self.request, _("Your comment was updated."))
         else:
             messages.success(
