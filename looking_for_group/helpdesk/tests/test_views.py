@@ -1,6 +1,6 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.urls import reverse
 from factory.django import mute_signals
 
@@ -341,3 +341,50 @@ def test_update_comment(
             assert comment.sync_status in ["sync", "updating", "update_err"]
             if comment.sync_status == "sync":
                 assert comment.last_sync > previous_sync
+
+
+@pytest.mark.parametrize(
+    "comment_to_use,gamertouse,expected_get_response,expected_get_location,expected_post_response",
+    [
+        ("comment1", None, 302, "/accounts/login/", None),
+        ("comment1", "gamer1", 403, None, 403),
+        ("comment1", "gamer2", 200, None, 302),
+        ("comment1", "super_gamer", 200, None, 302),
+    ],
+)
+def test_delete_comment(
+    client,
+    helpdesk_testdata,
+    django_assert_max_num_queries,
+    comment_to_use,
+    gamertouse,
+    expected_get_response,
+    expected_get_location,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(helpdesk_testdata, gamertouse)
+        client.force_login(gamer.user)
+    comment = getattr(helpdesk_testdata, comment_to_use)
+    url = reverse(
+        "helpdesk:issue-delete-comment",
+        kwargs={
+            "ext_id": comment.master_issue.external_id,
+            "cext_id": comment.external_id,
+        },
+    )
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    assert response.status_code == expected_get_response
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    else:
+        with mute_signals(post_delete):
+            response = client.post(url, data={})
+        assert response.status_code == expected_post_response
+        if expected_post_response != 302:
+            assert models.IssueCommentLink.objects.get(pk=comment.pk)
+        else:
+            with pytest.raises(ObjectDoesNotExist):
+                models.IssueCommentLink.objects.get(pk=comment.pk)

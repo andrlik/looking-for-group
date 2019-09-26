@@ -485,11 +485,12 @@ class IssueCommentDeleteView(
         obj = self.get_object()
         delete_remote_comment(obj)
         obj.refresh_from_db()
-        if obj.status != "deleted":
+        if obj.sync_status != "deleted":
             messages.success(self.request, _("Comment was queued for deletion."))
             return HttpResponseRedirect(self.get_success_url())
+        obj.delete()
         messages.success(self.request, _("Comment was deleted."))
-        return super().delete(request, *args, **kwargs)
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_queryset(self):
         return self.model.objects.exclude(sync_status__in=["delete_err", "deleted"])
