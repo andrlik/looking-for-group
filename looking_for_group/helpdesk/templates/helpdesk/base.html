@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% block subtitle %}{% trans "Help Desk" %} - {% endblock %}
 {% block extracrumbs %}
 <li>{% trans "Help Desk" %}</li>
 {% block hdcrumbs %}
@@ -18,11 +19,17 @@
     <nav>
       <ul class="menu align-right">
         {% block innernavmenu %}
-        <li{% block issues %}{% endblock %}><a href="{% url 'helpdesk:issue-list' %}"><i class="fas fa-satellite-dish"></i></a></li>
-        <li{% block issuecreate %}{% endblock %}><a href="{% url 'helpdesk:issue-create' %}"><i class="fas fa-meteor"></i></a></li>
+        <li{% block issues %}{% endblock %}><a href="{% url 'helpdesk:issue-list' %}"><i class="fas fa-life-ring"></i> {% trans "Issues" %}</a></li>
+        <li{% block issuecreate %}{% endblock %}><a href="{% url 'helpdesk:issue-create' %}"><i class="fas fa-meteor"></i> {% trans "Create Issue" %}</a></li>
         {% endblock %}
       </ul>
     </nav>
   </div>
 </div>
+{% endblock %}
+{% block js_extra %}
+{% include "datepicker_js.html" %}
+{% endblock %}
+{% block css_extra %}
+{% include "datepicker_css.html" %}
 {% endblock %}

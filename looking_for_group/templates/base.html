@@ -72,6 +72,7 @@
               <ul class="menu rounded">
                 <li><a href="{{ request.user.gamerprofile.get_absolute_url }}"><i class="fas fa-user"></i>&nbsp;&nbsp;{% trans "My Profile" %}</a></li>
                 <li><a href="{% url 'user_preferences:setting-view' %}"><i class="fas fa-cog"></i>&nbsp;&nbsp;{% trans "Settings" %}</a></li>
+                <li><a href="{% url 'helpdesk:issue-list' %}"><i class="fas fa-life-ring"></i>&nbsp;&nbsp;{% trans "Help Desk" %}</a></li>
                 {% if request.user.is_superuser %}
                 <li><a href="{% url 'admin:index' %}"><i class="fas fa-user-lock"></i> {% trans "Admin" %}</a></li>
                 {% endif %}

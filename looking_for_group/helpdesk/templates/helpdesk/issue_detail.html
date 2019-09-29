@@ -1,7 +1,7 @@
 {% extends "helpdesk/base.html" %}
 {% load i18n avatar_tags markdownify foundation_formtags rules helpdesk_tags %}
 {% block sectiontitle %}{% trans "Issue" %} {{ issue.external_id }}{% endblock %}
-{% block subtitle %}{% trans "Issue" %} {{ issue.external_id }}{% endblock %}
+{% block subtitle %}{% trans "Issue" %} {{ issue.external_id }} - {{ block.super }}{% endblock %}
 {% block mobileheader %}{% trans "Issue" %} {{ issue.external_id }}{% endblock %}
 {% block hdcrumbs %}
 <li><a href="{% url 'helpdesk:issue-list' %}">{% trans "Issues" %}</a></li>
@@ -61,20 +61,20 @@
     </div>
     {% block comments %}
     <div class="card">
-      <div class="card-divder"><h2>{% trans "Issue comments" %} ({{ issue.cached_comment_count }})</h2></div>
+      <div class="card-divider"><h2>{% trans "Issue comments" %} ({{ issue.cached_comment_count }})</h2></div>
       <div class="card-section">
         {% for comment in reconciled_comments %}
-        {% has_perm "helpdesk.edit_comment" comment.db_version request.user as is_comment_editor %}
-        {% has_perm "helpdesk.delete_comment" comment.db_version request.user as is_comment_deleter %}
+        {% has_perm "helpdesk.edit_comment" request.user comment.db_version as is_comment_editor %}
+        {% has_perm "helpdesk.delete_comment" request.user comment.db_version as is_comment_deleter %}
         <div class="grid-margin-x grid-x">
           <div class="cell medium-3">
             <p>{% render_commenter_id comment %}</p>
             <p>{{ comment.created|date:"E d, Y H:i e" }}</p>
             {% if is_comment_editor %}
-            <p><a class="button" href="{% url 'helpdesk:comment-edit' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Edit comment" %}</a></p>
+            <p><a class="button" href="{% url 'helpdesk:issue-edit-comment' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Edit comment" %}</a></p>
             {% endif %}
             {% if is_comment_deleter %}
-            <p><a class="button alert" href="{% url 'helpdesk:comment-delete' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Delete comment" %}</a></p>
+            <p><a class="button alert" href="{% url 'helpdesk:issue-delete-comment' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Delete comment" %}</a></p>
             {% endif %}
           </div>
           <div class="cell medium-6">{{ comment.body|markdownify|linebreaksbr|safe }}</div>
@@ -107,7 +107,7 @@
   {% block simplemde %}
   <script type="text/javascript">
     var easymde = new EasyMDE({
-      element: $('#id_cached_body')[0],
+      element: jQuery('#id_cached_body')[0],
       autosave: {
         enabled: true,
         uniqueId: "issue_{{ issue.external_id }}_newcomment_body",

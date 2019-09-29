@@ -85,14 +85,19 @@ def reconcile_comments(issuelink, use_emails=True):
     :return: A list of dicts representing the comments.
     :rtype: list
     """
+    logger.debug("Starting comment reconciliation...")
     remote_comments = issuelink.get_external_comments()
+    logger.debug("Fetched {} remote comments...".format(len(remote_comments)))
     local_comments = issuelink.comments.all()
-    local_comment_ids = [c.id for c in local_comments]
+    logger.debug("Fetched {} local comments...".format(local_comments.count()))
+    local_comment_ids = [c.external_id for c in local_comments]
     if not remote_comments:
+        logger.debug("No remote comments so only returning local comments.")
         return local_comments
     comments_to_return = []
     ids_to_exclude_from_local = []
     for comment in remote_comments:
+        logger.debug("Begging check for remote comment {}".format(comment.id))
         comm = {
             "external_id": comment.id,
             "body": comment.body,
@@ -107,18 +112,32 @@ def reconcile_comments(issuelink, use_emails=True):
             "gl_version": comment,
         }
         if "email" in comment.author.keys():
+            logger.debug("Received an email and adding it to object.")
             comm["creator_email"] = comment.author["email"]
-        if comment.id in local_comment_ids:
-            lcom = local_comments.get(external_id=comment.id)
+        if str(comment.id) in local_comment_ids:
+            logger.debug(
+                "This comment id can be found in our local comments. Retrieving local details..."
+            )
+            lcom = local_comments.get(external_id=str(comment.id))
             comm["db_version"] = lcom
             comm["creator"] = lcom.creator
             comm["body"] = lcom.cached_body
+            logger.debug(
+                "Adding info to exlude this local id of {} matching external id of {} from append...".format(
+                    lcom.id, comment.id
+                )
+            )
             ids_to_exclude_from_local.append(lcom.id)
         if not comm["db_version"] and use_emails and "email" in comment.author.keys():
             # TODO: Try and reconcile against a user via email address.
+            logger.debug(
+                "This comment doesn't have a local equivelent, but we did receive an email. Trying to reconcile with an existing user..."
+            )
             try:
                 user = EmailAddress.objects.get(email=comment.author["email"]).user
+                logger.debug("Found matching user of {}".format(user.username))
                 comm["creator"] = user
+                logger.debug("Creating local copy...")
                 lcom = models.IssueCommentLink.objects.create(
                     external_id=comment.id,
                     cached_body=comment.body,
@@ -131,12 +150,26 @@ def reconcile_comments(issuelink, use_emails=True):
                     sync_status="sync",
                 )
                 comm["db_version"] = lcom
+                logger.debug(
+                    "Successfully created local copy with id of {} for external comment of {}. Excluding from append.".format(
+                        lcom.id, comment.id
+                    )
+                )
                 ids_to_exclude_from_local.append(lcom.id)
             except ObjectDoesNotExist:
+                logger.debug(
+                    "We couldn't' find a matching email address, so proceeding without a local match."
+                )
                 pass  # We couldn't reconcile this to a local user.
+        logger.debug("Adding this reconciled comment to return list.")
         comments_to_return.append(comm)
     local_comments = local_comments.exclude(id__in=ids_to_exclude_from_local)
     if local_comments.count() > 0:
+        logger.debug(
+            "There are {} additional local comments to pull in...".format(
+                local_comments.count()
+            )
+        )
         for comment in local_comments:
             comm = {
                 "external_id": None,
@@ -146,9 +179,12 @@ def reconcile_comments(issuelink, use_emails=True):
                 "created": comment.created,
                 "modified": comment.modified,
             }
+        logger.debug("Appending local comment with id {}".format(comment.id))
         comments_to_return.append(comm)
     if not comments_to_return:
+        logger.debug("No comments to return.")
         return []
+    logger.debug("Returning sorted comment list.")
     return sorted(comments_to_return, key=lambda i: i["created"])
 
 

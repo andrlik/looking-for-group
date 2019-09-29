@@ -1,33 +1,37 @@
 {% extends "helpdesk/base.html" %}
 {% load i18n avatar_tags helpdesk_tags %}
 {% block sectiontitle %}{% trans "Issues" %}{% endblock %}
-{% block subtitle %}{% trans "Issues" %}{% endblock %}
+{% block subtitle %}{% trans "Issues" %} - {{ block.super }}{% endblock %}
 {% block mobileheader %}{% trans "Issues" %}{% endblock %}
 {% block hdcrumbs %}
-<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Issues" %}</li>
+<li>{% trans "Issues" %}</li>
+{% if listmode == "opened" %}<li><span class="show-for-sr">{% trans "Current:" %}</span> {% trans "Open" %}</li>{% endif %}
+{% if listmode == "closed" %}<li><span class="show-for-sr">{% trans "Current:" %}</span> {% trans "Closed" %}</li>{% endif %}
+{% if listmode == "myopened" %}<li><span class="show-for-sr">{% trans "Current:" %}</span> {% trans "My Open" %}</li>{% endif %}
+{% if listmode == "myclosed" %}<li><span class="show-for-sr">{% trans "Current:" %}</span> {% trans "My Closed" %}</li>{% endif %}
 {% endblock %}
 {% block content %}
 {% block tab_control %}
-<ul class="tabs" data-tabs data-tabs-deep-link="true" data-tabs-deep-link-smudge="true" id="issue-tabs">
+<ul class="tabs" id="issue-tabs">
   {% if listmode == "opened" %}
-  <li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Open Issues" %} ({{ total_open }})</a></li>
+  <li class="tabs-title is-active"><a href="#active-panel" class="truly-selected" data-tabs-target="active-panel"><span class="show-for-sr">{% trans "Selected:" %}</span> {% trans "Open Issues" %} ({{ total_open }})</a></li>
   {% else %}
-  <li class="tabs-title"><a href="{% url 'helpdesk:issue-list' %}" data-tabs-target="active_panel">{% trans "Open Issues" %} ({{ total_open }})</a></li>
+  <li class="tabs-title"><a href="{% url 'helpdesk:issue-list' %}">{% trans "Open Issues" %} ({{ total_open }})</a></li>
   {% endif %}
   {% if listmode == "closed" %}
-  <<li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Closed Issues" %} ({{ total_closed }})</a></li>
+  <li class="tabs-title is-active"><a href="#active-panel" class="truly-selected" data-tabs-target="active-panel"><span class="show-for-sr">{% trans "Selected:" %}</span> {% trans "Closed Issues" %} ({{ total_closed }})</a></li>
+    {% else %}
+    <li class="tabs-title"><a href="{% url 'helpdesk:issue-list' %}?status=closed">{% trans "Closed Issues" %} ({{ total_closed }})</a></li>
+    {% endif %}
+    {% if listmode == "myopened" %}
+    <li class="tabs-title is-active"><a href="#active-panel" class="truly-selected" data-tabs-target="active-panel"><span class="show-for-sr">{% trans "Selected:" %}</span> {% trans "Your Open Issues" %} ({{ your_open }})</a></li>
+      {% else %}
+      <li class="tabs-title"><a href="{% url 'helpdesk:my-issue-list' %}">{% trans "Your Open Issues" %} ({{ your_open }})</a></li>
+      {% endif %}
+      {% if listmode == "myclosed" %}
+      <li class="tabs-title is-active"><a href="#active-panel" class="truly-selected" data-tabs-target="active-panel"><span class="show-for-sr">{% trans "Selected:" %}</span> {% trans "Your Closed Issues" %} ({{ your_closed }})</a></li>
   {% else %}
-  <li class="tabs-title"><a href="{% url 'helpdesk:issue-list' %}?status=closed" data-tabs-target="active_panel">{% trans "Closed Issues" %} ({{ total_closed }})</a></li>
-  {% endif %}
-  {% if listmode == "myopened" %}
-  <li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Your Open Issues" %} ({{ your_open }})</a></li>
-  {% else %}
-  <li class="tabs-title"><a href="{% url 'helpdesk:my-issue-list' %}" data-tabs-target="active_panel">{% trans "Your Open Issues" %} ({{ your_open }})</a></li>
-  {% endif %}
-  {% if listmode == "myclosed" %}
-  <li class="tabs-title is-active"><a href="#active_panel" data-tabs-target="active_panel" aria-selected="true">{% trans "Your Closed Issues" %} ({{ your_closed }})</a></li>
-  {% else %}
-  <li class="tabs-title"><a href="{% url 'helpdesk:my-issue-list' %}?status=closed" data-tabs-target="active_panel">{% trans "Your Closed Issues" %} ({{ your_closed }})</a></li>
+  <li class="tabs-title"><a href="{% url 'helpdesk:my-issue-list' %}?status=closed">{% trans "Your Closed Issues" %} ({{ your_closed }})</a></li>
   {% endif %}
 </ul>
 {% endblock %}
@@ -51,10 +55,10 @@
       <tbody>
         {% for issue in issue_list %}
         <tr>
-          <td class="text-right"><a href="{{ issue.get_absolute_url }}">{{ issue.external_id }}</a></td>
-          <td>{% avatar issue.creator 30 class="avatar" %} {{ issue.creator.gamerprofile }}</a></td>
+          <td class="text-right"><a href="{{ issue.get_absolute_url }}" aria-label="{% trans 'Details for issue' %} {{ issue.external_id}}">{{ issue.external_id }}</a></td>
+          <td><a href="{{ issue.creator.gamerprofile.get_absolute_url }}">{% avatar issue.creator 30 class="avatar" %} {{ issue.creator.gamerprofile }}</a></td>
           <td>{{ issue.created|date:"E d, Y H:i e" }}</td>
-          <td><a href="{{ issue.get_absolute_url }}">{{ issue.title|truncatewords_html:20|safe }}</a></td>
+          <td><a href="{{ issue.get_absolute_url }}">{{ issue.cached_title|truncatewords_html:20|safe }}</a></td>
           <td><span class="label{% if issue.cached_status == 'closed' %} success{% endif %}">{{ issue.get_cached_status_display }}</span></td>
           <td class="text-right">{{ issue.cached_comment_count }}</td>
           <td><a href="{{ issue.get_absolute_url }}" class="button">{% trans "View" %}</a></td>

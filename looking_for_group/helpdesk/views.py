@@ -4,6 +4,7 @@ from braces.views import PrefetchRelatedMixin, SelectRelatedMixin
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.forms import modelform_factory
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -74,7 +75,7 @@ class IssueListView(
             creator=self.request.user
         ).count()
         context["your_closed"] = all_issues_not_deleted.filter(
-            creator=self.request.user
+            creator=self.request.user, cached_status="closed"
         ).count()
         return context
 
@@ -127,6 +128,9 @@ class IssueDetailView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         gl = get_backend_client()
+        context["comment_form"] = modelform_factory(
+            models.IssueCommentLink, fields=["cached_body"]
+        )
         try:
             context["gl_issue"] = cache.get_or_set(
                 "helpdesk-{}", gl.get_issue(context["issue"].external_id), 20

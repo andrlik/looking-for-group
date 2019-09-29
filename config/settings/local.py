@@ -109,6 +109,7 @@ LOGGING = {
         "postman": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "tours": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "helpdesk": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
     },
 }
 
