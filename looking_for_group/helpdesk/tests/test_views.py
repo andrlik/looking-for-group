@@ -98,8 +98,8 @@ def test_issue_create(
     "issue_to_use,gamertouse,expected_get_response,expected_comment_length,expected_location",
     [
         ("issue1", None, 302, None, "/accounts/login/"),
-        ("issue1", "gamer1", 200, 3, None),
-        ("issue2", "gamer1", 200, 3, None),
+        ("issue1", "gamer1", 200, 2, None),
+        ("issue2", "gamer1", 200, 2, None),
         ("issue4", "gamer1", 200, None, None),
         ("issue4", "gamer2", 403, None, None),
     ],

@@ -52,7 +52,7 @@ def test_issue_detail_view(
     assert len(violations) == 0, axe.report(violations)
 
 
-@pytest.mark.accessiblity
+@pytest.mark.accessibility
 @pytest.mark.nondestructive
 def test_comment_create_view(
     myselenium, axe_class, axe_options, login_method, helpdesk_testdata, live_server

@@ -24,7 +24,7 @@ def is_issue_creator(user, issuelink):
 
 @rules.predicate
 def is_comment_author(user, commentlink):
-    if is_user(user) and commentlink.creator == user:
+    if commentlink and is_user(user) and commentlink.creator == user:
         return True
     return False
 

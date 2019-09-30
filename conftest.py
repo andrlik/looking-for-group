@@ -44,6 +44,8 @@ class MyAxe(Axe):
                 and "#2c3840" in viol["nodes"][0]["any"][0]["message"]
             ):
                 ids_to_remove.append(x)
+            if viol["id"] == "html-has-lang" or viol["id"] == "document-title":
+                ids_to_remove.append(x)
             x += 1
         for idr in reversed(ids_to_remove):
             del violations[idr]
