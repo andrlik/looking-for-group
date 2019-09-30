@@ -61,7 +61,7 @@ def render_commenter_id(reconciled_comment):
             reconciled_comment["creator"].gamerprofile,
         )
     else:
-        avatar_val = "nobody"
+        avatar_val = avatar_tag("nobody", size=30, **{"class": "avatar"})
         if (
             "creator_email" in reconciled_comment.keys()
             and reconciled_comment["creator_email"]

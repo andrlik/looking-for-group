@@ -250,7 +250,7 @@ class IssueSubscribeView(LoginRequiredMixin, generic.edit.UpdateView):
     slug_field = "external_id"
     slug_url_kwarg = "ext_id"
     context_object_name = "issue"
-    fields = ["id"]
+    fields = []
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in ["post"]:
@@ -290,6 +290,7 @@ class IssueCloseView(
     slug_url_kwarg = "ext_id"
     permission_required = "helpdesk.close_issue"
     # Add a form here
+    fields = []
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in ["post"]:
@@ -298,9 +299,6 @@ class IssueCloseView(
 
     def form_valid(self, form):
         obj = self.get_object()
-        close_comment = form.save(commit=False)
-        close_comment.creator = self.reqeuest.user
-        create_remote_comment(close_comment)
         close_remote_issue(obj)
         obj.status = "closed"
         obj.save()
@@ -325,7 +323,7 @@ class IssueReopenView(
     slug_url_kwarg = "ext_id"
     slug_field = "external_id"
     permission_required = "helpdesk.reopen_issue"
-    fields = ["id"]
+    fields = []
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.lower() not in ["post"]:

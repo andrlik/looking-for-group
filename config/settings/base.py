@@ -408,3 +408,6 @@ GITLAB_URL = env("GITLAB_URL", default="https://gitlab.com")
 GITLAB_TOKEN = env("GITLAB_TOKEN", default=None)
 GITLAB_PROJECT_ID = env("GITLAB_PROJECT_ID", default=None)
 GITLAB_DEFAULT_USERNAME = env("GITLAB_DEFAULT_USERNAME", default="daniel")
+GITLAB_DEFAULT_REMOTE_USERNAME = env(
+    "GITLAB_DEFAULT_REMOTE_USERNAME", default="andrlik"
+)

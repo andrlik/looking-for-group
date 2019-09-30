@@ -11,7 +11,7 @@ from model_utils.models import TimeStampedModel
 from ..game_catalog.utils import AbstractUUIDModel
 from .backends import OperationError
 from .signals import issue_state_changed
-from .utils import get_backend_client, get_default_actor_for_syncs
+from .utils import get_backend_client, get_default_actor_for_syncs, is_system_comment
 
 logger = logging.getLogger("helpdesk")
 
@@ -230,6 +230,7 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
         verbose_name=_("Body"),
         help_text=_("Enter your comment."),
     )
+    system_comment = models.BooleanField(default=False)
     sync_status = models.CharField(
         max_length=15, default="pending", choices=SYNC_STATUS_CHOICES, db_index=True
     )
@@ -310,8 +311,19 @@ class IssueCommentLink(TimeStampedModel, AbstractUUIDModel, models.Model):
         if not external_comment:
             return False
         updated = False
-        if self.cached_body != external_comment.body:
-            self.cached_body = external_comment.body
+        if self.cached_body != external_comment.body or external_comment.body.strip() in [
+            "reopened",
+            "closed",
+        ]:
+            if external_comment.body.strip() == "reopened":
+                self.cached_body = "Reopened this issue."
+            elif external_comment.body.strip() == "closed":
+                self.cached_body = "Closed this issue."
+            else:
+                self.cached_body = external_comment.body
+            updated = True
+        if is_system_comment(external_comment) != self.system_comment:
+            self.system_comment = is_system_comment(external_comment)
             updated = True
         self.last_sync = timezone.now()
         self.save()

@@ -433,3 +433,45 @@ def test_delete_comment(
         else:
             with pytest.raises(ObjectDoesNotExist):
                 models.IssueCommentLink.objects.get(pk=comment.pk)
+
+
+@pytest.mark.parametrize(
+    "issue_to_use,gamertouse,view_name,expected_get_response,expected_post_response,expected_in_set,expected_subscribers",
+    [
+        ("issue2", None, "helpdesk:issue-subscribe", 405, 302, False, 2),
+        ("issue2", "gamer1", "helpdesk:issue-subscribe", 405, 302, True, 2),
+        ("issue2", "gamer3", "helpdesk:issue-subscribe", 405, 302, True, 3),
+        ("issue2", None, "helpdesk:issue-unsubscribe", 405, 302, False, 2),
+        ("issue2", "gamer1", "helpdesk:issue-unsubscribe", 405, 302, False, 1),
+        ("issue2", "gamer3", "helpdesk:issue-unsubscribe", 405, 302, False, 2),
+    ],
+)
+def test_issue_subscribe_view(
+    client,
+    django_assert_max_num_queries,
+    helpdesk_testdata,
+    issue_to_use,
+    gamertouse,
+    view_name,
+    expected_get_response,
+    expected_post_response,
+    expected_in_set,
+    expected_subscribers,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(helpdesk_testdata, gamertouse)
+        client.force_login(gamer.user)
+    issue = getattr(helpdesk_testdata, issue_to_use)
+    url = reverse(view_name, kwargs={"ext_id": issue.external_id})
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    assert response.status_code == expected_get_response
+    response = client.post(url, data={})
+    assert response.status_code == expected_post_response
+    if gamer:
+        if expected_in_set:
+            assert gamer.user in issue.subscribers.all()
+        else:
+            assert gamer.user not in issue.subscribers.all()
+    assert issue.subscribers.count() == expected_subscribers

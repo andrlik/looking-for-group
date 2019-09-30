@@ -14,15 +14,24 @@
     <div class="card">
       <div class="card-divider"><h2>{% trans "Details of issue" %} {{ issue.external_id }}</h2></div>
       <div class="card-section">
+        <div class="grid-x grid-margin-x">
+          <div class="cell medium-8">
         <dl>
           <dt>{% trans "Reported by" %}</dt>
           <dd><a href="{{ issue.creator.gamerprofile.get_absolute_url }}">{% avatar issue.creator 30 class="avatar" %} {{ issue.creator.gamerprofile }}</a></dd>
           <dt>{% trans "Reported at" %}</dt>
           <dd>{{ issue.created|date:"E d, Y H:i e" }}</dd>
+        </dl>
+          </div>
+          <div class="cell medium-2">
+            <form method="post" action="{% if request.user in issue.subscribers.all %}{% url 'helpdesk:issue-subscribe' ext_id=issue.external_id %}{% else %}{% url 'helpdesk:issue-unsubscribe' ext_id=issue.external_id %}{% endif %}">{% csrf_token %}<button type="submit" class="button float-right">{% if request.user in issue.subscribers.all %}<span class="show-for-sr">{% trans "Stop watching this issue" %} </span><i class="fas fa-eye-slash"></i></span>{% else %}<span class="show-for-sr">{% trans "Watch this issue" %} </span><i class="fas fa-eye"></i>{% endif %}</button></form>
+          </div>
+        </div>
+        <dl>
           <dt>{% trans "Title" %}</dt>
-          <dd>{{ issue.cached_title }}</dd>
+          <dd><p class="lead">{{ issue.cached_title }}</p></dd>
           <dt>{% trans "Description" %}</dt>
-          <dd>{{ issue.cached_description|markdownify|linebreaksbr|safe }}</dd>
+          <dd><p>{{ issue.cached_description|markdownify|linebreaksbr|safe }}</p></dd>
         </dl>
         {% has_perm "helpdesk.edit_issue" request.user issue as is_editor %}
         {% has_perm "helpdesk.close_issue" request.user issue as is_closer %}
@@ -66,25 +75,37 @@
         {% for comment in reconciled_comments %}
         {% has_perm "helpdesk.edit_comment" request.user comment.db_version as is_comment_editor %}
         {% has_perm "helpdesk.delete_comment" request.user comment.db_version as is_comment_deleter %}
-        <div class="grid-margin-x grid-x">
+        <div class="grid-margin-x grid-x {% cycle '' 'striped' %}">
           <div class="cell medium-3">
-            <p>{% render_commenter_id comment %}</p>
-            <p>{{ comment.created|date:"E d, Y H:i e" }}</p>
+            <div class="grid-x grid-margin-x">
+              <div class="cell">
+                {% render_commenter_id comment %}
+              </div>
+            <div class="cell">
+              {{ comment.created|date:"E d, Y H:i e" }}
+            </div>
+            {% if not comment.db_version.system_comment %}
             {% if is_comment_editor %}
-            <p><a class="button" href="{% url 'helpdesk:issue-edit-comment' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Edit comment" %}</a></p>
+            <div class="cell medium-auto">
+             <a class="button" href="{% url 'helpdesk:issue-edit-comment' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Edit comment" %}</a>
+            </div>
             {% endif %}
             {% if is_comment_deleter %}
-            <p><a class="button alert" href="{% url 'helpdesk:issue-delete-comment' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Delete comment" %}</a></p>
+            <div class="cell">
+              <a class="button alert" href="{% url 'helpdesk:issue-delete-comment' ext_id=issue.external_id cext_id=comment.external_id %}">{% trans "Delete comment" %}</a>
+            </div>
             {% endif %}
+            {% endif %}
+            </div>
           </div>
-          <div class="cell medium-6">{{ comment.body|markdownify|linebreaksbr|safe }}</div>
+          <div class="cell medium-6">{% if comment.db_version.system_comment %}<span class="label secondary"><em><strong>{{ comment.body|markdownify|linebreaksbr|safe }}</strong></em></span>{% else %}<p>{{ comment.body|markdownify|linebreaksbr|safe }}</p>{% endif %}</div>
         </div>
         {% empty %}
         <p>{% trans "There are no comments on this issue yet" %}</p>
         {% endfor %}
       </div>
     </div>
-    {% if is_commenter %}
+    {% if is_commenter and issue.cached_status == "opened" %}
     <div class="card">
       <div class="card-divider"><h2>{% trans "Add comment" %}</h2></div>
       <div class="card-section">

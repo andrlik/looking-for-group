@@ -444,8 +444,8 @@ def notify_subscribers_of_new_comment(comment):
     notify.send(
         comment.creator,
         recipient=recipients,
-        verb="commented on",
-        action_object=comment.master_issue,
+        verb="commented on issue",
+        target=comment.master_issue,
     )
 
 
@@ -487,5 +487,5 @@ def notify_subscribers_of_issue_state_change(issue, user, old_status, new_status
         verb = "closed issue"
         if new_status == "opened" and old_status == "closed":
             verb = "reopened issue"
-        notify.send(user, recipient=recipients, verb=verb, action_object=issue)
+        notify.send(user, recipient=recipients, verb=verb, target=issue)
         logger.debug("Successfully sent notifications!")

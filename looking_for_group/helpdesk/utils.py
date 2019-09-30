@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from pytz import timezone as ptimezone
 
+from ..users.models import User
 from . import models
 from .backends import AuthenticationError, GitlabConnector, NotImplementedError
 
@@ -73,6 +74,17 @@ def create_issuelink_from_remote_issue(remote_issue, creator=None, backend_clien
     )
 
 
+def is_system_comment(comment):
+    if comment.system or comment.body.strip() in [
+        "reopened",
+        "closed",
+        "changed the description",
+        "changed the title",
+    ]:
+        return True
+    return False
+
+
 def reconcile_comments(issuelink, use_emails=True):
     """
     For a given issue link object, fetch both the remote comments from gitlab and the locally stored comments in the db and reconcile them against each other.
@@ -98,71 +110,107 @@ def reconcile_comments(issuelink, use_emails=True):
     ids_to_exclude_from_local = []
     for comment in remote_comments:
         logger.debug("Begging check for remote comment {}".format(comment.id))
-        comm = {
-            "external_id": comment.id,
-            "body": comment.body,
-            "db_version": None,
-            "creator": comment.author["username"],
-            "created": datetime.strptime(
-                comment.created_at, "%Y-%m-%dT%H:%M:%S.%fZ"
-            ).replace(tzinfo=ptimezone("UTC")),
-            "modified": datetime.strptime(
-                comment.updated_at, "%Y-%m-%dT%H:%M:%S.%fZ"
-            ).replace(tzinfo=ptimezone("UTC")),
-            "gl_version": comment,
-        }
-        if "email" in comment.author.keys():
-            logger.debug("Received an email and adding it to object.")
-            comm["creator_email"] = comment.author["email"]
-        if str(comment.id) in local_comment_ids:
-            logger.debug(
-                "This comment id can be found in our local comments. Retrieving local details..."
-            )
-            lcom = local_comments.get(external_id=str(comment.id))
-            comm["db_version"] = lcom
-            comm["creator"] = lcom.creator
-            comm["body"] = lcom.cached_body
-            logger.debug(
-                "Adding info to exlude this local id of {} matching external id of {} from append...".format(
-                    lcom.id, comment.id
-                )
-            )
-            ids_to_exclude_from_local.append(lcom.id)
-        if not comm["db_version"] and use_emails and "email" in comment.author.keys():
-            # TODO: Try and reconcile against a user via email address.
-            logger.debug(
-                "This comment doesn't have a local equivelent, but we did receive an email. Trying to reconcile with an existing user..."
-            )
-            try:
-                user = EmailAddress.objects.get(email=comment.author["email"]).user
-                logger.debug("Found matching user of {}".format(user.username))
-                comm["creator"] = user
-                logger.debug("Creating local copy...")
-                lcom = models.IssueCommentLink.objects.create(
-                    external_id=comment.id,
-                    cached_body=comment.body,
-                    creator=user,
-                    created=comm["created"],
-                    modified=comm["modified"],
-                    master_issue=models.IssueLink.objects.get(
-                        external_id=comment.notable_iid
-                    ),
-                    sync_status="sync",
-                )
-                comm["db_version"] = lcom
+        if comment.body and comment.body != "":
+            comm = {
+                "external_id": comment.id,
+                "body": comment.body,
+                "db_version": None,
+                "creator": comment.author["username"],
+                "created": datetime.strptime(
+                    comment.created_at, "%Y-%m-%dT%H:%M:%S.%fZ"
+                ).replace(tzinfo=ptimezone("UTC")),
+                "modified": datetime.strptime(
+                    comment.updated_at, "%Y-%m-%dT%H:%M:%S.%fZ"
+                ).replace(tzinfo=ptimezone("UTC")),
+                "gl_version": comment,
+            }
+            if comm["body"] == "reopened":
+                comm["body"] = "Reopened this issue."
+            if comm["body"] == "closed":
+                comm["body"] = "Closed this issue."
+            if "email" in comment.author.keys():
+                logger.debug("Received an email and adding it to object.")
+                comm["creator_email"] = comment.author["email"]
+            else:
+                if (
+                    "username" in comment.author.keys()
+                    and comment.author["username"]
+                    == settings.GITLAB_DEFAULT_REMOTE_USERNAME
+                ):
+                    logger.debug("Found a gitlab username, and it's mine!")
+                    try:
+                        email = EmailAddress.objects.get(
+                            user=User.objects.get(
+                                username=settings.GITLAB_DEFAULT_USERNAME
+                            ),
+                            primary=True,
+                        ).email
+                        comm["creator_email"] = email
+                        logger.debug("Setting email address to {}".format(email))
+                    except ObjectDoesNotExist:
+                        logger.debug("Couldn't find the primary account. Skipping...")
+                        pass
+            if str(comment.id) in local_comment_ids:
                 logger.debug(
-                    "Successfully created local copy with id of {} for external comment of {}. Excluding from append.".format(
+                    "This comment id can be found in our local comments. Retrieving local details..."
+                )
+                lcom = local_comments.get(external_id=str(comment.id))
+                comm["db_version"] = lcom
+                comm["creator"] = lcom.creator
+                comm["body"] = lcom.cached_body
+                logger.debug(
+                    "Adding info to exlude this local id of {} matching external id of {} from append...".format(
                         lcom.id, comment.id
                     )
                 )
                 ids_to_exclude_from_local.append(lcom.id)
-            except ObjectDoesNotExist:
+            if (
+                not comm["db_version"]
+                and use_emails
+                and ("email" in comment.author.keys() or "creator_email" in comm.keys())
+            ):
+                # TODO: Try and reconcile against a user via email address.
                 logger.debug(
-                    "We couldn't' find a matching email address, so proceeding without a local match."
+                    "This comment doesn't have a local equivelent, but we did receive an email. Trying to reconcile with an existing user..."
                 )
-                pass  # We couldn't reconcile this to a local user.
-        logger.debug("Adding this reconciled comment to return list.")
-        comments_to_return.append(comm)
+                try:
+                    if "creator_email" in comm.keys():
+                        user = EmailAddress.objects.get(
+                            email=comm["creator_email"]
+                        ).user
+                    else:
+                        user = EmailAddress.objects.get(
+                            email=comment.author["email"]
+                        ).user
+                    logger.debug("Found matching user of {}".format(user.username))
+                    comm["creator"] = user
+                    logger.debug("Creating local copy...")
+                    lcom = models.IssueCommentLink.objects.create(
+                        external_id=comment.id,
+                        cached_body=comment.body,
+                        creator=user,
+                        created=comm["created"],
+                        modified=comm["modified"],
+                        master_issue=issuelink,
+                        sync_status="sync",
+                    )
+                    if is_system_comment(comment):
+                        lcom.system_comment = True
+                        lcom.save()
+                    comm["db_version"] = lcom
+                    logger.debug(
+                        "Successfully created local copy with id of {} for external comment of {}. Excluding from append.".format(
+                            lcom.id, comment.id
+                        )
+                    )
+                    ids_to_exclude_from_local.append(lcom.id)
+                except ObjectDoesNotExist:
+                    logger.debug(
+                        "We couldn't' find a matching email address, so proceeding without a local match."
+                    )
+                    pass  # We couldn't reconcile this to a local user.
+            logger.debug("Adding this reconciled comment to return list.")
+            comments_to_return.append(comm)
     local_comments = local_comments.exclude(id__in=ids_to_exclude_from_local)
     if local_comments.count() > 0:
         logger.debug(
