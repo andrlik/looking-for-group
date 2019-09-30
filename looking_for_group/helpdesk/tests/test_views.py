@@ -50,6 +50,51 @@ def test_issue_list_view(
 
 
 @pytest.mark.parametrize(
+    "gamertouse,expected_get_response,expected_get_location,post_data,expected_post_response",
+    [
+        (None, 302, "accounts/login", None, None),
+        (
+            "gamer1",
+            200,
+            None,
+            {
+                "cached_title": "Creating an issue via the form",
+                "cached_description": "I'm a bot!",
+            },
+            302,
+        ),
+    ],
+)
+def test_issue_create(
+    client,
+    helpdesk_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    expected_get_response,
+    expected_get_location,
+    post_data,
+    expected_post_response,
+):
+    gamer = None
+    num_issues = models.IssueLink.objects.count()
+    if gamertouse:
+        gamer = getattr(helpdesk_testdata, gamertouse)
+        client.force_login(gamer.user)
+    url = reverse("helpdesk:issue-create")
+    with django_assert_max_num_queries(50):
+        response = client.get(url)
+    assert expected_get_response == response.status_code
+    if expected_get_location:
+        assert expected_get_location in response["Location"]
+    else:
+        response = client.post(url, data=post_data)
+        assert expected_post_response == response.status_code
+        assert models.IssueLink.objects.count() - num_issues == 1
+        issue = models.IssueLink.objects.latest("created")
+        delete_remote_issue(issue)
+
+
+@pytest.mark.parametrize(
     "issue_to_use,gamertouse,expected_get_response,expected_comment_length,expected_location",
     [
         ("issue1", None, 302, None, "/accounts/login/"),

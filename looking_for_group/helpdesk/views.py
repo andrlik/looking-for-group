@@ -93,6 +93,7 @@ class MyIssueListView(IssueListView):
 class IssueCreateView(LoginRequiredMixin, generic.CreateView):
     model = models.IssueLink
     fields = ["cached_title", "cached_description"]
+    template_name = "helpdesk/issue_create.html"
 
     def form_valid(self, form):
         il = form.save(commit=False)
