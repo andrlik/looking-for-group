@@ -859,3 +859,25 @@ div#CookielawBanner {
 #autosaved, .autosave, .cursor, .lines, .words{
   color: #757674 !important;
 }
+
+ul.tabs li.tabs-title a.truly-selected {
+  background:#e6e6e6;
+  color: #006ca9;
+}
+
+div.striped {
+  background-color: $table-striped-background;
+}
+
+.button {
+  &.hollow {
+    &.inverse{
+      color: $white;
+      border-color: $white;
+      &:hover{
+        background-color:$white;
+        color: #006ca9;
+      }
+    }
+  }
+}

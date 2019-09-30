@@ -15,7 +15,7 @@ from .api_routers import router
 
 
 def trigger_error(request):
-    division_by_zero = 1 / 0
+    divide_by_zero = 1 / 0  # noqa
 
 
 urlpatterns = [
@@ -52,6 +52,7 @@ urlpatterns = [
         "messages/", include("looking_for_group.mailnotify.urls", namespace="postman")
     ),
     path("ajax_select/", include(ajax_select_urls)),
+    path("helpdesk/", include("looking_for_group.helpdesk.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

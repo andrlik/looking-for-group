@@ -105,6 +105,7 @@ LOCAL_APPS = [
     "looking_for_group.tours.apps.ToursConfig",
     "looking_for_group.world.apps.WorldConfig",
     "looking_for_group.locations.apps.LocationsConfig",
+    "looking_for_group.helpdesk.apps.HelpdeskConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -397,3 +398,16 @@ MARKDOWNIFY_FILTER_WHITELIST_TAGS = [
     "ul",
 ]
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")
+
+
+# ----------------------------------------------------------------------------
+# HelpDesk Credentials
+# ----------------------------------------------------------------------------
+
+GITLAB_URL = env("GITLAB_URL", default="https://gitlab.com")
+GITLAB_TOKEN = env("GITLAB_TOKEN", default=None)
+GITLAB_PROJECT_ID = env("GITLAB_PROJECT_ID", default=None)
+GITLAB_DEFAULT_USERNAME = env("GITLAB_DEFAULT_USERNAME", default="daniel")
+GITLAB_DEFAULT_REMOTE_USERNAME = env(
+    "GITLAB_DEFAULT_REMOTE_USERNAME", default="andrlik"
+)

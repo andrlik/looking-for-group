@@ -208,6 +208,8 @@ LOGGING = {
         "games": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "rules": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "discord": {"level": "ERROR", "handlers": ["console"], "propagate": False},
+        "helpdesk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
+        "locations": {"level": "ERROR", "handlers": ["console"], "propagate": False},
     },
 }
 
