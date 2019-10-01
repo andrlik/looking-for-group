@@ -46,6 +46,9 @@ class GamePostingForm(BooleanSwitchPaddleFormMixin, forms.ModelForm):
             self.fields.pop("communities")
         if "communities" in self.fields.keys():
             self.fields["communities"].queryset = allowed_communities
+        self.fields["published_game"].queryset = self.fields[
+            "published_game"
+        ].queryset.order_by("game__title", "release_date", "name")
 
     def clean(self):
         cleaned_data = super().clean()
