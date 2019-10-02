@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "domain": "app.lfg.directory",
+  "domain": "localhost:3000",
   "display_name": "LFG Directory",
   "username": {
     "re": "^[a-zA-Z0-9_@+.]{2,150}$",
@@ -13,9 +13,9 @@
     "svg_full": null
   },
   "description": "A tabletop RPG campaign manager and group finder.",
-  "prefill_url": "https://app.lfg.directory/keybase-proofs/new-proof?kb_username=%{kb_username}&username=%{username}&sig_hash=%{sig_hash}&kb_ua=%{kb_ua}",
-  "profile_url": "https://app.lfg.directory/keybase-proofs/profile/%{username}",
-  "check_url": "https://app.lfg.directory/keybase-proofs/api/%{username}",
+  "prefill_url": "http://localhost:3000/keybase-proofs/new-proof?kb_username=%{kb_username}&username=%{username}&sig_hash=%{sig_hash}&kb_ua=%{kb_ua}",
+  "profile_url": "http://localhost:3000/keybase-proofs/profile/%{username}",
+  "check_url": "http://localhost:3000/keybase-proofs/api/%{username}",
   "check_path": ["keybase_sigs"],
   "contact": ["daniel@mg.lfg.directory", "joshblum@keybase"]
 }

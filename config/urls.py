@@ -33,7 +33,7 @@ urlpatterns = [
         SiteSocialStatsView.as_view(),
         name="site-social-stats",
     ),
-    path("keybase_proofs/", include("keybase_proofs.urls")),
+    path("keybase-proofs/", include("keybase_proofs.urls")),
     path(
         "dashboard/stats/catalog/",
         SiteCatalogStatsView.as_view(),
