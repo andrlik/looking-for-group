@@ -9,6 +9,7 @@ from looking_for_group.game_catalog.tests.fixtures import *  # noqa
 from looking_for_group.gamer_profiles.tests import factories
 from looking_for_group.gamer_profiles.tests.fixtures import *  # noqa
 from looking_for_group.games.tests.fixtures import *  # noqa
+from looking_for_group.helpdesk.tests.fixtures import *  # noqa
 from looking_for_group.invites.tests.fixtures import *  # noqa
 from looking_for_group.locations.tests.fixtures import *  # noqa
 from looking_for_group.rpgcollections.tests.fixtures import *  # noqa
@@ -42,6 +43,8 @@ class MyAxe(Axe):
                 and "#1779ba" in viol["nodes"][0]["any"][0]["message"]
                 and "#2c3840" in viol["nodes"][0]["any"][0]["message"]
             ):
+                ids_to_remove.append(x)
+            if viol["id"] == "html-has-lang" or viol["id"] == "document-title":
                 ids_to_remove.append(x)
             x += 1
         for idr in reversed(ids_to_remove):

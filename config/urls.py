@@ -7,7 +7,14 @@ from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
 
-from looking_for_group.user_preferences.views import Dashboard, HomeView, PrivacyView, TermsView
+from looking_for_group.user_preferences.views import (
+    Dashboard,
+    HomeView,
+    PrivacyView,
+    SiteCatalogStatsView,
+    SiteSocialStatsView,
+    TermsView
+)
 
 # from star_ratings import urls as rating_urls
 from . import rating_url_override
@@ -15,12 +22,23 @@ from .api_routers import router
 
 
 def trigger_error(request):
-    division_by_zero = 1 / 0
+    divide_by_zero = 1 / 0  # noqa
 
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("dashboard/", view=Dashboard.as_view(), name="dashboard"),
+    path(
+        "dashboard/stats/social/",
+        SiteSocialStatsView.as_view(),
+        name="site-social-stats",
+    ),
+    path("keybase-proofs/", include("keybase_proofs.urls")),
+    path(
+        "dashboard/stats/catalog/",
+        SiteCatalogStatsView.as_view(),
+        name="site-catalog-stats",
+    ),
     path("sentry-debug", view=trigger_error),
     path("health/", view=TemplateView.as_view(template_name="health.html")),
     path("privacy/", view=PrivacyView.as_view(), name="privacy"),
@@ -52,6 +70,7 @@ urlpatterns = [
         "messages/", include("looking_for_group.mailnotify.urls", namespace="postman")
     ),
     path("ajax_select/", include(ajax_select_urls)),
+    path("helpdesk/", include("looking_for_group.helpdesk.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

@@ -1,0 +1,30 @@
+{% extends "helpdesk/base.html" %}
+{% load i18n avatar_tags markdownify %}
+{% block sectiontitle %}{% trans "Delete comment for issue" %} {{ issue.external_id }}{% endblock %}
+{% block subtitle %}{% trans "Delete comment for issue" %} {{ issue.external_id }}{% endblock %}
+{% block mobileheader %}{% trans "Delete comment for issue" %} {{ issue.external_id }}{% endblock %}
+{% block hdcrumbs %}
+<li><a href="{% url 'helpdesk:issue-list' %}">{% trans "Issues" %}</a></li>
+<li><a href="{{ issue.get_absolute_url }}">{{ issue.external_id }}</a></li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Delete comment" %}</li>
+{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-2"></div>
+  <div class="cell medium-7">
+    <div class="callout alert">
+      <h1>{% trans "Are you sure?" %}</h1>
+      <p>{% blocktrans with ticknum=issue.external_id %}This will permanently delete this comment for issue #{{ ticknum }}.{% endblocktrans %}</p>
+      <blockquote>
+        {{ comment.cached_body|markdownify|linebreaksbr|safe }}
+      </blockquote>
+      <form method="post" action="">
+        {% csrf_token %}
+        <div class="clearfix">
+          <a class="button secondary float-left" href="{{ issue.get_absolute_url }}">{% trans "Cancel and return to issue details" %}</a> <input type="submit" class="button alert float-right" value="{% trans 'Delete comment' %}" />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

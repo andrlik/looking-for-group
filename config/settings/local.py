@@ -109,5 +109,8 @@ LOGGING = {
         "postman": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "tours": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "helpdesk": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
     },
 }
+
+GITLAB_PROJECT_ID = env("GITLAB_TEST_PROJECT_ID", default=None)
