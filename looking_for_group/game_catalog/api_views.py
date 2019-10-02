@@ -10,8 +10,6 @@ class GamePublisherViewSet(viewsets.ReadOnlyModelViewSet):
     List and detail views for :class:`game_catalog.models.GamePublisher`.
     """
 
-    filter_backends = [DjangoFilterBackend]
-
     serializer_class = serializers.GamerPublisherSerializer
     queryset = models.GamePublisher.objects.all().prefetch_related(
         "gamesystem_set", "gameedition_set", "publishedmodule_set"
@@ -24,6 +22,7 @@ class GameSystemViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     filter_backends = [DjangoFilterBackend]
+    # filter_backends = ["publication_date"]
 
     serializer_class = serializers.GameSystemSerializer
 
@@ -31,6 +30,7 @@ class GameSystemViewSet(viewsets.ReadOnlyModelViewSet):
         models.GameSystem.objects.all()
         .select_related("original_publisher")
         .prefetch_related("game_editions")
+        .order_by("name")
     )
 
 
@@ -40,11 +40,13 @@ class GameEditionViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["game_system", "publisher", "release_date", "game"]
     serializer_class = serializers.GameEditionSerializer
     queryset = (
         models.GameEdition.objects.all()
         .select_related("publisher")
         .prefetch_related("publishedmodule_set")
+        .order_by("game__title", "release_date", "name")
     )
 
 
@@ -54,6 +56,7 @@ class SourcebookViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["edition", "corebook"]
     serializer_class = serializers.SourcebookSerializer
     queryset = models.SourceBook.objects.all().select_related("publisher", "edition")
 
@@ -64,6 +67,7 @@ class PublishedGameViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["publication_date"]
 
     serializer_class = serializers.PublishedGamerSerializer
 
@@ -76,6 +80,12 @@ class PublishedModuleViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     filter_backends = [DjangoFilterBackend]
+    filterset_fields = [
+        "parent_game_edition",
+        "publisher",
+        "publication_date",
+        "parent_game_edition__game_system",
+    ]
 
     serializer_class = serializers.PublishedModuleSerializer
 

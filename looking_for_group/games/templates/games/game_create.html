@@ -49,14 +49,5 @@
 </script>
 {% include "games/location_toggle_js.html" %}
 {% include "locations/autocomplete_js.html" %}
-<script type="text/javascript">
-  jQuery("#id_game_system").change(function (){
-    var system = jQuery("#id_game_system option:selected").val();
-    jQuery.getJSON('{% url "api-edition" %}?game_system=' + system, function(data) {
-  jQuery("#id_published_game").empty().append("<option></option>")
-      jQuery.each(data, function (index, value) {
-        jQuery("#id_published_game").append("<option value='" + value["id"] + "'>" + value["game"]["title"] + " (" + value["name"] + ")</option>");
-      });
-  });
-</script>
+{% include "games/game_form_js.html" %}
 {% endblock %}
