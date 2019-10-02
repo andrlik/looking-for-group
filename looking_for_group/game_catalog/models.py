@@ -1,20 +1,16 @@
 import logging
 
 from django.conf import settings
-from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
 
-from .utils import (
-    AbstractTaggedLinkedModel,
-    AbstractUUIDModel,
-    AbstractUUIDWithSlugModel,
-)
+from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel, AbstractUUIDWithSlugModel
 
 # Create your models here.
 logger = logging.getLogger("catalog")
@@ -104,6 +100,10 @@ class GameSystem(
 
     def get_absolute_url(self):
         return reverse("game_catalog:system-detail", kwargs={"system": self.id})
+
+    @property
+    def release_date(self):
+        return self.publication_date
 
     def get_correction_url(self):
         return reverse(

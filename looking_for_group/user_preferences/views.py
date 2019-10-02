@@ -1,4 +1,5 @@
 import hashlib
+import json
 import logging
 
 import factory.django
@@ -25,6 +26,7 @@ from ..game_catalog import models as catalog_models
 from ..gamer_profiles import models as social_models
 from ..gamer_profiles.views import ModelFormWithSwitcViewhMixin
 from ..games import models as game_models
+from ..games.mixins import JSONResponseMixin
 from . import forms, models
 from .utils import fetch_or_set_discord_comm_links
 
@@ -123,7 +125,13 @@ class SettingsView(LoginRequiredMixin, SelectRelatedMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["community_list"] = social_models.CommunityMembership.objects.filter(gamer=self.request.user.gamerprofile).select_related('community').order_by("community__name")
+        context["community_list"] = (
+            social_models.CommunityMembership.objects.filter(
+                gamer=self.request.user.gamerprofile
+            )
+            .select_related("community")
+            .order_by("community__name")
+        )
         return context
 
 
@@ -253,44 +261,6 @@ class Dashboard(LoginRequiredMixin, generic.ListView):
                 if comm.community.get_pending_applications().count() > 0:
                     comms_with_apps.append(comm)
         context["comms_with_apps"] = comms_with_apps
-        context["site_total_communities"] = cache.get_or_set(
-            "site_total_communities", social_models.GamerCommunity.objects.count()
-        )
-        context["site_total_gamers"] = cache.get_or_set(
-            "site_total_gamers", social_models.GamerProfile.objects.count()
-        )
-        context["site_total_games"] = cache.get_or_set(
-            "site_total_games", game_models.GamePosting.objects.count()
-        )
-        context["site_total_active_games"] = cache.get_or_set(
-            "site_total_active_games",
-            game_models.GamePosting.objects.exclude(
-                status__in=["cancel", "closed"]
-            ).count(),
-        )
-        context["site_total_completed_sessions"] = cache.get_or_set(
-            "site_total_completed_sessions",
-            game_models.GameSession.objects.filter(status="complete").count(),
-            600,
-        )
-        context["site_total_systems"] = cache.get_or_set(
-            "site_total_systems", catalog_models.GameSystem.objects.count(), 600
-        )
-        context["site_total_tracked_editions"] = cache.get_or_set(
-            "site_total_tracked_editions",
-            catalog_models.GameEdition.objects.count(),
-            600,
-        )
-        context["site_total_publishers"] = cache.get_or_set(
-            "site_total_publishers", catalog_models.GamePublisher.objects.count(), 600
-        )
-        context["site_total_modules"] = cache.get_or_set(
-            "site_total_modules", catalog_models.PublishedModule.objects.count(), 600
-        )
-        context["site_total_sourcebooks"] = cache.get_or_set(
-            "site_total_sourcebooks", catalog_models.SourceBook.objects.count(), 600
-        )
-        context["site_total_discord_communities"] = fetch_or_set_discord_comm_links()
         return context
 
 
@@ -383,3 +353,75 @@ class DeleteAccount(LoginRequiredMixin, generic.DeleteView):
         delete_user(user)
         logger.debug("Redirecting to home.")
         return HttpResponseRedirect(self.get_success_url())
+
+
+class SiteSocialStatsView(LoginRequiredMixin, JSONResponseMixin, generic.TemplateView):
+    """
+    Returns a JSON object containing the site stats.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        logger.debug("Fetching site social stats...")
+        stat_set = {
+            "site_total_communities": cache.get_or_set(
+                "site_total_communities", social_models.GamerCommunity.objects.count()
+            ),
+            "site_total_gamers": cache.get_or_set(
+                "site_total_gamers", social_models.GamerProfile.objects.count()
+            ),
+            "site_total_games": cache.get_or_set(
+                "site_total_games",
+                game_models.GamePosting.objects.exclude(status="cancel").count(),
+            ),
+            "site_total_active_games": cache.get_or_set(
+                "site_total_active_games",
+                game_models.GamePosting.objects.exclude(
+                    status__in=["cancel", "closed"]
+                ).count(),
+            ),
+            "site_total_completed_sessions": cache.get_or_set(
+                "site_total_completed_sessions",
+                game_models.GameSession.objects.filter(status="complete").count(),
+            ),
+            "site_total_discord_communities": fetch_or_set_discord_comm_links(),
+        }
+        logger.debug("Stats fetched. Returning to context.")
+        context["stat_set"] = stat_set
+        return context
+
+    def get_data(self, context):
+        return context["stat_set"]
+
+
+class SiteCatalogStatsView(LoginRequiredMixin, JSONResponseMixin, generic.TemplateView):
+    """
+    Returns a JSON response containing the catalog stats
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        stat_set = {
+            "site_total_systems": cache.get_or_set(
+                "site_total_systems", catalog_models.GameSystem.objects.count()
+            ),
+            "site_total_tracked_editions": cache.get_or_set(
+                "site_total_tracked_editions",
+                catalog_models.GameEdition.objects.count(),
+            ),
+            "site_total_publishers": cache.get_or_set(
+                "site_total_publishers", catalog_models.GamePublisher.objects.count()
+            ),
+            "site_total_modules": cache.get_or_set(
+                "site_total_modules", catalog_models.PublishedModule.objects.count()
+            ),
+            "site_total_sourcebooks": cache.get_or_set(
+                "site_total_sourcebooks", catalog_models.SourceBook.objects.count()
+            ),
+        }
+        context["stat_set"] = stat_set
+        logger.debug("Sending {}".format(stat_set))
+        return context
+
+    def get_data(self, context):
+        return context["stat_set"]

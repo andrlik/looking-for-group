@@ -1,7 +1,7 @@
 from rest_framework.routers import DefaultRouter
+
 from looking_for_group.game_catalog import api_views as catalog_api_views
 from looking_for_group.gamer_profiles import api_views as profile_api_views
-
 
 # API Router
 router = DefaultRouter()
@@ -17,6 +17,14 @@ router.register(
     r"catalog/publishedgames",
     catalog_api_views.PublishedGameViewSet,
     base_name="api-publishedgame",
+)
+router.register(
+    r"catalog/editions", catalog_api_views.GameEditionViewSet, base_name="api-edition"
+)
+router.register(
+    r"catalog/sourcebooks",
+    catalog_api_views.SourcebookViewSet,
+    base_name="api-sourcebook",
 )
 router.register(
     r"catalog/publishedmodules",

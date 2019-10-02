@@ -80,6 +80,24 @@ class GameEditionSerializer(TaggitSerializer, serializers.ModelSerializer):
         )
 
 
+class SourcebookSerializer(serializers.ModelSerializer):
+    edition = GameEditionSerializer(read_only=True)
+    publisher = GamerPublisherSerializer(read_only=True)
+
+    class Meta:
+        model = models.SourceBook
+        fields = (
+            "id",
+            "title",
+            "image",
+            "corebook",
+            "publisher",
+            "edition",
+            "release_date",
+            "isbn",
+        )
+
+
 class PublishedModuleSerializer(TaggitSerializer, serializers.ModelSerializer):
     parent_game_edition = GameEditionSerializer(read_only=True)
     publisher = GamerPublisherSerializer(read_only=True)

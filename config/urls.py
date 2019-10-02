@@ -7,7 +7,14 @@ from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
 
-from looking_for_group.user_preferences.views import Dashboard, HomeView, PrivacyView, TermsView
+from looking_for_group.user_preferences.views import (
+    Dashboard,
+    HomeView,
+    PrivacyView,
+    SiteCatalogStatsView,
+    SiteSocialStatsView,
+    TermsView
+)
 
 # from star_ratings import urls as rating_urls
 from . import rating_url_override
@@ -21,6 +28,17 @@ def trigger_error(request):
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("dashboard/", view=Dashboard.as_view(), name="dashboard"),
+    path(
+        "dashboard/stats/social/",
+        SiteSocialStatsView.as_view(),
+        name="site-social-stats",
+    ),
+    path("keybase-proofs/", include("keybase_proofs.urls")),
+    path(
+        "dashboard/stats/catalog/",
+        SiteCatalogStatsView.as_view(),
+        name="site-catalog-stats",
+    ),
     path("sentry-debug", view=trigger_error),
     path("health/", view=TemplateView.as_view(template_name="health.html")),
     path("privacy/", view=PrivacyView.as_view(), name="privacy"),

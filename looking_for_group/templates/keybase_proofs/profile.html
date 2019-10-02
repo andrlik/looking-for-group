@@ -1,0 +1,50 @@
+{% extends "keybase_proofs/_base.html" %}
+{% load i18n %}
+{% block subtitle %}{% trans "Keybase Proofs" %} - {% endblock %}
+{% block sectiontitle %}{% trans "Keybase Proofs" %}{% endblock %}
+{% block mobileheader %}{% trans "Keybase Proofs" %}{% endblock %}
+{% block profileactive %}{% include "is_active_definition.html" %}{% endblock %}
+{% block extracrumbs %}
+<li>{% trans "Keybase" %}</li>
+<li><span class="show-for-sr">{% trans "Current:" %} </span>{% trans "Proofs" %}</li>
+{% endblock %}
+{% block content %}
+<div class="grid-x grid-margin-x">
+
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h2>{% trans "Your Keybase Proofs" %}</h2></div>
+      <div class="card-section">
+        {% if not object_list %}
+        <p>{% trans "You don't currently have any Keybase proofs." %}</p>
+        {% endif %}
+        <table class="scroll hover">
+          <thead>
+          <tr>
+            <th>{% trans "Keybase Username" %}</th>
+            <th>{% trans "Sig Hash" %}</th>
+          </tr>
+          </thead>
+          <tbody>
+            {% for proof in object_list %}
+            {% if proof.is_verified %}
+            <tr>
+              <td><a href="https://keybase.io/{{ proof.kb_username }}/sigs/{{ proof.sig_hash }}">{{ proof.kb_username }} <img alt="Keybase proof status" src="https://keybase.io/{{ proof.kb_username }}/proof_badge/{{ proof.sig_hash }}?&domain={{ domain }}&username={{ user.username }}"></a></td>
+              <td>{{ proof.sig_hash }}</td>
+            </tr>
+            {% endif %}
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% comment %}
+Sample page for displaying existing keybase proofs on a user's profile. Only
+verified proofs are shown.
+{% endcomment %}

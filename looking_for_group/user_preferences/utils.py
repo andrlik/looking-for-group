@@ -7,7 +7,7 @@ from ..game_catalog import models as catalog_models
 from ..gamer_profiles import models as social_models
 from ..games import models as game_models
 
-logger = logging.getLogger("lfgtasks")
+logger = logging.getLogger("games")
 
 
 def prime_site_stats_cache():

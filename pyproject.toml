@@ -63,6 +63,7 @@ django-haystack = { git = "https://github.com/andrlik/django-haystack.git", rev 
 django-scheduler = { git = "https://github.com/andrlik/django-scheduler.git", rev = "4ae1fcf09065f0c9b7380685772549c70d2e78ff" }
 sentry-sdk = "^0.9.0"
 python-gitlab = "^1.11"
+django-keybase-proofs = "^0.0.8"
 
 [tool.poetry.dev-dependencies]
 sphinx = "~2.1.1"

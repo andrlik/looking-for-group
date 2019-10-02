@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "domain": "app.lfg.directory",
+  "display_name": "LFG Directory",
+  "username": {
+    "re": "^[a-zA-Z0-9_@+.]{2,150}$",
+    "min": 2,
+    "max": 150
+  },
+  "brand_color": "#006ca9",
+  "logo": {
+    "svg_black": "https://app.lfg.directory/staticfiles/images/small_black.svg",
+    "svg_full": "https://app.lfg.directory/staticfiles/images/full_color.svg"
+  },
+  "description": "A tabletop RPG campaign manager and group finder.",
+  "prefill_url": "https://app.lfg.directory/keybase-proofs/new-proof?kb_username=%{kb_username}&username=%{username}&sig_hash=%{sig_hash}&kb_ua=%{kb_ua}",
+  "profile_url": "https://app.lfg.directory/keybase-proofs/profile/%{username}",
+  "check_url": "https://app.lfg.directory/keybase-proofs/api/%{username}",
+  "check_path": ["keybase_sigs"],
+  "contact": ["daniel@mg.lfg.directory", "joshblum@keybase"]
+}
