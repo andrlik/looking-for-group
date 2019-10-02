@@ -1,0 +1,49 @@
+<script type="text/javascript">
+  jQuery("#id_game_system").change(function (){
+    var system = jQuery("#id_game_system option:selected").val();
+    jQuery.getJSON('{% url "api-edition-list" %}?game_system=' + system, function(data) {
+      jQuery("#id_published_game").empty().append("<option>---------</option>")
+      jQuery.each(data, function (index, value) {
+        jQuery("#id_published_game").append("<option value='" + value["id"] + "'>" + value["game"]["title"] + " (" + value["name"] + ")</option>");
+      });
+      jQuery("#id_published_game").fadeOut(200).fadeIn(200);
+    });
+    jQuery.getJSON("{% url 'api-publishedmodule-list' %}?parent_game_edition__game_system=" + system, function(data){
+      jQuery("#id_published_module").empty().append("<option>---------</option>")
+      jQuery.each(data, function(index, value) {
+        jQuery("#id_published_module").append("<option value='" + value["id"] + "'>" + value["title"] + "</option>");
+      });
+      jQuery("#id_published_module").fadeOut(200).fadeIn(200);
+    });
+  });
+  jQuery("#id_published_game").change(function (){
+    var edition = jQuery("#id_published_game option:selected").val();
+    jQuery.getJSON('/api/catalog/editions/' + edition + '/', function(edition_object) {
+
+      jQuery.getJSON('/api/catalog/systems/' + edition_object["game_system"]["id"] + "/", function(data) {
+        jQuery("#id_game_system").val(data["id"]);
+        jQuery("#id_game_system").fadeOut(200).fadeIn(200);
+      });
+    });
+    jQuery.getJSON("{% url 'api-publishedmodule-list' %}?parent_game_edition=" + edition, function(data){
+      jQuery("#id_published_module").empty().append("<option>---------</option>")
+      jQuery.each(data, function(index, value) {
+        jQuery("#id_published_module").append("<option value='" + value["id"] + "'>" + value["title"] + "</option>");
+      });
+      jQuery("#id_published_module").fadeOut(200).fadeIn(200);
+    });
+  });
+  jQuery("#id_published_module").change(function() {
+    var module_id = jQuery("#id_published_module").val();
+    jQuery.getJSON('/api/catalog/publishedmodules/' + module_id + '/', function(module_object) {
+      jQuery("#id_published_game").val(module_object["parent_game_edition"]["id"]);
+      if (!module_object["parent_game_edition"]["game_system"]) {
+        jQuery("#id_game_system").val("");
+      } else {
+        jQuery("#id_game_system").val(module_object["parent_game_edition"]["game_system"]["id"]);
+      }
+      jQuery("#id_game_system").fadeOut(200).fadeIn(200);
+      jQuery("#id_published_game").fadeOut(200).fadeIn(200);
+    });
+  });
+</script>
