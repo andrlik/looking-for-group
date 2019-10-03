@@ -2,11 +2,11 @@
   "name": "looking_for_group",
   "version": "0.1.0",
   "dependencies": {
-    "easymde": "^2.6.0",
+    "easymde": "^2.8.0",
     "shepherd.js": "^2.8.0"
   },
   "devDependencies": {
-    "browser-sync": "^2.26.5",
+    "browser-sync": "^2.26.7",
     "del": "^2.2.2",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^5.0.0",
