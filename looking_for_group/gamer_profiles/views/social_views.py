@@ -22,6 +22,7 @@ from django.utils import timezone
 from django.utils.http import is_safe_url
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
+from keybase_proofs import models as kb_models
 from notifications.signals import notify
 from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
@@ -1367,6 +1368,7 @@ class GamerProfileDetailView(
         context["week_availability"] = avail_calendar.get_weekly_availability(
             user_timezone
         )
+        context["kb_proofs"] = kb_models.KeybaseProof.objects.filter(is_verified=True)
         return context
 
     def handle_no_permission(self):

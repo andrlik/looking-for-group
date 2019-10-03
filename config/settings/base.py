@@ -89,6 +89,7 @@ THIRD_PARTY_APPS = [
     "ajax_select",
     "postman",
     "markdownify",
+    "keybase_proofs",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -105,6 +106,7 @@ LOCAL_APPS = [
     "looking_for_group.tours.apps.ToursConfig",
     "looking_for_group.world.apps.WorldConfig",
     "looking_for_group.locations.apps.LocationsConfig",
+    "looking_for_group.helpdesk.apps.HelpdeskConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -173,7 +175,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    #    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "looking_for_group.users.middleware.TimezoneSessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -397,3 +399,15 @@ MARKDOWNIFY_FILTER_WHITELIST_TAGS = [
     "ul",
 ]
 GOOGLE_MAPS_API_KEY = env("GOOGLE_MAPS_API_KEY", default="")
+# ----------------------------------------------------------------------------
+# HelpDesk Credentials
+# ----------------------------------------------------------------------------
+
+GITLAB_URL = env("GITLAB_URL", default="https://gitlab.com")
+GITLAB_TOKEN = env("GITLAB_TOKEN", default=None)
+GITLAB_PROJECT_ID = env("GITLAB_PROJECT_ID", default=None)
+GITLAB_DEFAULT_USERNAME = env("GITLAB_DEFAULT_USERNAME", default="daniel")
+GITLAB_DEFAULT_REMOTE_USERNAME = env(
+    "GITLAB_DEFAULT_REMOTE_USERNAME", default="andrlik"
+)
+KEYBASE_PROOFS_DOMAIN = "app.lfg.directory"

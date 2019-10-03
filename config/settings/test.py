@@ -95,6 +95,7 @@ LOGGING = {
         "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "games": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "helpdesk": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }
 
@@ -109,3 +110,4 @@ HAYSTACK_CONNECTIONS = {
         "INDEX_NAME": "haystack",
     }
 }
+GITLAB_PROJECT_ID = env("GITLAB_TEST_PROJECT_ID", default=None)

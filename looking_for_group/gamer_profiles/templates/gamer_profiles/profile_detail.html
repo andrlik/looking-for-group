@@ -51,6 +51,25 @@
   <dd>{{ gamer.ttgame_experience|default:"No info"|markdownify|safe }}</dd>
   <dt>{% trans "Playstyle" %}</dt>
   <dd>{{ gamer.playstyle|default:"No info"|markdownify|safe }}</dd>
+  {% if is_connected %}
+  <dt>Keybase {% trans "verified connections" %} <abbr title="{% trans 'Keybase is an identity service that uses cryptographic proofs to ensure accuracy.' %}"><i class="fas fa-info-circle"></i></abbr></dt>
+  <dd>
+    {% if not kb_proofs %}
+    <p>{% trans "No Keybase accounts connected yet." %}</p>
+    {% if request.user == gamer.user %}
+    <p>{% trans "If you already have" %} <a href="https://keybase.io">Keybase</a> {% trans "installed, you can add a record to prove that this LFG account belongs to you." %} </p>
+    <a class="button" href="keybase://profile/new-proof/app.lfg.directory/{{ request.user.username }}"><i class="fab fa-keybase"></i> {% trans "Add proof" %}</a>
+    {% endif %}
+    {% else %}
+    <ul>
+      {% for proof in kb_proofs %}
+      <li><a href="https://keybase.io/{{ proof.kb_username }}/"><i class="fab fa-keybase"></i> {{ proof.kb_username }}</a> <img alt="Keybase proof status" src="https://keybase.io/{{ proof.kb_username }}/proof_badge/{{ proof.sig_hash }}?&domain=app.lfg.directory&username={{ request.user.username }}"></li>
+      {% empty %}
+      {% endfor %}
+    </ul>
+    {% endif %}
+   </dd>
+   {% endif %}
 </dl>
 {% if request.user != gamer.user and can_message %}
 <a href="{% url 'postman:write' gamer.username %}" class="button primary"><i class="fas fa-envelope"></i> {% trans "Message" %}</a>
