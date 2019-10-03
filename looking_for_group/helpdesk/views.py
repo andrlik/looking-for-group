@@ -72,7 +72,7 @@ class IssueListView(
             cached_status="closed"
         ).count()
         context["your_open"] = all_issues_not_deleted.filter(
-            creator=self.request.user
+            creator=self.request.user, cached_status="opened"
         ).count()
         context["your_closed"] = all_issues_not_deleted.filter(
             creator=self.request.user, cached_status="closed"
