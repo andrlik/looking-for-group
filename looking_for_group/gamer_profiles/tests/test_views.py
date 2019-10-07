@@ -1225,7 +1225,7 @@ def test_gamer_profile_detail(
     url = reverse(
         "gamer_profiles:profile-detail", kwargs={"gamer": gamer_target.username}
     )
-    with django_assert_max_num_queries(80):
+    with django_assert_max_num_queries(90):
         response = client.get(url)
     if not gamer_to_use:
         assert assert_login_redirect(response)
