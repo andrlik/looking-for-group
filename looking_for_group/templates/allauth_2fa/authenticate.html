@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-1"></div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h2>{% trans "Two-Factor Authentication" %}</h2></div>
+      <div class="card-section">
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {{ form.otp_token.label }}:
+  {{ form.otp_token }}
+
+  <button class="button" type="submit">
+    {% trans 'Authenticate' %}
+  </button>
+</form>
+    </div>
+  </div>
+</div>
+{% endblock %}
