@@ -8,8 +8,9 @@
 {% block head_title %}{% trans "Sign In" %}{% endblock %}
 
 {% block inner %}
-
-<h1 class="show-for-medium">{% trans "Sign In" %}</h1>
+<div class="card">
+  <div class="card-divider"><h2>{% trans "Sign In" %}</h2></div>
+  <div class="card-section">
 
 {% get_providers as socialaccount_providers %}
 
@@ -46,5 +47,7 @@ for a {{ site_name }} account and sign in below:{% endblocktrans %}</p>
       <button class="button" type="submit">{% trans "Sign In" %}</button>
   </div>
 </form>
+  </div>
+</div>
 
 {% endblock %}

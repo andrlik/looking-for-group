@@ -2,22 +2,23 @@ import re
 
 from allauth.account import app_settings
 from allauth.account.adapter import DefaultAccountAdapter
-from allauth.account.utils import filter_users_by_username, user_field, user_username, user_email, valid_email_or_none
+from allauth.account.utils import filter_users_by_username, user_email, user_field, user_username, valid_email_or_none
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.utils import generate_unique_username
+from allauth_2fa.adapter import OTPAdapter
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.utils.text import slugify
 
 
-class AccountAdapter(DefaultAccountAdapter):
+class AccountAdapter(OTPAdapter):
     def is_open_for_signup(self, request):
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)  # pragma: no cover
 
     def save_user(self, request, user, form, commit=True):
-        display_name = form.cleaned_data.get('display_name')
-        tz = form.cleaned_data.get('timezone')
+        display_name = form.cleaned_data.get("display_name")
+        tz = form.cleaned_data.get("timezone")
         if display_name:
             user_field(user, "display_name", display_name)
         if tz:
@@ -25,7 +26,7 @@ class AccountAdapter(DefaultAccountAdapter):
         return super().save_user(request, user, form, commit)
 
     def get_login_redirect_url(self, request):
-        return reverse_lazy('dashboard')
+        return reverse_lazy("dashboard")
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -41,7 +42,9 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         """
         for validator in app_settings.USERNAME_VALIDATORS:
             validator(username)
-        username_blacklist_lower = [ub.lower() for ub in app_settings.USERNAME_BLACKLIST]
+        username_blacklist_lower = [
+            ub.lower() for ub in app_settings.USERNAME_BLACKLIST
+        ]
         if username.lower() in username_blacklist_lower:
             raise ValidationError("Username is blacklisted")
         if not shallow:
@@ -54,27 +57,29 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         Override of allauth method that makes sure usernames stay url safe.
         """
         display_name = None
-        external_username = data.get('username')
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
-        email = data.get('email')
-        name = data.get('name')
-        discriminator = data.get('discriminator')
+        external_username = data.get("username")
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        email = data.get("email")
+        name = data.get("name")
+        discriminator = data.get("discriminator")
         user = sociallogin.user
-        if re.match(r'[\S!$?+=#.@%^*(){}]', external_username):
+        if re.match(r"[\S!$?+=#.@%^*(){}]", external_username):
             username = slugify(external_username)
         else:
             username = external_username
         try:
             username = self.clean_username(username)
         except ValidationError:
-            username = generate_unique_username([first_name, last_name, email, username, discriminator, 'user'])
+            username = generate_unique_username(
+                [first_name, last_name, email, username, discriminator, "user"]
+            )
         if username != external_username:
             display_name = external_username
-        user_username(user, username or '')
-        user_email(user, valid_email_or_none(email) or '')
-        name_parts = (name or '').partition(' ')
-        user_field(user, 'first_name', first_name or name_parts[0])
-        user_field(user, 'last_name', last_name or name_parts[2])
-        user_field(user, 'display_name', display_name)
+        user_username(user, username or "")
+        user_email(user, valid_email_or_none(email) or "")
+        name_parts = (name or "").partition(" ")
+        user_field(user, "first_name", first_name or name_parts[0])
+        user_field(user, "last_name", last_name or name_parts[2])
+        user_field(user, "display_name", display_name)
         return user

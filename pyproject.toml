@@ -64,6 +64,7 @@ django-scheduler = { git = "https://github.com/andrlik/django-scheduler.git", re
 sentry-sdk = "^0.9.0"
 python-gitlab = "^1.11"
 django-keybase-proofs = "^0.0.8"
+django-allauth-2fa = "^0.7.0"
 
 [tool.poetry.dev-dependencies]
 sphinx = "~2.1.1"

@@ -48,6 +48,7 @@ urlpatterns = [
     path("{}doc/".format(settings.ADMIN_URL), include("django.contrib.admindocs.urls")),
     # User management
     path("users/", include("looking_for_group.users.urls", namespace="users")),
+    path("accounts/", include("allauth_2fa.urls")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     path("catalog/", include("looking_for_group.game_catalog.urls")),
