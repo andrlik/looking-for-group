@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-1"></div>
+  <div class="cell medium-auto">
+    <div class="card">
+      <div class="card-divider"><h2>{% trans "Disable Two-Factor Authentication" %}</h2></div>
+      <div class="card-section">
+        <div class="callout alert"><h3>{% trans "Are you sure?" %}</h3>
+          <p>{% trans "Disabling Two Factor Authentication will reduce the security of your account, unless you use a social login that has 2FA enabled, e.g. Discord." %}</p>
+        </div>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="button alert">
+    {% trans 'Disable Two-Factor' %}
+  </button>
+</form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
