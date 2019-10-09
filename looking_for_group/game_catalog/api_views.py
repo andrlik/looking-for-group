@@ -1,11 +1,12 @@
 # Note, we don't provide create, edit, or delete views for these now as we'll handle those via the admin.
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from . import models, serializers
 
 
-class GamePublisherViewSet(viewsets.ReadOnlyModelViewSet):
+class GamePublisherViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     List and detail views for :class:`game_catalog.models.GamePublisher`.
     """
@@ -16,7 +17,7 @@ class GamePublisherViewSet(viewsets.ReadOnlyModelViewSet):
     )
 
 
-class GameSystemViewSet(viewsets.ReadOnlyModelViewSet):
+class GameSystemViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Provides list and details for :class:`game_catalog.models.GameSystem`.
     """
@@ -34,7 +35,7 @@ class GameSystemViewSet(viewsets.ReadOnlyModelViewSet):
     )
 
 
-class GameEditionViewSet(viewsets.ReadOnlyModelViewSet):
+class GameEditionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Provides list and detail view for :class:`game_catalog.models.GameEdition`.
     """
@@ -42,15 +43,16 @@ class GameEditionViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["game_system", "publisher", "release_date", "game"]
     serializer_class = serializers.GameEditionSerializer
-    queryset = (
-        models.GameEdition.objects.all()
-        .select_related("publisher")
-        .prefetch_related("publishedmodule_set")
-        .order_by("game__title", "release_date", "name")
-    )
+
+    def get_queryset(self):
+        return (
+            models.GameEdition.objects.select_related("publisher")
+            .prefetch_related("publishedmodule_set")
+            .order_by("game__title", "release_date", "name")
+        )
 
 
-class SourcebookViewSet(viewsets.ReadOnlyModelViewSet):
+class SourcebookViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Provides list and detail view for sourcebooks.
     """
@@ -61,7 +63,7 @@ class SourcebookViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.SourceBook.objects.all().select_related("publisher", "edition")
 
 
-class PublishedGameViewSet(viewsets.ReadOnlyModelViewSet):
+class PublishedGameViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Provides list and detail view for :class:`game_catalog.models.PublishedGame`.
     """
@@ -74,7 +76,7 @@ class PublishedGameViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.PublishedGame.objects.all().prefetch_related("editions")
 
 
-class PublishedModuleViewSet(viewsets.ReadOnlyModelViewSet):
+class PublishedModuleViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     Provides list and detail views for :class:`game_catalog.models.PublishedModule`.
     """

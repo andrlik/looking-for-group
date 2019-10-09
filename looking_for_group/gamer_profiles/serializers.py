@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from . import models
 from ..games.models import GamePosting, Player
 from ..games.serializers import GameDataSerializer
 from ..users.models import User
+from . import models
 
 
 class GamerCommunitySerializer(serializers.ModelSerializer):
@@ -38,6 +38,7 @@ class CommunityListingField(serializers.RelatedField):
     """
     Text-friendly representation for community.
     """
+
     queryset = models.GamerCommunity.objects.all()
 
     def to_representation(self, value):
@@ -48,6 +49,7 @@ class UserListingField(serializers.RelatedField):
     """
     Text-friendly representation for community.
     """
+
     queryset = User.objects.all()
 
     def to_representation(self, value):
@@ -68,8 +70,13 @@ class GamerProfileSerializer(serializers.ModelSerializer):
     preferred_systems = serializers.StringRelatedField(many=True, read_only=True)
 
     def get_player_game_list(self, obj):
-        games_played = GamePosting.objects.filter(id__in=[p.game.id for p in Player.objects.filter(gamer=obj)])
-        return [{'title': g.title, 'gm': str(g.gm), 'sessions': g.sessions} for g in games_played]
+        games_played = GamePosting.objects.filter(
+            id__in=[p.game.id for p in Player.objects.filter(gamer=obj)]
+        )
+        return [
+            {"title": g.title, "gm": str(g.gm), "sessions": g.sessions}
+            for g in games_played
+        ]
 
     def get_timezone(self, obj):
         return obj.user.timezone
@@ -96,11 +103,7 @@ class GamerProfileSerializer(serializers.ModelSerializer):
             "gmed_games",
             "timezone",
         )
-        read_only_fields = (
-            "id",
-            "user",
-            "communities",
-        )
+        read_only_fields = ("id", "user", "communities")
 
 
 class CommunityMembershipSerializer(serializers.ModelSerializer):
@@ -226,3 +229,24 @@ class BannedUserSerializer(serializers.ModelSerializer):
         model = models.BannedUser
         fields = ("id", "community", "banner", "banned_user", "reason")
         read_only_fields = fields
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    """
+    A serializer for friend request objects.
+    """
+
+    requestor = GamerProfileSerializer()
+    recipient = GamerProfileSerializer()
+
+    class Meta:
+        model = models.GamerFriendRequest
+        fields = ("id", "created", "modified", "requestor", "recipient", "status")
+        read_only_fields = (
+            "id",
+            "created",
+            "modified",
+            "requestor",
+            "recipient",
+            "status",
+        )

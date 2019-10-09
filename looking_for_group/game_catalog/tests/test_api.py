@@ -1,12 +1,14 @@
 from django.urls import reverse
 from test_plus import APITestCase
 
-from ..models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule
+from ..models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
 from ..serializers import (
+    GameEditionSerializer,
     GamerPublisherSerializer,
     GameSystemSerializer,
     PublishedGamerSerializer,
-    PublishedModuleSerializer
+    PublishedModuleSerializer,
+    SourcebookSerializer
 )
 
 
@@ -53,6 +55,9 @@ class GameCatalogAbstractTestCase(APITestCase):
             parent_game_edition=self.numen,
         )
         self.vv.save()
+        self.discovery = SourceBook.objects.create(
+            edition=self.numen, title="Numenera Discovery", publisher=self.mcg
+        )
         self.strangesource = PublishedGame.objects.create(title="The Strange")
         self.strange = GameEdition(
             name="1", game=self.strangesource, publisher=self.mcg
@@ -116,12 +121,60 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
             assert serialized_object.data == self.last_response.data
 
 
+class EditionViews(GameCatalogAbstractTestCase):
+    def test_list_view(self):
+        url_kwargs = {"parent_lookup_game": self.numensource.pk, **self.extra}
+        self.get("api-edition-list", **url_kwargs)
+        self.response_403()
+        with self.login(username=self.user1.username):
+            self.get("api-edition-list", **url_kwargs)
+
+    def test_detail_view(self):
+        url_kwargs = {
+            "parent_lookup_game": self.numensource.pk,
+            "pk": self.numen.pk,
+            **self.extra,
+        }
+        self.get("api-edition-detail", **url_kwargs)
+        self.response_403()
+        with self.login(username=self.user1.username):
+            self.get("api-edition-detail", **url_kwargs)
+            serialized_object = GameEditionSerializer(self.numen)
+            assert serialized_object.data == self.last_response.data
+
+
+class SourcebookViews(GameCatalogAbstractTestCase):
+    def setUp(self):
+        super().setUp()
+        self.url_kwargs = {
+            "parent_lookup_edition__game": self.numensource.pk,
+            "parent_lookup_edition": self.numen.pk,
+            **self.extra,
+        }
+
+    def test_list_view(self):
+        self.get("api-sourcebook-list", **self.url_kwargs)
+        self.response_403()
+        with self.login(username=self.user1.username):
+            self.get("api-sourcebook-list", **self.url_kwargs)
+
+    def test_detail_view(self):
+        url_kwargs = self.url_kwargs.copy()
+        url_kwargs["pk"] = self.discovery.pk
+        self.get("api-sourcebook-detail", **url_kwargs)
+        self.response_403()
+        with self.login(username=self.user1.username):
+            self.get("api-sourcebook-detail", **url_kwargs)
+            serialized_object = SourcebookSerializer(self.discovery)
+            assert serialized_object.data == self.last_response.data
+
+
 class PublishedModuleViews(GameCatalogAbstractTestCase):
     def setUp(self):
         super().setUp()
         self.url_kwargs = {
-            "publishedgame_pk": self.numensource.pk,
-            "edition_pk": self.numen.pk,
+            "parent_lookup_parent_game_edition__game": self.numensource.pk,
+            "parent_lookup_parent_game_edition": self.numen.pk,
             **self.extra,
         }
 
