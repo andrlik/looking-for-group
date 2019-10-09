@@ -28,13 +28,13 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         message = None
         if "message" in request.data.keys():
             message = request.data["message"]
-        application = models.CommunityApplication.objects.create(
+        models.CommunityApplication.objects.create(
             gamer=request.user.gamerprofile,
             community=self.get_object(),
             message=message,
             status="review",
         )
-        return status.HTTP_201_CREATED
+        return Response(status.HTTP_201_CREATED)
 
     @action_permission_required("community.delete_community")
     def destroy(self, request, pk=None):
