@@ -751,6 +751,18 @@ version = "0.15.2"
 
 [[package]]
 category = "main"
+description = "Nested resources for the Django Rest Framework"
+name = "drf-nested-routers"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.91"
+
+[package.dependencies]
+Django = ">=1.11"
+djangorestframework = ">=3.6.0"
+
+[[package]]
+category = "main"
 description = "Python client for Elasticsearch"
 name = "elasticsearch"
 optional = false
@@ -1708,7 +1720,7 @@ setuptools = "*"
 "zope.interface" = "*"
 
 [metadata]
-content-hash = "c78aaf5ee0eaa364a2cdae08d147e1c3fcaad54e68de7dcfcb28cf247833524c"
+content-hash = "c82717fd7ae3e6d5904bad2536dbfd9fe8b1eef7ec55513a3a73d08806a93be7"
 python-versions = "~3.6 || ^3.7 || ^3.8"
 
 [metadata.hashes]
@@ -1779,6 +1791,7 @@ django-taggit-serializer = ["f712eb2482079be452bcd1e82b18a820e26427c3ee1cef2b4fc
 django-test-plus = ["579217bf87817c42cb131e59a7523c9b22a35f9758502cef0893641f4744a3fe"]
 djangorestframework = ["376f4b50340a46c15ae15ddd0c853085f4e66058f97e4dbe7d43ed62f5e60651", "c12869cfd83c33d579b17b3cb28a2ae7322a53c3ce85580c2a2ebe4e3f56c4fb"]
 docutils = ["6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0", "9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827", "a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"]
+drf-nested-routers = ["46e5c3abc15c782cafafd7d75028e8f9121bbc6228e3599bbb48a3daa4585034", "60c1e1f5cc801e757d26a8138e61c44419ef800c213c3640c5b6138e77d46762"]
 elasticsearch = ["658380fd60bdaf746fef12958f0abc49063218ce93ee1ae4ca1fe6291c896433", "ae91b089f2f2b5b3daa04297949e5f805ab12d187218cb587273f472656fd250"]
 entrypoints = ["589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19", "c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"]
 execnet = ["cacb9df31c9680ec5f95553976c4da484d407e85e41c83cb812aa014f0eddc50", "d4efd397930c46415f62f8a31388d6be4f27a91d7550eb79bc64a756e0056547"]
