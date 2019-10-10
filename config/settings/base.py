@@ -90,6 +90,10 @@ THIRD_PARTY_APPS = [
     "postman",
     "markdownify",
     "keybase_proofs",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
+    "allauth_2fa",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -177,6 +181,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
+    "allauth_2fa.middleware.AllauthTwoFactorMiddleware",
     "looking_for_group.users.middleware.TimezoneSessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -235,6 +241,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "looking_for_group.motd.context_processors.motd",
                 "looking_for_group.context_processors.app_version",
+                "looking_for_group.context_processors.has_two_factor",
                 "looking_for_group.tours.context_processors.completed_tours",
                 "postman.context_processors.inbox",
             ],
