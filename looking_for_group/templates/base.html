@@ -71,6 +71,12 @@
               <a href="#" class="hollow button">{{ request.user.gamerprofile }} {% avatar request.user 20 class="avatar" %}</a>
               <ul class="menu rounded">
                 <li><a href="{{ request.user.gamerprofile.get_absolute_url }}"><i class="fas fa-user"></i>&nbsp;&nbsp;{% trans "My Profile" %}</a></li>
+                {% if 2FA_ENABLED %}
+                <li><a href="{% url 'two-factor-backup-tokens' %}"><i class="fas fa-qrcode"></i>&nbsp;&nbsp;{% trans "Manage 2FA" %}</a></li>
+                {% else %}
+                <li><a href="{% url 'two-factor-setup' %}"><i class="fas fa-qrcode"></i>&nbsp;&nbsp;{% trans "Setup 2FA" %}</a></li>
+                {% endif %}
+                <li><a href="{% url 'account_change_password' %}"><i class="fas fa-key"></i>&nbsp;&nbsp;{% trans "Change Password" %}</a></li>
                 <li><a href="{% url 'user_preferences:setting-view' %}"><i class="fas fa-cog"></i>&nbsp;&nbsp;{% trans "Settings" %}</a></li>
                 <li><a href="{% url 'helpdesk:issue-list' %}"><i class="fas fa-life-ring"></i>&nbsp;&nbsp;{% trans "Help Desk" %}</a></li>
                 {% if request.user.is_superuser %}

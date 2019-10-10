@@ -249,7 +249,7 @@ def test_game_update_view(
     url = reverse("games:game_edit", kwargs={"gameid": game_testdata.gp2.slug})
     if gamer_to_use:
         client.force_login(user=getattr(game_testdata, gamer_to_use).user)
-    with django_assert_max_num_queries(50):
+    with django_assert_max_num_queries(60):
         response = client.get(url)
     if not gamer_to_use:
         assert assert_login_redirect(response)
