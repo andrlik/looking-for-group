@@ -1,15 +1,19 @@
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework_extensions.mixins import NestedViewSetMixin
 from rest_framework_rules.mixins import PermissionRequiredMixin
 
 from . import models, serializers
 from .models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
 
 
-class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
+class GamerCommunityViewSet(
+    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+):
     """
     A view set of GamerCommunity functions.
     """
@@ -76,34 +80,6 @@ class GamerCommunityViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().partial_update(request, **kwargs)
-
-    @action(methods=["get"], detail=True)
-    def members(self, request, **kwargs):
-        """
-        List members of a community.
-        """
-        community = self.get_object()
-        if not request.user.has_perm("community.view_details", community):
-            return Response(
-                {
-                    "result": "You are not a member of this community and cannot view member list."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        member_queryset = (
-            models.CommunityMembership.objects.filter(community=community)
-            .select_related("gamer")
-            .prefetch_related("gamer__user")
-            .filter(gamer__user=request.user)
-        )
-        page = self.paginate_queryset(member_queryset)
-        if page is not None:
-            member_serials = serializers.CommunityMembershipSerializer(page, many=True)
-            return self.get_paginated_response(member_serials.data)
-        member_serials = serializers.CommunityMembershipSerializer(
-            member_queryset, many=True
-        )
-        return Response(member_serials.data, status=status.HTTP_200_OK)
 
     @action(methods=["get"], detail=True)
     def bans(self, request, **kwargs):
@@ -196,7 +172,9 @@ class BannedUserViewSet(
         ).select_related("blocker", "blockee")
 
 
-class KickedUserViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
+class KickedUserViewSet(
+    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+):
     permission_required = "community.kick_user"
     object_permission_required = "community.kick_user"
     serializer_class = serializers.KickedUserSerializer
@@ -334,29 +312,30 @@ class GamerProfileViewSet(
     )
 
     def get_queryset(self):
-        qs_public = models.GamerProfile.objects.filter(private=False).select_related(
-            "user"
+        q_public = Q(private=False)
+        q_friends = Q(
+            pk__in=[f.pk for f in self.request.user.gamerprofile.friends.all()]
         )
-        qs_friends = self.request.user.gamerprofile.friends.all()
-        qs_community = models.GamerProfile.objects.filter(
-            id__in=[
-                cm.gamer.id
+        q_community = Q(
+            pk__in=[
+                cm.gamer.pk
                 for cm in models.CommunityMembership.objects.filter(
                     community__in=self.request.user.gamerprofile.communities.all()
                 )
             ]
         )
-        qs_pub_friends = qs_public.union(qs_friends)
-        qs_combined = qs_pub_friends.union(qs_community)
-        qs_remove_blocked = qs_combined.exclude(
-            id__in=[
-                b.blocker.id
+        q_self = Q(user=self.request.user)
+        qs = models.GamerProfile.objects.filter(
+            q_public | q_self | q_community | q_friends
+        ).exclude(
+            pk__in=[
+                b.blocker.pk
                 for b in models.BlockedUser.objects.filter(
                     blockee=self.request.user.gamerprofile
                 )
             ]
         )
-        return qs_remove_blocked
+        return qs
 
     def update(self, request, *args, **kwargs):
         if not request.user.has_perm("profile.edit_profile", self.get_object()):
@@ -389,7 +368,9 @@ class GamerProfileViewSet(
     #     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class GamerNoteViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
+class GamerNoteViewSet(
+    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+):
     """
     Generic view set for gamer notes.
     """
@@ -409,7 +390,9 @@ class GamerNoteViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         )
 
 
-class BlockedUserViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
+class BlockedUserViewSet(
+    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+):
     """
     View for other users that the individual has blocked.
     """
@@ -423,7 +406,9 @@ class BlockedUserViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         ).select_related("blocker", "blocked_user")
 
 
-class MutedUserViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
+class MutedUserViewSet(
+    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+):
     """
     View for other users that the individual has muted.
     """
@@ -439,6 +424,7 @@ class MutedUserViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
 
 class CommunityApplicationViewSet(
     PermissionRequiredMixin,
+    NestedViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.DestroyModelMixin,
@@ -461,6 +447,7 @@ class CommunityApplicationViewSet(
 
 class CommunityAdminApplicationViewSet(
     PermissionRequiredMixin,
+    NestedViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
@@ -521,6 +508,7 @@ class CommunityAdminApplicationViewSet(
 
 
 class SentFriendRequestViewSet(
+    NestedViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.DestroyModelMixin,
@@ -539,7 +527,10 @@ class SentFriendRequestViewSet(
 
 
 class ReceivedFriendRequestViewset(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+    NestedViewSetMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
 ):
     """
     A view for received friend requests.

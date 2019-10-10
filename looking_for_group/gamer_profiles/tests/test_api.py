@@ -1,63 +1,110 @@
-import factory.django
-from django.db.models.signals import post_save
-from test_plus import APITestCase
+import pytest
+from django.urls import reverse
 
-from ..models import CommunityMembership
-from .factories import GamerProfileFactory, GamerProfileWithCommunityFactory
+from .. import models
 
-
-class AbstractAPITestCase(APITestCase):
-    def setUp(self):
-        self.extra = {"format": "json"}
-        with factory.django.mute_signals(post_save):
-            self.gamer1 = GamerProfileWithCommunityFactory()
-            self.community = CommunityMembership.objects.filter(gamer=self.gamer1)[
-                0
-            ].community
-            self.community.set_role(self.gamer1, "admin")
-            self.gamer2 = GamerProfileFactory()
-            self.gamer2.friends.add(self.gamer1)
-            self.gamer3 = GamerProfileWithCommunityFactory()
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
-class TestCommunityViewSet(AbstractAPITestCase):
-    """
-    Test community viewsets.
-    """
+@pytest.mark.parametrize(
+    "gamertouse,viewname,expected_get_response",
+    [
+        (None, "api-community-list", 403),
+        ("gamer1", "api-community-list", 200),
+        (None, "api-profile-list", 403),
+        ("gamer1", "api-profile-list", 200),
+    ],
+)
+def test_top_list_views(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    viewname,
+    expected_get_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    url = reverse(viewname, kwargs={"format": "json"})
+    with django_assert_max_num_queries(70):
+        response = apiclient.get(url)
+    assert response.status_code == expected_get_response
 
-    def test_list_communities(self):
-        url_kwargs = {"extra": self.extra}
-        self.get("api-community-list", **url_kwargs)
-        print(self.last_response.data)
-        self.response_403()
-        with self.login(username=self.gamer1.user.username):
-            self.assertGoodView("api-community-list", **url_kwargs)
 
-    def test_retrieve_community(self):
-        url_kwargs = {"pk": self.community.pk, "extra": self.extra}
-        self.get("api-community-detail", **url_kwargs)
-        self.response_403()
-        print("Logging in with {}".format(self.gamer1.user.username))
-        assert self.gamer1.user.has_perm("community.view_details", self.community)
-        with self.login(username=self.gamer1.user.username):
-            self.assertGoodView("api-community-detail", **url_kwargs)
+@pytest.mark.parametrize(
+    "gamertouse,viewname,communitytouse,expected_get_response",
+    [
+        (None, "api-member-list", "community1", 403),
+        ("gamer1", "api-member-list", "community1", 200),
+        ("gamer5", "api-member-list", "community1", 404),
+        (None, "api-community-admins", "community1", 403),
+        ("gamer1", "api-community-admins", "community1", 200),
+        ("gamer5", "api-community-admins", "community1", 403),
+        (None, "api-community-mods", "community1", 403),
+        ("gamer1", "api-community-mods", "community1", 200),
+        ("gamer5", "api-community-mods", "community1", 403),
+        (None, "api-community-bans", "community1", 403),
+        ("gamer1", "api-community-bans", "community1", 200),
+        ("gamer5", "api-community-bans", "community1", 403),
+        (None, "api-community-kicks", "community1", 403),
+        ("gamer1", "api-community-kicks", "community1", 200),
+        ("gamer1", "api-community-kicks", "community1", 403),
+        (None, "api-comm-application-list", "community1", 403),
+        ("gamer1", "api-comm-application-list", "community1", 200),
+        ("gamer5", "api-comm-application-list", "community1", 403),
+    ],
+)
+def test_community_sublists(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    viewname,
+    communitytouse,
+    expected_get_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    community = getattr(social_testdata, communitytouse)
+    url = reverse(viewname, kwargs={"parent_lookup_community": community.pk})
+    with django_assert_max_num_queries(50):
+        response = apiclient.get(url)
+    assert response.status_code == expected_get_response
 
 
-class TestGamerProfileViewSet(AbstractAPITestCase):
-    """
-    Test gamerprofile viewset.
-    """
-
-    def test_list_profiles(self):
-        self.get("api-profile-list", extra=self.extra)
-        self.response_403()
-        with self.login(username=self.gamer1.user.username):
-            self.assertGoodView("api-profile-list", extra=self.extra)
-
-    def test_retrieve_a_gamer_profile(self):
-        url_kwargs = {"pk": self.gamer1.pk, "extra": self.extra}
-        self.get("api-profile-detail", **url_kwargs)
-        self.response_403()
-        # assert self.gamer2.user.has_perm("profile.view_detail", self.gamer1)
-        with self.login(username=self.gamer1.user.username):
-            self.assertGoodView("api-profile-detail", **url_kwargs)
+@pytest.mark.parametrize(
+    "gamertouse,viewname,object_to_use,expected_get_response",
+    [
+        (None, "api-community-detail", "community1", 403),
+        (None, "api-profile-detail", "gamer1", 403),
+        ("gamer1", "api-community-detail", "community1", 200),
+        ("gamer5", "api-community-detail", "community1", 200),
+        ("gamer1", "api-profile-detail", "gamer1", 200),
+        ("blocked_gamer", "api-profile-detail", "gamer1", 404),
+    ],
+)
+def test_top_detail_views(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    viewname,
+    object_to_use,
+    expected_get_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    obj = getattr(social_testdata, object_to_use)
+    if isinstance(obj, models.GamerProfile):
+        for gamecheck in models.GamerProfile.objects.all():
+            print("{}: {}".format(gamecheck.username, gamecheck.pk))
+    url = reverse(viewname, kwargs={"format": "json", "pk": obj.pk})
+    with django_assert_max_num_queries(70):
+        response = apiclient.get(url)
+    assert response.status_code == expected_get_response
