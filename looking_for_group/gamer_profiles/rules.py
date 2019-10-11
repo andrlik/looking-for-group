@@ -22,6 +22,8 @@ def is_user(user, obj=None):  # noqa
 
 @predicate
 def is_community_admin(user, community):
+    if not is_user(user):
+        return False
     try:
         role = user.gamerprofile.get_role(community)
     except NotInCommunity:
@@ -158,7 +160,6 @@ def is_connected_to_gamer(user, gamer):
     )
     result = False
     logger.debug("Checking if gamer is private...")
-    print(gamer.private)
     if not gamer.private:
         return True
     logger.debug("Gamer is private... moving on.")
@@ -179,14 +180,14 @@ def is_connected_to_gamer(user, gamer):
 
 @predicate
 def is_blocker(user, block_file):
-    if block_file.blocker == user.gamerprofile:
+    if is_user(user) and block_file.blocker == user.gamerprofile:
         return True
     return False
 
 
 @predicate
 def is_muter(user, mute_file):
-    if mute_file.muter == user.gamerprofile:
+    if is_user(user) and mute_file.muter == user.gamerprofile:
         return True
     return False
 
@@ -253,28 +254,28 @@ is_valid_inviter = is_community_admin | is_allowed_invites
 
 rules.add_perm("community.list_communities", is_user)
 rules.add_perm("community.view_details", is_community_member | is_public_community)
-rules.add_perm("community.edit_community", is_community_admin)
-rules.add_perm("community.join", is_joinable)
-rules.add_perm("community.apply", is_eligible_applicant)
-rules.add_perm("community.edit_application", is_applicant)
-rules.add_perm("community.approve_application", is_application_approver)
-rules.add_perm("community.review_applications", is_community_superior)
-rules.add_perm("community.leave", is_membership_subject)
-rules.add_perm("community.delete_community", is_community_owner)
-rules.add_perm("community.kick_user", is_community_admin)
-rules.add_perm("community.ban_user", is_community_admin)
-rules.add_perm("community.edit_roles", is_community_admin)
-rules.add_perm("community.edit_gamer_role", is_community_superior)
-rules.add_perm("community.transfer_ownership", is_community_owner)
-rules.add_perm("community.can_invite", is_valid_inviter)
-rules.add_perm("community.can_admin_invites", is_community_admin)
-rules.add_perm("profile.view_detail", is_profile_viewer)
-rules.add_perm("profile.delete_note", is_note_author)
-rules.add_perm("profile.can_friend", is_possible_friend)
+rules.add_perm("community.edit_community", is_user & is_community_admin)
+rules.add_perm("community.join", is_user & is_joinable)
+rules.add_perm("community.apply", is_user & is_eligible_applicant)
+rules.add_perm("community.edit_application", is_user & is_applicant)
+rules.add_perm("community.approve_application", is_user & is_application_approver)
+rules.add_perm("community.review_applications", is_user & is_community_superior)
+rules.add_perm("community.leave", is_user & is_membership_subject)
+rules.add_perm("community.delete_community", is_user & is_community_owner)
+rules.add_perm("community.kick_user", is_user & is_community_admin)
+rules.add_perm("community.ban_user", is_user & is_community_admin)
+rules.add_perm("community.edit_roles", is_user & is_community_admin)
+rules.add_perm("community.edit_gamer_role", is_user & is_community_superior)
+rules.add_perm("community.transfer_ownership", is_user & is_community_owner)
+rules.add_perm("community.can_invite", is_user & is_valid_inviter)
+rules.add_perm("community.can_admin_invites", is_user & is_community_admin)
+rules.add_perm("profile.view_detail", is_user & is_profile_viewer)
+rules.add_perm("profile.delete_note", is_user & is_note_author)
+rules.add_perm("profile.can_friend", is_user & is_possible_friend)
 rules.add_perm("profile.withdraw_friend_request", is_request_author)
-rules.add_perm("profile.approve_friend_request", is_request_recipient)
-rules.add_perm("profile.edit_profile", is_profile_owner)
-rules.add_perm("profile.view_gamer_notes", is_note_author)
-rules.add_perm("profile.remove_mute", is_muter)
-rules.add_perm("profile.remove_block", is_blocker)
-rules.add_perm("profile.see_detailed_availability", is_in_same_game_as_gamer)
+rules.add_perm("profile.approve_friend_request", is_user & is_request_recipient)
+rules.add_perm("profile.edit_profile", is_user & is_profile_owner)
+rules.add_perm("profile.view_gamer_notes", is_user & is_note_author)
+rules.add_perm("profile.remove_mute", is_user & is_muter)
+rules.add_perm("profile.remove_block", is_user & is_blocker)
+rules.add_perm("profile.see_detailed_availability", is_user & is_in_same_game_as_gamer)

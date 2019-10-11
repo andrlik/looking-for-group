@@ -56,9 +56,35 @@ class UserListingField(serializers.RelatedField):
         return value.display_name
 
 
+class GamerProfileListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for list views of gamer profile, and so that less private data is displayed
+    """
+
+    user = UserListingField()
+    timezone = serializers.SerializerMethodField()
+
+    def get_timezone(self, obj):
+        return obj.user.timezone
+
+    class Meta:
+        model = models.GamerProfile
+        fields = (
+            "id",
+            "user",
+            "private",
+            "timezone",
+            "will_gm",
+            "online_games",
+            "local_games",
+            "player_status",
+        )
+        read_only_fields = fields
+
+
 class GamerProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer for :class:`gamer_profiles.models.GamerProfile`.
+    Serializer for GamerProfile objects.
     """
 
     user = UserListingField()
@@ -121,8 +147,8 @@ class CommunityMembershipSerializer(serializers.ModelSerializer):
             "community",
             "gamer",
             "community_role",
-            "median_community_rating",
-            "comm_reputation_score",
+            # "median_community_rating",
+            # "comm_reputation_score",
             "created",
             "modified",
         )
@@ -130,8 +156,8 @@ class CommunityMembershipSerializer(serializers.ModelSerializer):
             "id",
             "community",
             "gamer",
-            "median_community_rating",
-            "comm_reputation_score",
+            # "median_community_rating",
+            # "comm_reputation_score",
             "created",
             "modified",
         )

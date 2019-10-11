@@ -20,6 +20,18 @@ community_router.register(
     basename="api-comm-application",
     parents_query_lookups=["community"],
 )
+community_router.register(
+    r"kicks",
+    profile_api_views.KickedUserViewSet,
+    basename="api-comm-kick",
+    parents_query_lookups=["community"],
+)
+community_router.register(
+    r"bans",
+    profile_api_views.BannedUserViewSet,
+    basename="api-comm-ban",
+    parents_query_lookups=["community"],
+)
 profile_router = social_router.register(
     r"profiles", profile_api_views.GamerProfileViewSet, basename="api-profile"
 )
@@ -45,5 +57,10 @@ social_router.register(
     profile_api_views.ReceivedFriendRequestViewset,
     basename="api-my-received-request",
 )
-
+social_router.register(
+    r"blocks", profile_api_views.BlockedUserViewSet, basename="api-block"
+)
+social_router.register(
+    r"mutes", profile_api_views.MutedUserViewSet, basename="api-mute"
+)
 urlpatterns = social_router.urls

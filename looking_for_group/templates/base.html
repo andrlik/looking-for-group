@@ -137,7 +137,7 @@
           <li><a href="{% url 'game_catalog:game-list' %}" class="is-active">
             <i class="large fas fa-database"></i><span class="app-dashboard-sidebar-text">{% trans "RPG Database" %}</span>
           </a></li>
-          <li><a href="{% url 'haystack_search' %}">
+          <li class="hide-for-medium"><a href="{% url 'haystack_search' %}">
             <i class="large fas fa-search"></i><span class="app-dashboard-sidebar-text">{% trans "Search" %}</span>
           </a></li>
           {% if request.user.is_authenticated %}
