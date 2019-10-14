@@ -22,13 +22,13 @@ from django_q import humanhash
 from notifications.models import Notification
 from schedule.models import Calendar
 
+from ..discord.models import CommunityDiscordLink
 from ..game_catalog import models as catalog_models
 from ..gamer_profiles import models as social_models
 from ..gamer_profiles.views import ModelFormWithSwitcViewhMixin
 from ..games import models as game_models
 from ..games.mixins import JSONResponseMixin
 from . import forms, models
-from .utils import fetch_or_set_discord_comm_links
 
 # Create your views here.
 
@@ -384,7 +384,7 @@ class SiteSocialStatsView(LoginRequiredMixin, JSONResponseMixin, generic.Templat
                 "site_total_completed_sessions",
                 game_models.GameSession.objects.filter(status="complete").count(),
             ),
-            "site_total_discord_communities": fetch_or_set_discord_comm_links(),
+            "site_total_discord_communities": cache.get_or_set("site_total_discord_communities", CommunityDiscordLink.objects.filter(servers__isnull=True).count()),
         }
         logger.debug("Stats fetched. Returning to context.")
         context["stat_set"] = stat_set
