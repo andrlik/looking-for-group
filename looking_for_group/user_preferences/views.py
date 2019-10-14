@@ -384,7 +384,7 @@ class SiteSocialStatsView(LoginRequiredMixin, JSONResponseMixin, generic.Templat
                 "site_total_completed_sessions",
                 game_models.GameSession.objects.filter(status="complete").count(),
             ),
-            "site_total_discord_communities": cache.get_or_set("site_total_discord_communities", CommunityDiscordLink.objects.filter(servers__isnull=True).count()),
+            "site_total_discord_communities": cache.get_or_set("site_total_discord_communities", CommunityDiscordLink.objects.filter(servers__isnull=False).count()),
         }
         logger.debug("Stats fetched. Returning to context.")
         context["stat_set"] = stat_set
