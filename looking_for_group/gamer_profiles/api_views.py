@@ -593,7 +593,7 @@ class CommunityAdminApplicationViewSet(
                 status=status.HTTP_403_FORBIDDEN,
             )
         try:
-            app.approve()
+            app.approve_application()
         except AlreadyInCommunity:
             return Response(status=status.HTTP_200_OK)
         except CurrentlySuspended:
@@ -611,7 +611,7 @@ class CommunityAdminApplicationViewSet(
                 {"result": "You don't have permission to approve this application."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        app.reject()
+        app.reject_application()
         return Response(status=status.HTTP_202_ACCEPTED)
 
 

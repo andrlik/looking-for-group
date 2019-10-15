@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from .. import models
+from ..models import NotInCommunity
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -250,3 +251,48 @@ def test_friend_request_create_receipt(
     elif expected_post_response == 200:
         gamer.refresh_from_db()
         assert friend_count - gamer.friends.count() == 1
+
+
+@pytest.mark.parametrize(
+    "gamertouse,viewname,expected_post_response",
+    [
+        (None, "api-comm-application-approve", 403),
+        ("gamer5", "api-comm-application-approve", 403),
+        ("gamer1", "api-comm-application-approve", 202),
+        (None, "api-comm-application-reject", 403),
+        ("gamer5", "api-comm-application-reject", 403),
+        ("gamer1", "api-comm-application-reject", 202),
+    ],
+)
+def test_community_application_approval(
+    apiclient,
+    social_testdata_with_kicks,
+    django_assert_max_num_queries,
+    gamertouse,
+    viewname,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
+        apiclient.force_login(gamer.user)
+    application = social_testdata_with_kicks.application
+    url = reverse(
+        viewname,
+        kwargs={
+            "parent_lookup_community": application.community.pk,
+            "pk": application.pk,
+        },
+    )
+    with django_assert_max_num_queries(50):
+        response = apiclient.post(url)
+    assert response.status_code == expected_post_response
+    if expected_post_response == 202:
+        application.refresh_from_db()
+        if "approve" in viewname:
+            assert application.status == "approve"
+            assert application.community.get_role(application.gamer)
+        else:
+            assert application.status == "reject"
+            with pytest.raises(NotInCommunity):
+                application.community.get_role(application.gamer)
