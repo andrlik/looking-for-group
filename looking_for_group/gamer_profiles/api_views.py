@@ -1,6 +1,4 @@
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, permissions, status, viewsets
@@ -507,7 +505,7 @@ class CommunityApplicationViewSet(
     permission_classes = (permissions.IsAuthenticated,)
     permission_required = "community.list_communities"
     serializer_class = serializers.CommunityApplicationSerializer
-    object_permission_required = "commuity.edit_application"
+    object_permission_required = "community.edit_application"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ("community", "status")
 

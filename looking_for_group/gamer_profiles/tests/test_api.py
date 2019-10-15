@@ -160,12 +160,16 @@ def test_community_sublist_details(
         ("gamer1", "api-profile-detail", "gamer1", 200),
         ("gamer1", "api-profile-detail", "gamer3", 200),
         ("blocked_gamer", "api-profile-detail", "gamer1", 403),
+        (None, "api-my-application-detail", "application", 403),
+        ("gamer1", "api-my-application-detail", "application", 404),
+        ("gamer5", "api-my-application-detail", "application", 404),
+        ("new_gamer", "api-my-application-detail", "application", 200),
     ],
 )
 def test_top_detail_views(
     apiclient,
     django_assert_max_num_queries,
-    social_testdata,
+    social_testdata_with_kicks,
     gamertouse,
     viewname,
     object_to_use,
@@ -173,9 +177,9 @@ def test_top_detail_views(
 ):
     gamer = None
     if gamertouse:
-        gamer = getattr(social_testdata, gamertouse)
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
         apiclient.force_login(gamer.user)
-    obj = getattr(social_testdata, object_to_use)
+    obj = getattr(social_testdata_with_kicks, object_to_use)
     if isinstance(obj, models.GamerProfile):
         for gamecheck in models.GamerProfile.objects.all():
             print("{}: {}".format(gamecheck.username, gamecheck.pk))
@@ -296,3 +300,15 @@ def test_community_application_approval(
             assert application.status == "reject"
             with pytest.raises(NotInCommunity):
                 application.community.get_role(application.gamer)
+
+
+def test_kick_ban_community_member(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata_with_kicks,
+    gamertouse,
+    viewname,
+    targetgamer,
+    expected_post_response,
+):
+    pass
