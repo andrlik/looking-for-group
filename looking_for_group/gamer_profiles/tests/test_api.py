@@ -1,8 +1,13 @@
+import logging
+
 import pytest
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 
-from .. import models
+from .. import models, serializers
 from ..models import NotInCommunity
+
+logger = logging.getLogger("api")
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
@@ -82,7 +87,7 @@ def test_community_sublists(
         gamer = getattr(social_testdata_with_kicks, gamertouse)
         apiclient.force_login(gamer.user)
     community = getattr(social_testdata_with_kicks, communitytouse)
-    url = reverse(viewname, kwargs={"parent_lookup_community": community.pk})
+    url = reverse(viewname, kwargs={"parent_lookup_community": community.slug})
     if filterstr:
         url = str(url) + "?{}".format(filterstr)
     with django_assert_max_num_queries(50):
@@ -143,7 +148,7 @@ def test_community_sublist_details(
     print("Using target object of {}".format(target_object))
     url = reverse(
         viewname,
-        kwargs={"parent_lookup_community": community.pk, "pk": target_object.pk},
+        kwargs={"parent_lookup_community": community.slug, "pk": target_object.pk},
     )
     with django_assert_max_num_queries(50):
         response = apiclient.get(url)
@@ -183,7 +188,12 @@ def test_top_detail_views(
     if isinstance(obj, models.GamerProfile):
         for gamecheck in models.GamerProfile.objects.all():
             print("{}: {}".format(gamecheck.username, gamecheck.pk))
-    url = reverse(viewname, kwargs={"format": "json", "pk": obj.pk})
+    if isinstance(obj, models.GamerCommunity):
+        url = reverse(viewname, kwargs={"format": "json", "slug": obj.slug})
+    elif isinstance(obj, models.GamerProfile):
+        url = reverse(viewname, kwargs={"format": "json", "username": obj.username})
+    else:
+        url = reverse(viewname, kwargs={"format": "json", "pk": obj.pk})
     with django_assert_max_num_queries(70):
         response = apiclient.get(url)
     assert response.status_code == expected_get_response
@@ -220,7 +230,7 @@ def test_friend_request_create_receipt(
         friend_count = gamer.friends.count()
     target_friend = getattr(social_testdata, targetgamer)
     print("Target: {}".format(target_friend))
-    friending_url = reverse(friendviewname, kwargs={"pk": target_friend.pk})
+    friending_url = reverse(friendviewname, kwargs={"username": target_friend.username})
     with django_assert_max_num_queries(50):
         response = apiclient.post(friending_url)
     assert response.status_code == expected_post_response
@@ -284,7 +294,7 @@ def test_community_application_approval(
     url = reverse(
         viewname,
         kwargs={
-            "parent_lookup_community": application.community.pk,
+            "parent_lookup_community": application.community.slug,
             "pk": application.pk,
         },
     )
@@ -302,13 +312,494 @@ def test_community_application_approval(
                 application.community.get_role(application.gamer)
 
 
+@pytest.mark.parametrize(
+    "gamertouse,communitytouse,viewname,post_data,targetgamer,expected_post_response",
+    [
+        (None, "community", "api-member-kick", {"reason": "Obnoxious"}, "gamer1", 403),
+        (None, "community", "api-member-ban", {"reason": "Obnoxious"}, "gamer1", 403),
+        (
+            "gamer1",
+            "community",
+            "api-member-kick",
+            {"reason": "Obnoxious"},
+            "gamer5",
+            403,
+        ),
+        (
+            "gamer1",
+            "community",
+            "api-member-ban",
+            {"reason": "Obnoxious"},
+            "gamer5",
+            403,
+        ),
+        (
+            "gamer5",
+            "community",
+            "api-member-kick",
+            {"reason": "Obnoxious"},
+            "gamer1",
+            201,
+        ),
+        (
+            "gamer5",
+            "community",
+            "api-member-ban",
+            {"reason": "Obnoxious"},
+            "gamer1",
+            201,
+        ),
+        ("gamer5", "community", "api-member-kick", {}, "gamer1", 400),
+        ("gamer5", "community", "api-member-ban", {}, "gamer1", 400),
+    ],
+)
 def test_kick_ban_community_member(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata_with_kicks,
+    gamertouse,
+    communitytouse,
+    viewname,
+    post_data,
+    targetgamer,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
+        apiclient.force_login(gamer.user)
+    community = getattr(social_testdata_with_kicks, communitytouse)
+    target_gamer = models.CommunityMembership.objects.get(
+        gamer=getattr(social_testdata_with_kicks, targetgamer), community=community
+    )
+    url = reverse(
+        viewname,
+        kwargs={"parent_lookup_community": community.slug, "pk": target_gamer.pk},
+    )
+    with django_assert_max_num_queries(50):
+        response = apiclient.post(url, data=post_data)
+    assert response.status_code == expected_post_response
+    if expected_post_response == 201:
+        with pytest.raises(ObjectDoesNotExist):
+            models.CommunityMembership.objects.get(
+                gamer=getattr(social_testdata_with_kicks, targetgamer),
+                community=community,
+            )
+        if "kick" in viewname:
+            assert (
+                models.KickedUser.objects.filter(
+                    community=community, kicked_user=target_gamer.gamer
+                ).count()
+                > 0
+            )
+        else:
+            assert (
+                models.BannedUser.objects.filter(
+                    community=community, banned_user=target_gamer.gamer
+                ).count()
+                > 0
+            )
+    else:
+        assert models.CommunityMembership.objects.get(
+            gamer=getattr(social_testdata_with_kicks, targetgamer), community=community
+        )
+        if "kick" in viewname:
+            assert (
+                models.KickedUser.objects.filter(
+                    community=community, kicked_user=target_gamer.gamer
+                ).count()
+                == 0
+            )
+        else:
+            assert (
+                models.BannedUser.objects.filter(
+                    community=community, banned_user=target_gamer.gamer
+                ).count()
+                == 0
+            )
+
+
+@pytest.mark.parametrize(
+    "gamertouse,communitytouse,viewname,httpmethod,targetobject,post_data,expected_post_response",
+    [
+        (None, "community2", "api-comm-kick-detail", "delete", "kick1", {}, 403),
+        (
+            None,
+            "community2",
+            "api-comm-kick-detail",
+            "put",
+            "kick1",
+            {"reason": "He's super annoying."},
+            403,
+        ),
+        (
+            None,
+            "community2",
+            "api-comm-kick-detail",
+            "patch",
+            "kick1",
+            {"reason": "He's super annoying."},
+            403,
+        ),
+        (None, "community", "api-comm-ban-detail", "delete", "banned1", {}, 403),
+        (
+            None,
+            "community",
+            "api-comm-ban-detail",
+            "put",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            403,
+        ),
+        (
+            None,
+            "community",
+            "api-comm-ban-detail",
+            "patch",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            403,
+        ),
+        ("gamer4", "community2", "api-comm-kick-detail", "delete", "kick1", {}, 403),
+        (
+            "gamer4",
+            "community2",
+            "api-comm-kick-detail",
+            "put",
+            "kick1",
+            {"reason": "He's super annoying."},
+            403,
+        ),
+        (
+            "gamer4",
+            "community2",
+            "api-comm-kick-detail",
+            "patch",
+            "kick1",
+            {"reason": "He's super annoying."},
+            403,
+        ),
+        ("gamer4", "community", "api-comm-ban-detail", "delete", "banned1", {}, 403),
+        (
+            "gamer4",
+            "community",
+            "api-comm-ban-detail",
+            "put",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            403,
+        ),
+        (
+            "gamer4",
+            "community",
+            "api-comm-ban-detail",
+            "patch",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            403,
+        ),
+        ("gamer1", "community1", "api-comm-kick-detail", "delete", "kick1", {}, 204),
+        (
+            "gamer1",
+            "community1",
+            "api-comm-kick-detail",
+            "put",
+            "kick1",
+            {"reason": "He's super annoying."},
+            200,
+        ),
+        (
+            "gamer1",
+            "community1",
+            "api-comm-kick-detail",
+            "patch",
+            "kick1",
+            {"reason": "He's super annoying."},
+            200,
+        ),
+        ("gamer1", "community", "api-comm-ban-detail", "delete", "banned1", {}, 403),
+        (
+            "gamer1",
+            "community",
+            "api-comm-ban-detail",
+            "put",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            403,
+        ),
+        (
+            "gamer1",
+            "community",
+            "api-comm-ban-detail",
+            "patch",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            403,
+        ),
+        ("gamer5", "community", "api-comm-ban-detail", "delete", "banned1", {}, 204),
+        (
+            "gamer5",
+            "community",
+            "api-comm-ban-detail",
+            "put",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            405,
+        ),
+        (
+            "gamer5",
+            "community",
+            "api-comm-ban-detail",
+            "patch",
+            "banned1",
+            {"reason": "harrassment extreme"},
+            405,
+        ),
+    ],
+)
+def test_kick_ban_edits(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata_with_kicks,
+    gamertouse,
+    communitytouse,
+    viewname,
+    httpmethod,
+    targetobject,
+    post_data,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
+        apiclient.force_login(gamer.user)
+    community = getattr(social_testdata_with_kicks, communitytouse)
+    target_object = getattr(social_testdata_with_kicks, targetobject)
+    logger.debug(
+        "Preparing to submit {} method with data of {}".format(httpmethod, post_data)
+    )
+    url = reverse(
+        viewname,
+        kwargs={"parent_lookup_community": community.slug, "pk": target_object.pk},
+    )
+    if httpmethod in ["patch", "delete"]:
+        data_to_submit = post_data
+    else:
+        if "ban" in viewname:
+            data_to_submit = {
+                # "id": target_object.pk,
+                # "community": community.name,
+                # "banner": target_object.banner.username,
+                # "banned_user": target_object.banned_user.username,
+                "reason": post_data["reason"]
+            }
+        else:
+            data_to_submit = {
+                "id": target_object.pk,
+                "community": community.slug,
+                "kicker": target_object.kicker.username,
+                "kicked_user": target_object.kicked_user.username,
+                "reason": post_data["reason"],
+                "end_date": "",
+            }
+        logger.debug("Translated post data to {}".format(data_to_submit))
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, data=data_to_submit)
+    print(response.data)
+    assert response.status_code == expected_post_response
+    if expected_post_response == 200:
+        target_object.refresh_from_db()
+        if post_data:
+            for k, v in post_data.items():
+                assert v == getattr(target_object, k) or (
+                    v == "" and not getattr(target_object, k)
+                )
+    if expected_post_response == 204:
+        with pytest.raises(ObjectDoesNotExist):
+            type(target_object).objects.get(pk=target_object.pk)
+
+
+@pytest.mark.parametrize(
+    "gamertouse,viewname,targetgamer,notetouse,expected_get_response,expected_length",
+    [
+        (None, "api-gamernote-list", "gamer3", None, 403, None),
+        (None, "api-gamernote-detail", "gamer3", "gn", 403, None),
+        ("gamer2", "api-gamernote-list", "gamer3", None, 200, 0),
+        ("gamer2", "api-gamernote-detail", "gamer3", "gn", 404, None),
+        ("gamer4", "api-gamernote-list", "gamer3", None, 200, 0),
+        ("gamer4", "api-gamernote-detail", "gamer3", "gn", 404, None),
+        ("gamer1", "api-gamernote-list", "gamer3", None, 200, 1),
+        ("gamer1", "api-gamernote-detail", "gamer3", "gn", 200, None),
+    ],
+)
+def test_gamernote_list_detail(
     apiclient,
     django_assert_max_num_queries,
     social_testdata_with_kicks,
     gamertouse,
     viewname,
     targetgamer,
+    notetouse,
+    expected_get_response,
+    expected_length,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
+        apiclient.force_login(gamer.user)
+    target_gamer = getattr(social_testdata_with_kicks, targetgamer)
+    url_kwargs = {"parent_lookup_gamer": target_gamer.username}
+    if notetouse:
+        url_kwargs["pk"] = getattr(social_testdata_with_kicks, notetouse).pk
+    url = reverse(viewname, kwargs=url_kwargs)
+    with django_assert_max_num_queries(50):
+        response = apiclient.get(url)
+    print(response.data)
+    assert response.status_code == expected_get_response
+    if expected_length:
+        assert len(response.data["results"]) == expected_length
+
+
+@pytest.mark.parametrize(
+    "gamertouse,targetgamer,viewname,httpmethod,targetobject,post_data,expected_post_response",
+    [
+        (
+            None,
+            "gamer3",
+            "api-gamernote-list",
+            "post",
+            None,
+            {"body": "This guy's wise", "title": "I like him"},
+            403,
+        ),
+        (
+            "gamer2",
+            "gamer3",
+            "api-gamernote-list",
+            "post",
+            None,
+            {"body": "This guy's wise", "title": "I like him"},
+            403,
+        ),
+        (
+            "gamer1",
+            "gamer3",
+            "api-gamernote-list",
+            "post",
+            None,
+            {"body": "This guy's wise", "title": "I like him"},
+            201,
+        ),
+        (
+            None,
+            "gamer3",
+            "api-gamernote-detail",
+            "put",
+            "gn",
+            {"body": "This guy's wise", "title": "I like him"},
+            404,
+        ),
+        (
+            "gamer2",
+            "gamer3",
+            "api-gamernote-detail",
+            "put",
+            "gn",
+            {"body": "This guy's wise", "title": "I like him"},
+            404,
+        ),
+        (
+            "gamer1",
+            "gamer3",
+            "api-gamernote-detail",
+            "put",
+            "gn",
+            {"body": "This guy's wise", "title": "I like him"},
+            200,
+        ),
+        (
+            None,
+            "gamer3",
+            "api-gamernote-detail",
+            "patch",
+            "gn",
+            {"body": "This guy's wise", "title": "I like him"},
+            404,
+        ),
+        (
+            "gamer2",
+            "gamer3",
+            "api-gamernote-detail",
+            "patch",
+            "gn",
+            {"body": "This guy's wise", "title": "I like him"},
+            404,
+        ),
+        (
+            "gamer1",
+            "gamer3",
+            "api-gamernote-detail",
+            "patch",
+            "gn",
+            {"body": "This guy's wise", "title": "I like him"},
+            200,
+        ),
+        (None, "gamer3", "api-gamernote-detail", "delete", "gn", {}, 404),
+        ("gamer2", "gamer3", "api-gamernote-detail", "delete", "gn", {}, 404),
+        ("gamer1", "gamer3", "api-gamernote-detail", "delete", "gn", {}, 204),
+    ],
+)
+def test_gamernote_create_update(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata_with_kicks,
+    gamertouse,
+    targetgamer,
+    viewname,
+    httpmethod,
+    targetobject,
+    post_data,
     expected_post_response,
 ):
-    pass
+    gamer = None
+    target_object = None
+    if gamertouse:
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
+        apiclient.force_login(gamer.user)
+    target_gamer = getattr(social_testdata_with_kicks, gamertouse)
+    target_gamer.friends.add(getattr(social_testdata_with_kicks, "gamer1"))
+    current_note_count = models.GamerNote.objects.filter(gamer=target_gamer).count()
+    if "detail" in viewname or "destroy" in viewname:
+        target_object = getattr(social_testdata_with_kicks, targetobject)
+        url = reverse(
+            viewname,
+            kwargs={
+                "parent_lookup_gamer": target_gamer.username,
+                "pk": target_object.pk,
+            },
+        )
+        if httpmethod == "put":
+            post_data["id"] = target_object.pk
+            post_data["author"] = target_object.author.username
+            post_data["gamer"] = target_object.gamer.username
+    else:
+        url = reverse(viewname, kwargs={"parent_lookup_gamer": target_gamer.username})
+    print(url)
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, post_data)
+    print(response.data)
+    assert response.status_code == expected_post_response
+    if target_object:
+        if expected_post_response == 204:
+            with pytest.raises(ObjectDoesNotExist):
+                models.GamerNote.objects.get(pk=target_object.pk)
+        else:
+            target_object.refresh_from_db()
+            for k, v in post_data.items():
+                assert v == getattr(target_object, k)
+    else:
+        assert (
+            models.GamerNote.objects.filter(gamer=target_gamer).count()
+            - current_note_count
+            == 1
+        )

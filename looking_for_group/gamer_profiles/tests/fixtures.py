@@ -47,7 +47,7 @@ class SocialTData(object):
             requestor=self.prospective_friend, recipient=self.gamer1, status="new"
         )
         self.gn = models.GamerNote.objects.create(
-            gamer=self.gamer4,
+            gamer=self.gamer3,
             author=self.gamer1,
             title="Test note",
             body="This is someone new.",

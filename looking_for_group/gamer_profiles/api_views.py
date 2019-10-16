@@ -1,3 +1,5 @@
+import logging
+
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -10,6 +12,8 @@ from rest_framework_rules.mixins import PermissionRequiredMixin
 
 from . import models, serializers
 from .models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
+
+logger = logging.getLogger("api")
 
 
 class GamerCommunityViewSet(
@@ -24,6 +28,8 @@ class GamerCommunityViewSet(
     object_permission_required = "community.list_communities"
     queryset = models.GamerCommunity.objects.all()
     serializer_class = serializers.GamerCommunitySerializer
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
 
     @action(methods=["post"], detail=True)
     def apply(self, request, **kwargs):
@@ -133,7 +139,7 @@ class BannedUserViewSet(
 
     def check_permissions(self, request, *args, **kwargs):
         community = get_object_or_404(
-            models.GamerCommunity, pk=self.kwargs["parent_lookup_community"]
+            models.GamerCommunity, slug=self.kwargs["parent_lookup_community"]
         )
         if not request.user.has_perm(self.permission_required, community):
             self.permission_denied(
@@ -145,19 +151,18 @@ class BannedUserViewSet(
 
     def get_queryset(self):
         return models.BannedUser.objects.filter(
-            community__in=models.GamerCommunity.objects.filter(
-                id__in=[
-                    c.community.id
-                    for c in models.CommunityMembership.objects.filter(
-                        community_role="admin", gamer=self.request.user.gamerprofile
-                    )
-                ]
-            )
+            community__slug=self.kwargs["parent_lookup_community"]
         ).select_related("banner", "banned_user")
 
 
 class KickedUserViewSet(
-    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+    PermissionRequiredMixin,
+    NestedViewSetMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
 ):
     permission_classes = (permissions.IsAuthenticated,)
     permission_required = "community.kick_user"
@@ -172,7 +177,7 @@ class KickedUserViewSet(
 
     def check_permissions(self, request, *args, **kwargs):
         community = get_object_or_404(
-            models.GamerCommunity, pk=self.kwargs["parent_lookup_community"]
+            models.GamerCommunity, slug=self.kwargs["parent_lookup_community"]
         )
         if not request.user.has_perm(self.permission_required, community):
             self.permission_denied(
@@ -183,15 +188,9 @@ class KickedUserViewSet(
             )
 
     def get_queryset(self):
+        logger.debug("Checking data...: {}".format(self.request.data))
         return models.KickedUser.objects.filter(
-            community__in=models.GamerCommunity.objects.filter(
-                id__in=[
-                    c.community.id
-                    for c in models.CommunityMembership.objects.filter(
-                        community_role="admin", gamer=self.request.user.gamerprofile
-                    )
-                ]
-            )
+            community__slug=self.kwargs["parent_lookup_community"]
         ).select_related("kicker", "kicked_user")
 
 
@@ -219,7 +218,7 @@ class CommunityMembershipViewSet(
 
     def check_permissions(self, request, *args, **kwargs):
         community = get_object_or_404(
-            models.GamerCommunity, pk=self.kwargs["parent_lookup_community"]
+            models.GamerCommunity, slug=self.kwargs["parent_lookup_community"]
         )
         if not request.user.has_perm(self.permission_required, community):
             self.permission_denied(
@@ -233,7 +232,7 @@ class CommunityMembershipViewSet(
         return (
             models.CommunityMembership.objects.filter(
                 community=models.GamerCommunity.objects.get(
-                    pk=self.kwargs["parent_lookup_community"]
+                    slug=self.kwargs["parent_lookup_community"]
                 )
             )
             .select_related("gamer", "community")
@@ -260,11 +259,11 @@ class CommunityMembershipViewSet(
             )
         end_date = None
         try:
-            reason = self.request.kwargs["reason"]
+            reason = self.request.data["reason"]
         except KeyError:
             return Response(status=400)
-        if "end_date" in self.request.kwargs.keys():
-            end_date = self.request.kwargs["end_date"]
+        if "end_date" in self.request.data.keys():
+            end_date = self.request.data["end_date"]
         membership = self.get_object()
         kicker = self.request.user.gamerprofile
         try:
@@ -277,7 +276,7 @@ class CommunityMembershipViewSet(
             return Response({}, status=status.HTTP_401_UNAUTHORIZED)
         except NotInCommunity:
             return Response({}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(kick_record.data, status=status.HTTP_202_ACCEPTED)
+        return Response(kick_record.data, status=status.HTTP_201_CREATED)
 
     @action(methods=["post"], detail=True)
     def ban(self, request, **kwargs):
@@ -290,7 +289,7 @@ class CommunityMembershipViewSet(
                 status=status.HTTP_403_FORBIDDEN,
             )
         try:
-            reason = self.request.kwargs["reason"]
+            reason = self.request.data["reason"]
         except KeyError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         banner = self.request.user.gamerprofile
@@ -303,7 +302,7 @@ class CommunityMembershipViewSet(
             return Response({}, status=status.HTTP_401_UNAUTHORIZED)
         except NotInCommunity:
             return Response({}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(ban_record.data, status=status.HTTP_202_ACCEPTED)
+        return Response(ban_record.data, status=status.HTTP_201_CREATED)
 
 
 class GamerProfileViewSet(
@@ -336,6 +335,8 @@ class GamerProfileViewSet(
         "preferred_systems",
         "adult_themes",
     )
+    lookup_field = "username"
+    lookup_url_kwarg = "username"
 
     def get_queryset(self):
         qs = models.GamerProfile.objects.exclude(
@@ -351,7 +352,7 @@ class GamerProfileViewSet(
     def retrieve(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        gamer = get_object_or_404(models.GamerProfile, pk=self.kwargs["pk"])
+        gamer = get_object_or_404(models.GamerProfile, username=self.kwargs["pk"])
         if request.user.gamerprofile.blocked_by(gamer):
             return Response(
                 data={
@@ -383,7 +384,9 @@ class GamerProfileViewSet(
 
     @action(detail=True, methods=["post"])
     def friend(self, request, *args, **kwargs):
-        target_gamer = get_object_or_404(models.GamerProfile, pk=self.kwargs["pk"])
+        target_gamer = get_object_or_404(
+            models.GamerProfile, username=self.kwargs["pk"]
+        )
         if not request.user.has_perm("profile.can_friend", target_gamer):
             return Response(
                 {"result": "You cannot send a friend request to this user."},
@@ -397,7 +400,9 @@ class GamerProfileViewSet(
 
     @action(detail=True, methods=["post"])
     def unfriend(self, request, *args, **kwargs):
-        target_gamer = get_object_or_404(models.GamerProfile, pk=self.kwargs["pk"])
+        target_gamer = get_object_or_404(
+            models.GamerProfile, username=self.kwargs["pk"]
+        )
         if not request.user.has_perm("profile.view_detail", target_gamer):
             return Response(status=status.HTTP_403_FORBIDDEN)
         request.user.gamerprofile.friends.remove(target_gamer)
@@ -426,15 +431,15 @@ class GamerNoteViewSet(
     """
 
     permission_classes = (permissions.IsAuthenticated,)
-    permission_required = "profile.view_details"
-    object_permission_required = "profile.edit_profile_note"
+    permission_required = "profile.view_detail"
+    object_permission_required = "profile.delete_note"
     serializer_class = serializers.GamerNoteSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = "gamer"
+    # filter_backends = [DjangoFilterBackend]
+    # filterset_fields = "gamer"
 
     def check_permissions(self, request, *args, **kwargs):
         profile = get_object_or_404(
-            models.GamerProfile, pk=self.kwargs["parent_lookup_gamer"]
+            models.GamerProfile, username=self.kwargs["parent_lookup_gamer"]
         )
         if not request.user.has_perm(self.permission_required, profile):
             self.permission_denied(
@@ -447,10 +452,13 @@ class GamerNoteViewSet(
     def get_queryset(self):
         return (
             models.GamerNote.objects.filter(
-                gamer=models.GamerProfile.objects.get(pk=self.kwargs["gamer_id"])
+                gamer=models.GamerProfile.objects.get(
+                    username=self.kwargs["parent_lookup_gamer"]
+                )
             )
             .filter(author=self.request.user.gamerprofile)
             .select_related("author", "gamer", "gamer__user")
+            .order_by("-created")
         )
 
 
@@ -535,7 +543,7 @@ class CommunityAdminApplicationViewSet(
 
     def check_permissions(self, request, *args, **kwargs):
         community = get_object_or_404(
-            models.GamerCommunity, pk=self.kwargs["parent_lookup_community"]
+            models.GamerCommunity, slug=self.kwargs["parent_lookup_community"]
         )
         if not request.user.has_perm("community.edit_roles", community):
             self.permission_denied(
@@ -558,7 +566,7 @@ class CommunityAdminApplicationViewSet(
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset()).filter(
-            community__pk=self.kwargs["parent_lookup_community"]
+            community__slug=self.kwargs["parent_lookup_community"]
         )
 
         # Perform the lookup filtering.
