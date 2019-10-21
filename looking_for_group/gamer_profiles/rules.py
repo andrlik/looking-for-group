@@ -24,9 +24,20 @@ def is_user(user, obj=None):  # noqa
 def is_community_admin(user, community):
     if not is_user(user):
         return False
+    logger.debug(
+        "Checking community {} which is owned by {}".format(
+            community.name, community.owner
+        )
+    )
     try:
         role = user.gamerprofile.get_role(community)
+        logger.debug(
+            "Retrieved role {} for {} in community {}".format(
+                role, user.gamerprofile, community.name
+            )
+        )
     except NotInCommunity:
+        logger.debug("Not in community!")
         return False
     if role == "Admin":
         return True

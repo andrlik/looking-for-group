@@ -50,6 +50,150 @@ def test_top_list_views(
 
 
 @pytest.mark.parametrize(
+    "gamertouse,viewname,httpmethod,targetobject,post_data,expected_post_response",
+    [
+        (
+            None,
+            "api-community-list",
+            "post",
+            None,
+            {
+                "id": "",
+                "slug": "",
+                "name": "My New Community",
+                "description": "Itsa me, Community!",
+                "url": "https://www.google.com",
+            },
+            403,
+        ),
+        (
+            "gamer1",
+            "api-community-list",
+            "post",
+            None,
+            {
+                "id": "",
+                "slug": "",
+                "name": "My New Community",
+                "description": "Itsa me, Community!",
+                "url": "https://www.google.com",
+            },
+            201,
+        ),
+        (
+            None,
+            "api-community-detail",
+            "put",
+            "community",
+            {
+                "name": "My New Community",
+                "description": "Itsa me, Community!",
+                "url": "https://www.google.com",
+            },
+            403,
+        ),
+        (
+            "gamer2",
+            "api-community-detail",
+            "put",
+            "community",
+            {
+                "name": "My New Community",
+                "description": "Itsa me, Community!",
+                "url": "https://www.google.com",
+            },
+            403,
+        ),
+        (
+            "gamer5",
+            "api-community-detail",
+            "put",
+            "community",
+            {
+                "name": "My New Community",
+                "description": "Itsa me, Community!",
+                "url": "https://www.google.com",
+            },
+            200,
+        ),
+        (
+            None,
+            "api-community-detail",
+            "patch",
+            "community",
+            {
+                "name": "My New Community",
+                "description": "Itsa me, Community!",
+                "url": "https://www.google.com",
+            },
+            403,
+        ),
+        (
+            "gamer5",
+            "api-community-detail",
+            "patch",
+            "community",
+            {
+                "name": "My New Community",
+                "description": "Itsa me, Community!",
+                "url": "https://www.google.com",
+            },
+            200,
+        ),
+        (None, "api-community-detail", "delete", "community", {}, 403),
+        ("gamer2", "api-community-detail", "delete", "community", {}, 403),
+        ("gamer5", "api-community-detail", "delete", "community", {}, 204),
+    ],
+)
+def test_community_destructive_edits(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata_with_kicks,
+    gamertouse,
+    viewname,
+    httpmethod,
+    post_data,
+    targetobject,
+    expected_post_response,
+):
+    gamer = None
+    target_object = None
+    community_count = models.GamerCommunity.objects.count()
+    if gamertouse:
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
+        apiclient.force_login(gamer.user)
+    if targetobject:
+        target_object = getattr(social_testdata_with_kicks, targetobject)
+        if httpmethod in ["put"]:
+            post_data["id"] = target_object.pk
+            post_data["slug"] = target_object.slug
+        url = reverse(viewname, kwargs={"slug": target_object.slug})
+    else:
+        url = reverse(viewname)
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, data=post_data)
+    print(response.data)
+    assert response.status_code == expected_post_response
+    if expected_post_response == 201:
+        assert models.GamerCommunity.objects.count() - community_count == 1
+    elif expected_post_response == 204:
+        with pytest.raises(ObjectDoesNotExist):
+            models.GamerCommunity.objects.get(pk=target_object.pk)
+    elif expected_post_response == 200:
+        target_object.refresh_from_db()
+        for k, v in post_data.items():
+            assert v == getattr(target_object, k) or (
+                v == "" and not getattr(target_object, k)
+            )
+    else:
+        assert models.GamerCommunity.objects.count() == community_count
+        if target_object:
+            for k, v in post_data.items():
+                if k not in ["id", "slug"]:
+                    assert v != getattr(target_object, k)
+
+
+@pytest.mark.parametrize(
     "gamertouse,viewname,filterstr,communitytouse,expected_get_response",
     [
         (None, "api-member-list", None, "community1", 403),

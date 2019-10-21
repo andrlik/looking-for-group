@@ -32,6 +32,18 @@ class GamerCommunityViewSet(
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
 
+    def create(self, request, *args, **kwargs):
+        submitted_data = self.serializer_class(data=request.data)
+        if submitted_data.is_valid():
+            data_to_use = submitted_data.data
+            data_to_use["owner"] = request.user.gamerprofile
+            new_community = models.GamerCommunity.objects.create(**data_to_use)
+            new_comm_serializer = self.serializer_class(new_community)
+            return Response(
+                data=new_comm_serializer.data, status=status.HTTP_201_CREATED
+            )
+        return Response(data=submitted_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
     @action(methods=["post"], detail=True)
     def apply(self, request, **kwargs):
         """
@@ -70,7 +82,13 @@ class GamerCommunityViewSet(
         )
 
     def update(self, request, **kwargs):
-        if not request.user.has_perm("community.edit_community"):
+        logger.debug(
+            "Received request to update community via api by user {}".format(
+                request.user
+            )
+        )
+        logger.debug("Checking permissions...")
+        if not request.user.has_perm("community.edit_community", self.get_object()):
             return Response(
                 {
                     "result": "You do not have the necessary permissions to update this community."
@@ -80,6 +98,12 @@ class GamerCommunityViewSet(
         return super().update(request, **kwargs)
 
     def partial_update(self, request, **kwargs):
+        logger.debug(
+            "Received request to update community via api by user {}".format(
+                request.user
+            )
+        )
+        logger.debug("Checking permissions...")
         if not request.user.has_perm("community.edit_community", self.get_object()):
             return Response(
                 {
