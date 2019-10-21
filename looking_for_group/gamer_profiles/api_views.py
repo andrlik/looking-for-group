@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, permissions, status, viewsets
@@ -352,7 +353,7 @@ class GamerProfileViewSet(
     def retrieve(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        gamer = get_object_or_404(models.GamerProfile, username=self.kwargs["pk"])
+        gamer = get_object_or_404(models.GamerProfile, username=self.kwargs["username"])
         if request.user.gamerprofile.blocked_by(gamer):
             return Response(
                 data={
@@ -385,7 +386,7 @@ class GamerProfileViewSet(
     @action(detail=True, methods=["post"])
     def friend(self, request, *args, **kwargs):
         target_gamer = get_object_or_404(
-            models.GamerProfile, username=self.kwargs["pk"]
+            models.GamerProfile, username=self.kwargs["username"]
         )
         if not request.user.has_perm("profile.can_friend", target_gamer):
             return Response(
@@ -401,7 +402,7 @@ class GamerProfileViewSet(
     @action(detail=True, methods=["post"])
     def unfriend(self, request, *args, **kwargs):
         target_gamer = get_object_or_404(
-            models.GamerProfile, username=self.kwargs["pk"]
+            models.GamerProfile, username=self.kwargs["username"]
         )
         if not request.user.has_perm("profile.view_detail", target_gamer):
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -448,6 +449,36 @@ class GamerNoteViewSet(
                     "You do not have permission to access or manipulate this data."
                 ),
             )
+
+    def create(self, request, *args, **kwargs):
+        new_note_serializer = self.serializer_class(data=request.data)
+        if new_note_serializer.is_valid():
+            data_to_use = new_note_serializer.validated_data
+            data_to_use["gamer"] = get_object_or_404(
+                models.GamerProfile, username=self.kwargs["parent_lookup_gamer"]
+            )
+            data_to_use["author"] = request.user.gamerprofile
+            try:
+                new_note = models.GamerNote.objects.create(**data_to_use)
+            except IntegrityError as ie:
+                logger.error(
+                    "Error when trying to create gamer note from serializer. Message was {}".format(
+                        str(ie)
+                    )
+                )
+                return Response(
+                    data={
+                        "error": "Something went wrong when creating this record. This error has been logged. If you continue to receive this error, please report this at https://app.lfg.directory/helpdesk/issues/"
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+            return Response(
+                data=self.serializer_class(new_note).data,
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(
+            data=new_note_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
 
     def get_queryset(self):
         return (

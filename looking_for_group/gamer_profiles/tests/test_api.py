@@ -679,7 +679,7 @@ def test_gamernote_list_detail(
             "post",
             None,
             {"body": "This guy's wise", "title": "I like him"},
-            403,
+            201,
         ),
         (
             "gamer1",
@@ -697,7 +697,7 @@ def test_gamernote_list_detail(
             "put",
             "gn",
             {"body": "This guy's wise", "title": "I like him"},
-            404,
+            403,
         ),
         (
             "gamer2",
@@ -724,7 +724,7 @@ def test_gamernote_list_detail(
             "patch",
             "gn",
             {"body": "This guy's wise", "title": "I like him"},
-            404,
+            403,
         ),
         (
             "gamer2",
@@ -744,7 +744,7 @@ def test_gamernote_list_detail(
             {"body": "This guy's wise", "title": "I like him"},
             200,
         ),
-        (None, "gamer3", "api-gamernote-detail", "delete", "gn", {}, 404),
+        (None, "gamer3", "api-gamernote-detail", "delete", "gn", {}, 403),
         ("gamer2", "gamer3", "api-gamernote-detail", "delete", "gn", {}, 404),
         ("gamer1", "gamer3", "api-gamernote-detail", "delete", "gn", {}, 204),
     ],
@@ -766,7 +766,7 @@ def test_gamernote_create_update(
     if gamertouse:
         gamer = getattr(social_testdata_with_kicks, gamertouse)
         apiclient.force_login(gamer.user)
-    target_gamer = getattr(social_testdata_with_kicks, gamertouse)
+    target_gamer = getattr(social_testdata_with_kicks, targetgamer)
     target_gamer.friends.add(getattr(social_testdata_with_kicks, "gamer1"))
     current_note_count = models.GamerNote.objects.filter(gamer=target_gamer).count()
     if "detail" in viewname or "destroy" in viewname:
@@ -793,13 +793,22 @@ def test_gamernote_create_update(
         if expected_post_response == 204:
             with pytest.raises(ObjectDoesNotExist):
                 models.GamerNote.objects.get(pk=target_object.pk)
-        else:
+        if expected_post_response == 200:
             target_object.refresh_from_db()
             for k, v in post_data.items():
-                assert v == getattr(target_object, k)
+                if hasattr(getattr(target_object, k), "username"):
+                    assert v == getattr(target_object, k).username
+                else:
+                    assert v == getattr(target_object, k)
     else:
-        assert (
-            models.GamerNote.objects.filter(gamer=target_gamer).count()
-            - current_note_count
-            == 1
-        )
+        if expected_post_response == 201:
+            assert (
+                models.GamerNote.objects.filter(gamer=target_gamer).count()
+                - current_note_count
+                == 1
+            )
+        else:
+            assert (
+                models.GamerNote.objects.filter(gamer=target_gamer).count()
+                == current_note_count
+            )
