@@ -346,6 +346,52 @@ def test_top_detail_views(
 
 
 @pytest.mark.parametrize(
+    "gamertouse,gamertoedit,httpmethod,post_data,expected_post_response",
+    [
+        (None, "gamer1", "put", {"player_status": "available"}, 403),
+        ("gamer2", "gamer1", "put", {"player_status": "available"}, 403),
+        ("gamer1", "gamer1", "put", {"player_status": "available"}, 200),
+        (None, "gamer1", "patch", {"player_status": "available"}, 403),
+        ("gamer2", "gamer1", "patch", {"player_status": "available"}, 403),
+        ("gamer1", "gamer1", "patch", {"player_status": "available"}, 200),
+    ],
+)
+def test_gamer_profile_update_views(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    gamertoedit,
+    httpmethod,
+    post_data,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    gamer_to_edit = getattr(social_testdata, gamertoedit)
+    url = reverse("api-profile-detail", kwargs={"username": gamer_to_edit.username})
+    if httpmethod == "put":
+        # Add all the necessary fields.
+        data_to_use = serializers.GamerProfileSerializer(gamer_to_edit).data
+        for k, v in post_data.items():
+            data_to_use[k] = v
+    else:
+        data_to_use = {**post_data}
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, data=data_to_use)
+    print(response.data)
+    assert response.status_code == expected_post_response
+    if expected_post_response == 200:
+        gamer_to_edit.refresh_from_db()
+        for k, v in post_data.items():
+            assert getattr(gamer_to_edit, k) == v or (
+                v == "" and not getattr(gamer_to_edit, k)
+            )
+
+
+@pytest.mark.parametrize(
     "gamertouse,targetgamer,friendviewname,friendaction,expected_get_response,expected_post_response",
     [
         (None, "gamer2", "api-profile-friend", None, 403, 403),

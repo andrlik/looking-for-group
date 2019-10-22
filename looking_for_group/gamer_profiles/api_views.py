@@ -456,7 +456,7 @@ class GamerProfileViewSet(
 
     permission_classes = (permissions.IsAuthenticated,)
     permission_required = "community.list_communities"
-    object_permission_required = "community.list_commmunties"
+    object_permission_required = "community.list_communities"
     serializer_class = serializers.GamerProfileListSerializer
     serializer_detail_class = serializers.GamerProfileSerializer
     filter_backends = [DjangoFilterBackend]
