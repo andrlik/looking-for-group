@@ -10,6 +10,14 @@ catalog_router.register(
 catalog_router.register(
     r"systems", catalog_api_views.GameSystemViewSet, basename="api-system"
 )
+catalog_router.register(
+    r"editions", catalog_api_views.WideGameEditionViewSet, basename="api-wideedition"
+)
+catalog_router.register(
+    r"modules",
+    catalog_api_views.WidePublishedModuleViewSet,
+    basename="api-widepublishedmodule",
+)
 game_router = catalog_router.register(
     r"publishedgames",
     catalog_api_views.PublishedGameViewSet,

@@ -1138,3 +1138,111 @@ def test_gamernote_create_update(
                 models.GamerNote.objects.filter(gamer=target_gamer).count()
                 == current_note_count
             )
+
+
+@pytest.mark.parametrize(
+    "gamertouse,targetgamer,viewname,expected_post_response",
+    [
+        (None, "gamer1", "api-profile-block", 403),
+        (None, "gamer1", "api-profile-mute", 403),
+        ("gamer1", "muted_gamer", "api-profile-mute", 400),
+        ("gamer1", "blocked_gamer", "api-profile-block", 400),
+        ("gamer1", "gamer3", "api-profile-mute", 201),
+        ("gamer1", "gamer3", "api-profile-block", 201),
+        ("gamer1", "gamer1", "api-profile-mute", 400),
+        ("gamer1", "gamer1", "api-profile-block", 400),
+    ],
+)
+def test_block_mute_gamer(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    targetgamer,
+    viewname,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    target_gamer = getattr(social_testdata, targetgamer)
+    total_records = 0
+    if "mute" in viewname:
+        total_records = models.MutedUser.objects.filter(mutee=target_gamer).count()
+    else:
+        total_records = models.BlockedUser.objects.filter(blockee=target_gamer).count()
+    url = reverse(viewname, kwargs={"username": target_gamer.username})
+    with django_assert_max_num_queries(50):
+        response = apiclient.post(url)
+    print(response.data)
+    assert response.status_code == expected_post_response
+    if expected_post_response == 201:
+        if "mute" in viewname:
+            assert (
+                models.MutedUser.objects.filter(mutee=target_gamer).count()
+                - total_records
+                == 1
+            )
+        else:
+            assert (
+                models.BlockedUser.objects.filter(blockee=target_gamer).count()
+                - total_records
+                == 1
+            )
+    else:
+        if "mute" in viewname:
+            assert (
+                models.MutedUser.objects.filter(mutee=target_gamer).count()
+                == total_records
+            )
+        else:
+            assert (
+                models.BlockedUser.objects.filter(blockee=target_gamer).count()
+                == total_records
+            )
+
+
+@pytest.mark.parametrize(
+    "gamertouse,recordtouse,viewname,httpmethod,expected_response",
+    [
+        (None, "mute_record", "api-mute-detail", "get", 403),
+        (None, "block_record", "api-block-detail", "get", 403),
+        (None, "mute_record", "api-mute-detail", "delete", 403),
+        (None, "block_record", "api-block-detail", "delete", 403),
+        ("gamer2", "mute_record", "api-mute-detail", "get", 404),
+        ("gamer2", "block_record", "api-block-detail", "get", 404),
+        ("gamer2", "mute_record", "api-mute-detail", "delete", 404),
+        ("gamer2", "block_record", "api-block-detail", "delete", 404),
+        ("gamer1", "mute_record", "api-mute-detail", "get", 200),
+        ("gamer1", "block_record", "api-block-detail", "get", 200),
+        ("gamer1", "mute_record", "api-mute-detail", "delete", 204),
+        ("gamer1", "block_record", "api-block-detail", "delete", 204),
+    ],
+)
+def test_retrieve_destroy_block_mute(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    recordtouse,
+    viewname,
+    httpmethod,
+    expected_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    target_object = getattr(social_testdata, recordtouse)
+    url = reverse(viewname, kwargs={"pk": target_object.pk})
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url)
+    print(response.data)
+    assert response.status_code == expected_response
+    if httpmethod == "delete":
+        if expected_response == 204:
+            with pytest.raises(ObjectDoesNotExist):
+                type(target_object).objects.get(pk=target_object.pk)
+        else:
+            assert type(target_object).objects.get(pk=target_object.pk)

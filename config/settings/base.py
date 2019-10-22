@@ -94,6 +94,7 @@ THIRD_PARTY_APPS = [
     "django_otp.plugins.otp_totp",
     "django_otp.plugins.otp_static",
     "allauth_2fa",
+    "django_filters",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",

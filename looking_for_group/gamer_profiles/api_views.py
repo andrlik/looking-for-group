@@ -223,7 +223,7 @@ class GamerCommunityViewSet(
     #     community = self.get_object()
     #     if not request.user.has_perm("community.ban_user", community):
     #         return Response(
-    #             {"result": "You do not have the permissions to see this data."},
+    #             {"errors": "You do not have the permissions to see this data."},
     #             status=status.HTTP_403_FORBIDDEN,
     #         )
     #     ban_list = models.BannedUser.objects.filter(community=community)
@@ -238,7 +238,7 @@ class GamerCommunityViewSet(
     #     community = self.get_object()
     #     if not request.user.has_perm("community.kick_user", community):
     #         return Response(
-    #             {"result": "You do not have the permissions to see this data."},
+    #             {"errors": "You do not have the permissions to see this data."},
     #             status=status.HTTP_403_FORBIDDEN,
     #         )
     #     kick_list = models.KickedUser.objects.filter(community=community)
@@ -506,7 +506,7 @@ class GamerProfileViewSet(
     def update(self, request, *args, **kwargs):
         if not request.user.has_perm("profile.edit_profile", self.get_object()):
             return Response(
-                {"result": "You cannot edit another user's profile."},
+                {"errors": "You cannot edit another user's profile."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().update(request, *args, **kwargs)
@@ -514,19 +514,22 @@ class GamerProfileViewSet(
     def partial_update(self, request, *args, **kwargs):
         if not request.user.has_perm("profile.edit_profile", self.get_object()):
             return Response(
-                {"result": "You cannot edit another user's profile."},
+                {"errors": "You cannot edit another user's profile."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"])
     def friend(self, request, *args, **kwargs):
+        """
+        Send a friend request to the user.
+        """
         target_gamer = get_object_or_404(
             models.GamerProfile, username=self.kwargs["username"]
         )
         if not request.user.has_perm("profile.can_friend", target_gamer):
             return Response(
-                {"result": "You cannot send a friend request to this user."},
+                {"errors": "You cannot send a friend request to this user."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         friend_req = models.GamerFriendRequest.objects.create(
@@ -537,6 +540,9 @@ class GamerProfileViewSet(
 
     @action(detail=True, methods=["post"])
     def unfriend(self, request, *args, **kwargs):
+        """
+        Unfriend the user.
+        """
         target_gamer = get_object_or_404(
             models.GamerProfile, username=self.kwargs["username"]
         )
@@ -544,6 +550,57 @@ class GamerProfileViewSet(
             return Response(status=status.HTTP_403_FORBIDDEN)
         request.user.gamerprofile.friends.remove(target_gamer)
         return Response(status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def block(self, request, *args, **kwargs):
+        """
+        Blocks another user.
+        """
+        blockee = self.get_object()
+        if blockee.user == request.user:
+            return Response(
+                data={"errors": "You cannot block yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if blockee.blocked_by(request.user.gamerprofile):
+            return Response(
+                data={"errors": "You have already blocked this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        block_record = blockee.block(request.user.gamerprofile)
+        return Response(
+            data=serializers.BlockedUserSerializer(block_record).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["post"])
+    def mute(self, request, *args, **kwargs):
+        """
+        Mutes a user. As opposed to blocking a user, this means that their messages to the muter will not be delivered, but the muted user won't know this is happening.
+        """
+        mutee = self.get_object()
+        if mutee.user == request.user:
+            return Response(
+                data={"errors": "You cannot mute yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if (
+            models.MutedUser.objects.filter(
+                muter=request.user.gamerprofile, mutee=mutee
+            ).count()
+            > 0
+        ):
+            return Response(
+                data={"errors": "You have already muted this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        mute_record = models.MutedUser.objects.create(
+            muter=request.user.gamerprofile, mutee=mutee
+        )
+        return Response(
+            data=serializers.MuteduserSerializer(mute_record).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     # @action_permission_required(
     #     "profile.view_note",
@@ -630,7 +687,12 @@ class GamerNoteViewSet(
 
 
 class BlockedUserViewSet(
-    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+    PermissionRequiredMixin,
+    NestedViewSetMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
 ):
     """
     View for other users that the individual has blocked.
@@ -638,7 +700,7 @@ class BlockedUserViewSet(
 
     permission_classes = (permissions.IsAuthenticated,)
     permission_required = "community.list_communities"
-    object_permission_required = "community.destroy_block"
+    object_permission_required = "profile.remove_block"
     serializer_class = serializers.BlockedUserSerializer
 
     def get_queryset(self):
@@ -648,7 +710,12 @@ class BlockedUserViewSet(
 
 
 class MutedUserViewSet(
-    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+    PermissionRequiredMixin,
+    NestedViewSetMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
 ):
     """
     View for other users that the individual has muted.
@@ -762,7 +829,7 @@ class CommunityAdminApplicationViewSet(
         app = self.get_object()
         if not request.user.has_perm("community.approve_application", app):
             return Response(
-                {"result": "You don't have permission to approve this application."},
+                {"errors": "You don't have permission to approve this application."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         try:
@@ -781,7 +848,7 @@ class CommunityAdminApplicationViewSet(
         app = self.get_object()
         if not request.user.has_perm("community.approve_application", app):
             return Response(
-                {"result": "You don't have permission to approve this application."},
+                {"errors": "You don't have permission to approve this application."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         app.reject_application()
@@ -839,7 +906,7 @@ class ReceivedFriendRequestViewset(
         """
         req = self.get_object()
         req.accept()
-        return Response({"result": "Accepted"}, status=status.HTTP_202_ACCEPTED)
+        return Response({"errors": "Accepted"}, status=status.HTTP_202_ACCEPTED)
 
     @action(methods=["post"], detail=True)
     def ignore(self, request, *args, **kwargs):
@@ -848,4 +915,4 @@ class ReceivedFriendRequestViewset(
         """
         req = self.get_object()
         req.deny()
-        return Response({"result": "Ignored"}, status=status.HTTP_202_ACCEPTED)
+        return Response({"errors": "Ignored"}, status=status.HTTP_202_ACCEPTED)

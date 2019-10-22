@@ -1,14 +1,14 @@
 <script type="text/javascript">
   jQuery("#id_game_system").change(function (){
     var system = jQuery("#id_game_system option:selected").val();
-    jQuery.getJSON('{% url "api-edition-list" %}?game_system=' + system, function(data) {
+    jQuery.getJSON('{% url "api-wideedition-list" %}?game_system=' + system, function(data) {
       jQuery("#id_published_game").empty().append("<option value=''>---------</option>")
       jQuery.each(data, function (index, value) {
         jQuery("#id_published_game").append("<option value='" + value["id"] + "'>" + value["game"]["title"] + " (" + value["name"] + ")</option>");
       });
       jQuery("#id_published_game").fadeOut(200).fadeIn(200);
     });
-    jQuery.getJSON("{% url 'api-publishedmodule-list' %}?parent_game_edition__game_system=" + system, function(data){
+    jQuery.getJSON("{% url 'api-widepublishedmodule-list' %}?parent_game_edition__game_system=" + system, function(data){
       jQuery("#id_published_module").empty().append("<option value=''>---------</option>")
       jQuery.each(data, function(index, value) {
         jQuery("#id_published_module").append("<option value='" + value["id"] + "'>" + value["title"] + "</option>");
@@ -25,7 +25,7 @@
         jQuery("#id_game_system").fadeOut(200).fadeIn(200);
       });
     });
-    jQuery.getJSON("{% url 'api-publishedmodule-list' %}?parent_game_edition=" + edition, function(data){
+    jQuery.getJSON("{% url 'api-widepublishedmodule-list' %}?parent_game_edition=" + edition, function(data){
       jQuery("#id_published_module").empty().append("<option value=''>---------</option>")
       jQuery.each(data, function(index, value) {
         jQuery("#id_published_module").append("<option value='" + value["id"] + "'>" + value["title"] + "</option>");

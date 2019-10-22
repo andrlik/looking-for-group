@@ -43,13 +43,11 @@ class GameEditionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["game_system", "publisher", "release_date", "game"]
     serializer_class = serializers.GameEditionSerializer
-
-    def get_queryset(self):
-        return (
-            models.GameEdition.objects.select_related("publisher")
-            .prefetch_related("publishedmodule_set")
-            .order_by("game__title", "release_date", "name")
-        )
+    queryset = (
+        models.GameEdition.objects.select_related("publisher")
+        .prefetch_related("publishedmodule_set")
+        .order_by("game__title", "release_date", "name")
+    )
 
 
 class SourcebookViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
@@ -97,3 +95,28 @@ class PublishedModuleViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         "parent_game_edition__game",
         "parent_game_edition__game_system",
     )
+
+
+class WideGameEditionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Provides a non-nested list of editions
+    """
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["game", "game_system"]
+    serializer_class = serializers.GameEditionSerializer
+    queryset = models.GameEdition.objects.all()
+
+
+class WidePublishedModuleViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Provides a non-nested list of modules
+    """
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = [
+        "parent_game_edition",
+        "parent_game_edition__game" "parent_game_edition__game_system",
+    ]
+    serializer_class = serializers.PublishedModuleSerializer
+    queryset = models.PublishedModule.objects.all()
