@@ -71,6 +71,11 @@ def is_membership_subject(user, membership):
 
 
 @predicate
+def is_not_member_checked(user, membership):
+    return not is_membership_subject(user, membership)
+
+
+@predicate
 def is_community_owner(user, community):
     if user.gamerprofile == community.owner:
         return True
@@ -78,6 +83,17 @@ def is_community_owner(user, community):
 
 
 is_community_superior = is_community_owner | is_community_admin
+
+
+@predicate
+def is_role_editor(user, member):
+    if (
+        is_user(user)
+        and user.gamerprofile != member.gamer
+        and is_community_superior(user, member.community)
+    ):
+        return True
+    return False
 
 
 @predicate
@@ -276,7 +292,7 @@ rules.add_perm("community.delete_community", is_user & is_community_owner)
 rules.add_perm("community.kick_user", is_user & is_community_admin)
 rules.add_perm("community.ban_user", is_user & is_community_admin)
 rules.add_perm("community.edit_roles", is_user & is_community_admin)
-rules.add_perm("community.edit_gamer_role", is_user & is_community_superior)
+rules.add_perm("community.edit_gamer_role", is_role_editor)
 rules.add_perm("community.transfer_ownership", is_user & is_community_owner)
 rules.add_perm("community.can_invite", is_user & is_valid_inviter)
 rules.add_perm("community.can_admin_invites", is_user & is_community_admin)

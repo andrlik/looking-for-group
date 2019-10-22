@@ -1,6 +1,6 @@
 import logging
 
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -112,6 +112,108 @@ class GamerCommunityViewSet(
                 status=status.HTTP_403_FORBIDDEN,
             )
         return super().partial_update(request, **kwargs)
+
+    @action(
+        methods=["post"], detail=True, permission_required="community.list_communities"
+    )
+    def join(self, request, *args, **kwargs):
+        """
+        If a community is not private, you can skip the application process and join directly via this method.
+        """
+        community = self.get_object()
+        if community.private:
+            return Response(
+                data={
+                    "errors": "You cannot join a private community. You must apply instead"
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if community in request.user.gamerprofile.communities.all():
+            return Response(
+                data={"errors": "You are already a member of this community."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        member_record = community.add_member(request.user.gamerprofile)
+        member_data = serializers.CommunityMembershipSerializer(member_record)
+        return Response(data=member_data.data, status=status.HTTP_201_CREATED)
+
+    @action(
+        methods=["post"], detail=True, permission_required="community.list_communities"
+    )
+    def leave(self, request, *args, **kwargs):
+        """
+        Leave the community. Must already be a member.
+        """
+        community = self.get_object()
+        if community not in request.user.gamerprofile.communities.all():
+            return Response(
+                {"errors": "You aren't a member of this community."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            member = models.CommunityMembership.objects.get(
+                community=community, gamer=request.user.gamerprofile
+            )
+            if member.gamer == community.owner:
+                return Response(
+                    data={
+                        "errors": "You are this community's owner. You cannot leave the community unless you first transfer ownership to another community admin."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except ObjectDoesNotExist:
+            return Response(
+                data={"errors": "You are not a member of this community."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        member.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=["post"], detail=True, permission_required="community.list_communities"
+    )
+    def transfer(self, request, *args, **kwargs):
+        """
+        Transfer ownership of the community to another community admin specified by username.
+        """
+        community = self.get_object()
+        if not request.user.has_perm("community.transfer_ownership", community):
+            return Response(
+                data={
+                    "errors": "Only the owner of a community can transfer ownership."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        username = request.data["username"]
+        try:
+            new_owner = models.GamerProfile.objects.get(username=username)
+            try:
+                if community.get_role(new_owner) != "Admin":
+                    return Response(
+                        data={
+                            "errors": "The selected user is not an admin of this community and cannot be transferred ownership."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                community.owner = new_owner
+                community.save()
+            except models.NotInCommunity:
+                return Response(
+                    data={
+                        "errors": "The user you specified is not a member of the community and cannot be made the owner."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except ObjectDoesNotExist:
+            return Response(
+                data={"errors": "The username you specified does not exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            data=serializers.GamerCommunitySerializer(community).data,
+            status=status.HTTP_200_OK,
+        )
 
     # @action(methods=["get"], detail=True)
     # def bans(self, request, **kwargs):
@@ -264,11 +366,21 @@ class CommunityMembershipViewSet(
             .order_by("community_role", "gamer__username")
         )
 
-    @action_permission_required("community.edit_role")
+    @action_permission_required(
+        "community.edit_gamer_role",
+        fn=lambda request, parent_lookup_community, pk: models.CommunityMembership.objects.get(
+            community__slug=parent_lookup_community, pk=pk
+        ),
+    )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
-    @action_permission_required("community.edit_role")
+    @action_permission_required(
+        "community.edit_gamer_role",
+        fn=lambda request, parent_lookup_community, pk: models.CommunityMembership.objects.get(
+            community__slug=parent_lookup_community, pk=pk
+        ),
+    )
     def partial_update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 

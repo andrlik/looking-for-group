@@ -117,7 +117,7 @@ class CommunityMembershipSerializer(serializers.ModelSerializer):
     """
 
     community = serializers.SlugRelatedField(slug_field="slug", read_only=True)
-    gamer = GamerProfileListSerializer()
+    gamer = GamerProfileListSerializer(read_only=True)
 
     class Meta:
         model = models.CommunityMembership

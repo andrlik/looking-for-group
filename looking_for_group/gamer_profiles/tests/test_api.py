@@ -1,8 +1,10 @@
 import logging
+from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
+from django.utils import timezone
 
 from .. import models, serializers
 from ..models import NotInCommunity
@@ -564,6 +566,138 @@ def test_kick_ban_community_member(
 
 
 @pytest.mark.parametrize(
+    "gamertouse,httpmethod,communitytouse,targetmember,post_data,expected_post_response",
+    [
+        (None, "put", "community", "gamer1", {"community_role": "admin"}, 403),
+        ("gamer1", "put", "community", "gamer1", {"community_role": "admin"}, 403),
+        ("gamer5", "put", "community", "gamer1", {"community_role": "admin"}, 200),
+        (None, "patch", "community", "gamer1", {"community_role": "admin"}, 403),
+        ("gamer1", "patch", "community", "gamer1", {"community_role": "admin"}, 403),
+        ("gamer5", "patch", "community", "gamer1", {"community_role": "admin"}, 200),
+        ("gamer5", "put", "community", "gamer5", {"community_role": "moderator"}, 403),
+    ],
+)
+def test_edit_community_role(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    httpmethod,
+    communitytouse,
+    targetmember,
+    post_data,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    community = getattr(social_testdata, communitytouse)
+    target_member = community.members.get(gamer=getattr(social_testdata, targetmember))
+    url = reverse(
+        "api-member-detail",
+        kwargs={
+            "parent_lookup_community": target_member.community.slug,
+            "pk": target_member.pk,
+        },
+    )
+    data_to_use = {**post_data}
+    data_to_use["gamer"] = serializers.GamerProfileListSerializer(
+        target_member.gamer
+    ).data
+    if httpmethod == "put":
+        data_to_use["id"] = target_member.pk
+        data_to_use["community"] = target_member.community.slug
+        # data_to_use["median_comm_rating"] = target_member.median_comm_rating
+        # data_to_use["comm_reputation_score"] = target_member.comm_reputation_score
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, data=data_to_use)
+    print(response.data)
+    assert response.status_code == expected_post_response
+    target_member.refresh_from_db()
+    for k, v in post_data.items():
+        if expected_post_response == 200:
+            assert getattr(target_member, k) == v
+        else:
+            assert getattr(target_member, k) != v
+
+
+@pytest.mark.parametrize(
+    "gamertouse,communitytouse,viewname,expected_post_response",
+    [
+        (None, "community_public", "api-community-join", 403),
+        (None, "community_public", "api-community-leave", 403),
+        ("gamer4", "community_public", "api-community-join", 201),
+        ("gamer4", "community_public", "api-community-leave", 403),
+        ("gamer1", "community_public", "api-community-leave", 204),
+        ("gamer3", "community_public", "api-community-leave", 400),
+    ],
+)
+def test_join_leave_community(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata,
+    gamertouse,
+    communitytouse,
+    viewname,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    community = getattr(social_testdata, communitytouse)
+    url = reverse(viewname, kwargs={"slug": community.slug})
+    with django_assert_max_num_queries(50):
+        response = apiclient.post(url, data={})
+    print(response.data)
+    assert response.status_code == expected_post_response
+    if expected_post_response == 201:
+        assert models.CommunityMembership.objects.get(community=community, gamer=gamer)
+    elif expected_post_response == 204:
+        with pytest.raises(ObjectDoesNotExist):
+            models.CommunityMembership.objects.get(community=community, gamer=gamer)
+
+
+@pytest.mark.parametrize(
+    "gamertouse,communitytouse,targetgamer,expected_post_response",
+    [
+        (None, "community2", "gamer2", 403),
+        ("gamer2", "community2", "gamer2", 403),
+        ("gamer5", "community2", "gamer3", 400),
+        ("gamer5", "community2", "gamer1", 400),
+        ("gamer5", "community2", "gamer2", 200),
+    ],
+)
+def test_transfer_ownership(
+    apiclient,
+    django_assert_max_num_queries,
+    social_testdata_with_kicks,
+    gamertouse,
+    communitytouse,
+    targetgamer,
+    expected_post_response,
+):
+    gamer = None
+    if gamertouse:
+        gamer = getattr(social_testdata_with_kicks, gamertouse)
+        apiclient.force_login(gamer.user)
+    community = getattr(social_testdata_with_kicks, communitytouse)
+    previous_owner = community.owner
+    target_gamer = getattr(social_testdata_with_kicks, targetgamer)
+    url = reverse("api-community-transfer", kwargs={"slug": community.slug})
+    with django_assert_max_num_queries(50):
+        response = apiclient.post(url, data={"username": target_gamer.username})
+    print(response.data)
+    assert response.status_code == expected_post_response
+    community.refresh_from_db()
+    if expected_post_response == 200:
+        assert community.owner == target_gamer
+    else:
+        assert community.owner == previous_owner
+
+
+@pytest.mark.parametrize(
     "gamertouse,communitytouse,viewname,httpmethod,targetobject,post_data,expected_post_response",
     [
         (None, "community2", "api-comm-kick-detail", "delete", "kick1", {}, 403),
@@ -744,7 +878,9 @@ def test_kick_ban_edits(
                 "kicker": target_object.kicker.username,
                 "kicked_user": target_object.kicked_user.username,
                 "reason": post_data["reason"],
-                "end_date": "",
+                "end_date": (timezone.now() + timedelta(days=10)).strftime(
+                    "%Y-%m-%dT%H:%M"
+                ),
             }
         logger.debug("Translated post data to {}".format(data_to_submit))
     with django_assert_max_num_queries(50):
