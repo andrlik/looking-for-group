@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from ..game_catalog import serializers as catalog_serializers
+from ..gamer_profiles import serializers as social_serializers
 from . import models
 
 
@@ -8,7 +10,7 @@ class CharacterSerializer(serializers.ModelSerializer):
     Serializer for character objects.
     """
 
-    player = serializers.StringRelatedField(read_only=True)
+    player = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = models.Character
@@ -21,8 +23,8 @@ class AdventureLogSerializer(serializers.ModelSerializer):
     """
 
     session = serializers.PrimaryKeyRelatedField(read_only=True)
-    initial_author = serializers.StringRelatedField(read_only=True)
-    last_edited_by = serializers.StringRelatedField(read_only=True)
+    initial_author = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    last_edited_by = serializers.SlugRelatedField(slug_field="username", read_only=True)
 
     class Meta:
         model = models.AdventureLog
@@ -37,17 +39,29 @@ class AdventureLogSerializer(serializers.ModelSerializer):
             "body",
             "body_rendered",
         )
-        read_only_fields = fields
+        read_only_fields = (
+            "id",
+            "session",
+            "created",
+            "modified",
+            "initial_author",
+            "last_edited_by",
+            "body_rendered",
+        )
 
 
-class GameSessionSerializer(serializers.ModelSerializer):
+class GameSessionGMSerializer(serializers.ModelSerializer):
     """
     Serializer for a game session.
     """
 
     adventurelog = AdventureLogSerializer()
-    players_expected = serializers.StringRelatedField(many=True, read_only=True)
-    players_missing = serializers.StringRelatedField(many=True, read_only=True)
+    players_expected = serializers.SlugRelatedField(
+        slug_field="username", many=True, read_only=True
+    )
+    players_missing = serializers.SlugRelatedField(
+        slug_field="username", many=True, read_only=True
+    )
 
     class Meta:
         model = models.GameSession
@@ -61,6 +75,38 @@ class GameSessionSerializer(serializers.ModelSerializer):
             "gm_notes_rendered",
             "adventurelog",
         )
+        read_only_fields = (
+            "id",
+            "scheduled_time",
+            "status",
+            "gm_notes_rendered",
+            "adventurelog",
+        )
+
+
+class GameSessionSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a game session from the player's view.
+    """
+
+    adventurelog = AdventureLogSerializer()
+    players_expected = serializers.SlugRelatedField(
+        slug_field="username", many=True, read_only=True
+    )
+    players_missing = serializers.SlugRelatedField(
+        slug_field="username", many=True, read_only=True
+    )
+
+    class Meta:
+        model = models.GameSession
+        fields = (
+            "id",
+            "scheduled_time",
+            "status",
+            "players_expected",
+            "players_missing",
+            "adventurelog",
+        )
         read_only_fields = fields
 
 
@@ -69,8 +115,8 @@ class PlayerSerializer(serializers.ModelSerializer):
     Serializer for player and playerstats
     """
 
-    gamer = serializers.StringRelatedField(read_only=True)
-    game = serializers.StringRelatedField(read_only=True)
+    gamer = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    game = serializers.PrimaryKeyRelatedField(read_only=True)
     attendance_rating = serializers.SerializerMethodField()
 
     def get_attendance_rating(self, obj):
@@ -93,12 +139,16 @@ class GameDataSerializer(serializers.ModelSerializer):
     Serializer for game data export.
     """
 
-    gm = serializers.StringRelatedField(read_only=True)
-    players = serializers.StringRelatedField(many=True)
+    gm = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    players = serializers.SlugRelatedField(
+        slug_field="username", many=True, read_only=True
+    )
     published_game = serializers.StringRelatedField(read_only=True)
     game_system = serializers.StringRelatedField(read_only=True)
     published_module = serializers.StringRelatedField(read_only=True)
-    communities = serializers.StringRelatedField(read_only=True)
+    communities = serializers.SlugRelatedField(
+        slug_field="slug", many=True, read_only=True
+    )
     character_set = CharacterSerializer(many=True, read_only=True)
     gamesession_set = GameSessionSerializer(many=True, read_only=True)
     player_stats = serializers.SerializerMethodField(read_only=True)
