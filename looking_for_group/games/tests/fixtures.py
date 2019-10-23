@@ -5,10 +5,16 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import m2m_changed
 from django.utils import timezone
 from factory.django import mute_signals
+from rest_framework.test import APIClient
 from schedule.models import Calendar, Rule
 
 from ...gamer_profiles.tests import factories
 from .. import models
+
+
+@pytest.fixture
+def apiclient():
+    return APIClient()
 
 
 class GamesTData(object):

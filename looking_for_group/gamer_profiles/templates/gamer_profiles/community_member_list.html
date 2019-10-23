@@ -11,7 +11,7 @@
 {% block content %}
 {% has_perm 'community.kick_user' request.user community as is_kicker %}
 {% has_perm 'community.ban_user' request.user community as is_banner %}
-{% has_perm 'community.edit_gamer_role' request.user community as is_admin %}
+
 
 
 {% if is_kicker or is_banner %}
@@ -54,6 +54,7 @@
   </thead>
   <tbody>
     {% for member in object_list %}
+    {% has_perm 'community.edit_gamer_role' request.user member as is_admin %}
     <tr>
       <td>{% avatar member.gamer.user 30 class="avatar" %} <a href="{{ member.gamer.get_absolute_url }}">{{ member.gamer }}</a></td>
       <td>{{ member.get_community_role_display }}</td>

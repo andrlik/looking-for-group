@@ -110,6 +110,7 @@ LOGGING = {
         "tours": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "helpdesk": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "api": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
     },
 }
 
