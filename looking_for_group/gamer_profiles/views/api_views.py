@@ -11,8 +11,8 @@ from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSe
 from rest_framework_rules.decorators import permission_required as action_permission_required
 from rest_framework_rules.mixins import PermissionRequiredMixin
 
-from . import models, serializers
-from .models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
+from .. import models, serializers
+from ..models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
 
 logger = logging.getLogger("api")
 
