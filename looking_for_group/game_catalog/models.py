@@ -41,7 +41,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:pub-detail", kwargs={"publisher": self.id})
+        return reverse("game_catalog:pub-detail", kwargs={"publisher": self.slug})
 
     def get_correction_url(self):
         return reverse(
@@ -98,7 +98,7 @@ class GameSystem(
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:system-detail", kwargs={"system": self.id})
+        return reverse("game_catalog:system-detail", kwargs={"system": self.slug})
 
     @property
     def release_date(self):
@@ -144,7 +144,7 @@ class PublishedGame(
         return self.title  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:game-detail", kwargs={"game": self.id})
+        return reverse("game_catalog:game-detail", kwargs={"game": self.slug})
 
     def get_correction_url(self):
         return reverse(
@@ -340,7 +340,7 @@ class PublishedModule(
         return self.title  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:module-detail", kwargs={"module": self.id})
+        return reverse("game_catalog:module-detail", kwargs={"module": self.slug})
 
     def get_correction_url(self):
         return reverse(

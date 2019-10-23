@@ -62,10 +62,10 @@ def test_list_views(
 @pytest.mark.parametrize(
     "view_name, gamer_to_use, object_name, url_kwarg, obj_attr, expected_response_code, expected_location",
     [
-        ("game_catalog:pub-detail", None, "mcg", "publisher", "pk", 200, None),
-        ("game_catalog:system-detail", None, "cypher", "system", "pk", 200, None),
-        ("game_catalog:game-detail", None, "numensource", "game", "pk", 200, None),
-        ("game_catalog:module-detail", None, "cos", "module", "pk", 200, None),
+        ("game_catalog:pub-detail", None, "mcg", "publisher", "slug", 200, None),
+        ("game_catalog:system-detail", None, "cypher", "system", "slug", 200, None),
+        ("game_catalog:game-detail", None, "numensource", "game", "slug", 200, None),
+        ("game_catalog:module-detail", None, "cos", "module", "slug", 200, None),
         ("game_catalog:edition_detail", None, "numen", "edition", "slug", 200, None),
         (
             "game_catalog:sourcebook_detail",
@@ -250,7 +250,8 @@ def test_create_edition(
     if gamer_to_use:
         client.force_login(user=getattr(catalog_testdata, gamer_to_use).user)
     url = reverse(
-        "game_catalog:edition_create", kwargs={"game": catalog_testdata.numensource.pk}
+        "game_catalog:edition_create",
+        kwargs={"game": catalog_testdata.numensource.slug},
     )
     response = client.get(url)
     assert response.status_code == expected_get_response
@@ -426,7 +427,7 @@ def test_addition_create(
             None,
             "mcg",
             "publisher",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -435,7 +436,7 @@ def test_addition_create(
             None,
             "cypher",
             "system",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -444,7 +445,7 @@ def test_addition_create(
             None,
             "numensource",
             "game",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -471,7 +472,7 @@ def test_addition_create(
             None,
             "cos",
             "module",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -498,7 +499,7 @@ def test_addition_create(
             None,
             "mcg",
             "publisher",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -507,7 +508,7 @@ def test_addition_create(
             None,
             "cypher",
             "system",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -516,7 +517,7 @@ def test_addition_create(
             None,
             "numensource",
             "game",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -543,7 +544,7 @@ def test_addition_create(
             None,
             "cos",
             "module",
-            "pk",
+            "slug",
             302,
             "/accounts/login/",
         ),
@@ -565,13 +566,21 @@ def test_addition_create(
             302,
             "/accounts/login/",
         ),
-        ("game_catalog:pub-edit", "random_gamer", "mcg", "publisher", "pk", 403, None),
+        (
+            "game_catalog:pub-edit",
+            "random_gamer",
+            "mcg",
+            "publisher",
+            "slug",
+            403,
+            None,
+        ),
         (
             "game_catalog:system-edit",
             "random_gamer",
             "cypher",
             "system",
-            "pk",
+            "slug",
             403,
             None,
         ),
@@ -580,7 +589,7 @@ def test_addition_create(
             "random_gamer",
             "numensource",
             "game",
-            "pk",
+            "slug",
             403,
             None,
         ),
@@ -602,7 +611,15 @@ def test_addition_create(
             403,
             None,
         ),
-        ("game_catalog:module-edit", "random_gamer", "cos", "module", "pk", 403, None),
+        (
+            "game_catalog:module-edit",
+            "random_gamer",
+            "cos",
+            "module",
+            "slug",
+            403,
+            None,
+        ),
         (
             "game_catalog:addition_update",
             "random_gamer",
@@ -626,7 +643,7 @@ def test_addition_create(
             "random_gamer",
             "mcg",
             "publisher",
-            "pk",
+            "slug",
             403,
             None,
         ),
@@ -635,7 +652,7 @@ def test_addition_create(
             "random_gamer",
             "cypher",
             "system",
-            "pk",
+            "slug",
             403,
             None,
         ),
@@ -644,7 +661,7 @@ def test_addition_create(
             "random_gamer",
             "numensource",
             "game",
-            "pk",
+            "slug",
             403,
             None,
         ),
@@ -671,7 +688,7 @@ def test_addition_create(
             "random_gamer",
             "cos",
             "module",
-            "pk",
+            "slug",
             403,
             None,
         ),
@@ -693,9 +710,9 @@ def test_addition_create(
             403,
             None,
         ),
-        ("game_catalog:pub-edit", "editor", "mcg", "publisher", "pk", 200, None),
-        ("game_catalog:system-edit", "editor", "cypher", "system", "pk", 200, None),
-        ("game_catalog:game-edit", "editor", "numensource", "game", "pk", 200, None),
+        ("game_catalog:pub-edit", "editor", "mcg", "publisher", "slug", 200, None),
+        ("game_catalog:system-edit", "editor", "cypher", "system", "slug", 200, None),
+        ("game_catalog:game-edit", "editor", "numensource", "game", "slug", 200, None),
         ("game_catalog:edition_edit", "editor", "numen", "edition", "slug", 200, None),
         (
             "game_catalog:sourcebook_edit",
@@ -706,7 +723,7 @@ def test_addition_create(
             200,
             None,
         ),
-        ("game_catalog:module-edit", "editor", "cos", "module", "pk", 200, None),
+        ("game_catalog:module-edit", "editor", "cos", "module", "slug", 200, None),
         (
             "game_catalog:addition_update",
             "editor",
@@ -725,9 +742,17 @@ def test_addition_create(
             200,
             None,
         ),
-        ("game_catalog:pub-delete", "editor", "mcg", "publisher", "pk", 200, None),
-        ("game_catalog:system-delete", "editor", "cypher", "system", "pk", 200, None),
-        ("game_catalog:game-delete", "editor", "numensource", "game", "pk", 200, None),
+        ("game_catalog:pub-delete", "editor", "mcg", "publisher", "slug", 200, None),
+        ("game_catalog:system-delete", "editor", "cypher", "system", "slug", 200, None),
+        (
+            "game_catalog:game-delete",
+            "editor",
+            "numensource",
+            "game",
+            "slug",
+            200,
+            None,
+        ),
         (
             "game_catalog:edition_delete",
             "editor",
@@ -746,7 +771,7 @@ def test_addition_create(
             200,
             None,
         ),
-        ("game_catalog:module-delete", "editor", "cos", "module", "pk", 200, None),
+        ("game_catalog:module-delete", "editor", "cos", "module", "slug", 200, None),
         (
             "game_catalog:addition_delete",
             "editor",
@@ -791,9 +816,9 @@ def test_load_edit_delete_views(
 @pytest.mark.parametrize(
     "view_name, object_name, object_attr, object_kwarg",
     [
-        ("game_catalog:pub-delete", "mcg", "pk", "publisher"),
-        ("game_catalog:system-delete", "cypher", "pk", "system"),
-        ("game_catalog:game-delete", "numensource", "pk", "game"),
+        ("game_catalog:pub-delete", "mcg", "slug", "publisher"),
+        ("game_catalog:system-delete", "cypher", "slug", "system"),
+        ("game_catalog:game-delete", "numensource", "slug", "game"),
         ("game_catalog:edition_delete", "numen", "slug", "edition"),
         ("game_catalog:sourcebook_delete", "numenbook", "slug", "book"),
         ("game_catalog:correction_delete", "correction1", "slug", "correction"),
@@ -945,7 +970,9 @@ def test_publisher_update(client, catalog_testdata):
     }
     client.force_login(user=catalog_testdata.editor.user)
     response = client.post(
-        reverse("game_catalog:pub-edit", kwargs={"publisher": catalog_testdata.mcg.pk}),
+        reverse(
+            "game_catalog:pub-edit", kwargs={"publisher": catalog_testdata.mcg.slug}
+        ),
         data=post_data,
     )
     assert response.status_code == 302
@@ -964,7 +991,7 @@ def test_game_update(client, catalog_testdata):
     }
     client.force_login(user=catalog_testdata.editor.user)
     response = client.post(
-        reverse("game_catalog:game-edit", kwargs={"game": catalog_testdata.dd.pk}),
+        reverse("game_catalog:game-edit", kwargs={"game": catalog_testdata.dd.slug}),
         data=post_data,
     )
     assert response.status_code == 302
@@ -983,7 +1010,7 @@ def test_system_update(client, catalog_testdata):
     client.force_login(user=catalog_testdata.editor.user)
     response = client.post(
         reverse(
-            "game_catalog:system-edit", kwargs={"system": catalog_testdata.cypher.pk}
+            "game_catalog:system-edit", kwargs={"system": catalog_testdata.cypher.slug}
         ),
         data=post_data,
     )
@@ -1047,7 +1074,9 @@ def test_module_update(client, catalog_testdata):
     }
     client.force_login(user=catalog_testdata.editor.user)
     response = client.post(
-        reverse("game_catalog:module-edit", kwargs={"module": catalog_testdata.cos.pk}),
+        reverse(
+            "game_catalog:module-edit", kwargs={"module": catalog_testdata.cos.slug}
+        ),
         data=post_data,
     )
     assert response.status_code == 302

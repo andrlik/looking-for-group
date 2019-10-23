@@ -67,7 +67,7 @@
         <hr />
         <p><strong>{% trans "Admin tools" %}</strong></p>
 <div class="clearfix">
-  <a href="{% url 'game_catalog:module-edit' module=module.pk %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:module-delete' module=module.pk %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete module" %}</a>
+  <a href="{% url 'game_catalog:module-edit' module=module.slug %}" class="button float-left"><i class="fas fa-edit"></i> {% trans "Edit details" %}</a> <a href="{% url 'game_catalog:module-delete' module=module.slug %}" class="float-right button alert"><i class="fas fa-trash-alt"></i> {% trans "Delete module" %}</a>
 </div>
       </div>
       {% else %}
