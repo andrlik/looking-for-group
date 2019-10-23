@@ -6,7 +6,9 @@ from looking_for_group.gamer_profiles import api_views as profile_api_views
 
 social_router = ExtendedDefaultRouter()
 community_router = social_router.register(
-    r"communities", profile_api_views.GamerCommunityViewSet, basename="api-community"
+    r"social/communities",
+    profile_api_views.GamerCommunityViewSet,
+    basename="api-community",
 )
 community_router.register(
     r"members",
@@ -33,7 +35,7 @@ community_router.register(
     parents_query_lookups=["community"],
 )
 profile_router = social_router.register(
-    r"profiles", profile_api_views.GamerProfileViewSet, basename="api-profile"
+    r"social/profiles", profile_api_views.GamerProfileViewSet, basename="api-profile"
 )
 
 profile_router.register(
@@ -43,24 +45,24 @@ profile_router.register(
     parents_query_lookups=["gamer"],
 )
 social_router.register(
-    r"applications",
+    r"social/applications",
     profile_api_views.CommunityApplicationViewSet,
     basename="api-my-application",
 )
 social_router.register(
-    r"friendrequests/sent",
+    r"social/friendrequests/sent",
     profile_api_views.SentFriendRequestViewSet,
     basename="api-my-sent-request",
 )
 social_router.register(
-    r"friendrequests/received",
+    r"social/friendrequests/received",
     profile_api_views.ReceivedFriendRequestViewset,
     basename="api-my-received-request",
 )
 social_router.register(
-    r"blocks", profile_api_views.BlockedUserViewSet, basename="api-block"
+    r"social/blocks", profile_api_views.BlockedUserViewSet, basename="api-block"
 )
 social_router.register(
-    r"mutes", profile_api_views.MutedUserViewSet, basename="api-mute"
+    r"social/mutes", profile_api_views.MutedUserViewSet, basename="api-mute"
 )
 urlpatterns = social_router.urls
