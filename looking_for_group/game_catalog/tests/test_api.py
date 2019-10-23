@@ -74,7 +74,7 @@ class PublisherViews(GameCatalogAbstractTestCase):
             self.get("api-publisher-list", extra=self.extra)
 
     def test_detail_retrieval(self):
-        url_kwargs = {"pk": self.mcg.pk, **self.extra}
+        url_kwargs = {"slug": self.mcg.slug, **self.extra}
         self.get("api-publisher-detail", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
@@ -92,7 +92,7 @@ class GameSystemViews(GameCatalogAbstractTestCase):
             self.get("api-system-list", **url_kwargs)
 
     def test_detail_view(self):
-        url_kwargs = {"pk": self.cypher.pk, **self.extra}
+        url_kwargs = {"slug": self.cypher.slug, **self.extra}
         self.get("api-system-detail", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
@@ -110,7 +110,7 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
             self.get("api-publishedgame-list", **url_kwargs)
 
     def test_detail_view(self):
-        url_kwargs = {"pk": self.numensource.pk, **self.extra}
+        url_kwargs = {"slug": self.numensource.slug, **self.extra}
         print(type(self.numensource))
         self.get("api-publishedgame-detail", **url_kwargs)
         self.response_403()
@@ -123,7 +123,7 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
 
 class EditionViews(GameCatalogAbstractTestCase):
     def test_list_view(self):
-        url_kwargs = {"parent_lookup_game": self.numensource.pk, **self.extra}
+        url_kwargs = {"parent_lookup_game__slug": self.numensource.slug, **self.extra}
         self.get("api-edition-list", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
@@ -131,8 +131,8 @@ class EditionViews(GameCatalogAbstractTestCase):
 
     def test_detail_view(self):
         url_kwargs = {
-            "parent_lookup_game": self.numensource.pk,
-            "pk": self.numen.pk,
+            "parent_lookup_game__slug": self.numensource.slug,
+            "slug": self.numen.pk,
             **self.extra,
         }
         self.get("api-edition-detail", **url_kwargs)
@@ -147,8 +147,8 @@ class SourcebookViews(GameCatalogAbstractTestCase):
     def setUp(self):
         super().setUp()
         self.url_kwargs = {
-            "parent_lookup_edition__game": self.numensource.pk,
-            "parent_lookup_edition": self.numen.pk,
+            "parent_lookup_edition__game__slug": self.numensource.slug,
+            "parent_lookup_edition__slug": self.numen.slug,
             **self.extra,
         }
 
@@ -160,12 +160,14 @@ class SourcebookViews(GameCatalogAbstractTestCase):
 
     def test_detail_view(self):
         url_kwargs = self.url_kwargs.copy()
-        url_kwargs["pk"] = self.discovery.pk
+        url_kwargs["slug"] = self.discovery.slug
         self.get("api-sourcebook-detail", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
             self.get("api-sourcebook-detail", **url_kwargs)
-            serialized_object = SourcebookSerializer(self.discovery)
+            serialized_object = SourcebookSerializer(
+                self.discovery, context={"request": self.last_response.wsgi_request}
+            )
             assert serialized_object.data == self.last_response.data
 
 
@@ -173,8 +175,8 @@ class PublishedModuleViews(GameCatalogAbstractTestCase):
     def setUp(self):
         super().setUp()
         self.url_kwargs = {
-            "parent_lookup_parent_game_edition__game": self.numensource.pk,
-            "parent_lookup_parent_game_edition": self.numen.pk,
+            "parent_lookup_parent_game_edition__game__slug": self.numensource.slug,
+            "parent_lookup_parent_game_edition__slug": self.numen.slug,
             **self.extra,
         }
 
@@ -186,7 +188,7 @@ class PublishedModuleViews(GameCatalogAbstractTestCase):
 
     def test_detail_view(self):
         url_kwargs = self.url_kwargs.copy()
-        url_kwargs["pk"] = self.vv.pk
+        url_kwargs["slug"] = self.vv.slug
         self.get("api-publishedmodule-detail", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
