@@ -79,7 +79,10 @@ class PublisherViews(GameCatalogAbstractTestCase):
         self.response_403()
         with self.login(username=self.user1.username):
             self.get("api-publisher-detail", **url_kwargs)
-            serialized_data = GamerPublisherSerializer(self.mcg)
+            serialized_data = GamerPublisherSerializer(
+                self.mcg,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_data.data == self.last_response.data
 
 
@@ -97,7 +100,10 @@ class GameSystemViews(GameCatalogAbstractTestCase):
         self.response_403()
         with self.login(username=self.user1.username):
             self.get("api-system-detail", **url_kwargs)
-            serialized_object = GameSystemSerializer(self.cypher)
+            serialized_object = GameSystemSerializer(
+                self.cypher,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_object.data == self.last_response.data
 
 
@@ -117,7 +123,10 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
         with self.login(username=self.user1.username):
             print(reverse("api-publishedgame-detail", kwargs=url_kwargs))
             self.get("api-publishedgame-detail", **url_kwargs)
-            serialized_object = PublishedGamerSerializer(self.numensource)
+            serialized_object = PublishedGamerSerializer(
+                self.numensource,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_object.data == self.last_response.data
 
 
@@ -132,14 +141,17 @@ class EditionViews(GameCatalogAbstractTestCase):
     def test_detail_view(self):
         url_kwargs = {
             "parent_lookup_game__slug": self.numensource.slug,
-            "slug": self.numen.pk,
+            "slug": self.numen.slug,
             **self.extra,
         }
         self.get("api-edition-detail", **url_kwargs)
         self.response_403()
         with self.login(username=self.user1.username):
             self.get("api-edition-detail", **url_kwargs)
-            serialized_object = GameEditionSerializer(self.numen)
+            serialized_object = GameEditionSerializer(
+                self.numen,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_object.data == self.last_response.data
 
 
@@ -165,8 +177,10 @@ class SourcebookViews(GameCatalogAbstractTestCase):
         self.response_403()
         with self.login(username=self.user1.username):
             self.get("api-sourcebook-detail", **url_kwargs)
+            request_used = self.last_response.wsgi_request
             serialized_object = SourcebookSerializer(
-                self.discovery, context={"request": self.last_response.wsgi_request}
+                self.discovery,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
             )
             assert serialized_object.data == self.last_response.data
 
@@ -193,5 +207,8 @@ class PublishedModuleViews(GameCatalogAbstractTestCase):
         self.response_403()
         with self.login(username=self.user1.username):
             self.get("api-publishedmodule-detail", **url_kwargs)
-            serialized_object = PublishedModuleSerializer(self.vv)
+            serialized_object = PublishedModuleSerializer(
+                self.vv,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_object.data == self.last_response.data
