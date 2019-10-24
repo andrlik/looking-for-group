@@ -75,7 +75,16 @@ class GamerPublisherSerializer(
 
     class Meta:
         model = models.GamePublisher
-        fields = ("api_url", "name", "logo", "url", "tags", "created", "modified")
+        fields = (
+            "api_url",
+            "slug",
+            "name",
+            "logo",
+            "url",
+            "tags",
+            "created",
+            "modified",
+        )
         extra_kwargs = {
             "api_url": {"view_name": "api-publisher-detail", "lookup_field": "slug"}
         }
@@ -86,14 +95,20 @@ class GameSystemSerializer(
 ):
     tags = TagListSerializerField(read_only=True)
     inherited_tags = TagListSerializerField(read_only=True)
+    original_publisher_name = serializers.SerializerMethodField()
+
+    def get_original_publisher_name(self, obj):
+        return obj.original_publisher.name
 
     class Meta:
         model = models.GameSystem
         fields = (
             "api_url",
+            "slug",
             "name",
             "description",
             "original_publisher",
+            "original_publisher_name",
             "image",
             "isbn",
             "publication_date",
@@ -124,6 +139,7 @@ class PublishedGamerSerializer(
         model = models.PublishedGame
         fields = (
             "api_url",
+            "slug",
             "title",
             "image",
             "description",
@@ -141,24 +157,43 @@ class GameEditionSerializer(TaggitSerializer, NestedHyperlinkedModelSerializer):
     game = serializers.HyperlinkedRelatedField(
         view_name="api-publishedgame-detail", lookup_field="slug", read_only=True
     )
+    game_title = serializers.SerializerMethodField()
     publisher = serializers.HyperlinkedRelatedField(
         view_name="api-publisher-detail", lookup_field="slug", read_only=True
     )
+    publisher_name = serializers.SerializerMethodField()
     game_system = serializers.HyperlinkedRelatedField(
         view_name="api-system-detail", lookup_field="slug", read_only=True
     )
+    game_system_name = serializers.SerializerMethodField()
     tags = TagListSerializerField(read_only=True)
     inherited_tags = TagListSerializerField(read_only=True)
+
+    def get_game_title(self, obj):
+        return obj.game.title
+
+    def get_publisher_name(self, obj):
+        if obj.publisher:
+            return obj.publisher.name
+        return None
+
+    def get_game_system_name(self, obj):
+        if obj.game_system:
+            return obj.game_system.name
+        return None
 
     class Meta:
         model = models.GameEdition
         fields = (
-            "id",
             "api_url",
+            "slug",
             "game",
+            "game_title",
             "name",
             "publisher",
+            "publisher_name",
             "game_system",
+            "game_system_name",
             "url",
             "release_date",
             "tags",
@@ -181,17 +216,27 @@ class SourcebookSerializer(NestedHyperlinkedModelSerializer):
         lookup_url_kwarg="slug",
         read_only=True,
     )
+    publisher_name = serializers.SerializerMethodField()
+    edition_title = serializers.SerializerMethodField()
+
+    def get_publisher_name(self, obj):
+        return obj.publisher.name
+
+    def get_edition_title(self, obj):
+        return "{} ({})".format(obj.edition.game.title, obj.edition.name)
 
     class Meta:
         model = models.SourceBook
         fields = (
-            "id",
             "api_url",
+            "slug",
             "title",
             "image",
             "corebook",
             "publisher",
+            "publisher_name",
             "edition",
+            "edition_title",
             "release_date",
             "isbn",
         )
@@ -220,17 +265,29 @@ class PublishedModuleSerializer(TaggitSerializer, NestedHyperlinkedModelSerializ
     )
     tags = TagListSerializerField()
     inherited_tags = TagListSerializerField(read_only=True)
+    publisher_name = serializers.SerializerMethodField()
+    parent_game_edition_name = serializers.SerializerMethodField()
+
+    def get_publisher_name(self, obj):
+        return obj.publisher.name
+
+    def get_parent_game_edition_name(self, obj):
+        return "{} ({})".format(
+            obj.parent_game_edition.game.title, obj.parent_game_edition.name
+        )
 
     class Meta:
         model = models.PublishedModule
         fields = (
-            "id",
             "api_url",
+            "slug",
             "title",
             "publisher",
+            "publisher_name",
             "isbn",
             "publication_date",
             "parent_game_edition",
+            "parent_game_edition_title",
             "image",
             "url",
             "tags",
