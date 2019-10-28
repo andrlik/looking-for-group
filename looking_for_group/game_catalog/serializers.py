@@ -266,12 +266,12 @@ class PublishedModuleSerializer(TaggitSerializer, NestedHyperlinkedModelSerializ
     tags = TagListSerializerField()
     inherited_tags = TagListSerializerField(read_only=True)
     publisher_name = serializers.SerializerMethodField()
-    parent_game_edition_name = serializers.SerializerMethodField()
+    parent_game_edition_title = serializers.SerializerMethodField()
 
     def get_publisher_name(self, obj):
         return obj.publisher.name
 
-    def get_parent_game_edition_name(self, obj):
+    def get_parent_game_edition_title(self, obj):
         return "{} ({})".format(
             obj.parent_game_edition.game.title, obj.parent_game_edition.name
         )
