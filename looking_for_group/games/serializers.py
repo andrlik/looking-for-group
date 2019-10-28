@@ -62,6 +62,27 @@ class AdventureLogSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
     initial_author = serializers.SlugRelatedField(slug_field="username", read_only=True)
     last_edited_by = serializers.SlugRelatedField(slug_field="username", read_only=True)
 
+    def __init__(self, instance=None, *args, **kwargs):
+        self._supplied_session = kwargs.pop("session", None)
+        super().__init__(instance, *args, **kwargs)
+
+    def create(self, validated_data):
+        old_session = validated_data.pop("session", None)
+        return models.AdventureLog.objects.create(
+            session=self._supplied_session, **validated_data
+        )
+
+    def validate(self, data):
+        if not data["session"] and self._supplied_session:
+            data["session"] = reverse(
+                "api-session-detail",
+                kwargs={
+                    "slug": self._supplied_session.slug,
+                    "parent_lookup_game__slug": self._supplied_session.game.slug,
+                },
+            )
+        return super().validate(data)
+
     class Meta:
         model = models.AdventureLog
         fields = (

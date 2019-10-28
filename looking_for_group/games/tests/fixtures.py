@@ -119,6 +119,7 @@ class GamesTData(object):
         self.session2 = self.gp2.create_next_session()
         self.player1 = models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
         self.player2 = models.Player.objects.create(gamer=self.gamer3, game=self.gp2)
+        self.player3 = models.Player.objects.create(gamer=self.gamer1, game=self.gp1)
         self.character1 = models.Character.objects.create(
             player=self.player1,
             name="Magic Brian",
