@@ -1,6 +1,6 @@
 import logging
 
-from django.db import Q
+from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, mixins, status, viewsets
@@ -27,24 +27,28 @@ class GamePostingViewSet(
 
     permission_required = "community.list_communities"
     object_permission_required = "game.can_view_listing"
+    model = models.GamePosting
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
     serializer_class = serializers.GameDataSerializer
     serializer_detail_class = serializers.GameDataSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = [
-        "published_game",
-        "game_system",
-        "published_module",
-        "game_status",
-        "game_type",
-        "venue_type",
-    ]
+    # filter_backends = [DjangoFilterBackend]
+    # filterset_fields = [
+    #     "published_game",
+    #     "game_system",
+    #     "published_module",
+    #     "game_status",
+    #     "game_type",
+    #     "venue_type",
+    # ]
 
     def get_queryset(self):
         public_q = Q(privacy_level="public")
         final_q = public_q
         if self.request.user.is_authenticated:
+            logger.debug(
+                "We have a logged in user so we're going to add community and friend filtering."
+            )
             q_community = Q(privacy_level="community") & (
                 Q(communities__in=[self.request.user.gamerprofile.communities.all()])
                 | Q(gm__in=self.request.user.gamerprofile.friends.all())
@@ -116,6 +120,7 @@ class GameSessionViewSet(
     Views for seeing game session data.
     """
 
+    model = models.GameSession
     permission_required = "game.can_view_listing_details"
     serializer_class = serializers.GameSessionSerializer
     lookup_field = "slug"
@@ -138,9 +143,9 @@ class GameSessionViewSet(
         )
 
     def get_queryset(self):
-        return models.GameSession.objects.filter(
+        return self.model.objects.filter(
             game__slug=self.kwargs["parent_lookup_game__slug"]
-        )
+        ).order_by("-scheduled_time")
 
     def dispatch(self, request, *args, **kwargs):
         if (
@@ -230,6 +235,7 @@ class AdventureLogViewSet(
     Allows the manipulation of view sets.
     """
 
+    model = models.AdventureLog
     serializer_class = serializers.AdventureLogSerializer
     lookup_field = "slug"
     lookup_url_kwarg = "slug"

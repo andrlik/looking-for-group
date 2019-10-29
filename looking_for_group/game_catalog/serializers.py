@@ -21,17 +21,28 @@ class NestedHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
 
     def __init__(self, view_name, parent_lookup_kwargs=None, *args, **kwargs):
         self.parent_lookup_kwargs = parent_lookup_kwargs
+        logger.debug(
+            "Initialized related field with parent_lookup_kwargs of {}".format(
+                self.parent_lookup_kwargs
+            )
+        )
         super().__init__(view_name, *args, **kwargs)
 
     def get_url(self, obj, view_name, request, format):
         url_kwargs = {self.lookup_url_kwarg: getattr(obj, self.lookup_field)}
         if self.parent_lookup_kwargs:
+            logger.debug(
+                "This nested hyperlink has parent lookups... Digging into them."
+            )
             for k, v in self.parent_lookup_kwargs.items():
+                logger.debug("Digging for value for {}".format(k))
                 property_depth = v.split("__")
                 working_property = obj
                 for prop in property_depth:
                     working_property = getattr(working_property, prop)
                 url_kwargs[k] = working_property
+                logger.debug("Set {} to value {}".format(k, working_property))
+        logger.debug("Running reverse using url_kwargs of {}".format(url_kwargs))
         return reverse(
             self.view_name, request=request, format=format, kwargs=url_kwargs
         )
@@ -217,6 +228,12 @@ class SourcebookSerializer(NestedHyperlinkedModelSerializer):
         read_only=True,
     )
     publisher_name = serializers.SerializerMethodField()
+    edition = NestedHyperlinkedRelatedField(
+        view_name="api-edition-detail",
+        lookup_field="slug",
+        parent_lookup_kwargs={"parent_lookup_game__slug": "game__slug"},
+        read_only=True,
+    )
     edition_title = serializers.SerializerMethodField()
 
     def get_publisher_name(self, obj):
@@ -301,6 +318,7 @@ class PublishedModuleSerializer(TaggitSerializer, NestedHyperlinkedModelSerializ
                     "parent_lookup_parent_game_edition__game__slug": "parent_game_edition__game__slug",
                     "parent_lookup_parent_game_edition__slug": "parent_game_edition__slug",
                 },
+                "read_only": True,
             },
             "parent_game_edition": {
                 "view_name": "api-edition-detail",

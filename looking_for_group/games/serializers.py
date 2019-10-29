@@ -26,6 +26,18 @@ def find_slug_in_url(url):
     return possible_slug
 
 
+class PlayerEditableField(serializers.RelatedField):
+    def to_representation(self, instance):
+        return {"slug": instance.slug, "gamer": instance.gamer.username}
+
+    def to_internal_value(self, data):
+        try:
+            player = models.Player.objects.get(slug=data["slug"])
+        except ObjectDoesNotExist:
+            return None
+        return player
+
+
 class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
     """
     Serializer for character objects.
@@ -57,6 +69,12 @@ class AdventureLogSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
     Serializer for an adventure log.
     """
 
+    session = catalog_serializers.NestedHyperlinkedRelatedField(
+        view_name="api-session-detail",
+        lookup_field="slug",
+        read_only=True,
+        parent_lookup_kwargs={"parent_lookup_game__slug": "game__slug"},
+    )
     game_title = serializers.SerializerMethodField()
     session_date = serializers.SerializerMethodField()
     initial_author = serializers.SlugRelatedField(slug_field="username", read_only=True)
@@ -67,13 +85,25 @@ class AdventureLogSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
         super().__init__(instance, *args, **kwargs)
 
     def create(self, validated_data):
-        old_session = validated_data.pop("session", None)
+        validated_data.pop("session", None)
         return models.AdventureLog.objects.create(
             session=self._supplied_session, **validated_data
         )
 
+    def get_session_date(self, obj):
+        return obj.session.scheduled_time
+
+    def get_game_title(self, obj):
+        return obj.session.game.title
+
     def validate(self, data):
-        if not data["session"] and self._supplied_session:
+        logger.debug("Starting adventure log validation...")
+        if (
+            "session" not in data.keys() or not data["session"]
+        ) and self._supplied_session:
+            logger.debug(
+                "Session is missing, but we were already supplied with a _supplied_session. Setting that as url."
+            )
             data["session"] = reverse(
                 "api-session-detail",
                 kwargs={
@@ -88,7 +118,9 @@ class AdventureLogSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
         fields = (
             "api_url",
             "slug",
+            "game_title",
             "session",
+            "session_date",
             "created",
             "modified",
             "initial_author",
@@ -100,7 +132,9 @@ class AdventureLogSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
         read_only_fields = (
             "api_url",
             "slug",
+            "game_title",
             "session",
+            "session_date",
             "created",
             "modified",
             "initial_author",
@@ -112,7 +146,7 @@ class AdventureLogSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
                 "view_name": "api-adventurelog-detail",
                 "lookup_field": "slug",
                 "parent_lookup_kwargs": {
-                    "parent_lookup_game__slug": "session__game__slug",
+                    "parent_lookup_session__game__slug": "session__game__slug",
                     "parent_lookup_session__slug": "session__slug",
                 },
             },
@@ -154,12 +188,16 @@ class GameSessionSerializer(catalog_serializers.NestedHyperlinkedModelSerializer
     Serializer for a game session from player's perspective.
     """
 
+    game = catalog_serializers.NestedHyperlinkedRelatedField(
+        view_name="api-game-detail", lookup_field="slug", read_only=True
+    )
+    adventurelog = AdventureLogSerializer()
     adventurelog_title = serializers.SerializerMethodField()
     adventurelog_body = serializers.SerializerMethodField()
     adventurelog_body_rendered = serializers.SerializerMethodField()
     game_title = serializers.SerializerMethodField()
-    players_expected = PlayerSerializer(many=True, read_only=True)
-    players_missing = PlayerSerializer(many=True, read_only=True)
+    players_expected = serializers.SerializerMethodField(read_only=True)
+    players_missing = serializers.SerializerMethodField(read_only=True)
 
     def get_adventurelog_title(self, obj):
         if obj.adventurelog:
@@ -178,6 +216,12 @@ class GameSessionSerializer(catalog_serializers.NestedHyperlinkedModelSerializer
 
     def get_game_title(self, obj):
         return obj.game.title
+
+    def get_players_expected(self, obj):
+        return [p.gamer.username for p in obj.players_expected]
+
+    def get_players_missing(self, obj):
+        return [p.gamer.username for p in obj.players_missing]
 
     class Meta:
         model = models.GameSession
@@ -207,7 +251,7 @@ class GameSessionSerializer(catalog_serializers.NestedHyperlinkedModelSerializer
                 "view_name": "api-adventurelog-detail",
                 "lookup_field": "slug",
                 "parent_lookup_kwargs": {
-                    "parent_lookup_game__slug": "session__game__slug",
+                    "parent_lookup_session__game__slug": "session__game__slug",
                     "parent_lookup_session__slug": "session__slug",
                 },
             },
@@ -219,32 +263,54 @@ class GameSessionGMSerializer(NestedUpdateMixin, GameSessionSerializer):
     Serializer for a game session from the GM's view.
     """
 
-    adventurelog = AdventureLogSerializer()
-    players_expected = PlayerSerializer(many=True)
-    players_missing = PlayerSerializer(many=True)
+    players_expected = PlayerEditableField(
+        many=True, queryset=models.Player.objects.all()
+    )
+    players_missing = PlayerEditableField(
+        many=True, queryset=models.Player.objects.all()
+    )
 
     def validate(self, data):
         data = super().validate(data)
+        logger.debug(
+            "Starting check to ensure that players missing doesn't contain any elements not already in players_expected..."
+        )
         for player in data["players_missing"]:
+            logger.debug(
+                "Checking to ensure player {} in also in {}".format(
+                    player, data["players_expected"]
+                )
+            )
             if player not in data["players_expected"]:
                 raise serializers.ValidationError(
                     "You can't mark a player of missing if they weren't part of the expected set of players."
                 )
-        game_slug = find_slug_in_url(data["game"])
-        try:
-            game = models.GamePosting.objects.get(slug=game_slug)
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError(
-                "You specified a game that doesn't exist!"
+        logger.debug("Grabbing game data...")
+        if self.instance or data["slug"]:
+            if self.instance:
+                game = self.instance.game
+            else:
+                game = models.GameSession.objects.get(slug=data["slug"]).game
+            logger.debug("Game set to {}".format(game))
+        logger.debug(
+            "Parsing through players_expected value of {}".format(
+                data["players_expected"]
             )
+        )
         for player in data["players_expected"]:
-            if player["game"] != game.slug:
+            logger.debug(
+                "Checking that player {} matches session game slug of {}".format(
+                    player, game.slug
+                )
+            )
+            if player.game.slug != game.slug:
                 raise serializers.ValidationError(
                     "You cannot specify a player from another game!"
                 )
         return data
 
     class Meta:
+        model = models.GameSession
         fields = (
             "api_url",
             "slug",
@@ -262,6 +328,7 @@ class GameSessionGMSerializer(NestedUpdateMixin, GameSessionSerializer):
             "adventurelog_body_rendered",
         )
         read_only_fields = (
+            "api_url",
             "slug",
             "game",
             "game_title",
@@ -273,11 +340,25 @@ class GameSessionGMSerializer(NestedUpdateMixin, GameSessionSerializer):
             "adventurelog_body",
             "adventurelog_body_rendered",
         )
+        extra_kwargs = {
+            "api_url": {
+                "view_name": "api-session-detail",
+                "lookup_field": "slug",
+                "parent_lookup_kwargs": {"parent_lookup_game__slug": "game__slug"},
+            },
+            "game": {"view_name": "api-game-detail", "lookup_field": "slug"},
+            "adventurelog": {
+                "view_name": "api-adventurelog-detail",
+                "lookup_field": "slug",
+                "parent_lookup_kwargs": {
+                    "parent_lookup_session__game__slug": "session__game__slug",
+                    "parent_lookup_session__slug": "session__slug",
+                },
+            },
+        }
 
 
-class GameDataSerializer(
-    catalog_serializers.APIURLMixin, serializers.HyperlinkedModelSerializer
-):
+class GameDataSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
     """
     Serializer for game data export.
     """
@@ -298,111 +379,116 @@ class GameDataSerializer(
         players = models.Player.objects.filter(game=obj)
         return PlayerSerializer(players, many=True).data
 
+    def get_published_game_title(self, obj):
+        if obj.published_game:
+            return "{} ({})".format(
+                obj.published_game.game.title, obj.published_game.name
+            )
+        return None
+
+    def get_game_system_name(self, obj):
+        if obj.game_system:
+            return obj.game_system.name
+        return None
+
+    def get_published_module_title(self, obj):
+        if obj.published_module:
+            return obj.published_module.title
+        return None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.communities.queryset = GamerProfile.objects.get(
-            username=self.fields["gm"]
-        ).communities.all()
+        if self.instance:
+            self._session_gm = self.instance.gm
+            self.fields["communities"].queryset = self._session_gm.communities.all()
+        elif self.context["request"] and self.context["request"].user.is_authenticated:
+            self._session_gm = self.context["request"].user.gamerprofile
+            self.fields["communities"].queryset = self._session_gm.communities.all()
+        else:
+            self._session_gm = None
+            self.fields["communities"].queryset = None
+
+    def create(self, validated_data):
+        if (
+            "gm" not in validated_data.keys() or not validated_data["gm"]
+        ) and self._session_gm:
+            return models.GamePosting.objects.create(
+                gm=self._session_gm, **validated_data
+            )
+        return super().create(validated_data)
 
     def validate(self, data):
         """
         Verify communities and catalog entries
         """
         logger.debug("Begining validation of dataset {}".format(data))
-        logger.debug("Starting with basic checks...")
+        logger.debug("Updating community queryset...")
+        logger.debug("Calling parent class validation basic checks...")
         data = super().validate(data)
         logger.debug("Starting on custom validation...")
-        module = None
-        edition = None
-        system = None
+        if not self.instance and not self._session_gm:
+            raise serializers.ValidationError(
+                {
+                    "gm": "You cannot create a game without the GM being provided in the request context."
+                }
+            )
         if data["privacy_level"] == "private" and data["communities"]:
             logger.debug(
                 "Found an issue with someone trying to post an unlisted game to communities."
             )
             raise serializers.ValidationError(
-                "You cannot post an unlisted game to communities."
+                {"communities": "You cannot post an unlisted game to communities."}
             )
         if data["communities"]:
-            for community_slug in data["communities"]:
-                if community_slug not in [
-                    c.slug
-                    for c in GamerProfile.objects.get(
-                        username=data["gm"]
-                    ).communities.all()
-                ]:
+            for community in data["communities"]:
+                if community not in self._session_gm.communities.all():
                     logger.debug(
                         "User is trying to post a game to a community of which they are not a member."
                     )
                     raise serializers.ValidationError(
                         "You cannot post a game to a community of which you are not a member. You are not a member of {}".format(
-                            models.GamerCommunity.objects.get(slug=community_slug).name
+                            community.name
                         )
                     )
-        logger.debug("Starting validation of catalog entries...")
-        if data["published_module"]:
-            # Check to see if there is a mismatch.
-            module_slug = find_slug_in_url(data["published_module"])
-            logger.debug("Module is specified and found slug of {}".format(module_slug))
-            try:
-                module = PublishedModule.objects.get(slug=module_slug)
-                logger.debug("Retrieved module {}".format(module))
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError("You specified an invalid module.")
-        if data["published_game"]:
-            edition_slug = find_slug_in_url(data["published_game"])
-            logger.debug("Edition is specified. Found slug of {}".format(edition_slug))
-            try:
-                edition = GameEdition.objects.get(slug=edition_slug)
-                logger.debug("Retrieved edition object of {}".format(edition))
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError(
-                    "You specified an invalid game edition."
-                )
-
-        if data["game_system"]:
-            system_slug = find_slug_in_url(data["game_system"])
-            logger.debug("System is specified and found slug of {}".format(system_slug))
-            try:
-                system = GameSystem.objects.get(slug=system_slug)
-                logger.debug("Retrieved system object of {}".format(system))
-            except ObjectDoesNotExist:
-                raise serializers.ValidationError(
-                    "You specified an invalid game system."
-                )
         logger.debug("Comparing retrieved catalog objects.")
-        if module and edition and module.parent_game_edition != edition:
+        if (
+            data["published_module"]
+            and data["published_game"]
+            and data["published_module"].parent_game_edition != data["published_game"]
+        ):
             logger.debug("Module and edition are a mismatch!!")
             raise serializers.ValidationError(
                 "You specified a module that belongs to a different game edition than the one you are playing."
             )
-        if edition and system and edition.game_system != system:
+        if (
+            data["published_game"]
+            and data["game_system"]
+            and data["published_game"].game_system != data["game_system"]
+        ):
             logger.debug("Edition and game system are a mismatch!!")
             raise serializers.ValidationError(
                 "You specified a different game system than the game edition that you are using to play."
             )
-        if module and (not edition or not system):
+        if data["published_module"] and (
+            not data["published_game"] or not data["game_system"]
+        ):
             logger.debug(
                 "Module is set, but not other values. We'll try to fill them in..."
             )
-            if not edition:
-                data["published_game"] = reverse(
-                    "api-edition-detail",
-                    kwargs={
-                        "parent_lookup_game__slug": module.parent_game_edition__game__slug,
-                        "slug": module.parent_game_edition.slug,
-                    },
-                )
+            if not data["published_game"]:
+                data["published_game"] = data["published_module"].parent_game_edition
                 logger.debug("Set edition based on module.")
-            if not system:
-                data["game_system"] = reverse(
-                    "api-system-detail",
-                    kwargs={"slug": module.parent_game_edition.game_system.slug},
-                )
+            if not data["game_system"]:
+                data["game_system"] = data[
+                    "published_module"
+                ].parent_game_edition.game_system
                 logger.debug("Set system based on module")
-        elif not module and edition and not system:
-            data["game_system"] = reverse(
-                "api-system-detail", kwargs={"slug": edition.game_system.slug}
-            )
+        elif (
+            not data["published_module"]
+            and data["published_game"]
+            and not data["game_system"]
+        ):
+            data["game_system"] = data["published_game"].game_system
             logger.debug("Set system based on edition [module not specified.]")
         else:
             logger.debug(
@@ -421,6 +507,8 @@ class GameDataSerializer(
             "game_description",
             "game_description_rendered",
             "game_type",
+            "game_status",
+            "venue_type",
             "privacy_level",
             "adult_themes",
             "content_warning",
@@ -445,7 +533,8 @@ class GameDataSerializer(
             "slug",
             "gm",
             "game_description_rendered",
-            "published_game_title" "game_system_name",
+            "published_game_title",
+            "game_system_name",
             "published_module_title",
             "players",
             "sessions",

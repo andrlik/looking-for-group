@@ -24,6 +24,11 @@ def test_find_slug_in_url(catalog_testdata, model, serializer_class):
     Test our ability to find the slugs in the testdata.
     """
     for item in model.objects.all():
+        print(
+            "Preparing test for item {}, with serializer class {}".format(
+                item, serializer_class
+            )
+        )
         assert (
             serializers.find_slug_in_url(
                 serializer_class(item, context={"request": None}).data["api_url"]
@@ -33,25 +38,40 @@ def test_find_slug_in_url(catalog_testdata, model, serializer_class):
 
 
 @pytest.mark.parametrize(
-    "edition,system,module,expected_valid",
+    "gamertouse,edition,system,module,expected_valid",
     [
-        ("numen", "cypher", "vv", True),
-        ("numen", "ddfive", "vv", False),
-        ("numen", "ddfive", None, False),
-        (None, "cypher", None, True),
-        (None, "cypher", "vv", True),
-        (None, None, "vv", True),
-        ("numen", None, None, True),
-        ("numen", None, "cos", False),
-        (None, None, None, True),
+        ("gamer1", "numen", "cypher", "vv", True),
+        (None, "numen", "cypher", "vv", True),
+        ("gamer1", "numen", "ddfive", "vv", False),
+        ("gamer1", "numen", "ddfive", None, False),
+        ("gamer1", None, "cypher", None, True),
+        ("gamer1", None, "cypher", "vv", True),
+        ("gamer1", None, None, "vv", True),
+        ("gamer1", "numen", None, None, True),
+        ("gamer1", "numen", None, "cos", False),
+        ("gamer1", None, None, None, True),
     ],
 )
 def test_game_serializer_validation(
-    catalog_testdata, game_testdata, edition, system, module, expected_valid
+    catalog_testdata,
+    game_testdata,
+    apiclient,
+    gamertouse,
+    edition,
+    system,
+    module,
+    expected_valid,
 ):
     """
     Test the validation functions for a posted game.
     """
+    request = None
+    if gamertouse:
+        apiclient.force_login(getattr(game_testdata, gamertouse).user)
+        response = apiclient.get(
+            reverse("api-game-detail", kwargs={"slug": game_testdata.gp1})
+        )
+        request = response.request
     existing_game = serializers.GameDataSerializer(
         game_testdata.gp1, context={"request": None}
     )
@@ -72,7 +92,7 @@ def test_game_serializer_validation(
                 "parent_lookup_game__slug": getattr(
                     catalog_testdata, edition
                 ).game.slug,
-                "slug": getattr(catalog_testdata, edition),
+                "slug": getattr(catalog_testdata, edition).slug,
             },
         )
     else:
@@ -85,7 +105,7 @@ def test_game_serializer_validation(
         new_game["game_system"] = ""
     if module:
         new_game["published_module"] = reverse(
-            "api-module_detail",
+            "api-publishedmodule-detail",
             kwargs={
                 "parent_lookup_parent_game_edition__game__slug": getattr(
                     catalog_testdata, module
@@ -97,11 +117,56 @@ def test_game_serializer_validation(
             },
         )
     else:
-        new_game["published_module"] == ""
+        new_game["published_module"] = ""
     new_game["api_url"] = ""
     new_game["slug"] = ""
-    check_serializer = serializers.GameDataSerializer(data=new_game)
-    assert expected_valid == check_serializer.is_valid()
+    print("Submitting data of value {} to serializer...".format(new_game))
+
+    check_serializer = serializers.GameDataSerializer(
+        data=new_game, context={"request": request}
+    )
+    validity_check = check_serializer.is_valid()
+    print(check_serializer.errors)
+    assert expected_valid == validity_check
+
+
+@pytest.mark.parametrize(
+    "privacy_level,communities_submitted,expected_result",
+    [
+        ("private", [], True),
+        ("private", ["comm1"], False),
+        ("community", ["comm1"], True),
+        ("community", ["comm2"], False),
+        ("community", ["comm1", "comm2"], False),
+        ("public", [], True),
+        ("public", ["comm1"], True),
+        ("public", ["comm2"], False),
+    ],
+)
+def test_game_serializer_community_logic(
+    catalog_testdata,
+    game_testdata,
+    privacy_level,
+    communities_submitted,
+    expected_result,
+):
+    """
+    Tests whether the community specific rules are being evaluated by the serializer validation for games correctly.
+    """
+    game_serialized = serializers.GameDataSerializer(
+        game_testdata.gp2, context={"request": None}
+    )
+    game_update_data = game_serialized.data
+    game_update_data["privacy_level"] = privacy_level
+    game_update_data["communities"] = [
+        getattr(game_testdata, c).slug for c in communities_submitted
+    ]
+    check_serial = serializers.GameDataSerializer(
+        game_testdata.gp2, data=game_update_data, context={"request": None}
+    )
+    check_result = check_serial.is_valid()
+    print(check_serial.errors)
+    assert check_result == expected_result
 
 
 @pytest.mark.parametrize(
@@ -120,32 +185,35 @@ def test_game_session_validation(
     """
     Test the game session validator.
     """
-    existing_session_data = serializers.GameSessionSerializer(
+    print("Starting to grab existing session data...")
+    existing_session_data = serializers.GameSessionGMSerializer(
         game_testdata.session2, context={"request": None}
     ).data
-    existing_session_data["players_expected"] = serializers.PlayerSerializer(
-        [
-            p
-            for p in models.Player.objects.filter(
-                gamer__username__in=[
-                    getattr(p, "gamer").username for p in players_expected
-                ]
-            )
-        ],
-        many=True,
+    print("Got existing session data of {}".format(existing_session_data))
+    print("Setting players_expected to {}".format(players_expected))
+    existing_session_data["players_expected"] = [
+        {"slug": p.slug, "gamer": p.gamer.username}
+        for p in models.Player.objects.filter(
+            pk__in=[getattr(game_testdata, g).pk for g in players_expected]
+        )
+    ]
+
+    print("Setting players missing to {}".format(players_missing))
+    existing_session_data["players_missing"] = [
+        {"slug": p.slug, "gamer": p.gamer.username}
+        for p in models.Player.objects.filter(
+            pk__in=[getattr(game_testdata, g).pk for g in players_missing]
+        )
+    ]
+
+    print(
+        "Data to use to use in validation is now {}. Feeding to serializer...".format(
+            existing_session_data
+        )
     )
-    existing_session_data["players_missing"] = serializers.PlayerSerializer(
-        [
-            p
-            for p in models.Player.objects.filter(
-                gamer__username__in=[
-                    getattr(p, "gamer").username for p in players_missing
-                ]
-            )
-        ],
-        many=True,
-    )
-    check_serializer = serializers.GameSessionSerializer(
-        data=existing_session_data, context={"request": None}
+    check_serializer = serializers.GameSessionGMSerializer(
+        instance=game_testdata.session2,
+        data=existing_session_data,
+        context={"request": None},
     )
     assert expected_valid == check_serializer.is_valid()
