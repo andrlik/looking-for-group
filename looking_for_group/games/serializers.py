@@ -38,6 +38,81 @@ class PlayerEditableField(serializers.RelatedField):
         return player
 
 
+class GameApplicationSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
+    """
+    Serializer to represent applications to a game
+    """
+
+    game = catalog_serializers.NestedHyperlinkedRelatedField(
+        view_name="api-game-detail", lookup_field="slug", read_only=True
+    )
+    gamer = catalog_serializers.NestedHyperlinkedRelatedField(
+        view_name="api-profile-detail", lookup_field="username", read_only=True
+    )
+    gamer_username = serializers.SlugRelatedField(slug_field="username", read_only=True)
+
+    class Meta:
+        model = models.GamePostingApplication
+        fields = ("api_url", "game", "gamer", "gamer_username", "message", "status")
+        read_only_fields = ("api_url", "game", "gamer", "gamer_username", "status")
+        extra_kwargs = {
+            "api_url": {
+                "view_name": "api-mygameapplication-detail",
+                "lookup_field": "slug",
+            }
+        }
+
+
+class ScheduleSerializer(serializers.Serializer):
+    """
+    For sending a scheduled time to a session as a separate call.
+    """
+
+    new_scheduled_time = serializers.DateTimeField(required=True)
+
+
+class GameApplicationGMSerializer(GameApplicationSerializer):
+    """
+    Serializer to use in GM view.
+    """
+
+    player_stats = serializers.SerializerMethodField(read_only=True)
+
+    def get_player_stats(self, obj):
+        return {
+            "games_joined": obj.gamer.games_joined,
+            "games_left": obj.gamer.games_left,
+            "games_finished": obj.gamer.games_finished,
+        }
+
+    class Meta:
+        model = models.GamePostingApplication
+        fields = (
+            "api_url",
+            "game",
+            "gamer",
+            "gamer_username",
+            "player_stats",
+            "message",
+            "status",
+        )
+        read_only_fields = (
+            "api_url",
+            "game",
+            "gamer",
+            "gamer_username",
+            "player_stats",
+            "status",
+        )
+        extra_kwargs = {
+            "api_url": {
+                "view_name": "api-gameapplication-detail",
+                "lookup_field": "slug",
+                "parent_lookup_kwargs": {"parent_lookup_game__slug": "game__slug"},
+            }
+        }
+
+
 class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
     """
     Serializer for character objects.
@@ -358,26 +433,34 @@ class GameSessionGMSerializer(NestedUpdateMixin, GameSessionSerializer):
         }
 
 
-class GameDataSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
+class GameDataListSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
     """
-    Serializer for game data export.
+    Broader view for a list view. Can also be used as a detail view for non-members of a game.
     """
 
     gm = serializers.SlugRelatedField(slug_field="username", read_only=True)
-    players = serializers.SlugRelatedField(
-        slug_field="username", read_only=True, many=True
-    )
-    published_game_title = serializers.SerializerMethodField()
-    game_system_name = serializers.SerializerMethodField()
-    published_module_title = serializers.SerializerMethodField()
+    gm_stats = serializers.SerializerMethodField(read_only=True)
+    published_game_title = serializers.SerializerMethodField(read_only=True)
+    game_system_name = serializers.SerializerMethodField(read_only=True)
+    published_module_title = serializers.SerializerMethodField(read_only=True)
     communities = serializers.SlugRelatedField(
         slug_field="slug", many=True, queryset=GamerCommunity.objects.all()
     )
-    player_stats = serializers.SerializerMethodField(read_only=True)
+    current_players = serializers.SerializerMethodField(read_only=True)
 
-    def get_player_stats(self, obj):
-        players = models.Player.objects.filter(game=obj)
-        return PlayerSerializer(players, many=True).data
+    def get_gm_stats(self, obj):
+        if obj.gm:
+            return {
+                "games_created": obj.gm.games_created,
+                "active_games": models.GamePosting.objects.filter(gm=obj.gm)
+                .exclude(status__in=["cancel", "closed"])
+                .count(),
+                "games_finished": obj.gm.gm_games_finished,
+            }
+        return None
+
+    def get_current_players(self, obj):
+        return models.Player.objects.filter(game=obj).count()
 
     def get_published_game_title(self, obj):
         if obj.published_game:
@@ -396,6 +479,90 @@ class GameDataSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
             return obj.published_module.title
         return None
 
+    class Meta:
+        model = models.GamePosting
+        fields = (
+            "api_url",
+            "slug",
+            "title",
+            "gm",
+            "gm_stats",
+            "game_description",
+            "game_description_rendered",
+            "game_type",
+            "status",
+            "game_mode",
+            "privacy_level",
+            "adult_themes",
+            "content_warning",
+            "published_game",
+            "published_game_title",
+            "game_system",
+            "game_system_name",
+            "published_module",
+            "published_module_title",
+            "start_time",
+            "session_length",
+            "end_date",
+            "communities",
+            "current_players",
+            "min_players",
+            "max_players",
+            "sessions",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "api_url",
+            "slug",
+            "gm",
+            "game_description_rendered",
+            "published_game_title",
+            "game_system_name",
+            "published_module_title",
+            "sessions",
+            "created",
+            "modified",
+        )
+        extra_kwargs = {
+            "api_url": {"view_name": "api-game-detail", "lookup_field": "slug"},
+            "published_game": {
+                "view_name": "api-edition-detail",
+                "lookup_field": "slug",
+                "queryset": GameEdition.objects.all().order_by("game__title", "name"),
+                "parent_lookup_kwargs": {"parent_lookup_game__slug": "game__slug"},
+            },
+            "game_system": {
+                "view_name": "api-system-detail",
+                "lookup_field": "slug",
+                "queryset": GameSystem.objects.all().order_by("name"),
+            },
+            "published_module": {
+                "view_name": "api-publishedmodule-detail",
+                "lookup_field": "slug",
+                "queryset": PublishedModule.objects.all().order_by("title"),
+                "parent_lookup_kwargs": {
+                    "parent_lookup_parent_game_edition__game__slug": "parent_game_edition__game__slug",
+                    "parent_lookup_parent_game_edition__slug": "parent_game_edition__slug",
+                },
+            },
+        }
+
+
+class GameDataSerializer(GameDataListSerializer):
+    """
+    Serializer for game data export.
+    """
+
+    players = serializers.SlugRelatedField(
+        slug_field="username", read_only=True, many=True
+    )
+    player_stats = serializers.SerializerMethodField(read_only=True)
+
+    def get_player_stats(self, obj):
+        players = models.Player.objects.filter(game=obj)
+        return PlayerSerializer(players, many=True).data
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance:
@@ -412,9 +579,15 @@ class GameDataSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
         if (
             "gm" not in validated_data.keys() or not validated_data["gm"]
         ) and self._session_gm:
-            return models.GamePosting.objects.create(
+            communities = validated_data.pop("communities", None)
+            new_game = models.GamePosting.objects.create(
                 gm=self._session_gm, **validated_data
             )
+            if communities:
+                new_game.communities.add(*communities)
+            new_game.gm.refresh_from_db()
+            new_game.refresh_from_db()
+            return new_game
         return super().create(validated_data)
 
     def validate(self, data):
@@ -504,6 +677,7 @@ class GameDataSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
             "slug",
             "title",
             "gm",
+            "gm_stats",
             "game_description",
             "game_description_rendered",
             "game_type",
@@ -522,6 +696,9 @@ class GameDataSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
             "session_length",
             "end_date",
             "communities",
+            "current_players",
+            "min_players",
+            "max_players",
             "players",
             "sessions",
             "player_stats",

@@ -4,8 +4,22 @@ from . import api_views
 
 games_app_router = ExtendedDefaultRouter()
 
+
 games_router = games_app_router.register(
     r"games", api_views.GamePostingViewSet, basename="api-game"
+)
+
+games_app_router.register(
+    r"games/my-applications",
+    api_views.GameApplicationViewSet,
+    basename="api-mygameapplication",
+)
+
+games_router.register(
+    r"applications",
+    api_views.GMGameApplicationViewSet,
+    basename="api-gameapplication",
+    parents_query_lookups=["game__slug"],
 )
 
 session_router = games_router.register(
