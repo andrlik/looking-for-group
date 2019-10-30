@@ -41,7 +41,7 @@ def test_find_slug_in_url(catalog_testdata, model, serializer_class):
     "gamertouse,edition,system,module,expected_valid",
     [
         ("gamer1", "numen", "cypher", "vv", True),
-        (None, "numen", "cypher", "vv", True),
+        (None, "numen", "cypher", "vv", False),
         ("gamer1", "numen", "ddfive", "vv", False),
         ("gamer1", "numen", "ddfive", None, False),
         ("gamer1", None, "cypher", None, True),
@@ -71,7 +71,7 @@ def test_game_serializer_validation(
         response = apiclient.get(
             reverse("api-game-detail", kwargs={"slug": game_testdata.gp1})
         )
-        request = response.request
+        request = response.wsgi_request
     existing_game = serializers.GameDataSerializer(
         game_testdata.gp1, context={"request": None}
     )
