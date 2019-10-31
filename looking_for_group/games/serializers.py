@@ -555,9 +555,9 @@ class GameDataSerializer(GameDataListSerializer):
     """
 
     players = serializers.SlugRelatedField(
-        slug_field="username", read_only=True, many=True
+        slug_field="username", read_only=True, many=True, required=False
     )
-    player_stats = serializers.SerializerMethodField(read_only=True)
+    player_stats = serializers.SerializerMethodField(read_only=True, required=False)
 
     def get_player_stats(self, obj):
         players = models.Player.objects.filter(game=obj)
@@ -605,14 +605,19 @@ class GameDataSerializer(GameDataListSerializer):
                     "gm": "You cannot create a game without the GM being provided in the request context."
                 }
             )
-        if data["privacy_level"] == "private" and data["communities"]:
+        if (
+            "privacy_level" in data.keys()
+            and data["privacy_level"] == "private"
+            and "communities" in data.keys()
+            and data["communities"]
+        ):
             logger.debug(
                 "Found an issue with someone trying to post an unlisted game to communities."
             )
             raise serializers.ValidationError(
                 {"communities": "You cannot post an unlisted game to communities."}
             )
-        if data["communities"]:
+        if "communities" in data.keys() and data["communities"]:
             for community in data["communities"]:
                 if community not in self._session_gm.communities.all():
                     logger.debug(
@@ -625,7 +630,8 @@ class GameDataSerializer(GameDataListSerializer):
                     )
         logger.debug("Comparing retrieved catalog objects.")
         if (
-            data["published_module"]
+            all([i in data.keys() for i in ["published_module", "published_game"]])
+            and data["published_module"]
             and data["published_game"]
             and data["published_module"].parent_game_edition != data["published_game"]
         ):
@@ -634,7 +640,8 @@ class GameDataSerializer(GameDataListSerializer):
                 "You specified a module that belongs to a different game edition than the one you are playing."
             )
         if (
-            data["published_game"]
+            all([i in data.keys() for i in ["published_game", "game_system"]])
+            and data["published_game"]
             and data["game_system"]
             and data["published_game"].game_system != data["game_system"]
         ):
@@ -642,24 +649,29 @@ class GameDataSerializer(GameDataListSerializer):
             raise serializers.ValidationError(
                 "You specified a different game system than the game edition that you are using to play."
             )
-        if data["published_module"] and (
-            not data["published_game"] or not data["game_system"]
+        if (
+            "published_module" in data.keys()
+            and data["published_module"]
+            and (
+                ("published_game" not in data.keys() or not data["published_game"])
+                or ("game_system" not in data.keys() or not data["game_system"])
+            )
         ):
             logger.debug(
                 "Module is set, but not other values. We'll try to fill them in..."
             )
-            if not data["published_game"]:
+            if "published_game" not in data.keys() or not data["published_game"]:
                 data["published_game"] = data["published_module"].parent_game_edition
                 logger.debug("Set edition based on module.")
-            if not data["game_system"]:
+            if "game_system" not in data.keys() or not data["game_system"]:
                 data["game_system"] = data[
                     "published_module"
                 ].parent_game_edition.game_system
                 logger.debug("Set system based on module")
         elif (
-            not data["published_module"]
-            and data["published_game"]
-            and not data["game_system"]
+            ("published_module" not in data.keys() or not data["published_module"])
+            and ("published_game" in data.keys() and data["published_game"])
+            and ("game_system" not in data.keys() or not data["game_system"])
         ):
             data["game_system"] = data["published_game"].game_system
             logger.debug("Set system based on edition [module not specified.]")
@@ -719,6 +731,11 @@ class GameDataSerializer(GameDataListSerializer):
             "modified",
         )
         extra_kwargs = {
+            "communities": {"required": False},
+            "player_stats": {"required": False},
+            "gm_stats": {"required": False},
+            "created": {"required": False},
+            "modified": {"required": False},
             "api_url": {"view_name": "api-game-detail", "lookup_field": "slug"},
             "published_game": {
                 "view_name": "api-edition-detail",

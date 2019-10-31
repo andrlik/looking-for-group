@@ -1,6 +1,6 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_delete
 from factory.django import mute_signals
 from rest_framework.reverse import reverse
 
@@ -251,13 +251,14 @@ def test_game_crud_views(
     if httpmethod == "put" and game:
         for k, v in serializers.GameDataSerializer(
             game, context={"request": None}
-        ).data:
-            if k not in post_data.keys():
-                post_data[k] = v
+        ).data.items():
+            if k not in data_to_post.keys():
+                data_to_post[k] = v
     url = reverse(viewname, kwargs=url_kwargs)
     print(url)
     with django_assert_max_num_queries(50):
-        with mute_signals(post_delete):
+        with mute_signals(post_delete, pre_delete):
+            print("Submitting request with post data of {}".format(data_to_post))
             response = getattr(apiclient, httpmethod)(url, data=data_to_post)
     print(response.data)
     assert response.status_code == expected_response
@@ -265,7 +266,7 @@ def test_game_crud_views(
         assert models.GamePosting.objects.count() - current_games == 1
     elif httpmethod in ["put", "patch"] and game and expected_response == 200:
         game.refresh_from_db()
-        for k, v in post_data:
+        for k, v in post_data.items():
             assert (v == "" and not getattr(game, k)) or v == getattr(game, k)
     elif game and httpmethod == "delete":
         if expected_response == 204:

@@ -75,7 +75,7 @@ class GamePostingViewSet(
         return super().retrieve(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.edit_game", self.get_object()):
+        if not request.user.has_perm("game.can_edit_listing", self.get_object()):
             return Response(
                 data={"errors": "You do not have permission to edit this game."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -83,7 +83,7 @@ class GamePostingViewSet(
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.edit_game", self.get_object()):
+        if not request.user.has_perm("game.can_edit_listing", self.get_object()):
             return Response(
                 data={"errors": "You do not have permission to edit this game."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -91,7 +91,7 @@ class GamePostingViewSet(
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.delete_game", self.get_object()):
+        if not request.user.has_perm("game.can_edit_listing", self.get_object()):
             return Response(
                 data={"errors": "You do not have permission to delete this game."},
                 status=status.HTTP_403_FORBIDDEN,
