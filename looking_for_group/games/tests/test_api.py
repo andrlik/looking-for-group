@@ -305,12 +305,6 @@ def test_game_crud_views(
     else:
         if game:
             assert game == models.GamePosting.objects.get(pk=game.pk)
-            if "detail" in viewname and httpmethod == "get":
-                if see_players:
-                    assert "players" in response.data.keys()
-                else:
-                    with pytest.raises(KeyError):
-                        response.data["players"]
 
 
 @pytest.mark.parametrize(
@@ -357,3 +351,69 @@ def test_list_retrieve_games(
         else:
             with pytest.raises(KeyError):
                 response.data["players"]
+
+
+@pytest.mark.parametrize(
+    "gamertouse,gametouse,viewname, httpmethod, applicationtouse,expected_response",
+    [
+        (None, "gp5", "api-gameapplication-list", "get", None, 403),
+        (None, "gp5", "api-gameapplication-detail", "get", "app1", 403),
+        (None, "gp5", "api-gameapplication-approve", "post", "app1", 403),
+        (None, "gp5", "api-gameapplication-reject", "post", "app1", 403),
+        ("gamer3", "gp5", "api-gameapplication-list", "get", None, 403),
+        ("gamer3", "gp5", "api-gameapplication-detail", "get", "app1", 403),
+        ("gamer3", "gp5", "api-gameapplication-approve", "post", "app1", 403),
+        ("gamer3", "gp5", "api-gameapplication-reject", "post", "app1", 403),
+        ("gamer1", "gp5", "api-gameapplication-list", "get", None, 403),
+        ("gamer1", "gp5", "api-gameapplication-detail", "get", "app1", 403),
+        ("gamer1", "gp5", "api-gameapplication-approve", "post", "app1", 403),
+        ("gamer1", "gp5", "api-gameapplication-reject", "post", "app1", 403),
+        ("gamer4", "gp1", "api-gameapplication-detail", "get", "app1", 404),
+        ("gamer4", "gp5", "api-gameapplication-list", "get", None, 200),
+        ("gamer4", "gp5", "api-gameapplication-detail", "get", "app1", 200),
+        ("gamer4", "gp5", "api-gameapplication-approve", "post", "app1", 201),
+        ("gamer4", "gp5", "api-gameapplication-reject", "post", "app1", 200),
+    ],
+)
+def test_gm_application_view_approve_reject(
+    apiclient,
+    game_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    gametouse,
+    viewname,
+    httpmethod,
+    applicationtouse,
+    expected_response,
+):
+    """
+    Test the GM view of game applications and ensure that permissions are applied correctly.
+    """
+    gamer = None
+    game = getattr(game_testdata, gametouse)
+    application = None
+    if gamertouse:
+        gamer = getattr(game_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    if applicationtouse:
+        application = getattr(game_testdata, applicationtouse)
+    if not application:
+        url = reverse(viewname, kwargs={"parent_lookup_game__slug": game.slug})
+    else:
+        url = reverse(
+            viewname,
+            kwargs={"parent_lookup_game__slug": game.slug, "slug": application.slug},
+        )
+    with django_assert_max_num_queries(50):
+        with mute_signals(post_save):
+            response = getattr(apiclient, httpmethod)(url, data={})
+    print(response.data)
+    assert response.status_code == expected_response
+    if application:
+        application.refresh_from_db()
+        if "approve" in viewname and expected_response == 201:
+            assert application.status == "approve"
+        elif "reject" in viewname and expected_response == 200:
+            assert application.status == "deny"
+        else:
+            assert application.status == "pending"

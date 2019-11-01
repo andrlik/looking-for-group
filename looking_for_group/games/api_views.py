@@ -1,15 +1,14 @@
 import logging
 
-from django.db.models import F
 from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from notifications.signals import notify
-from rest_framework import generics, mixins, status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
-from rest_framework_rules.decorators import permission_required as action_permission_required
 from rest_framework_rules.mixins import PermissionRequiredMixin
 
 from . import models, serializers
@@ -490,6 +489,7 @@ class GMGameApplicationViewSet(
     View for a GM to review and approve applicants.
     """
 
+    permission_classes = (IsAuthenticated,)
     serializer_class = serializers.GameApplicationGMSerializer
     permission_required = "game.can_edit_listing"
     object_permission_required = "game.can_edit_listing"
@@ -512,11 +512,10 @@ class GMGameApplicationViewSet(
         if not request.user.is_authenticated or not request.user.has_perm(
             self.permission_required, self.get_parent_game()
         ):
-            return Response(
-                data={
-                    "errors": "You don't have permission to administrate applications to this game."
-                },
-                status=status.HTTP_403_FORBIDDEN,
+            logger.debug("Permission missing!")
+            self.permission_denied(
+                request,
+                message="You don't have permission to administrate applications to this game.",
             )
 
     def check_object_permissions(self, request, *args, **kwargs):
@@ -527,6 +526,7 @@ class GMGameApplicationViewSet(
         """
         Approves the game application.
         """
+        self.check_permissions(request, *args, **kwargs)
         obj = self.get_object()
         obj.status = "approve"
         player = models.Player.objects.create(game=obj.game, gamer=obj.gamer)
@@ -543,6 +543,7 @@ class GMGameApplicationViewSet(
         """
         Rejects the game application.
         """
+        self.check_permissions(request, *args, **kwargs)
         obj = self.get_object()
         obj.status = "deny"
         obj.save()
