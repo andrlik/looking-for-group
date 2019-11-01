@@ -1,6 +1,6 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_delete, pre_delete
+from django.db.models.signals import post_delete, post_save, pre_delete
 from factory.django import mute_signals
 from rest_framework.reverse import reverse
 
@@ -252,12 +252,21 @@ def test_game_crud_views(
         for k, v in serializers.GameDataSerializer(
             game, context={"request": None}
         ).data.items():
-            if k not in data_to_post.keys():
+            if k not in data_to_post.keys() and k not in [
+                "gm_stats",
+                "player_stats",
+                "players",
+                "game_description_rendered",
+                "published_module_title",
+                "game_system_name",
+                "published_game_title",
+                "current_players",
+            ]:
                 data_to_post[k] = v
     url = reverse(viewname, kwargs=url_kwargs)
     print(url)
     with django_assert_max_num_queries(50):
-        with mute_signals(post_delete, pre_delete):
+        with mute_signals(post_delete, pre_delete, post_save):
             print("Submitting request with post data of {}".format(data_to_post))
             response = getattr(apiclient, httpmethod)(url, data=data_to_post)
     print(response.data)
