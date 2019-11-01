@@ -417,3 +417,136 @@ def test_gm_application_view_approve_reject(
             assert application.status == "deny"
         else:
             assert application.status == "pending"
+
+
+@pytest.mark.parametrize(
+    "gamertouse,viewname,httpmethod,applicationtouse,post_data,expected_response",
+    [
+        (None, "api-mygameapplication-list", "get", None, {}, 403),
+        (None, "api-mygameapplication-detail", "get", "app1", {}, 403),
+        (
+            None,
+            "api-mygameapplication-detail",
+            "put",
+            "app1",
+            {"message": "I'm feeling strong today"},
+            403,
+        ),
+        (
+            None,
+            "api-mygameapplication-detail",
+            "patch",
+            "app1",
+            {"message": "I'm feeling strong today"},
+            403,
+        ),
+        (None, "api-mygameapplication-detail", "delete", "app1", {}, 403),
+        ("gamer4", "api-mygameapplication-list", "get", None, {}, 200),
+        ("gamer4", "api-mygameapplication-detail", "get", "app1", {}, 404),
+        (
+            "gamer4",
+            "api-mygameapplication-detail",
+            "put",
+            "app1",
+            {"message": "I'm feeling strong today"},
+            404,
+        ),
+        (
+            "gamer4",
+            "api-mygameapplication-detail",
+            "patch",
+            "app1",
+            {"message": "I'm feeling strong today"},
+            404,
+        ),
+        ("gamer4", "api-mygameapplication-detail", "delete", "app1", {}, 404),
+        ("gamer1", "api-mygameapplication-list", "get", None, {}, 200),
+        ("gamer1", "api-mygameapplication-detail", "get", "app1", {}, 200),
+        (
+            "gamer1",
+            "api-mygameapplication-detail",
+            "put",
+            "app1",
+            {"message": "I'm feeling strong today"},
+            200,
+        ),
+        (
+            "gamer1",
+            "api-mygameapplication-detail",
+            "patch",
+            "app1",
+            {"message": "I'm feeling strong today"},
+            200,
+        ),
+        ("gamer1", "api-mygameapplication-detail", "delete", "app1", {}, 204),
+    ],
+)
+def test_player_application_viewset(
+    apiclient,
+    game_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    viewname,
+    httpmethod,
+    applicationtouse,
+    post_data,
+    expected_response,
+):
+    """
+    Test the player views of their applications.
+    """
+    gamer = None
+    application = None
+    if gamertouse:
+        gamer = getattr(game_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    if applicationtouse:
+        application = getattr(game_testdata, applicationtouse)
+    data_to_post = post_data.copy()
+    if httpmethod == "put":
+        for k, v in serializers.GameApplicationSerializer(
+            application, context={"request": None}
+        ).data.items():
+            if k not in post_data.keys() and k not in ["gamer_username"]:
+                data_to_post[k] = v
+    if application:
+        url = reverse(viewname, kwargs={"slug": application.slug})
+    else:
+        url = reverse(viewname)
+    print(url)
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+    print(response.data)
+    assert response.status_code == expected_response
+    if expected_response == 204:
+        with pytest.raises(ObjectDoesNotExist):
+            models.GamePostingApplication.objects.get(pk=application.pk)
+    elif httpmethod in ["put", "post"]:
+        application.refresh_from_db()
+        if expected_response == 200:
+            for k, v in post_data.items():
+                assert (v == "" and not getattr(application, k)) or v == getattr(
+                    application, k
+                )
+        else:
+            for k, v in post_data.items():
+                assert v != getattr(application, k)
+    else:
+        if expected_response == 200:
+            if not application:
+                assert (
+                    response.data["results"]
+                    == serializers.GameApplicationSerializer(
+                        models.GamePostingApplication.objects.filter(gamer=gamer),
+                        many=True,
+                        context={"request": response.wsgi_request},
+                    ).data
+                )
+            else:
+                application.refresh_from_db()
+                assert (
+                    response.data
+                    == serializers.GameApplicationSerializer(
+                        application, context={"request": response.wsgi_request}
+                    ).data
+                )

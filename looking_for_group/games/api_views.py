@@ -453,7 +453,6 @@ class AdventureLogViewSet(
 
 class GameApplicationViewSet(
     PermissionRequiredMixin,
-    NestedViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -464,18 +463,28 @@ class GameApplicationViewSet(
     View for an applicant to review, create, update, and delete their applications to games.
     """
 
+    permission_classes = (IsAuthenticated,)
     serializer_class = serializers.GameApplicationSerializer
     permission_required = "community.list_communities"
-    object_permission_required = "game.can_edit_application"
+    object_permission_required = "game.edit_application"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status"]
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
 
     def get_queryset(self):
-        return models.GamePostingApplication.objects.filter(
+        logger.debug("Fetching gamerprofile from request...")
+        gamer = self.request.user.gamerprofile
+        logger.debug("Fetching game applications for gamer {}".format(gamer))
+        qs = models.GamePostingApplication.objects.filter(
             gamer=self.request.user.gamerprofile
+        ).order_by("-modified", "-created", "status")
+        logger.debug(
+            "Retrieved queryset of length {} for gamer {}".format(
+                qs.count(), self.request.user.gamerprofile
+            )
         )
+        return qs
 
 
 class GMGameApplicationViewSet(

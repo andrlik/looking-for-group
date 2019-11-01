@@ -4,15 +4,15 @@ from . import api_views
 
 games_app_router = ExtendedDefaultRouter()
 
-
-games_router = games_app_router.register(
-    r"games", api_views.GamePostingViewSet, basename="api-game"
-)
-
 games_app_router.register(
     r"games/my-applications",
     api_views.GameApplicationViewSet,
     basename="api-mygameapplication",
+)
+
+
+games_router = games_app_router.register(
+    r"games", api_views.GamePostingViewSet, basename="api-game"
 )
 
 games_router.register(
