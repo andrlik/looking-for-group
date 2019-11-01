@@ -550,3 +550,270 @@ def test_player_application_viewset(
                         application, context={"request": response.wsgi_request}
                     ).data
                 )
+
+
+@pytest.mark.parametrize(
+    "gamertouse,gametouse,viewname,httpmethod,chartouse,post_data,expected_response",
+    [
+        (None, "gp2", "api-character-list", "get", None, {}, 403),
+        (
+            None,
+            "gp2",
+            "api-character-list",
+            "post",
+            None,
+            {
+                "name": "Tommy",
+                "description": "Just a jerk",
+                "character_sheet": "",
+                "status": "pending",
+            },
+            403,
+        ),
+        (None, "gp2", "api-character-detail", "get", "character1", {}, 403),
+        (
+            None,
+            "gp2",
+            "api-character-detail",
+            "patch",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            403,
+        ),
+        (
+            None,
+            "gp2",
+            "api-character-detail",
+            "put",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            403,
+        ),
+        (None, "gp2", "api-character-approve", "post", "character1", {}, 403),
+        (None, "gp2", "api-character-reject", "post", "character1", {}, 403),
+        (None, "gp2", "api-character-deactivate", "post", "character1", {}, 403),
+        (None, "gp2", "api-character-reactivate", "post", "character1", {}, 403),
+        (None, "gp2", "api-character-detail", "delete", "character1", {}, 403),
+        ("gamer2", "gp2", "api-character-list", "get", None, {}, 403),
+        (
+            "gamer2",
+            "gp2",
+            "api-character-list",
+            "post",
+            None,
+            {
+                "name": "Tommy",
+                "description": "Just a jerk",
+                "character_sheet": "",
+                "status": "pending",
+            },
+            403,
+        ),
+        ("gamer2", "gp2", "api-character-detail", "get", "character1", {}, 403),
+        (
+            "gamer2",
+            "gp2",
+            "api-character-detail",
+            "patch",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            403,
+        ),
+        (
+            "gamer2",
+            "gp2",
+            "api-character-detail",
+            "put",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            403,
+        ),
+        ("gamer2", "gp2", "api-character-approve", "post", "character1", {}, 403),
+        ("gamer2", "gp2", "api-character-reject", "post", "character1", {}, 403),
+        ("gamer2", "gp2", "api-character-deactivate", "post", "character1", {}, 403),
+        ("gamer2", "gp2", "api-character-reactivate", "post", "character1", {}, 403),
+        ("gamer2", "gp2", "api-character-detail", "delete", "character1", {}, 403),
+        ("gamer3", "gp2", "api-character-list", "get", None, {}, 200),
+        (
+            "gamer3",
+            "gp2",
+            "api-character-list",
+            "post",
+            None,
+            {
+                "name": "Tommy",
+                "description": "Just a jerk",
+                "character_sheet": "",
+                "status": "pending",
+            },
+            201,
+        ),
+        ("gamer3", "gp2", "api-character-detail", "get", "character1", {}, 200),
+        (
+            "gamer3",
+            "gp2",
+            "api-character-detail",
+            "patch",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            403,
+        ),
+        (
+            "gamer3",
+            "gp2",
+            "api-character-detail",
+            "put",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            403,
+        ),
+        ("gamer3", "gp2", "api-character-approve", "post", "character1", {}, 403),
+        ("gamer3", "gp2", "api-character-reject", "post", "character1", {}, 403),
+        ("gamer3", "gp2", "api-character-deactivate", "post", "character1", {}, 403),
+        ("gamer3", "gp2", "api-character-reactivate", "post", "character1", {}, 403),
+        ("gamer3", "gp2", "api-character-detail", "delete", "character1", {}, 403),
+        ("gamer4", "gp2", "api-character-list", "get", None, {}, 200),
+        (
+            "gamer4",
+            "gp2",
+            "api-character-list",
+            "post",
+            None,
+            {
+                "name": "Tommy",
+                "description": "Just a jerk",
+                "character_sheet": "",
+                "status": "pending",
+            },
+            201,
+        ),
+        ("gamer4", "gp2", "api-character-detail", "get", "character1", {}, 200),
+        (
+            "gamer4",
+            "gp2",
+            "api-character-detail",
+            "patch",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            200,
+        ),
+        (
+            "gamer4",
+            "gp2",
+            "api-character-detail",
+            "put",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            200,
+        ),
+        ("gamer4", "gp2", "api-character-approve", "post", "character1", {}, 403),
+        ("gamer4", "gp2", "api-character-reject", "post", "character1", {}, 403),
+        ("gamer4", "gp2", "api-character-deactivate", "post", "character1", {}, 200),
+        ("gamer4", "gp2", "api-character-reactivate", "post", "character1", {}, 200),
+        ("gamer4", "gp2", "api-character-detail", "delete", "character1", {}, 204),
+        ("gamer1", "gp2", "api-character-list", "get", None, {}, 200),
+        (
+            "gamer1",
+            "gp2",
+            "api-character-list",
+            "post",
+            None,
+            {
+                "name": "Tommy",
+                "description": "Just a jerk",
+                "character_sheet": "",
+                "status": "pending",
+            },
+            403,
+        ),
+        ("gamer1", "gp2", "api-character-detail", "get", "character1", {}, 200),
+        (
+            "gamer1",
+            "gp2",
+            "api-character-detail",
+            "patch",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            200,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "api-character-detail",
+            "put",
+            "character1",
+            {"description", "Barry bluejeans is my co-pilot"},
+            200,
+        ),
+        ("gamer1", "gp2", "api-character-approve", "post", "character1", {}, 200),
+        ("gamer1", "gp2", "api-character-reject", "post", "character1", {}, 200),
+        ("gamer1", "gp2", "api-character-deactivate", "post", "character1", {}, 200),
+        ("gamer1", "gp2", "api-character-reactivate", "post", "character1", {}, 200),
+        ("gamer1", "gp2", "api-character-detail", "delete", "character1", {}, 403),
+    ],
+)
+def test_character_game_viewset(
+    apiclient,
+    game_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    gametouse,
+    viewname,
+    httpmethod,
+    chartouse,
+    post_data,
+    expected_response,
+):
+    """
+    Tests for the game-centric character viewset.
+    """
+    gamer = None
+    game = getattr(game_testdata, gametouse)
+    character = None
+    character_count = models.Character.objects.count()
+    if gamertouse:
+        gamer = getattr(game_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    if chartouse:
+        character = getattr(game_testdata, chartouse)
+    data_to_post = post_data.copy()
+    if httpmethod == "put":
+        for k, v in serializers.CharacterSerializer(
+            character, context={"request": None}
+        ).data.items():
+            if k not in post_data.keys() and k not in ["created", "modified"]:
+                data_to_post[k] = v
+    if character:
+        url = reverse(
+            viewname,
+            kwargs={"parent_lookup_game__slug": game.slug, "slug": character.slug},
+        )
+    else:
+        url = reverse(viewname, kwargs={"parent_lookup_game__slug": game.slug})
+    print(url)
+    print("Preparing to submit request with {}".format(data_to_post))
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+    print(response.data)
+    assert response.status_code == expected_response
+    if character:
+        if expected_response == 204:
+            with pytest.raises(ObjectDoesNotExist):
+                models.Character.objects.get(pk=character.pk)
+        elif expected_response == 200:
+            character.refresh_from_db()
+            if httpmethod in ["put", "patch"]:
+                for k, v in post_data.items():
+                    assert (v == "" and not getattr(character, k)) or v == getattr(
+                        character, k
+                    )
+            else:
+                for k, v in post_data.items():
+                    assert v != getattr(character, k)
+        else:
+            assert models.Character.objects.get(pk=character.pk)
+    else:
+        if expected_response == 201:
+            assert models.Character.objects.count() - character_count == 1
+        else:
+            assert models.Character.objects.count() == character_count

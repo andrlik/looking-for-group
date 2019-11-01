@@ -22,6 +22,13 @@ games_router.register(
     parents_query_lookups=["game__slug"],
 )
 
+games_router.register(
+    r"characters",
+    api_views.CharacterViewSet,
+    basename="api-character",
+    parents_query_lookups=["game__slug"],
+)
+
 session_router = games_router.register(
     r"sessions",
     api_views.GameSessionViewSet,

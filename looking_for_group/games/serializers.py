@@ -123,19 +123,65 @@ class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
     def get_player_username(self, obj):
         return obj.player.gamerprofile.username
 
+    def create(self, validated_data):
+        if "game" not in validated_data.keys() or not validated_data["game"]:
+            if "game" in self.context.keys() and self.context["game"]:
+                game = self.context["game"]
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "game": "This value must be passed in either the dataset or the request context."
+                    }
+                )
+        else:
+            game = validated_data.pop("game")
+        if "player" not in validated_data.keys() or not validated_data["player"]:
+            if self.context["request"]:
+                try:
+                    player = models.Player.objects.get(
+                        game=game, gamer=self.context["request"].user.gamerprofile
+                    )
+                except ObjectDoesNotExist:
+                    raise serializers.ValidationError(
+                        {
+                            "player": "The user must be passed in the request context or we can't determine the character owner."
+                        }
+                    )
+        elif validated_data["player"].game != game:
+            raise serializers.ValidationError(
+                {
+                    "player": "You can't assign a character to a player for a different game."
+                }
+            )
+        else:
+            player = validated_data.pop("player")
+        new_character = models.Character.objects.create(
+            game=game, player=player, **validated_data
+        )
+        return new_character
+
     class Meta:
         model = models.Character
-        fields = ("api_url", "slug", "name", "description", "player", "player_username")
-        read_only_fields = ("api_url", "slug", "player", "player_username")
+        fields = (
+            "api_url",
+            "slug",
+            "name",
+            "description",
+            "game",
+            "player",
+            "player_username",
+        )
+        read_only_fields = ("api_url", "slug", "game", "player", "player_username")
         extra_kwargs = {
             "api_url": {
                 "view_name": "api-character-detail",
                 "lookup_field": "slug",
                 "parent_lookup_kwargs": {
-                    "parent_query_lookup__player__game__slug": "player__game__slug"
+                    "parent_query_lookup_game__slug": "game__slug"
                 },
             },
             "player": {"view_name": "api-profile-detail", "lookup_field": "username"},
+            "game": {"view_name": "api-game-detail", "lookup_field": "slug"},
         }
 
 

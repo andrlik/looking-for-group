@@ -623,11 +623,14 @@ class CharacterViewSet(
     permission_required = "game.is_member"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status"]
+    parent_game = None
 
     def get_parent_game(self):
-        return models.GamePosting.objects.get(
-            slug=self.kwargs["parent_lookup_player__game__slug"]
-        )
+        if not self.parent_game:
+            self.parent_game = get_object_or_404(
+                models.GamePosting, slug=self.kwargs["parent_lookup_game__slug"]
+            )
+        return self.parent_game
 
     def get_queryset(self):
         return models.Character.objects.filter(game=self.get_parent_game())
@@ -636,15 +639,28 @@ class CharacterViewSet(
         if not request.user.is_authenticated or not request.user.has_perm(
             self.permission_required, self.get_parent_game()
         ):
-            return Response(
-                data={
-                    "errors": "You don't have the permissions required to view this character's information."
-                },
-                status=status.HTTP_403_FORBIDDEN,
+            self.permission_denied(
+                request,
+                message="You don't have the required permissions to manipulate this character information.",
             )
 
     def check_object_permissions(self, request, *args, **kwargs):
         self.check_permissions(self, request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        if request.user.gamerprofile == self.get_parent_game().gm:
+            return Response(
+                data={"errors": "Only a player can create a character."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        char_ser = serializers.CharacterSerializer(
+            data=request.data,
+            context={"request": request, "game": self.get_parent_game()},
+        )
+        if not char_ser.is_valid():
+            return Response(data=char_ser.errors, status=status.HTTP_400_BAD_REQUEST)
+        char_ser.save()
+        return Response(data=char_ser.data, status=status.HTTP_201_CREATED)
 
     @action(methods=["post"], detail=True)
     def approve(self, request, *args, **kwargs):
@@ -705,6 +721,25 @@ class CharacterViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @action(methods=["post"], detail=True)
+    def reactivate(self, request, *args, **kwargs):
+        """
+        Reactivate an inactive character.
+        """
+        obj = self.get_object()
+        if not request.user.has_perm("game.is_character_editor", obj):
+            return Response(
+                data={
+                    "errors": "You don't have the necessary permissions to reactivate this character."
+                }
+            )
+        obj.status = "pending"
+        obj.save()
+        return Response(
+            data=self.serializer_class(obj, context={"request": request}).data,
+            status=status.HTTP_200_OK,
+        )
+
     def update(self, request, *args, **kwargs):
         if not request.user.has_perm("game.is_character_editor", self.get_object()):
             return Response(
@@ -726,7 +761,7 @@ class CharacterViewSet(
         super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.is_character_editor", self.get_object()):
+        if not request.user.has_perm("game.delete_character", self.get_object()):
             return Response(
                 data={
                     "errors": "You don't have the necessary permissions to edit this character."
