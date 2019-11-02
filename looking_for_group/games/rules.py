@@ -1,6 +1,7 @@
 import rules
 
 from ..gamer_profiles.rules import is_community_member, is_friend
+from . import models
 
 
 @rules.predicate
@@ -77,6 +78,14 @@ def is_character_editor(user, character):
 
 
 @rules.predicate
+def is_character_approver(user, character):
+    # For legacy code, we confirm that this is the actual character object and not the game object as would be expected normally.
+    if isinstance(character, models.GamePosting):
+        return is_game_gm(user, character)
+    return character.game.gm.user == user
+
+
+@rules.predicate
 def is_character_owner(user, character):
     return character.player.gamer.user == user
 
@@ -96,7 +105,11 @@ log_writer = is_game_gm | is_scribe
 
 
 @rules.predicate
-def is_player_owner(user, player):
+def is_player_owner(user, player=None):
+    if not player:
+        raise AttributeError(
+            "You must specify a player when calling this permission request."
+        )
     return player.gamer.user == user
 
 
@@ -107,7 +120,7 @@ def is_calendar_owner(user, calendar):
 
 rules.add_perm("game.can_edit_listing", is_game_gm)
 rules.add_perm("game.add_character", is_player_owner)
-rules.add_perm("game.approve_character", is_game_gm)
+rules.add_perm("game.approve_character", is_character_approver)
 rules.add_perm("game.edit_character", is_character_editor)
 rules.add_perm("game.view_character", is_game_member)
 rules.add_perm("game.delete_character", is_character_owner)

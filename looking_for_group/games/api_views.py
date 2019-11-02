@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
 from rest_framework_rules.mixins import PermissionRequiredMixin
+from rules.contrib.rest_framework import AutoPermissionViewSetMixin
 
 from . import models, serializers
 
@@ -611,19 +612,25 @@ class PlayerViewSet(
 
 
 class CharacterViewSet(
-    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+    AutoPermissionViewSetMixin, NestedViewSetMixin, viewsets.ModelViewSet
 ):
     """
     Provides views for the characters in a game.
     """
 
+    permission_classes = (IsAuthenticated,)
     serializer_class = serializers.CharacterSerializer
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
-    permission_required = "game.is_member"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status"]
     parent_game = None
+    permission_type_map = {
+        **AutoPermissionViewSetMixin.permission_type_map,
+        "approve": "approve",
+        "reject": "approve",
+    }
+    permission_type_map["list"] = "gamelist"
 
     def get_parent_game(self):
         if not self.parent_game:
@@ -635,17 +642,21 @@ class CharacterViewSet(
     def get_queryset(self):
         return models.Character.objects.filter(game=self.get_parent_game())
 
-    def check_permissions(self, request, *args, **kwargs):
-        if not request.user.is_authenticated or not request.user.has_perm(
-            self.permission_required, self.get_parent_game()
-        ):
-            self.permission_denied(
-                request,
-                message="You don't have the required permissions to manipulate this character information.",
-            )
-
-    def check_object_permissions(self, request, *args, **kwargs):
-        self.check_permissions(self, request, *args, **kwargs)
+    def initial(self, *args, **kwargs):
+        if self.action in ["list", "create"]:
+            if (
+                not self.request.user.is_authenticated
+                or not self.request.user.has_perm(
+                    "game.is_member", self.get_parent_game()
+                )
+            ):
+                self.permission_denied(
+                    self.request,
+                    message="You are not a member of this game and can't view the character info.",
+                )
+        self.permission_type_map.pop("list")
+        self.permission_type_map.pop("add")
+        super().initial(*args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         if request.user.gamerprofile == self.get_parent_game().gm:

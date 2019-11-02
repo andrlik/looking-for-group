@@ -791,7 +791,11 @@ def test_character_game_viewset(
     else:
         url = reverse(viewname, kwargs={"parent_lookup_game__slug": game.slug})
     print(url)
-    print("Preparing to submit request with {}".format(data_to_post))
+    print(
+        "Preparing to submit request to {} with {} for {} ({})".format(
+            url, data_to_post, gamer, gamertouse
+        )
+    )
     with django_assert_max_num_queries(50):
         response = getattr(apiclient, httpmethod)(url, data=data_to_post)
     print(response.data)

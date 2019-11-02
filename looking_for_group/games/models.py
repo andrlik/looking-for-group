@@ -4,13 +4,14 @@ from datetime import timedelta
 import pytz
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import models, transaction
 from django.db.models.query_utils import Q
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
+from rules.contrib.models import RulesModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
 from schedule.models.calendars import CalendarManager
 from schedule.periods import Day, Week
@@ -961,7 +962,7 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         return None
 
 
-class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class Character(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     Represents a character being played for a given game.
     """
@@ -989,6 +990,16 @@ class Character(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
 
     def get_absolute_url(self):
         return reverse_lazy("games:character_detail", kwargs={"character": self.slug})
+
+    class Meta:
+        rules_permissions = {
+            "add": "game.add_character",
+            "edit": "game.is_character_editor",
+            "gamelist": "game.is_member",
+            "view": "game.is_character_viewer",
+            "delete": "game.delete_character",
+            "approve": "game.approve_character",
+        }
 
 
 class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
