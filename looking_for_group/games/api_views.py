@@ -672,13 +672,6 @@ class CharacterViewSet(
         Approves the proposed character.
         """
         obj = self.get_object()
-        if not request.user.has_perm("game.approve_character", obj):
-            return Response(
-                data={
-                    "errors": "You don't have the permissions required to approve a character."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         obj.status = "approved"
         obj.save()
         return Response(
@@ -692,12 +685,6 @@ class CharacterViewSet(
         Rejects the proposed character.
         """
         obj = self.get_object()
-        if not request.user.has_perm("game.approve_character", obj):
-            return Response(
-                data={
-                    "errors": "You don't have the permissions required to reject this character."
-                }
-            )
         obj.status = "rejected"
         obj.save()
         return Response(
@@ -711,13 +698,6 @@ class CharacterViewSet(
         Make a character inactive.
         """
         obj = self.get_object()
-        if not request.user.has_perm("game.is_character_editor", obj):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to edit this character."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         obj.status = "inactive"
         obj.save()
         return Response(
@@ -731,48 +711,12 @@ class CharacterViewSet(
         Reactivate an inactive character.
         """
         obj = self.get_object()
-        if not request.user.has_perm("game.is_character_editor", obj):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to reactivate this character."
-                }
-            )
         obj.status = "pending"
         obj.save()
         return Response(
             data=self.serializer_class(obj, context={"request": request}).data,
             status=status.HTTP_200_OK,
         )
-
-    def update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.is_character_editor", self.get_object()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to edit this character."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        super().update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.is_character_editor", self.get_object()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to edit this character."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        super().partial_update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.delete_character", self.get_object()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to edit this character."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        super().destroy(request, *args, **kwargs)
 
 
 class MyCharacterViewSet(

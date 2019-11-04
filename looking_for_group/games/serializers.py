@@ -113,12 +113,38 @@ class GameApplicationGMSerializer(GameApplicationSerializer):
         }
 
 
+class PlayerSerializer(serializers.ModelSerializer):
+    """
+    Serializer for player and playerstats
+    """
+
+    gamer = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    game = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    attendance_rating = serializers.SerializerMethodField()
+
+    def get_attendance_rating(self, obj):
+        return obj.get_attendance_rating_for_game()
+
+    class Meta:
+        model = models.Player
+        fields = (
+            "slug",
+            "gamer",
+            "game",
+            "sessions_expected",
+            "sessions_missed",
+            "attendance_rating",
+        )
+        read_only_fields = fields
+
+
 class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
     """
     Serializer for character objects.
     """
 
-    player_username = serializers.SerializerMethodField()
+    player_username = serializers.SerializerMethodField(read_only=True)
+    player = PlayerSerializer(read_only=True)
 
     def get_player_username(self, obj):
         return obj.player.gamer.username
@@ -177,10 +203,6 @@ class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
                 "view_name": "api-character-detail",
                 "lookup_field": "slug",
                 "parent_lookup_kwargs": {"parent_lookup_game__slug": "game__slug"},
-            },
-            "player": {
-                "view_name": "api-profile-detail",
-                "lookup_field": "gamer__username",
             },
             "game": {"view_name": "api-game-detail", "lookup_field": "slug"},
         }
@@ -278,31 +300,6 @@ class AdventureLogSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
                 "parent_lookup_kwargs": {"parent_lookup_game__slug": "game__slug"},
             },
         }
-
-
-class PlayerSerializer(serializers.ModelSerializer):
-    """
-    Serializer for player and playerstats
-    """
-
-    gamer = serializers.SlugRelatedField(slug_field="username", read_only=True)
-    game = serializers.SlugRelatedField(slug_field="slug", read_only=True)
-    attendance_rating = serializers.SerializerMethodField()
-
-    def get_attendance_rating(self, obj):
-        return obj.get_attendance_rating_for_game()
-
-    class Meta:
-        model = models.Player
-        fields = (
-            "slug",
-            "gamer",
-            "game",
-            "sessions_expected",
-            "sessions_missed",
-            "attendance_rating",
-        )
-        read_only_fields = fields
 
 
 class GameSessionSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):

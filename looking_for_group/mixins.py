@@ -74,8 +74,8 @@ class ParentObjectAutoPermissionViewSetMixin:
         if handler.__func__ in extra_actions:
             if handler.detail:
                 obj = self.get_object()
-            elif self.action not in ("create", "list"):
-                obj = self.get_object()
+        elif self.action not in ("create", "list"):
+            obj = self.get_object()
 
         # Now check permissions. First we check to see if the parent objects are needed.
         if self.action in self.parent_dependent_actions:

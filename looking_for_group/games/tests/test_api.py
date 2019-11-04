@@ -577,7 +577,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "patch",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             403,
         ),
         (
@@ -586,7 +586,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "put",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             403,
         ),
         (None, "gp2", "api-character-approve", "post", "character1", {}, 403),
@@ -616,7 +616,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "patch",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             403,
         ),
         (
@@ -625,7 +625,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "put",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             403,
         ),
         ("gamer2", "gp2", "api-character-approve", "post", "character1", {}, 403),
@@ -655,7 +655,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "patch",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             403,
         ),
         (
@@ -664,7 +664,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "put",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             403,
         ),
         ("gamer3", "gp2", "api-character-approve", "post", "character1", {}, 403),
@@ -694,7 +694,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "patch",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             200,
         ),
         (
@@ -703,7 +703,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "put",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             200,
         ),
         ("gamer4", "gp2", "api-character-approve", "post", "character1", {}, 403),
@@ -733,7 +733,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "patch",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             200,
         ),
         (
@@ -742,7 +742,7 @@ def test_player_application_viewset(
             "api-character-detail",
             "put",
             "character1",
-            {"description", "Barry bluejeans is my co-pilot"},
+            {"description": "Barry bluejeans is my co-pilot"},
             200,
         ),
         ("gamer1", "gp2", "api-character-approve", "post", "character1", {}, 200),
@@ -781,7 +781,7 @@ def test_character_game_viewset(
         for k, v in serializers.CharacterSerializer(
             character, context={"request": None}
         ).data.items():
-            if k not in post_data.keys() and k not in ["created", "modified"]:
+            if k not in post_data.keys() and k not in ["created", "modified", "player"]:
                 data_to_post[k] = v
     if character:
         url = reverse(
