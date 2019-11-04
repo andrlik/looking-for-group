@@ -6,8 +6,9 @@ from django.db.models.query_utils import Q
 from django.utils import timezone
 from rules import predicate
 
-from ..games.models import GamePosting as Game
-from ..games.models import GamePostingApplication, Player
+from looking_for_group.games.models import GamePosting as Game
+from looking_for_group.games.models import GamePostingApplication, Player
+
 from .models import BannedUser, BlockedUser, KickedUser, NotInCommunity
 
 logger = logging.getLogger("rules")

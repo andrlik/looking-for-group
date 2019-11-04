@@ -121,7 +121,7 @@ class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
     player_username = serializers.SerializerMethodField()
 
     def get_player_username(self, obj):
-        return obj.player.gamerprofile.username
+        return obj.player.gamer.username
 
     def create(self, validated_data):
         if "game" not in validated_data.keys() or not validated_data["game"]:
@@ -176,11 +176,12 @@ class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
             "api_url": {
                 "view_name": "api-character-detail",
                 "lookup_field": "slug",
-                "parent_lookup_kwargs": {
-                    "parent_query_lookup_game__slug": "game__slug"
-                },
+                "parent_lookup_kwargs": {"parent_lookup_game__slug": "game__slug"},
             },
-            "player": {"view_name": "api-profile-detail", "lookup_field": "username"},
+            "player": {
+                "view_name": "api-profile-detail",
+                "lookup_field": "gamer__username",
+            },
             "game": {"view_name": "api-game-detail", "lookup_field": "slug"},
         }
 

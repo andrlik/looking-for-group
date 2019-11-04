@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytz
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models.query_utils import Q
 from django.urls import reverse_lazy
@@ -19,6 +19,7 @@ from schedule.periods import Day, Week
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..game_catalog.utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 from ..gamer_profiles.models import GamerCommunity, GamerProfile
+from ..games import rules
 from ..invites.models import Invite
 from ..locations.models import Location
 from .utils import check_table_exists
@@ -993,12 +994,12 @@ class Character(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
 
     class Meta:
         rules_permissions = {
-            "add": "game.add_character",
-            "edit": "game.is_character_editor",
-            "gamelist": "game.is_member",
-            "view": "game.is_character_viewer",
-            "delete": "game.delete_character",
-            "approve": "game.approve_character",
+            "add": rules.is_game_member,
+            "change": rules.is_character_editor,
+            "gamelist": rules.is_game_member,
+            "view": rules.is_game_member,
+            "delete": rules.is_character_owner,
+            "approve": rules.is_character_approver,
         }
 
 

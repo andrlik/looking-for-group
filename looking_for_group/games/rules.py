@@ -1,14 +1,20 @@
 import rules
 
-from ..gamer_profiles.rules import is_community_member, is_friend
 from . import models
 
 
 @rules.predicate
 def is_same_community_as_game(user, game):
     for community in game.communities:
-        if is_community_member(user, community):
+        if community in user.gamerprofile.communities.all():
             return True
+    return False
+
+
+@rules.predicate
+def is_friend(user, user2):
+    if user.gamerprofile in user2.gamerprofile.friends.all():
+        return True
     return False
 
 
@@ -119,7 +125,7 @@ def is_calendar_owner(user, calendar):
 
 
 rules.add_perm("game.can_edit_listing", is_game_gm)
-rules.add_perm("game.add_character", is_player_owner)
+rules.add_perm("game.add_character", is_game_member)
 rules.add_perm("game.approve_character", is_character_approver)
 rules.add_perm("game.edit_character", is_character_editor)
 rules.add_perm("game.view_character", is_game_member)

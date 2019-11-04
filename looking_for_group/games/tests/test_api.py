@@ -747,8 +747,8 @@ def test_player_application_viewset(
         ),
         ("gamer1", "gp2", "api-character-approve", "post", "character1", {}, 200),
         ("gamer1", "gp2", "api-character-reject", "post", "character1", {}, 200),
-        ("gamer1", "gp2", "api-character-deactivate", "post", "character1", {}, 200),
-        ("gamer1", "gp2", "api-character-reactivate", "post", "character1", {}, 200),
+        ("gamer1", "gp2", "api-character-deactivate", "post", "character1", {}, 403),
+        ("gamer1", "gp2", "api-character-reactivate", "post", "character1", {}, 403),
         ("gamer1", "gp2", "api-character-detail", "delete", "character1", {}, 403),
     ],
 )
