@@ -9,7 +9,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
-from rest_framework_rules.mixins import PermissionRequiredMixin
 from rules.contrib.rest_framework import AutoPermissionViewSetMixin
 
 from looking_for_group.mixins import ParentObjectAutoPermissionViewSetMixin
@@ -20,7 +19,7 @@ logger = logging.getLogger("api")
 
 
 class GamePostingViewSet(
-    PermissionRequiredMixin,
+    AutoPermissionViewSetMixin,
     DetailSerializerMixin,
     NestedViewSetMixin,
     viewsets.ModelViewSet,
@@ -29,8 +28,7 @@ class GamePostingViewSet(
     A view set that allows the retrieval and manipulation of posted game data.
     """
 
-    permission_required = "community.list_communities"
-    object_permission_required = "game.can_view_listing"
+    permission_classes = (IsAuthenticated,)
     model = models.GamePosting
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
@@ -45,6 +43,11 @@ class GamePostingViewSet(
         "game_type",
         "game_mode",
     ]
+    permission_type_map = {
+        **AutoPermissionViewSetMixin.permission_type_map,
+        "apply": "apply",
+        "leave": "leave",
+    }
 
     def get_queryset(self):
         gamer = self.request.user.gamerprofile
@@ -76,43 +79,10 @@ class GamePostingViewSet(
             self.serializer_detail_class = serializers.GameDataListSerializer
         return super().retrieve(request, *args, **kwargs)
 
-    def update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_edit_listing", self.get_object()):
-            return Response(
-                data={"errors": "You do not have permission to edit this game."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_edit_listing", self.get_object()):
-            return Response(
-                data={"errors": "You do not have permission to edit this game."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().partial_update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_edit_listing", self.get_object()):
-            return Response(
-                data={"errors": "You do not have permission to delete this game."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().destroy(request, *args, **kwargs)
-
     @action(methods=["post"], detail=True)
     def apply(self, request, *args, **kwargs):
         obj = self.get_object()
         logger.debug("Retrieved game object of {}".format(obj))
-        if not request.user.is_authenticated or not request.user.has_perm(
-            "game.can_apply", obj
-        ):
-            return Response(
-                data={
-                    "errors": "Either this game is not open to new players or you don't have the necessary permissions to apply to this game."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         if request.user.has_perm("game.is_member", obj):
             return Response(
                 data={"errors": "You are already in this game..."},
@@ -148,15 +118,6 @@ class GamePostingViewSet(
     @action(methods=["post"], detail=True)
     def leave(self, request, *args, **kwargs):
         obj = self.get_object()
-        if not request.user.is_authenticated or not request.user.has_perm(
-            "game.is_member", obj
-        ):
-            return Response(
-                data={
-                    "errors": "You can't leave a game if you are not already a member."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         if request.user == obj.gm.user:
             return Response(
                 data={"errors": "The GM cannot leave the game."},
@@ -168,7 +129,7 @@ class GamePostingViewSet(
 
 
 class GameSessionViewSet(
-    PermissionRequiredMixin,
+    ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -185,17 +146,32 @@ class GameSessionViewSet(
     serializer_class = serializers.GameSessionSerializer
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
-
-    def check_permissions(self, request, *args, **kwargs):
-        game = self.get_parent_game()
-        if not request.user.has_perm("game.is_member", game):
-            return Response(
-                data={"errors": "Only game members can view game session details"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-    def check_object_permissions(self, request, *args, **kwargs):
-        self.check_permissions(request, *args, **kwargs)
+    parent_dependent_actions = [
+        "create",
+        "retrieve",
+        "update",
+        "partial_update",
+        "destroy",
+        "reschedule",
+        "cancel",
+        "uncancel",
+        "add_log",
+        "complete",
+        "uncomplete",
+    ]
+    parent_lookup_field = "game"
+    parent_object_model = models.GamePosting
+    parent_object_lookup_field = "slug"
+    parent_object_url_kwarg = "parent_lookup_game__slug"
+    permission_type_map = {
+        **ParentObjectAutoPermissionViewSetMixin.permission_type_map,
+        "add_log": "view",
+        "reschedule": "schedule",
+        "cancel": "schedule",
+        "uncancel": "schedule",
+        "complete": "change",
+        "uncomplete": "change",
+    }
 
     def get_parent_game(self):
         return get_object_or_404(
@@ -215,39 +191,8 @@ class GameSessionViewSet(
             self.serializer_class = serializers.GameSessionGMSerializer
         return super().dispatch(request, *args, **kwargs)
 
-    def update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_edit_listing", self.get_parent_game()):
-            return Response(
-                {"errors": "You do not have permission to edit this game session."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_edit_listing", self.get_parent_game()):
-            return Response(
-                {"errors": "You do not have permission to edit this game session."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().partial_update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_edit_listing", self.get_parent_game()):
-            return Response(
-                {"errors": "You do not have permission to delete this game session."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().destroy(request, *args, **kwargs)
-
     @action(methods=["post"], detail=True)
     def reschedule(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_schedule", self.get_parent_game()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to reschedule this session."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         date_serializer = serializers.ScheduleSerializer(data=request.data)
         if not date_serializer.is_valid():
             return Response(
@@ -265,12 +210,6 @@ class GameSessionViewSet(
 
     @action(methods=["post"], detail=True)
     def complete(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_schedule", self.get_parent_game()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to complete this session."
-                }
-            )
         obj = self.get_object()
         if obj.status in ["complete", "cancel"]:
             return Response(
@@ -288,12 +227,6 @@ class GameSessionViewSet(
 
     @action(methods=["post"], detail=True)
     def uncomplete(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_schedule", self.get_parent_game()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to uncomplete this session."
-                }
-            )
         obj = self.get_object()
         if obj.status != "complete":
             return Response(
@@ -311,12 +244,6 @@ class GameSessionViewSet(
 
     @action(methods=["post"], detail=True)
     def cancel(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_schedule", self.get_parent_game()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to cancel this session."
-                }
-            )
         obj = self.get_object()
         if obj.status in ["complete", "cancel"]:
             return Response(
@@ -331,12 +258,6 @@ class GameSessionViewSet(
 
     @action(methods=["post"], detail=True)
     def uncancel(self, request, *args, **kwargs):
-        if not request.user.has_perm("game.can_schedule", self.get_parent_game()):
-            return Response(
-                data={
-                    "errors": "You don't have the necessary permissions to uncancel this session."
-                }
-            )
         obj = self.get_object()
         if obj.status != "cancel":
             return Response(
@@ -356,15 +277,6 @@ class GameSessionViewSet(
         """
         Create the adventure log for this session.
         """
-        if not request.user.has_perm(
-            "game.edit_create_adventure_log", self.get_parent_game()
-        ):
-            return Response(
-                data={
-                    "errors": "You do not have the necessary permissions to create a log entry for this session."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
         session = self.get_object()
         if session.adventurelog:
             return Response(
@@ -389,7 +301,7 @@ class GameSessionViewSet(
 
 
 class AdventureLogViewSet(
-    PermissionRequiredMixin,
+    ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -401,61 +313,32 @@ class AdventureLogViewSet(
     """
 
     model = models.AdventureLog
+    parent_lookup_field = "session__game"
+    parent_object_model = models.GamePosting
+    parent_object_lookup_field = "slug"
+    parent_object_url_kwarg = "parent_lookup_session__game__slug"
     serializer_class = serializers.AdventureLogSerializer
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
     permission_required = "game.is_member"
+    permission_type_map = {**ParentObjectAutoPermissionViewSetMixin.permission_type_map}
+    permission_type_map["list"] = "add"
+    parent_dependent_actions = [
+        "create",
+        "retrieve",
+        "update",
+        "partial_update",
+        "destroy",
+    ]
 
-    def check_permissions(self, request, *args, **kwargs):
-        if not request.user.has_perm(self.permission_required, self.get_parent_game()):
-            return Response(
-                data={
-                    "errors": "You don't have permission to view adventure logs for this game."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-    def check_object_permissions(self, request, *args, **kwargs):
-        self.check_permissions(request, *args, **kwargs)
-
-    def get_parent_game(self):
-        return get_object_or_404(
-            models.GamePosting, slug=self.kwargs["parent_lookup_session__game__slug"]
+    def get_queryset(self):
+        return models.AdventureLog.objects.filter(
+            session__slug=self.kwargs["parent_lookup_session__slug"]
         )
-
-    def update(self, request, *args, **kwargs):
-        if not request.user.has_perm(
-            "game.edit_create_adventure_log", self.get_parent_game()
-        ):
-            return Response(
-                data={"errors": "You cannot edit this adventure log."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        if not request.user.has_perm(
-            "game.edit_create_adventure_log", self.get_parent_game()
-        ):
-            return Response(
-                data={"errors": "You cannot edit this adventure log."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().partial_update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        if not request.user.has_perm(
-            "game.delete_adventure_log", self.get_parent_game()
-        ):
-            return Response(
-                data={"errors": "You cannot delete this adventure log."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().destroy(request, *args, **kwargs)
 
 
 class GameApplicationViewSet(
-    PermissionRequiredMixin,
+    AutoPermissionViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -468,12 +351,11 @@ class GameApplicationViewSet(
 
     permission_classes = (IsAuthenticated,)
     serializer_class = serializers.GameApplicationSerializer
-    permission_required = "community.list_communities"
-    object_permission_required = "game.edit_application"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status"]
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
+    permission_type_map = {**AutoPermissionViewSetMixin.permission_type_map}
 
     def get_queryset(self):
         logger.debug("Fetching gamerprofile from request...")
@@ -491,7 +373,7 @@ class GameApplicationViewSet(
 
 
 class GMGameApplicationViewSet(
-    PermissionRequiredMixin,
+    ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -503,12 +385,22 @@ class GMGameApplicationViewSet(
 
     permission_classes = (IsAuthenticated,)
     serializer_class = serializers.GameApplicationGMSerializer
-    permission_required = "game.can_edit_listing"
-    object_permission_required = "game.can_edit_listing"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status"]
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
+    parent_lookup_field = "game"
+    parent_object_lookup_field = "slug"
+    parent_object_model = models.GamePosting
+    parent_object_url_kwarg = "parent_lookup_game__slug"
+    parent_dependent_actions = ["list", "retrieve", "approve", "reject"]
+    permission_type_map = {
+        **ParentObjectAutoPermissionViewSetMixin.permission_type_map,
+        "approve": "approve",
+        "reject": "approve",
+    }
+    permission_type_map["retrieve"] = "approve"
+    permission_type_map["list"] = "approve"
 
     def get_queryset(self):
         return models.GamePostingApplication.objects.filter(
@@ -520,25 +412,11 @@ class GMGameApplicationViewSet(
             models.GamePosting, slug=self.kwargs["parent_lookup_game__slug"]
         )
 
-    def check_permissions(self, request, *args, **kwargs):
-        if not request.user.is_authenticated or not request.user.has_perm(
-            self.permission_required, self.get_parent_game()
-        ):
-            logger.debug("Permission missing!")
-            self.permission_denied(
-                request,
-                message="You don't have permission to administrate applications to this game.",
-            )
-
-    def check_object_permissions(self, request, *args, **kwargs):
-        self.check_permissions(request, *args, **kwargs)
-
     @action(methods=["post"], detail=True)
     def approve(self, request, *args, **kwargs):
         """
         Approves the game application.
         """
-        self.check_permissions(request, *args, **kwargs)
         obj = self.get_object()
         obj.status = "approve"
         player = models.Player.objects.create(game=obj.game, gamer=obj.gamer)
@@ -555,7 +433,6 @@ class GMGameApplicationViewSet(
         """
         Rejects the game application.
         """
-        self.check_permissions(request, *args, **kwargs)
         obj = self.get_object()
         obj.status = "deny"
         obj.save()
@@ -575,7 +452,7 @@ class GMGameApplicationViewSet(
 
 
 class PlayerViewSet(
-    PermissionRequiredMixin,
+    ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -589,25 +466,17 @@ class PlayerViewSet(
     permission_required = "game.is_member"
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
+    parent_lookup_field = "game"
+    parent_object_model = models.GamePosting
+    parent_object_lookup_field = "slug"
+    parent_object_url_kwarg = "parent_lookup_game__slug"
+    parent_dependent_actions = ["list", "retrieve"]
+    permission_type_map = {**ParentObjectAutoPermissionViewSetMixin.permission_type_map}
 
     def get_parent_game(self):
         return get_object_or_404(
             models.GamePosting, slug=self.kwargs["parent_lookup_game__slug"]
         )
-
-    def check_permissions(self, request, *args, **kwargs):
-        if not request.user.is_authenticated or not request.user.has_perm(
-            self.permission_required, self.get_parent_game()
-        ):
-            return Response(
-                data={
-                    "errors": "You don't have the required permissions to view players in this game."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-    def check_object_permissions(self, request, *args, **kwargs):
-        self.check_permissions(request, *args, **kwargs)
 
     def get_queryset(self):
         return models.Player.objects.filter(game=self.get_parent_game())

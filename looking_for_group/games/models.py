@@ -581,7 +581,7 @@ SESSION_TYPE_CHOICES = (("normal", "Normal"), ("adhoc", "Ad hoc"))
 
 # Create your models here.
 class GamePosting(
-    TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLinkedModel, models.Model
+    TimeStampedModel, AbstractUUIDWithSlugModel, AbstractTaggedLinkedModel, RulesModel
 ):
     """
     A user-created game.
@@ -884,9 +884,17 @@ class GamePosting(
         ordering = ["status", "start_time", "-end_date", "-created"]
         verbose_name = "Game"
         verbose_name_plural = "Games"
+        rules_permissions = {
+            "add": rules.is_user,
+            "change": rules.is_game_gm,
+            "view": rules.is_user,
+            "delete": rules.is_game_gm,
+            "apply": rules.application_eligible,
+            "leave": rules.is_game_member,
+        }
 
 
-class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     An application for a game.
     """
@@ -926,8 +934,17 @@ class GamePostingApplication(TimeStampedModel, AbstractUUIDWithSlugModel, models
             )
         return False
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.application_eligible,
+            "change": rules.is_applicant,
+            "view": rules.is_application_viewer,
+            "delete": rules.is_applicant,
+            "approve": rules.is_game_gm,
+        }
 
-class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+
+class Player(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     An abstract link to a game.
     """
@@ -961,6 +978,14 @@ class Player(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         if characters.count() > 0:
             return characters[0]
         return None
+
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_game_gm,
+            "change": rules.is_game_gm,
+            "view": rules.is_game_member,
+            "delete": rules.is_game_gm,
+        }
 
 
 class Character(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
@@ -1003,7 +1028,7 @@ class Character(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
         }
 
 
-class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     An instance of a posted game. Only generated once played.
     """
@@ -1095,8 +1120,17 @@ class GameSession(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
             self.occurrence.uncancel()
             self.save()
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_game_gm,
+            "change": rules.is_game_gm,
+            "view": rules.is_game_member,
+            "delete": rules.is_game_gm,
+            "schedule": rules.is_game_gm,
+        }
 
-class AdventureLog(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+
+class AdventureLog(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     Represents an optional player-visible adventure log for a session.
     This can be created at any time after the initial session is instantiated, provided that it is not in status cancelled.
@@ -1124,3 +1158,11 @@ class AdventureLog(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
         related_name="latest_editor_logs",
         on_delete=models.SET_NULL,
     )
+
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_game_member,
+            "change": rules.is_game_member,
+            "view": rules.is_game_member,
+            "delete": rules.is_game_gm,
+        }

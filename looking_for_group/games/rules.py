@@ -4,6 +4,13 @@ from . import models
 
 
 @rules.predicate
+def is_user(user, obj=None):
+    if user.is_authenticated:
+        return True
+    return False
+
+
+@rules.predicate
 def is_same_community_as_game(user, game):
     for community in game.communities:
         if community in user.gamerprofile.communities.all():
