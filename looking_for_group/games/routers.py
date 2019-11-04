@@ -10,6 +10,10 @@ games_app_router.register(
     basename="api-mygameapplication",
 )
 
+games_app_router.register(
+    r"games/my-characters", api_views.MyCharacterViewSet, basename="api-mycharacter"
+)
+
 
 games_router = games_app_router.register(
     r"games", api_views.GamePostingViewSet, basename="api-game"

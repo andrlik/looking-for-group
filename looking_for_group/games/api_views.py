@@ -720,18 +720,30 @@ class CharacterViewSet(
 
 
 class MyCharacterViewSet(
-    PermissionRequiredMixin, NestedViewSetMixin, viewsets.ModelViewSet
+    AutoPermissionViewSetMixin,
+    NestedViewSetMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
 ):
     """
     Provides a vew so that players can view all their characters in one place.
     """
 
     serializer_class = serializers.CharacterSerializer
-    permission_required = "community.list_communities"
+    permission_classes = (IsAuthenticated,)
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["status"]
+    permission_type_map = {
+        **AutoPermissionViewSetMixin.permission_type_map,
+        "deactivate": "delete",
+        "reactivate": "delete",
+    }
+    permission_type_map["retrieve"] = "delete"
 
     def get_queryset(self):
         return models.Character.objects.filter(
@@ -745,6 +757,19 @@ class MyCharacterViewSet(
         """
         obj = self.get_object()
         obj.status = "inactive"
+        obj.save()
+        return Response(
+            data=self.serializer_class(obj, context={"request": request}).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(methods=["post"], detail=True)
+    def reactivate(self, request, *args, **kwargs):
+        """
+        Reactivate an inactive character.
+        """
+        obj = self.get_object()
+        obj.status = "pending"
         obj.save()
         return Response(
             data=self.serializer_class(obj, context={"request": request}).data,

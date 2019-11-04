@@ -821,3 +821,154 @@ def test_character_game_viewset(
             assert models.Character.objects.count() - character_count == 1
         else:
             assert models.Character.objects.count() == character_count
+
+
+@pytest.mark.parametrize(
+    "gamertouse,viewname,httpmethod,chartouse,post_data,expected_response",
+    [
+        (None, "api-mycharacter-list", "get", None, {}, 403),
+        (None, "api-mycharacter-detail", "get", "character1", {}, 403),
+        (
+            None,
+            "api-mycharacter-detail",
+            "patch",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            403,
+        ),
+        (
+            None,
+            "api-mycharacter-detail",
+            "put",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            403,
+        ),
+        (None, "api-mycharacter-detail", "delete", "character1", {}, 403),
+        (None, "api-mycharacter-deactivate", "post", "character1", {}, 403),
+        (None, "api-mycharacter-reactivate", "post", "character1", {}, 403),
+        ("gamer2", "api-mycharacter-list", "get", None, {}, 200),
+        ("gamer2", "api-mycharacter-detail", "get", "character1", {}, 404),
+        (
+            "gamer2",
+            "api-mycharacter-detail",
+            "patch",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            404,
+        ),
+        (
+            "gamer2",
+            "api-mycharacter-detail",
+            "put",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            404,
+        ),
+        ("gamer2", "api-mycharacter-detail", "delete", "character1", {}, 404),
+        ("gamer2", "api-mycharacter-deactivate", "post", "character1", {}, 404),
+        ("gamer2", "api-mycharacter-reactivate", "post", "character1", {}, 404),
+        ("gamer1", "api-mycharacter-list", "get", None, {}, 200),
+        ("gamer1", "api-mycharacter-detail", "get", "character1", {}, 404),
+        (
+            "gamer1",
+            "api-mycharacter-detail",
+            "patch",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            404,
+        ),
+        (
+            "gamer1",
+            "api-mycharacter-detail",
+            "put",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            404,
+        ),
+        ("gamer1", "api-mycharacter-detail", "delete", "character1", {}, 404),
+        ("gamer1", "api-mycharacter-deactivate", "post", "character1", {}, 404),
+        ("gamer1", "api-mycharacter-reactivate", "post", "character1", {}, 404),
+        ("gamer4", "api-mycharacter-list", "get", None, {}, 200),
+        ("gamer4", "api-mycharacter-detail", "get", "character1", {}, 200),
+        (
+            "gamer4",
+            "api-mycharacter-detail",
+            "patch",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            200,
+        ),
+        (
+            "gamer4",
+            "api-mycharacter-detail",
+            "put",
+            "character1",
+            {"description": "Barry bluejeans is my co-pilot."},
+            200,
+        ),
+        ("gamer4", "api-mycharacter-detail", "delete", "character1", {}, 204),
+        ("gamer4", "api-mycharacter-deactivate", "post", "character1", {}, 200),
+        ("gamer4", "api-mycharacter-reactivate", "post", "character1", {}, 200),
+    ],
+)
+def test_my_character_viewset(
+    apiclient,
+    game_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    viewname,
+    httpmethod,
+    chartouse,
+    post_data,
+    expected_response,
+):
+    """
+    Tests the viewset for a given game to see all of their characters.
+    """
+    gamer = None
+    character = None
+    if gamertouse:
+        gamer = getattr(game_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    if chartouse:
+        character = getattr(game_testdata, chartouse)
+    data_to_post = post_data.copy()
+    if httpmethod == "put":
+        for k, v in serializers.CharacterSerializer(
+            character, context={"request": None}
+        ).data.items():
+            if k not in post_data.keys() and k not in [
+                "player",
+                "player_username",
+                "game",
+            ]:
+                data_to_post[k] = v
+    if character:
+        url = reverse(viewname, kwargs={"slug": character.slug})
+    else:
+        url = reverse(viewname)
+    print(url)
+    print(
+        "Preparing to submit {} to url {} for {}".format(data_to_post, url, gamertouse)
+    )
+    with django_assert_max_num_queries(50):
+        response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+    print(response.data)
+    assert response.status_code == expected_response
+    if expected_response == 204:
+        with pytest.raises(ObjectDoesNotExist):
+            models.Character.objects.get(pk=character.pk)
+    elif httpmethod in ["put", "patch"]:
+        character.refresh_from_db()
+        if expected_response == 200:
+            for k, v in post_data.items():
+                assert (v == "" and not getattr(character, k)) or getattr(
+                    character, k
+                ) == v
+        else:
+            for k, v in post_data.items():
+                assert getattr(character, k) != v
+    else:
+        if character and httpmethod == "delete":
+            assert models.Character.objects.get(pk=character.pk)
