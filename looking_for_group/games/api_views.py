@@ -470,6 +470,7 @@ class PlayerViewSet(
     Provides views for players in a given game.
     """
 
+    permission_classes = (IsAuthenticated,)
     serializer_class = serializers.PlayerSerializer
     permission_required = "game.is_member"
     lookup_field = "slug"
@@ -480,6 +481,7 @@ class PlayerViewSet(
     parent_object_url_kwarg = "parent_lookup_game__slug"
     parent_dependent_actions = ["list", "retrieve"]
     permission_type_map = {**ParentObjectAutoPermissionViewSetMixin.permission_type_map}
+    permission_type_map["list"] = "view"
 
     def get_parent_game(self):
         return get_object_or_404(

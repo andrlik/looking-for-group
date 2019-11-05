@@ -1618,3 +1618,54 @@ def test_adventure_log_viewset(
                 for k, v in post_data.items():
                     assert log_serial.data[k] != v
         assert models.AdventureLog.objects.get(pk=log.pk)
+
+
+@pytest.mark.parametrize(
+    "gamertouse,gametouse,viewname,playertouse,expected_response",
+    [
+        (None, "gp2", "api-player-list", None, 403),
+        (None, "gp2", "api-player-detail", "player1", 403),
+        ("gamer2", "gp2", "api-player-list", None, 403),
+        ("gamer2", "gp2", "api-player-detail", "player1", 403),
+        ("gamer4", "gp2", "api-player-list", None, 200),
+        ("gamer4", "gp2", "api-player-detail", "player1", 200),
+        ("gamer1", "gp2", "api-player-list", None, 200),
+        ("gamer1", "gp2", "api-player-detail", "player1", 200),
+    ],
+)
+def test_player_viewset(
+    apiclient,
+    game_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    gametouse,
+    viewname,
+    playertouse,
+    expected_response,
+):
+    """
+    Test for player view set (which only supports get views.)
+    """
+    gamer = None
+    game = getattr(game_testdata, gametouse)
+    player = None
+    if gamertouse:
+        gamer = getattr(game_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    if playertouse:
+        player = getattr(game_testdata, playertouse)
+        url = reverse(
+            viewname,
+            kwargs={"parent_lookup_game__slug": game.slug, "slug": player.slug},
+        )
+    else:
+        url = reverse(viewname, kwargs={"parent_lookup_game__slug": game.slug})
+    print("Fetching from {} for user {}".format(url, gamertouse))
+    with django_assert_max_num_queries(50):
+        response = apiclient.get(url)
+    print(
+        "Expected {}. Got {}: {}".format(
+            expected_response, response.status_code, response.data
+        )
+    )
+    assert response.status_code == expected_response
