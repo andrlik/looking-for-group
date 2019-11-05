@@ -151,11 +151,12 @@ class GameSessionViewSet(
         "retrieve",
         "update",
         "partial_update",
+        "list",
         "destroy",
         "reschedule",
         "cancel",
         "uncancel",
-        "add_log",
+        "addlog",
         "complete",
         "uncomplete",
     ]
@@ -165,13 +166,14 @@ class GameSessionViewSet(
     parent_object_url_kwarg = "parent_lookup_game__slug"
     permission_type_map = {
         **ParentObjectAutoPermissionViewSetMixin.permission_type_map,
-        "add_log": "view",
-        "reschedule": "schedule",
-        "cancel": "schedule",
-        "uncancel": "schedule",
+        "addlog": "view",
+        "reschedule": "change",
+        "cancel": "change",
+        "uncancel": "change",
         "complete": "change",
         "uncomplete": "change",
     }
+    permission_type_map["list"] = "view"
 
     def get_parent_game(self):
         return get_object_or_404(
@@ -186,7 +188,7 @@ class GameSessionViewSet(
     def dispatch(self, request, *args, **kwargs):
         if (
             request.user.is_authenticated
-            and self.request.user.gamerprofile == self.get_object().gm
+            and request.user.gamerprofile == self.get_parent_game().gm
         ):
             self.serializer_class = serializers.GameSessionGMSerializer
         return super().dispatch(request, *args, **kwargs)
@@ -196,15 +198,21 @@ class GameSessionViewSet(
         date_serializer = serializers.ScheduleSerializer(data=request.data)
         if not date_serializer.is_valid():
             return Response(
+                data=date_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+        obj = self.get_object()
+        if obj.status in ["complete", "cancel"]:
+            return Response(
                 data={
-                    "new_scheduled_time": "You specified the datetime in an invalid format."
+                    "errors": "This session is already marked as {} and cannot be rescheduled.".format(
+                        obj.get_status_display()
+                    )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        obj = self.get_object()
         obj.move(date_serializer.validated_data["new_scheduled_time"])
         return Response(
-            data=self.serializer_class(obj, context={"request": request}),
+            data=self.serializer_class(obj, context={"request": request}).data,
             status=status.HTTP_200_OK,
         )
 
@@ -273,12 +281,12 @@ class GameSessionViewSet(
         )
 
     @action(methods=["post"], detail=True)
-    def add_log(self, request, *args, **kwargs):
+    def addlog(self, request, *args, **kwargs):
         """
         Create the adventure log for this session.
         """
         session = self.get_object()
-        if session.adventurelog:
+        if hasattr(session, "adventurelog"):
             return Response(
                 data={"errors": "This session already has an adventure log."},
                 status=status.HTTP_400_BAD_REQUEST,

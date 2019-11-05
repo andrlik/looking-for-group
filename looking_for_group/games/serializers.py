@@ -28,11 +28,13 @@ def find_slug_in_url(url):
 
 class PlayerEditableField(serializers.RelatedField):
     def to_representation(self, instance):
-        return {"slug": instance.slug, "gamer": instance.gamer.username}
+        return {"game": instance.game.slug, "gamer": instance.gamer.username}
 
     def to_internal_value(self, data):
         try:
-            player = models.Player.objects.get(slug=data["slug"])
+            player = models.Player.objects.get(
+                game__slug=data["game"], gamer__username=data["gamer"]
+            )
         except ObjectDoesNotExist:
             return None
         return player
@@ -310,26 +312,25 @@ class GameSessionSerializer(catalog_serializers.NestedHyperlinkedModelSerializer
     game = catalog_serializers.NestedHyperlinkedRelatedField(
         view_name="api-game-detail", lookup_field="slug", read_only=True
     )
-    adventurelog = AdventureLogSerializer()
-    adventurelog_title = serializers.SerializerMethodField()
-    adventurelog_body = serializers.SerializerMethodField()
-    adventurelog_body_rendered = serializers.SerializerMethodField()
+    adventurelog_title = serializers.SerializerMethodField(read_only=True)
+    adventurelog_body = serializers.SerializerMethodField(read_only=True)
+    adventurelog_body_rendered = serializers.SerializerMethodField(read_only=True)
     game_title = serializers.SerializerMethodField()
     players_expected = serializers.SerializerMethodField(read_only=True)
     players_missing = serializers.SerializerMethodField(read_only=True)
 
     def get_adventurelog_title(self, obj):
-        if obj.adventurelog:
+        if hasattr(obj, "adventurelog"):
             return obj.adventurelog.title
         return None
 
     def get_adventurelog_body(self, obj):
-        if obj.adventurelog:
+        if hasattr(obj, "adventurelog"):
             return obj.adventurelog.body
         return None
 
     def get_adventurelog_body_rendered(self, obj):
-        if obj.adventurelog:
+        if hasattr(obj, "adventurelog"):
             return obj.adventurelog.body_rendered
         return None
 
@@ -337,10 +338,10 @@ class GameSessionSerializer(catalog_serializers.NestedHyperlinkedModelSerializer
         return obj.game.title
 
     def get_players_expected(self, obj):
-        return [p.gamer.username for p in obj.players_expected]
+        return [p.gamer.username for p in obj.players_expected.all()]
 
     def get_players_missing(self, obj):
-        return [p.gamer.username for p in obj.players_missing]
+        return [p.gamer.username for p in obj.players_missing.all()]
 
     class Meta:
         model = models.GameSession

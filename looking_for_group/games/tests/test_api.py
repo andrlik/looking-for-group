@@ -1,12 +1,18 @@
+from datetime import datetime, timedelta
+
 import pytest
+import pytz
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_delete, post_save, pre_delete
+from django.utils import timezone
 from factory.django import mute_signals
 from rest_framework.reverse import reverse
 
 from .. import models, serializers
 
 pytestmark = pytest.mark.django_db(transaction=True)
+
+tz = pytz.timezone("US/Eastern")
 
 
 @pytest.mark.parametrize(
@@ -972,3 +978,405 @@ def test_my_character_viewset(
     else:
         if character and httpmethod == "delete":
             assert models.Character.objects.get(pk=character.pk)
+
+
+@pytest.mark.parametrize(
+    "gamertouse,gametouse,viewname,httpmethod,sessiontouse,post_data,expected_response",
+    [
+        (None, "gp2", "api-session-list", "get", None, {}, 403),
+        (None, "gp2", "api-session-detail", "get", "session2", {}, 403),
+        (
+            None,
+            "gp2",
+            "api-session-detail",
+            "put",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            403,
+        ),
+        (
+            None,
+            "gp2",
+            "api-session-detail",
+            "patch",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            403,
+        ),
+        (None, "gp2", "api-session-detail", "delete", "session2", {}, 403),
+        (
+            None,
+            "gp2",
+            "api-session-reschedule",
+            "post",
+            "session2",
+            {
+                "new_scheduled_time": (timezone.now() + timedelta(days=30))
+                .astimezone(tz)
+                .strftime("%Y-%m-%dT%H:%M:%S%z")
+            },
+            403,
+        ),
+        (None, "gp2", "api-session-cancel", "post", "session2", {}, 403),
+        (None, "gp2", "api-session-uncancel", "post", "session2", {}, 403),
+        (None, "gp2", "api-session-complete", "post", "session2", {}, 403),
+        (None, "gp2", "api-session-uncomplete", "post", "session2", {}, 403),
+        (
+            None,
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session2",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            403,
+        ),
+        (
+            None,
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session1",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            403,
+        ),
+        ("gamer2", "gp2", "api-session-list", "get", None, {}, 403),
+        ("gamer2", "gp2", "api-session-detail", "get", "session2", {}, 403),
+        (
+            "gamer2",
+            "gp2",
+            "api-session-detail",
+            "put",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            403,
+        ),
+        (
+            "gamer2",
+            "gp2",
+            "api-session-detail",
+            "patch",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            403,
+        ),
+        ("gamer2", "gp2", "api-session-detail", "delete", "session2", {}, 403),
+        (
+            "gamer2",
+            "gp2",
+            "api-session-reschedule",
+            "post",
+            "session2",
+            {
+                "new_scheduled_time": (timezone.now() + timedelta(days=30))
+                .astimezone(tz)
+                .strftime("%Y-%m-%dT%H:%M:%S%z")
+            },
+            403,
+        ),
+        ("gamer2", "gp2", "api-session-cancel", "post", "session2", {}, 403),
+        ("gamer2", "gp2", "api-session-uncancel", "post", "session2", {}, 403),
+        ("gamer2", "gp2", "api-session-complete", "post", "session2", {}, 403),
+        ("gamer2", "gp2", "api-session-uncomplete", "post", "session2", {}, 403),
+        (
+            "gamer2",
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session1",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            403,
+        ),
+        (
+            "gamer2",
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session2",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            403,
+        ),
+        ("gamer4", "gp2", "api-session-list", "get", None, {}, 200),
+        ("gamer4", "gp2", "api-session-detail", "get", "session2", {}, 200),
+        (
+            "gamer4",
+            "gp2",
+            "api-session-detail",
+            "put",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            403,
+        ),
+        (
+            "gamer4",
+            "gp2",
+            "api-session-detail",
+            "patch",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            403,
+        ),
+        ("gamer4", "gp2", "api-session-detail", "delete", "session2", {}, 403),
+        (
+            "gamer4",
+            "gp2",
+            "api-session-reschedule",
+            "post",
+            "session2",
+            {
+                "new_scheduled_time": (timezone.now() + timedelta(days=30))
+                .astimezone(tz)
+                .strftime("%Y-%m-%dT%H:%M:%S%z")
+            },
+            403,
+        ),
+        ("gamer4", "gp2", "api-session-cancel", "post", "session2", {}, 403),
+        ("gamer4", "gp2", "api-session-uncancel", "post", "session2", {}, 403),
+        ("gamer4", "gp2", "api-session-complete", "post", "session2", {}, 403),
+        ("gamer4", "gp2", "api-session-uncomplete", "post", "session2", {}, 403),
+        (
+            "gamer4",
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session2",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            400,
+        ),
+        (
+            "gamer4",
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session1",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            201,
+        ),
+        ("gamer1", "gp2", "api-session-list", "get", None, {}, 200),
+        ("gamer1", "gp2", "api-session-detail", "get", "session2", {}, 200),
+        (
+            "gamer1",
+            "gp2",
+            "api-session-detail",
+            "put",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            200,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "api-session-detail",
+            "patch",
+            "session2",
+            {
+                "gm_notes": "A whole lot of madness going on.",
+                "players_expected": ["player1", "player2"],
+                "players_missing": ["player2"],
+            },
+            200,
+        ),
+        ("gamer1", "gp2", "api-session-detail", "delete", "session2", {}, 204),
+        (
+            "gamer1",
+            "gp2",
+            "api-session-reschedule",
+            "post",
+            "session2",
+            {
+                "new_scheduled_time": (timezone.now() + timedelta(days=30))
+                .astimezone(tz)
+                .strftime("%Y-%m-%dT%H:%M:%S%z")
+            },
+            200,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "api-session-reschedule",
+            "post",
+            "session1",
+            {
+                "new_scheduled_time": (timezone.now() + timedelta(days=30))
+                .astimezone(tz)
+                .strftime("%Y-%m-%dT%H:%M:%S%z")
+            },
+            400,
+        ),
+        ("gamer1", "gp2", "api-session-cancel", "post", "session2", {}, 200),
+        ("gamer1", "gp2", "api-session-uncancel", "post", "session2", {}, 400),
+        ("gamer1", "gp2", "api-session-complete", "post", "session2", {}, 200),
+        ("gamer1", "gp2", "api-session-complete", "post", "session1", {}, 400),
+        ("gamer1", "gp2", "api-session-uncomplete", "post", "session2", {}, 400),
+        ("gamer1", "gp2", "api-session-uncomplete", "post", "session1", {}, 200),
+        (
+            "gamer1",
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session2",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            400,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "api-session-addlog",
+            "post",
+            "session1",
+            {"title": "We had some fun", "body": "Didn't we, boys?"},
+            201,
+        ),
+    ],
+)
+def test_game_session_viewset(
+    apiclient,
+    game_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    gametouse,
+    viewname,
+    httpmethod,
+    sessiontouse,
+    post_data,
+    expected_response,
+):
+    """
+    Test game session actions.
+    """
+    gamer = None
+    game = getattr(game_testdata, gametouse)
+    session = None
+    if gamertouse:
+        gamer = getattr(game_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    if sessiontouse:
+        session = getattr(game_testdata, sessiontouse)
+    data_to_post = post_data.copy()
+    if "players_expected" in post_data.keys():
+        data_to_post["players_expected"] = [
+            {"game": p.game.slug, "gamer": p.gamer.username}
+            for p in [
+                getattr(game_testdata, player)
+                for player in post_data["players_expected"]
+            ]
+        ]
+    if "players_missing" in post_data.keys():
+        data_to_post["players_missing"] = [
+            {"game": p.game.slug, "gamer": p.gamer.username}
+            for p in [
+                getattr(game_testdata, player)
+                for player in post_data["players_missing"]
+            ]
+        ]
+    if httpmethod == "put":
+        for k, v in serializers.GameSessionGMSerializer(
+            session, context={"request": None}
+        ).data.items():
+            if k not in post_data.keys() and k not in [
+                "created",
+                "modified",
+                "api_url",
+                "game",
+                "gm_notes_rendered",
+            ]:
+                data_to_post[k] = v
+    if session:
+        url = reverse(
+            viewname,
+            kwargs={"parent_lookup_game__slug": game.slug, "slug": session.slug},
+        )
+    else:
+        url = reverse(viewname, kwargs={"parent_lookup_game__slug": game.slug})
+    print(url)
+    print(
+        "Preparing to send {} to url {} for user {}...".format(
+            data_to_post, url, gamertouse
+        )
+    )
+    with django_assert_max_num_queries(50):
+        with mute_signals(post_save):
+            response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+    print(
+        "Expected {}. Got {}: {}".format(
+            expected_response, response.status_code, response.data
+        )
+    )
+    assert response.status_code == expected_response
+    if session:
+        if expected_response == 204:
+            with pytest.raises(ObjectDoesNotExist):
+                models.GameSession.objects.get(pk=session.pk)
+        else:
+            session.refresh_from_db()
+            session_serialized = serializers.GameSessionGMSerializer(
+                session, context={"request": None}
+            )
+            if httpmethod in ["put", "patch"]:
+                if expected_response == 200:
+                    for k, v in post_data.items():
+                        if "players" in k:
+                            assert session.players_expected.count() == 2
+                            assert session.players_missing.count() == 1
+                        else:
+                            assert v == session_serialized.data[k]
+                else:
+                    for k, v in post_data.items():
+                        assert v != session_serialized.data[k]
+            elif "reschedule" in viewname:
+                if expected_response == 200:
+                    assert (
+                        datetime.strptime(
+                            post_data["new_scheduled_time"], "%Y-%m-%dT%H:%M:%S%z"
+                        )
+                        == session.scheduled_time
+                    )
+                else:
+                    assert (
+                        datetime.strptime(
+                            post_data["new_scheduled_time"], "%Y-%m-%dT%H:%M:%S%z"
+                        )
+                        != session.scheduled_time
+                    )
+            elif "-cancel" in viewname:
+                if expected_response == 200:
+                    assert session.status == "cancel"
+                elif expected_response != 400:
+                    assert session.status != "cancel"
+            elif "-complete" in viewname:
+                if expected_response == 200:
+                    assert session.status == "complete"
+                elif expected_response != 400:
+                    assert session.status != "complete"
+            elif "add_log" in viewname:
+                if expected_response == 201:
+                    assert session.log
+            else:
+                assert models.GameSession.objects.get(pk=session.pk)
