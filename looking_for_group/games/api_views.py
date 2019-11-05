@@ -14,6 +14,7 @@ from rules.contrib.rest_framework import AutoPermissionViewSetMixin
 from looking_for_group.mixins import ParentObjectAutoPermissionViewSetMixin
 
 from . import models, serializers
+from .signals import player_kicked, player_left
 
 logger = logging.getLogger("api")
 
@@ -124,8 +125,11 @@ class GamePostingViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         player = models.Player.objects.get(gamer=request.user.gamerprofile, game=obj)
+        player_left.send(models.Player, player=player)
         player.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
 
 class GameSessionViewSet(
@@ -490,6 +494,13 @@ class PlayerViewSet(
 
     def get_queryset(self):
         return models.Player.objects.filter(game=self.get_parent_game())
+
+    @action(methods=["post"], detail=True)
+    def kick(self, requests, *args, **kwargs):
+        obj = self.get_object()
+        player_kicked.send(request.user, player=obj)
+        obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CharacterViewSet(

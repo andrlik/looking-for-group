@@ -192,7 +192,7 @@ def test_game_session_validation(
     print("Got existing session data of {}".format(existing_session_data))
     print("Setting players_expected to {}".format(players_expected))
     existing_session_data["players_expected"] = [
-        {"slug": p.slug, "gamer": p.gamer.username}
+        {"game": p.game.slug, "gamer": p.gamer.username}
         for p in models.Player.objects.filter(
             pk__in=[getattr(game_testdata, g).pk for g in players_expected]
         )
@@ -200,7 +200,7 @@ def test_game_session_validation(
 
     print("Setting players missing to {}".format(players_missing))
     existing_session_data["players_missing"] = [
-        {"slug": p.slug, "gamer": p.gamer.username}
+        {"game": p.game.slug, "gamer": p.gamer.username}
         for p in models.Player.objects.filter(
             pk__in=[getattr(game_testdata, g).pk for g in players_missing]
         )

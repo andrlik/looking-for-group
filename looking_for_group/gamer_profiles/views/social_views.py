@@ -2275,7 +2275,9 @@ class ExportProfileView(
         return models.GamerProfile.objects.all()
 
     def get_data(self):
-        serializer = serializers.GamerProfileSerializer(self.get_object())
+        serializer = serializers.GamerProfileSerializer(
+            self.get_object(), context={"request": self.request}
+        )
         return serializer.data
 
     def render_to_response(self, context, **response_kwargs):
