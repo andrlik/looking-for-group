@@ -1380,3 +1380,241 @@ def test_game_session_viewset(
                     assert session.log
             else:
                 assert models.GameSession.objects.get(pk=session.pk)
+
+
+@pytest.mark.parametrize(
+    "gamertouse,gametouse,sessiontouse,logtouse,viewname,httpmethod,post_data,expected_response",
+    [
+        (None, "gp2", "session2", "log1", "api-adventurelog-detail", "get", {}, 403),
+        (
+            None,
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "patch",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            403,
+        ),
+        (
+            None,
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "put",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            403,
+        ),
+        (None, "gp2", "session2", "log1", "api-adventurelog-detail", "delete", {}, 403),
+        (
+            "gamer2",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "get",
+            {},
+            403,
+        ),
+        (
+            "gamer2",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "patch",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            403,
+        ),
+        (
+            "gamer2",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "put",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            403,
+        ),
+        (
+            "gamer2",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "delete",
+            {},
+            403,
+        ),
+        (
+            "gamer4",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "get",
+            {},
+            200,
+        ),
+        (
+            "gamer4",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "patch",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            200,
+        ),
+        (
+            "gamer4",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "put",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            200,
+        ),
+        (
+            "gamer4",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "delete",
+            {},
+            403,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "get",
+            {},
+            200,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "patch",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            200,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "put",
+            {
+                "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
+            },
+            200,
+        ),
+        (
+            "gamer1",
+            "gp2",
+            "session2",
+            "log1",
+            "api-adventurelog-detail",
+            "delete",
+            {},
+            204,
+        ),
+    ],
+)
+def test_adventure_log_viewset(
+    apiclient,
+    game_testdata,
+    django_assert_max_num_queries,
+    gamertouse,
+    gametouse,
+    sessiontouse,
+    logtouse,
+    viewname,
+    httpmethod,
+    post_data,
+    expected_response,
+):
+    """
+    Tests for the adventure log view set.
+    """
+    gamer = None
+    game = getattr(game_testdata, gametouse)
+    session = getattr(game_testdata, sessiontouse)
+    log = getattr(game_testdata, logtouse)
+    if gamertouse:
+        gamer = getattr(game_testdata, gamertouse)
+        apiclient.force_login(gamer.user)
+    data_to_post = post_data.copy()
+    if httpmethod == "put":
+        for k, v in serializers.AdventureLogSerializer(
+            log, context={"request": None}
+        ).data.items():
+            if k not in post_data.keys() and k not in [
+                "created",
+                "modified",
+                "session",
+                "api_url",
+                "body_rendered",
+            ]:
+                data_to_post[k] = v
+    url = reverse(
+        viewname,
+        kwargs={
+            "parent_lookup_session__game__slug": game.slug,
+            "parent_lookup_session__slug": session.slug,
+            "slug": log.slug,
+        },
+    )
+    print(url)
+    print(
+        "Preparing to submit {} to {} for user {}...".format(
+            data_to_post, url, gamertouse
+        )
+    )
+    with django_assert_max_num_queries(50):
+        with mute_signals(post_save):
+            response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+    print(
+        "Expected {}. Got {}: {}".format(
+            expected_response, response.status_code, response.data
+        )
+    )
+    assert response.status_code == expected_response
+    if expected_response == 204:
+        with pytest.raises(ObjectDoesNotExist):
+            models.AdventureLog.objects.get(pk=log.pk)
+    else:
+        log.refresh_from_db()
+        log_serial = serializers.AdventureLogSerializer(log, context={"request": None})
+        if httpmethod in ["put", "patch"]:
+            if expected_response == 200:
+                for k, v in post_data.items():
+                    assert log_serial.data[k] == v
+            else:
+                for k, v in post_data.items():
+                    assert log_serial.data[k] != v
+        assert models.AdventureLog.objects.get(pk=log.pk)
