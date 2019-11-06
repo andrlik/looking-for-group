@@ -3,6 +3,7 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -14,6 +15,7 @@ from looking_for_group.mixins import ParentObjectAutoPermissionViewSetMixin
 
 from .. import models, serializers
 from ..models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
+from ..rules import is_membership_subject
 
 logger = logging.getLogger("api")
 
@@ -136,6 +138,7 @@ class GamerCommunityViewSet(
         member.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(methods=["post"], detail=True)
     def transfer(self, request, *args, **kwargs):
         """
         Transfer ownership of the community to another community admin specified by username.
@@ -186,9 +189,9 @@ class BannedUserViewSet(
     parent_lookup_field = "community"
     parent_object_model = models.GamerCommunity
     parent_object_lookup_field = "slug"
-    parent_object_url_kwarg = "parent_lookup_community__slug"
+    parent_object_url_kwarg = "parent_lookup_community"
     permission_type_map = {**ParentObjectAutoPermissionViewSetMixin.permission_type_map}
-    permission_type_map["list"] = "add"
+    permission_type_map["list"] = "view"
     parent_dependent_actions = [
         "list",
         "create",
@@ -285,8 +288,32 @@ class CommunityMembershipViewSet(
             .order_by("community_role", "gamer__username")
         )
 
+    def run_check_for_member_edit(self, request, obj):
+        return is_membership_subject(request.user, obj)
+
+    def update(self, request, *args, **kwargs):
+        membership = self.get_object()
+        if self.run_check_for_member_edit(request, membership):
+            self.permission_denied(
+                request, message=_("You can't edit your own membership profile.")
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        membership = self.get_object()
+        if self.run_check_for_member_edit(request, membership):
+            self.permission_denied(
+                request, message=_("You can't edit your own membership profile.")
+            )
+        return super().partial_update(request, *args, **kwargs)
+
     @action(methods=["post"], detail=True)
     def kick(self, request, **kwargs):
+        membership = self.get_object()
+        if self.run_check_for_member_edit(request, membership):
+            self.permission_denied(
+                request, message=_("You can't edit your own membership profile.")
+            )
         end_date = None
         try:
             reason = self.request.data["reason"]
@@ -294,7 +321,6 @@ class CommunityMembershipViewSet(
             return Response(status=400)
         if "end_date" in self.request.data.keys():
             end_date = self.request.data["end_date"]
-        membership = self.get_object()
         kicker = self.request.user.gamerprofile
         try:
             kick_record = serializers.KickedUserSerializer(
@@ -310,12 +336,16 @@ class CommunityMembershipViewSet(
 
     @action(methods=["post"], detail=True)
     def ban(self, request, **kwargs):
+        membership = self.get_object()
+        if self.run_check_for_member_edit(request, membership):
+            self.permission_denied(
+                request, message=_("You can't edit your own membership profile.")
+            )
         try:
             reason = self.request.data["reason"]
         except KeyError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         banner = self.request.user.gamerprofile
-        membership = self.get_object()
         try:
             ban_record = serializers.BannedUserSerializer(
                 membership.community.ban_user(banner, membership.gamer, reason)
@@ -360,19 +390,13 @@ class GamerProfileViewSet(
     permission_type_map = {
         **AutoPermissionViewSetMixin.permission_type_map,
         "friend": "friend",
+        "unfriend": "view",
         "block": "block",
         "mute": "block",
     }
 
     def get_queryset(self):
-        qs = models.GamerProfile.objects.exclude(
-            pk__in=[
-                b.blocker.pk
-                for b in models.BlockedUser.objects.filter(
-                    blockee=self.request.user.gamerprofile
-                )
-            ]
-        )
+        qs = models.GamerProfile.objects.all()
         return qs
 
     def retrieve(self, request, *args, **kwargs):
@@ -404,7 +428,9 @@ class GamerProfileViewSet(
         if target_gamer in request.user.gamerprofile.friends.all():
             return Response(
                 data={
-                    "errors": "{} is already one of your friends.".format(target_gamer)
+                    "errors": _(
+                        "{} is already one of your friends.".format(target_gamer)
+                    )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -424,7 +450,9 @@ class GamerProfileViewSet(
         )
         if target_gamer not in request.user.gamerprofile.friends.all():
             return Response(
-                data={"errors": "This user is not one of your friends."},
+                data={
+                    "errors": _("{} is not one of your friends.".format(target_gamer))
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         request.user.gamerprofile.friends.remove(target_gamer)
@@ -630,12 +658,13 @@ class CommunityAdminApplicationViewSet(
     parent_object_model = models.GamerCommunity
     parent_object_lookup_field = "slug"
     parent_object_url_kwarg = "parent_lookup_community"
-    parent_dependent_actions = ["list", "retrieve", "approve", "reject"]
+    parent_dependent_actions = ["list"]
     permission_type_map = {
         **ParentObjectAutoPermissionViewSetMixin.permission_type_map,
         "approve": "approve",
         "reject": "approve",
     }
+    permission_type_map["list"] = "reviewlist"
 
     def get_queryset(self):
         return (

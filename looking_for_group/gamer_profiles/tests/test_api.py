@@ -256,16 +256,16 @@ def test_community_sublists(
         ("blocked_gamer", "api-comm-kick-detail", "community1", "kick1", 403),
         ("gamer1", "api-comm-kick-detail", "community1", "kick1", 200),
         ("gamer1", "api-comm-application-detail", "community1", "application", 200),
-        ("gamer1", "api-comm-application-detail", "community", "application", 403),
+        ("gamer1", "api-comm-application-detail", "community", "application", 404),
         (
             "blocked_gamer",
             "api-comm-application-detail",
             "community1",
             "application",
-            403,
+            404,
         ),
-        ("new_gamer", "api-comm-application-detail", "community1", "application", 403),
-        ("gamer5", "api-comm-application-detail", "community1", "application", 403),
+        ("new_gamer", "api-comm-application-detail", "community1", "application", 404),
+        ("gamer5", "api-comm-application-detail", "community1", "application", 404),
     ],
 )
 def test_community_sublist_details(
@@ -401,7 +401,7 @@ def test_gamer_profile_update_views(
         ("gamer1", "gamer2", "api-profile-friend", "accept", 200, 201),
         ("gamer1", "gamer2", "api-profile-friend", "reject", 200, 201),
         ("gamer1", "gamer3", "api-profile-unfriend", None, 200, 200),
-        ("blocked_gamer", "gamer1", "api-profile-unfriend", None, 200, 403),
+        ("blocked_gamer", "gamer1", "api-profile-unfriend", None, 200, 400),
     ],
 )
 def test_friend_request_create_receipt(
@@ -465,10 +465,10 @@ def test_friend_request_create_receipt(
     "gamertouse,viewname,expected_post_response",
     [
         (None, "api-comm-application-approve", 403),
-        ("gamer5", "api-comm-application-approve", 403),
+        ("gamer5", "api-comm-application-approve", 404),
         ("gamer1", "api-comm-application-approve", 202),
         (None, "api-comm-application-reject", 403),
-        ("gamer5", "api-comm-application-reject", 403),
+        ("gamer5", "api-comm-application-reject", 404),
         ("gamer1", "api-comm-application-reject", 202),
     ],
 )

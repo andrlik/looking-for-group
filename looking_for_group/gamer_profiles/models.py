@@ -317,7 +317,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, RulesModel):
         rules_permissions = {
             "add": rules.is_user,
             "change": rules.is_community_admin,
-            "view": rules.is_community_member,
+            "view": rules.is_user,
             "delete": rules.is_community_owner,
             "apply": rules.is_eligible_applicant,
             "join": rules.is_joinable,
@@ -764,12 +764,12 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, RulesModel):
         order_with_respect_to = "community"
         rules_permissions = {
             "add": rules.is_community_admin,
-            "change": rules.is_community_admin,
+            "change": rules.is_community_superior,
             "view": rules.is_community_member,
-            "delete": rules.is_community_admin,
-            "kick": rules.is_community_admin,
-            "ban": rules.is_community_admin,
-            "changerole": rules.is_community_admin,
+            "delete": rules.is_community_superior,
+            "kick": rules.is_community_superior,
+            "ban": rules.is_community_superior,
+            "changerole": rules.is_community_superior,
         }
 
 
@@ -862,6 +862,7 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, RulesModel):
             "view": rules.is_applicant | rules.is_application_approver,
             "delete": rules.is_applicant,
             "approve": rules.is_application_approver,
+            "reviewlist": rules.is_community_admin,
         }
 
 
