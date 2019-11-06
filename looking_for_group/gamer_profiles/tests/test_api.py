@@ -786,7 +786,7 @@ def test_transfer_ownership(
             {"reason": "harrassment extreme"},
             403,
         ),
-        ("gamer4", "community2", "api-comm-kick-detail", "delete", "kick1", {}, 403),
+        ("gamer4", "community2", "api-comm-kick-detail", "delete", "kick1", {}, 404),
         (
             "gamer4",
             "community2",
@@ -794,7 +794,7 @@ def test_transfer_ownership(
             "put",
             "kick1",
             {"reason": "He's super annoying."},
-            403,
+            404,
         ),
         (
             "gamer4",
@@ -803,7 +803,7 @@ def test_transfer_ownership(
             "patch",
             "kick1",
             {"reason": "He's super annoying."},
-            403,
+            404,
         ),
         ("gamer4", "community", "api-comm-ban-detail", "delete", "banned1", {}, 403),
         (
@@ -813,7 +813,7 @@ def test_transfer_ownership(
             "put",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         (
             "gamer4",
@@ -822,7 +822,7 @@ def test_transfer_ownership(
             "patch",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         ("gamer1", "community1", "api-comm-kick-detail", "delete", "kick1", {}, 204),
         (
@@ -851,7 +851,7 @@ def test_transfer_ownership(
             "put",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         (
             "gamer1",
@@ -860,7 +860,7 @@ def test_transfer_ownership(
             "patch",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         ("gamer5", "community", "api-comm-ban-detail", "delete", "banned1", {}, 204),
         (

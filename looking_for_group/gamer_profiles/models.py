@@ -320,6 +320,7 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, RulesModel):
             "view": rules.is_community_member,
             "delete": rules.is_community_owner,
             "apply": rules.is_eligible_applicant,
+            "join": rules.is_joinable,
             "leave": rules.is_community_member,
         }
 
@@ -626,7 +627,8 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, RulesModel):
         rules_permissions = {
             "add": rules.is_user,
             "change": rules.is_profile_owner,
-            "view": rules.is_profile_viewer,
+            "view": rules.is_user,
+            "view_details": rules.is_profile_viewer,
             "delete": rules.is_profile_owner,
             "friend": rules.is_possible_friend,
             "unfriend": rules.is_friend,
