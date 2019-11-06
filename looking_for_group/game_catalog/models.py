@@ -8,7 +8,9 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
+from rules.contrib.models import RulesModel
 
+from . import rules
 from .utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 
 # Create your models here.
@@ -22,7 +24,7 @@ SUGGESTION_STATUS_CHOICES = (
 )
 
 
-class GamePublisher(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class GamePublisher(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     A publisher of games.
     """
@@ -52,10 +54,16 @@ class GamePublisher(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     class Meta:
         ordering = ["name"]
         verbose_name = _("Publisher")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class GameSystem(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     A root rule system potentially used for multiple games.
@@ -113,10 +121,16 @@ class GameSystem(
     class Meta:
         ordering = ["name", "-publication_date"]
         verbose_name = _("Game System")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class PublishedGame(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     A published game.
@@ -155,10 +169,16 @@ class PublishedGame(
     class Meta:
         ordering = ["title", "-publication_date"]
         verbose_name = _("Published Game")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class GameEdition(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     Record of editons as a child object of PublishedGame.
@@ -230,10 +250,16 @@ class GameEdition(
     class Meta:
         order_with_respect_to = "game"
         verbose_name = _("Game Edition")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class SourceBook(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     Source book (as opposed to a module/adventure) published for a given edition.
@@ -292,10 +318,16 @@ class SourceBook(
     class Meta:
         order_with_respect_to = "edition"
         verbose_name = _("Source Book")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class PublishedModule(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     A published campaign/adventure module that might be used as the basis for gameplay.
@@ -351,9 +383,15 @@ class PublishedModule(
     class Meta:
         ordering = ["title", "-publication_date"]
         verbose_name = _("Module/Adventure")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
-class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     A suggested change to an existing listing.
     """
@@ -450,9 +488,15 @@ class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mo
     class Meta:
         ordering = ["-created", "status"]
         verbose_name = _("Suggested Correction")
+        rules_permissions = {
+            "add": None,
+            "change": rules.is_rpgeditor,
+            "view": rules.is_rpgeditor,
+            "delete": rules.is_rpgeditor,
+        }
 
 
-class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     A suggested new entry to the catalog.
     """
@@ -557,3 +601,9 @@ class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mode
     class Meta:
         ordering = ["-created", "status"]
         verbose_name = _("Suggested Addition")
+        rules_permissions = {
+            "add": None,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }

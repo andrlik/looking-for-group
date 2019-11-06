@@ -256,16 +256,16 @@ def test_community_sublists(
         ("blocked_gamer", "api-comm-kick-detail", "community1", "kick1", 403),
         ("gamer1", "api-comm-kick-detail", "community1", "kick1", 200),
         ("gamer1", "api-comm-application-detail", "community1", "application", 200),
-        ("gamer1", "api-comm-application-detail", "community", "application", 403),
+        ("gamer1", "api-comm-application-detail", "community", "application", 404),
         (
             "blocked_gamer",
             "api-comm-application-detail",
             "community1",
             "application",
-            403,
+            404,
         ),
-        ("new_gamer", "api-comm-application-detail", "community1", "application", 403),
-        ("gamer5", "api-comm-application-detail", "community1", "application", 403),
+        ("new_gamer", "api-comm-application-detail", "community1", "application", 404),
+        ("gamer5", "api-comm-application-detail", "community1", "application", 404),
     ],
 )
 def test_community_sublist_details(
@@ -401,7 +401,7 @@ def test_gamer_profile_update_views(
         ("gamer1", "gamer2", "api-profile-friend", "accept", 200, 201),
         ("gamer1", "gamer2", "api-profile-friend", "reject", 200, 201),
         ("gamer1", "gamer3", "api-profile-unfriend", None, 200, 200),
-        ("blocked_gamer", "gamer1", "api-profile-unfriend", None, 200, 403),
+        ("blocked_gamer", "gamer1", "api-profile-unfriend", None, 200, 400),
     ],
 )
 def test_friend_request_create_receipt(
@@ -465,10 +465,10 @@ def test_friend_request_create_receipt(
     "gamertouse,viewname,expected_post_response",
     [
         (None, "api-comm-application-approve", 403),
-        ("gamer5", "api-comm-application-approve", 403),
+        ("gamer5", "api-comm-application-approve", 404),
         ("gamer1", "api-comm-application-approve", 202),
         (None, "api-comm-application-reject", 403),
-        ("gamer5", "api-comm-application-reject", 403),
+        ("gamer5", "api-comm-application-reject", 404),
         ("gamer1", "api-comm-application-reject", 202),
     ],
 )
@@ -786,7 +786,7 @@ def test_transfer_ownership(
             {"reason": "harrassment extreme"},
             403,
         ),
-        ("gamer4", "community2", "api-comm-kick-detail", "delete", "kick1", {}, 403),
+        ("gamer4", "community2", "api-comm-kick-detail", "delete", "kick1", {}, 404),
         (
             "gamer4",
             "community2",
@@ -794,7 +794,7 @@ def test_transfer_ownership(
             "put",
             "kick1",
             {"reason": "He's super annoying."},
-            403,
+            404,
         ),
         (
             "gamer4",
@@ -803,7 +803,7 @@ def test_transfer_ownership(
             "patch",
             "kick1",
             {"reason": "He's super annoying."},
-            403,
+            404,
         ),
         ("gamer4", "community", "api-comm-ban-detail", "delete", "banned1", {}, 403),
         (
@@ -813,7 +813,7 @@ def test_transfer_ownership(
             "put",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         (
             "gamer4",
@@ -822,7 +822,7 @@ def test_transfer_ownership(
             "patch",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         ("gamer1", "community1", "api-comm-kick-detail", "delete", "kick1", {}, 204),
         (
@@ -851,7 +851,7 @@ def test_transfer_ownership(
             "put",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         (
             "gamer1",
@@ -860,7 +860,7 @@ def test_transfer_ownership(
             "patch",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            405,
         ),
         ("gamer5", "community", "api-comm-ban-detail", "delete", "banned1", {}, 204),
         (
