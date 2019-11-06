@@ -2,14 +2,10 @@ import logging
 
 import rules
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.query_utils import Q
 from django.utils import timezone
 from rules import predicate
 
-from looking_for_group.games.models import GamePosting as Game
-from looking_for_group.games.models import GamePostingApplication, Player
-
-from .models import BannedUser, BlockedUser, KickedUser, NotInCommunity
+from looking_for_group import gamer_profiles, games
 
 logger = logging.getLogger("rules")
 
@@ -37,7 +33,7 @@ def is_community_admin(user, community):
                 role, user.gamerprofile, community.name
             )
         )
-    except NotInCommunity:
+    except gamer_profiles.models.NotInCommunity:
         logger.debug("Not in community!")
         return False
     if role == "Admin":
@@ -56,7 +52,7 @@ def is_public_community(user, community):  # noqa
 def is_not_member(user, community):
     try:
         community.get_role(user.gamerprofile)
-    except NotInCommunity:
+    except gamer_profiles.models.NotInCommunity:
         return True
     return False
 
@@ -99,10 +95,12 @@ def is_role_editor(user, member):
 
 @predicate
 def is_not_comm_blocked(user, community):
-    bans = BannedUser.objects.filter(banned_user=user.gamerprofile, community=community)
+    bans = gamer_profiles.models.BannedUser.objects.filter(
+        banned_user=user.gamerprofile, community=community
+    )
     if bans:
         return False
-    kicks = KickedUser.objects.filter(
+    kicks = gamer_profiles.models.KickedUser.objects.filter(
         kicked_user=user.gamerprofile, community=community, end_date__gt=timezone.now()
     )
     if kicks:
@@ -132,7 +130,7 @@ def is_community_member(user, community):
     try:
         community.get_role(user.gamerprofile)
         return True
-    except NotInCommunity:
+    except gamer_profiles.models.NotInCommunity:
         return False
     return False
 
@@ -155,23 +153,27 @@ def in_same_community_as_gamer(user, gamer):
 def is_in_same_game_as_gamer(user, gamer):
     user_gamer = user.gamerprofile
     user_gm_games = user_gamer.gmed_games.exclude(status__in=["closed", "cancel"])
-    user_player_games = Player.objects.select_related("game").filter(
+    user_player_games = games.models.Player.objects.select_related("game").filter(
         gamer=user_gamer, game__status__in=["open", "started", "replace"]
     )
-    gamer_player_games = Player.objects.select_related("game").filter(
+    gamer_player_games = games.models.Player.objects.select_related("game").filter(
         gamer=gamer, game__status__in=["open", "started", "replace"]
     )
     gamer_gm_games = gamer.gmed_games.exclude(status__in=["closed", "cancel"])
     gamer_games = gamer_gm_games.union(
-        Game.objects.filter(id__in=[p.game.id for p in gamer_player_games])
+        games.models.GamePosting.objects.filter(
+            id__in=[p.game.id for p in gamer_player_games]
+        )
     )
-    gamer_apps = GamePostingApplication.objects.filter(
+    gamer_apps = games.models.GamePostingApplication.objects.filter(
         gamer=gamer, status="pending", game__in=user_gm_games
     )
     if gamer_apps.count() > 0:
         return True
     user_games = user_gm_games.union(
-        Game.objects.filter(id__in=[p.game.id for p in user_player_games])
+        games.models.GamePosting.objects.filter(
+            id__in=[p.game.id for p in user_player_games]
+        )
     )
     matching_games = user_games.filter(id__in=[g.id for g in gamer_games])
     if matching_games.count() > 0:
@@ -197,7 +199,9 @@ def is_connected_to_gamer(user, gamer):
         logger.debug("User is a friend of gamer.")
         result = True
     try:
-        BlockedUser.objects.get(blocker=gamer, blockee=user.gamerprofile)
+        gamer_profiles.models.BlockedUser.objects.get(
+            blocker=gamer, blockee=user.gamerprofile
+        )
         logger.debug("User is blocked by gamer")
         result = False
     except ObjectDoesNotExist:
@@ -272,7 +276,7 @@ def is_allowed_invites(user, community):
             if community.invites_allowed == "moderator":
                 if role == "Moderator":
                     return True
-        except NotInCommunity:
+        except gamer_profiles.models.NotInCommunity:
             pass
     return False
 
