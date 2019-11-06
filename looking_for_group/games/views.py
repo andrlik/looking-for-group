@@ -26,11 +26,11 @@ from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar, Occurrence
 from schedule.periods import Day, Month
 
+from . import forms, models, serializers
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..gamer_profiles.models import GamerProfile
 from ..locations.forms import LocationForm
 from ..locations.models import Location
-from . import forms, models, serializers
 from .mixins import JSONResponseMixin
 from .signals import player_kicked, player_left
 from .utils import mkfirstOfmonth, mkLastOfMonth
@@ -1724,6 +1724,15 @@ class CharacterCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
         self.game = self.player.game
         if self.player.game != self.game:
             raise PermissionDenied
+        if request.user.is_authenticated:
+            if request.user.gamerprofile == self.game.gm:
+                messages.error(request, _("GMs cannot create a player character."))
+                raise PermissionDenied
+            elif request.user.gamerprofile != self.player.gamer:
+                messages.error(
+                    request, _("You can't create a character for a different player.")
+                )
+                raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
