@@ -758,6 +758,25 @@ version = "0.5.1"
 
 [[package]]
 category = "main"
+description = "Automated generation of real Swagger/OpenAPI 2.0 schemas from Django Rest Framework code."
+name = "drf-yasg"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "1.17.0"
+
+[package.dependencies]
+Django = ">=1.11.7"
+coreapi = ">=2.3.3"
+coreschema = ">=0.0.4"
+djangorestframework = ">=3.8"
+inflection = ">=0.3.1"
+packaging = "*"
+"ruamel.yaml" = ">=0.15.34"
+six = ">=1.10.0"
+uritemplate = ">=3.0.0"
+
+[[package]]
+category = "main"
 description = "Python client for Elasticsearch"
 name = "elasticsearch"
 optional = false
@@ -881,6 +900,14 @@ version = "0.23"
 
 [package.dependencies]
 zipp = ">=0.5"
+
+[[package]]
+category = "main"
+description = "A port of Ruby on Rails inflector to Python"
+name = "inflection"
+optional = false
+python-versions = "*"
+version = "0.3.1"
 
 [[package]]
 category = "dev"
@@ -1007,7 +1034,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "3.1.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Core utilities for Python packages"
 name = "packaging"
 optional = false
@@ -1108,7 +1135,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "2.4.2"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Python parsing module"
 name = "pyparsing"
 optional = false
@@ -1405,6 +1432,28 @@ name = "rjsmin"
 optional = false
 python-versions = "*"
 version = "1.1.0"
+
+[[package]]
+category = "main"
+description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
+name = "ruamel.yaml"
+optional = false
+python-versions = "*"
+version = "0.16.5"
+
+[package.dependencies]
+[package.dependencies."ruamel.yaml.clib"]
+python = "<3.8"
+version = ">=0.1.2"
+
+[[package]]
+category = "main"
+description = "C version of reader, parser and emitter for ruamel.yaml derived from libyaml"
+marker = "platform_python_implementation == \"CPython\" and python_version < \"3.8\""
+name = "ruamel.yaml.clib"
+optional = false
+python-versions = "*"
+version = "0.2.0"
 
 [[package]]
 category = "main"
@@ -1715,7 +1764,7 @@ setuptools = "*"
 "zope.interface" = "*"
 
 [metadata]
-content-hash = "2f2cfa6cd94c7af39728dbba490836f48d1ee04914373e4c013da59a1505c422"
+content-hash = "c7bbcf91bad22ff2a4d3f80293bc3ad5dd92b0296d8ac5eab5a4130f70b7d9f5"
 python-versions = "~3.6 || ^3.7 || ^3.8"
 
 [metadata.hashes]
@@ -1787,6 +1836,7 @@ djangorestframework = ["5488aed8f8df5ec1d70f04b2114abc52ae6729748a176c453313834a
 docutils = ["6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0", "9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827", "a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"]
 drf-extensions = ["78e3ac3c944774878c28ae335d91bbd6c43889bee610c48cf893faffb7685dce", "a3869f2bb668ee05acc78e9076e658527611efa9a4ba319f0817f89b0ec01bf4"]
 drf-writable-nested = ["5c54eca93d74dc22014fb7ea54b6dbd559a058587596feba4d79078e32a83e16"]
+drf-yasg = ["4cfec631880ae527a91ec7cd3241aea2f82189f59e2f089119aa687761afb227", "504cce09035cf1bace63b84d9d778b772f86bb37d8a71ed6f723346362e633b2"]
 elasticsearch = ["658380fd60bdaf746fef12958f0abc49063218ce93ee1ae4ca1fe6291c896433", "ae91b089f2f2b5b3daa04297949e5f805ab12d187218cb587273f472656fd250"]
 entrypoints = ["589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19", "c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"]
 execnet = ["cacb9df31c9680ec5f95553976c4da484d407e85e41c83cb812aa014f0eddc50", "d4efd397930c46415f62f8a31388d6be4f27a91d7550eb79bc64a756e0056547"]
@@ -1799,6 +1849,7 @@ icalendar = ["07c2447a1d44cbb27c90b8c6a5c98e890cc1853c6223e2a52195cddec26c6356",
 idna = ["c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407", "ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c"]
 imagesize = ["3f349de3eb99145973fefb7dbe38554414e5c30abd0c8e4b970a7c9d09f3a1d8", "f3832918bc3c66617f92e35f5d70729187676313caa60c187eb0f28b8fe5e3b5"]
 importlib-metadata = ["aa18d7378b00b40847790e7c27e11673d7fed219354109d0e7b9e5b25dc3ad26", "d5f18a79777f3aa179c145737780282e27b508fc8fd688cb17c7a813e8bd39af"]
+inflection = ["18ea7fb7a7d152853386523def08736aa8c32636b047ade55f7578c4edeb16ca"]
 isort = ["54da7e92468955c4fceacd0c86bd0ec997b0e1ee80d97f67c35a78b719dccab1", "6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd"]
 itypes = ["c6e77bb9fd68a4bfeb9d958fea421802282451a25bac4913ec94db82a899c073"]
 jinja2 = ["74320bb91f31270f9551d46522e33af46a80c3d619f4a4bf42b3164d30b5911f", "9fe95f19286cfefaa917656583d020be14e7859c6b0252588391e47db34527de"]
@@ -1850,6 +1901,8 @@ redis = ["8a1900a9f2a0a44ecf6e8b5eb3e967a9909dfed219ad66df094f27f7d6f330fb", "a2
 requests = ["11e007a8a2aa0323f5a921e9e6a2d7e4e67d9877e85773fba9ba6419025cbeb4", "9cf5292fcd0f598c671cfc1e0d7d1a7f13bb8085e9a590f48c010551dc6c4b31"]
 requests-oauthlib = ["bd6533330e8748e94bf0b214775fed487d309b8b8fe823dc45641ebcd9a32f57", "d3ed0c8f2e3bbc6b344fa63d6f933745ab394469da38db16bdddb461c7e25140", "dd5a0499abfefd087c6dd96693cbd5bfd28aa009719a7f85ab3fabe3956ef19a"]
 rjsmin = ["0ab825839125eaca57cc59581d72e596e58a7a56fbc0839996b7528f0343a0a8", "211c2fe8298951663bbc02acdffbf714f6793df54bfc50e1c6c9e71b3f2559a3", "466fe70cc5647c7c51b3260c7e2e323a98b2b173564247f9c89e977720a0645f", "585e75a84d9199b68056fd4a083d9a61e2a92dfd10ff6d4ce5bdb04bc3bdbfaf", "6044ca86e917cd5bb2f95e6679a4192cef812122f28ee08c677513de019629b3", "714329db774a90947e0e2086cdddb80d5e8c4ac1c70c9f92436378dedb8ae345", "799890bd07a048892d8d3deb9042dbc20b7f5d0eb7da91e9483c561033b23ce2", "975b69754d6a76be47c0bead12367a1ca9220d08e5393f80bab0230d4625d1f4", "b15dc75c71f65d9493a8c7fa233fdcec823e3f1b88ad84a843ffef49b338ac32", "dd0f4819df4243ffe4c964995794c79ca43943b5b756de84be92b445a652fb86", "e3908b21ebb584ce74a6ac233bdb5f29485752c9d3be5e50c5484ed74169232c", "e487a7783ac4339e79ec610b98228eb9ac72178973e3dee16eba0e3feef25924", "ecd29f1b3e66a4c0753105baec262b331bcbceefc22fbe6f7e8bcd2067bcb4d7"]
+"ruamel.yaml" = ["0db639b1b2742dae666c6fc009b8d1931ef15c9276ef31c0673cc6dcf766cf40", "412a6f5cfdc0525dee6a27c08f5415c7fd832a7afcb7a0ed7319628aed23d408"]
+"ruamel.yaml.clib" = ["1e77424825caba5553bbade750cec2277ef130647d685c2b38f68bc03453bac6", "392b7c371312abf27fb549ec2d5e0092f7ef6e6c9f767bfb13e83cb903aca0fd", "4d55386129291b96483edcb93b381470f7cd69f97585829b048a3d758d31210a", "550168c02d8de52ee58c3d8a8193d5a8a9491a5e7b2462d27ac5bf63717574c9", "57933a6986a3036257ad7bf283529e7c19c2810ff24c86f4a0cfeb49d2099919", "615b0396a7fad02d1f9a0dcf9f01202bf9caefee6265198f252c865f4227fcc6", "77556a7aa190be9a2bd83b7ee075d3df5f3c5016d395613671487e79b082d784", "7aee724e1ff424757b5bd8f6c5bbdb033a570b2b4683b17ace4dbe61a99a657b", "8073c8b92b06b572e4057b583c3d01674ceaf32167801fe545a087d7a1e8bf52", "9c6d040d0396c28d3eaaa6cb20152cb3b2f15adf35a0304f4f40a3cf9f1d2448", "a0ff786d2a7dbe55f9544b3f6ebbcc495d7e730df92a08434604f6f470b899c5", "b1b7fcee6aedcdc7e62c3a73f238b3d080c7ba6650cd808bce8d7761ec484070", "b66832ea8077d9b3f6e311c4a53d06273db5dc2db6e8a908550f3c14d67e718c", "d0d3ac228c9bbab08134b4004d748cf9f8743504875b3603b3afbb97e3472947", "d10e9dd744cf85c219bf747c75194b624cc7a94f0c80ead624b06bfa9f61d3bc", "ea4362548ee0cbc266949d8a441238d9ad3600ca9910c3fe4e82ee3a50706973", "ed5b3698a2bb241b7f5cbbe277eaa7fe48b07a58784fba4f75224fd066d253ad", "f9dcc1ae73f36e8059589b601e8e4776b9976effd76c21ad6a855a74318efd6e"]
 rules = ["2c0a3707e5e935a883ef8fe65fd080e7169f67ac1ef0c5e2d2e6932cb3ef5318"]
 s3transfer = ["6efc926738a3cd576c2a79725fed9afde92378aa5c6a957e3af010cb019fac9d", "b780f2411b824cb541dbcd2c713d0cb61c7d1bcadae204cdddda2b35cef493ba"]
 selenium = ["2d7131d7bc5a5b99a2d9b04aaf2612c411b03b8ca1b1ee8d3de5845a9be2cb3c", "deaf32b60ad91a4611b98d8002757f29e6f2c2d5fcaf202e1c9ad06d6772300d"]

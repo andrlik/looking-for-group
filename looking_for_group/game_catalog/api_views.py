@@ -138,7 +138,8 @@ class WidePublishedModuleViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = [
         "parent_game_edition",
-        "parent_game_edition__game" "parent_game_edition__game_system",
+        "parent_game_edition__game",
+        "parent_game_edition__game_system",
     ]
     serializer_class = serializers.PublishedModuleSerializer
     queryset = models.PublishedModule.objects.all()
