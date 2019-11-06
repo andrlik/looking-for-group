@@ -648,18 +648,6 @@ confusable-homoglyphs = ">=3.0,<4.0"
 
 [[package]]
 category = "main"
-description = "Django REST framework integration for django-rules"
-name = "django-rest-framework-rules"
-optional = false
-python-versions = ">=3.5.*, <4"
-version = "1.0.0"
-
-[package.dependencies]
-django = "*"
-rules = "*"
-
-[[package]]
-category = "main"
 description = "A calendaring app for Django."
 name = "django-scheduler"
 optional = false
@@ -1727,7 +1715,7 @@ setuptools = "*"
 "zope.interface" = "*"
 
 [metadata]
-content-hash = "3953a2e0eac6164bfe178cfa773aa0b3cc7d034be6ee218d9ecea126c84c8258"
+content-hash = "2f2cfa6cd94c7af39728dbba490836f48d1ee04914373e4c013da59a1505c422"
 python-versions = "~3.6 || ^3.7 || ^3.8"
 
 [metadata.hashes]
@@ -1789,7 +1777,6 @@ django-postman = ["73bc0eb1e601ac0c5cde91fa3407d9ce157163303f9367e792763d79a6a58
 django-q = ["4fb1974efc5952100eddad1734f03795e70a1dd2663cc085b7df374f3c6312c3", "70081f58c6d78748d8664acbf028fb641687c36df38d3d31e9f1b6fcfac1079f"]
 django-redis = ["af0b393864e91228dd30d8c85b5c44d670b5524cb161b7f9e41acc98b6e5ace7", "f46115577063d00a890867c6964ba096057f07cb756e78e0503b89cd18e4e083"]
 django-registration = ["5193f8a8f8b5ee9f3cc6ae3b561739d17f69759b9abe72f33aec07467a99eeff", "88673ceecb09413493f78a2847cb78da8df47d4d6629aee6a17d9e3c6c66c444"]
-django-rest-framework-rules = ["a789bd15fcdf9f15ac8c9f999102c148a8c91f7feeb6bc9aec537ea675bcd36a"]
 django-scheduler = []
 django-star-ratings = ["8900617d44e93529f66213d8b3efa72c6943c9a5ff11f96e63aa6b4dbc96e4b5"]
 django-storages = ["87287b7ad2e789cd603373439994e1ac6f94d9dc2e5f8173d2a87aa3ed458bd9", "f3b3def96493d3ccde37b864cea376472baf6e8a596504b209278801c510b807"]
