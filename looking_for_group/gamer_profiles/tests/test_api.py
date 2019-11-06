@@ -374,7 +374,9 @@ def test_gamer_profile_update_views(
     url = reverse("api-profile-detail", kwargs={"username": gamer_to_edit.username})
     if httpmethod == "put":
         # Add all the necessary fields.
-        data_to_use = serializers.GamerProfileSerializer(gamer_to_edit).data
+        data_to_use = serializers.GamerProfileSerializer(
+            gamer_to_edit, context={"request": None}
+        ).data
         for k, v in post_data.items():
             data_to_use[k] = v
     else:

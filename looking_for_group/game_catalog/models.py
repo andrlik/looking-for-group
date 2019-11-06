@@ -5,12 +5,11 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
 
-from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel, AbstractUUIDWithSlugModel
+from .utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 
 # Create your models here.
 logger = logging.getLogger("catalog")
@@ -23,7 +22,7 @@ SUGGESTION_STATUS_CHOICES = (
 )
 
 
-class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
+class GamePublisher(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
     """
     A publisher of games.
     """
@@ -42,7 +41,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:pub-detail", kwargs={"publisher": self.id})
+        return reverse("game_catalog:pub-detail", kwargs={"publisher": self.slug})
 
     def get_correction_url(self):
         return reverse(
@@ -56,7 +55,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
 
 
 class GameSystem(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
 ):
     """
     A root rule system potentially used for multiple games.
@@ -99,7 +98,7 @@ class GameSystem(
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:system-detail", kwargs={"system": self.id})
+        return reverse("game_catalog:system-detail", kwargs={"system": self.slug})
 
     @property
     def release_date(self):
@@ -117,7 +116,7 @@ class GameSystem(
 
 
 class PublishedGame(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
 ):
     """
     A published game.
@@ -145,7 +144,7 @@ class PublishedGame(
         return self.title  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:game-detail", kwargs={"game": self.id})
+        return reverse("game_catalog:game-detail", kwargs={"game": self.slug})
 
     def get_correction_url(self):
         return reverse(
@@ -296,7 +295,7 @@ class SourceBook(
 
 
 class PublishedModule(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
 ):
     """
     A published campaign/adventure module that might be used as the basis for gameplay.
@@ -341,7 +340,7 @@ class PublishedModule(
         return self.title  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:module-detail", kwargs={"module": self.id})
+        return reverse("game_catalog:module-detail", kwargs={"module": self.slug})
 
     def get_correction_url(self):
         return reverse(

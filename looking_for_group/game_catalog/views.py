@@ -61,7 +61,7 @@ class GamePublisherListView(PrefetchRelatedMixin, generic.ListView):
 class GamePublisherDetailView(PrefetchRelatedMixin, generic.DetailView):
     model = GamePublisher
     prefetch_related = ["gamesystem_set", "gameedition_set", "publishedmodule_set"]
-    pk_url_kwarg = "publisher"
+    slug_url_kwarg = "publisher"
     context_object_name = "publisher"
     template_name = "catalog/pub_detail.html"
 
@@ -74,7 +74,7 @@ class GamePublisherUpdateView(
     """
 
     model = GamePublisher
-    pk_url_kwarg = "publisher"
+    slug_url_kwarg = "publisher"
     context_object_name = "publisher"
     template_name = "catalog/pub_edit.html"
     fields = ["name", "logo", "url", "description"]
@@ -115,7 +115,7 @@ class GamePublisherDeleteView(
     prefetch_related = ["gameedition_set", "gamesystem_set", "publishedmodule_set"]
     template_name = "catalog/pub_delete.html"
     context_object_name = "publisher"
-    pk_url_kwarg = "publisher"
+    slug_url_kwarg = "publisher"
 
     def get_success_url(self):
         return reverse_lazy("game_catalog:pub-list")
@@ -167,7 +167,7 @@ class GameSystemDetailView(
     model = GameSystem
     select_related = ["original_publisher"]
     prefetch_related = ["game_editions"]
-    pk_url_kwarg = "system"
+    slug_url_kwarg = "system"
     context_object_name = "system"
     template_name = "catalog/system_detail.html"
 
@@ -186,7 +186,7 @@ class GameSystemUpdateView(
 
     model = GameSystem
     context_object_name = "system"
-    pk_url_kwarg = "system"
+    slug_url_kwarg = "system"
     permission_required = "catalog.can_edit"
     form_class = forms.SystemForm
     template_name = "catalog/system_edit.html"
@@ -217,7 +217,7 @@ class GameSystemDeleteView(
     context_object_name = "system"
     select_related = ["original_publisher"]
     prefetch_related = ["game_editions", "gameposting_set", "gamerprofile_set"]
-    pk_url_kwarg = "system"
+    slug_url_kwarg = "system"
     permission_required = "catalog.can_edit"
     template_name = "catalog/system_delete.html"
     success_url = reverse_lazy("game_catalog:system-list")
@@ -271,7 +271,7 @@ class PublishedGameUpdateView(
     model = PublishedGame
     permission_required = "catalog.can_edit"
     form_class = forms.GameForm
-    pk_url_kwarg = "game"
+    slug_url_kwarg = "game"
     context_object_name = "game"
     template_name = "catalog/game_edit.html"
 
@@ -282,7 +282,7 @@ class PublishedGameUpdateView(
 class PublishedGameDetailView(PrefetchRelatedMixin, generic.DetailView):
     model = PublishedGame
     prefetch_related = ["editions"]
-    pk_url_kwarg = "game"
+    slug_url_kwarg = "game"
     context_object_name = "game"
     template_name = "catalog/game_detail.html"
 
@@ -301,7 +301,7 @@ class PublishedGameDeleteView(
     permission_required = "catalog.can_edit"
     context_object_name = "game"
     prefetch_related = ["editions"]
-    pk_url_kwarg = "game"
+    slug_url_kwarg = "game"
     template_name = "catalog/game_delete.html"
     success_url = reverse_lazy("game_catalog:game-list")
 
@@ -322,8 +322,8 @@ class EditionCreateView(
         return self.model
 
     def dispatch(self, request, *args, **kwargs):
-        game_pk = kwargs.pop("game", None)
-        self.game = get_object_or_404(PublishedGame, pk=game_pk)
+        game_slug = kwargs.pop("game", None)
+        self.game = get_object_or_404(PublishedGame, slug=game_slug)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -580,7 +580,7 @@ class PublishedModuleUpdateView(
 
     model = PublishedModule
     context_object_name = "module"
-    pk_url_kwarg = "module"
+    slug_url_kwarg = "module"
     form_class = forms.ModuleForm
     permission_required = "catalog.can_edit"
     template_name = "catalog/module_edit.html"
@@ -603,7 +603,7 @@ class PublishedModuleDetailView(SelectRelatedMixin, generic.DetailView):
         "parent_game_edition__game_system",
         "publisher",
     ]
-    pk_url_kwarg = "module"
+    slug_url_kwarg = "module"
     context_object_name = "module"
     template_name = "catalog/module_detail.html"
 
@@ -626,7 +626,7 @@ class PublishedModuleDeleteView(
 
     model = PublishedModule
     context_object_name = "module"
-    pk_url_kwarg = "module"
+    slug_url_kwarg = "module"
     permission_required = "catalog.can_edit"
     template_name = "catalog/module_delete.html"
     select_related = ["parent_game_edition", "publisher"]
@@ -763,7 +763,9 @@ class SuggestedCorrectionCreateView(LoginRequiredMixin, generic.CreateView):
 
     def get_form(self):
         form = super().get_form()
-        form.fields["new_release_date"].widget = dj_forms.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")
+        form.fields["new_release_date"].widget = dj_forms.DateInput(
+            attrs={"class": "dp"}, format="%Y-%m-%d"
+        )
         return form
 
     def get_context_data(self, **kwargs):
@@ -817,7 +819,9 @@ class SuggestedCorrectionUpdateView(
 
     def get_form(self):
         form = super().get_form()
-        form.fields["new_release_date"].widget = dj_forms.DateInput(attrs={"class": "dp"}, format="%Y-%m-%d")
+        form.fields["new_release_date"].widget = dj_forms.DateInput(
+            attrs={"class": "dp"}, format="%Y-%m-%d"
+        )
         return form
 
 

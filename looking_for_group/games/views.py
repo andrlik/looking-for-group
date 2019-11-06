@@ -26,12 +26,13 @@ from rules.contrib.views import PermissionRequiredMixin
 from schedule.models import Calendar, Occurrence
 from schedule.periods import Day, Month
 
+from . import forms, models, serializers
 from ..game_catalog.models import GameEdition, GameSystem, PublishedModule
 from ..gamer_profiles.models import GamerProfile
 from ..locations.forms import LocationForm
 from ..locations.models import Location
-from . import forms, models, serializers
 from .mixins import JSONResponseMixin
+from .signals import player_kicked, player_left
 from .utils import mkfirstOfmonth, mkLastOfMonth
 
 # Create your views here.
@@ -1649,7 +1650,7 @@ class PlayerLeaveGameView(
         messages.success(
             self.request, _("You have left game {}".format(self.game.title))
         )
-        self.get_object().gamer.games_left = F("games_left") + 1
+        player_left.send(models.Player, player=self.get_object())
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -1694,16 +1695,13 @@ class PlayerKickView(
 
     def delete(self, request, *args, **kwargs):
         logger.debug("Entering delete method...")
+        obj = self.get_object()
         messages.success(
             self.request,
-            _(
-                "You have kicked player {} from game {}".format(
-                    self.get_object(), self.game.title
-                )
-            ),
+            _("You have kicked player {} from game {}".format(obj, self.game.title)),
         )
-        obj = self.get_object()
         objpk = obj.pk
+        player_kicked.send(request.user, player=obj)
         with transaction.atomic():
             obj.delete()
         logger.debug("Deleted object with pk {}...".format(objpk))
@@ -1726,10 +1724,19 @@ class CharacterCreate(LoginRequiredMixin, PermissionRequiredMixin, generic.Creat
         self.game = self.player.game
         if self.player.game != self.game:
             raise PermissionDenied
+        if request.user.is_authenticated:
+            if request.user.gamerprofile == self.game.gm:
+                messages.error(request, _("GMs cannot create a player character."))
+                raise PermissionDenied
+            elif request.user.gamerprofile != self.player.gamer:
+                messages.error(
+                    request, _("You can't create a character for a different player.")
+                )
+                raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
     def get_permission_object(self):
-        return self.player
+        return self.player.game
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2049,7 +2056,9 @@ class ExportGameDataView(
     context_object_name = "game"
 
     def get_data(self):
-        serializer = serializers.GameDataSerializer(self.get_object())
+        serializer = serializers.GameDataSerializer(
+            self.get_object(), context={"request": self.request}
+        )
         return serializer.data
 
     def get_queryset(self):

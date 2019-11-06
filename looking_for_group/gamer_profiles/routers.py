@@ -1,6 +1,6 @@
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 
-from looking_for_group.gamer_profiles import api_views as profile_api_views
+from .views import api_views as profile_api_views
 
 # API Router
 

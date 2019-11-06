@@ -11,8 +11,8 @@ from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSe
 from rest_framework_rules.decorators import permission_required as action_permission_required
 from rest_framework_rules.mixins import PermissionRequiredMixin
 
-from . import models, serializers
-from .models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
+from .. import models, serializers
+from ..models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity
 
 logger = logging.getLogger("api")
 
@@ -500,7 +500,8 @@ class GamerProfileViewSet(
         if not request.user.has_perm("profile.view_detail", gamer):
             self.serializer_detail_class = serializers.GamerProfileListSerializer
         return Response(
-            data=self.serializer_detail_class(gamer).data, status=status.HTTP_200_OK
+            data=self.serializer_detail_class(gamer, context={"request": request}).data,
+            status=status.HTTP_200_OK,
         )
 
     def update(self, request, *args, **kwargs):

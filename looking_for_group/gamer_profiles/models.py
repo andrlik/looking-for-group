@@ -465,6 +465,10 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
             "How many times has this user left a game before it was completed?"
         ),
     )
+    games_kicked = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How many times has this user been kicked out of a game by a GM?"),
+    )
     gm_games_finished = models.PositiveIntegerField(
         default=0, help_text=_("How many games has this GM completed?")
     )

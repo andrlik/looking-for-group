@@ -11,6 +11,8 @@ class GamePublisherViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     List and detail views for :class:`game_catalog.models.GamePublisher`.
     """
 
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
     serializer_class = serializers.GamerPublisherSerializer
     queryset = models.GamePublisher.objects.all().prefetch_related(
         "gamesystem_set", "gameedition_set", "publishedmodule_set"
@@ -22,6 +24,8 @@ class GameSystemViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     Provides list and details for :class:`game_catalog.models.GameSystem`.
     """
 
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
     filter_backends = [DjangoFilterBackend]
     # filter_backends = ["publication_date"]
 
@@ -40,14 +44,21 @@ class GameEditionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     Provides list and detail view for :class:`game_catalog.models.GameEdition`.
     """
 
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["game_system", "publisher", "release_date", "game"]
     serializer_class = serializers.GameEditionSerializer
-    queryset = (
-        models.GameEdition.objects.select_related("publisher")
-        .prefetch_related("publishedmodule_set")
-        .order_by("game__title", "release_date", "name")
-    )
+
+    def get_queryset(self):
+        return (
+            models.GameEdition.objects.filter(
+                game__slug=self.kwargs["parent_lookup_game__slug"]
+            )
+            .select_related("publisher")
+            .prefetch_related("publishedmodule_set")
+            .order_by("game__title", "release_date", "name")
+        )
 
 
 class SourcebookViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
@@ -55,10 +66,17 @@ class SourcebookViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     Provides list and detail view for sourcebooks.
     """
 
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["edition", "corebook"]
     serializer_class = serializers.SourcebookSerializer
-    queryset = models.SourceBook.objects.all().select_related("publisher", "edition")
+
+    def get_queryset(self):
+        return models.SourceBook.objects.filter(
+            edition__game__slug=self.kwargs["parent_lookup_edition__game__slug"],
+            edition__slug=self.kwargs["parent_lookup_edition__slug"],
+        )
 
 
 class PublishedGameViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
@@ -66,6 +84,8 @@ class PublishedGameViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     Provides list and detail view for :class:`game_catalog.models.PublishedGame`.
     """
 
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["publication_date"]
 
@@ -79,6 +99,8 @@ class PublishedModuleViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     Provides list and detail views for :class:`game_catalog.models.PublishedModule`.
     """
 
+    lookup_field = "slug"
+    lookup_url_kwarg = "slug"
     filter_backends = [DjangoFilterBackend]
     filterset_fields = [
         "parent_game_edition",

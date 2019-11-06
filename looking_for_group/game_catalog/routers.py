@@ -28,24 +28,27 @@ game_router = catalog_router.register(
 )
 
 edition_router = game_router.register(
-    r"catalog/editions",
+    r"editions",
     catalog_api_views.GameEditionViewSet,
     basename="api-edition",
-    parents_query_lookups=["game"],
+    parents_query_lookups=["game__slug"],
 )
 
 edition_router.register(
-    r"catalog/sourcebooks",
+    r"sourcebooks",
     catalog_api_views.SourcebookViewSet,
     basename="api-sourcebook",
-    parents_query_lookups=["edition__game", "edition"],
+    parents_query_lookups=["edition__game__slug", "edition__slug"],
 )
 
 edition_router.register(
-    r"catalog/publishedmodules",
+    r"publishedmodules",
     catalog_api_views.PublishedModuleViewSet,
     basename="api-publishedmodule",
-    parents_query_lookups=["parent_game_edition__game", "parent_game_edition"],
+    parents_query_lookups=[
+        "parent_game_edition__game__slug",
+        "parent_game_edition__slug",
+    ],
 )
 
 urlpatterns = catalog_router.urls

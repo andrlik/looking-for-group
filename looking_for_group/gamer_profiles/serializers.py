@@ -1,9 +1,10 @@
 from rest_framework import serializers
 
-from . import models
+from ..game_catalog.serializers import APIURLMixin
 from ..games.models import GamePosting, Player
 from ..games.serializers import GameDataSerializer
 from ..users.models import User
+from . import models
 
 
 class GamerCommunitySerializer(serializers.ModelSerializer):
@@ -59,7 +60,7 @@ class GamerProfileListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class GamerProfileSerializer(serializers.ModelSerializer):
+class GamerProfileSerializer(APIURLMixin, serializers.HyperlinkedModelSerializer):
     """
     Serializer for GamerProfile objects.
     """
@@ -69,8 +70,8 @@ class GamerProfileSerializer(serializers.ModelSerializer):
     communities = serializers.SlugRelatedField(
         slug_field="slug", read_only=True, many=True
     )
+    gmed_games = serializers.StringRelatedField(many=True, read_only=True)
     player_game_list = serializers.SerializerMethodField()
-    gmed_games = GameDataSerializer(many=True, read_only=True)
     preferred_games = serializers.StringRelatedField(many=True, read_only=True)
     preferred_systems = serializers.StringRelatedField(many=True, read_only=True)
 
@@ -89,6 +90,7 @@ class GamerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GamerProfile
         fields = (
+            "api_url",
             "user",
             "private",
             "playstyle",
@@ -108,7 +110,17 @@ class GamerProfileSerializer(serializers.ModelSerializer):
             "gmed_games",
             "timezone",
         )
-        read_only_fields = ("user", "communities")
+        read_only_fields = (
+            "api_url",
+            "user",
+            "communities",
+            "gmed_games",
+            "player_game_list",
+            "reputation_score",
+        )
+        extra_kwargs = {
+            "api_url": {"view_name": "api-profile-detail", "lookup_field": "username"}
+        }
 
 
 class CommunityMembershipSerializer(serializers.ModelSerializer):

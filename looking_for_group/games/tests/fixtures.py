@@ -94,6 +94,15 @@ class GamesTData(object):
             session_length=2.5,
             game_description="We are fond of rolling dice.",
         )
+        self.app1 = models.GamePostingApplication.objects.create(
+            game=self.gp5, gamer=self.gamer1, message="Hi There", status="pending"
+        )
+        self.app2 = models.GamePostingApplication.objects.create(
+            game=self.gp5,
+            gamer=self.gamer2,
+            message="I've got some dice...",
+            status="pending",
+        )
         self.gp_irl = models.GamePosting.objects.create(
             game_type="campaign",
             status="open",
@@ -119,6 +128,7 @@ class GamesTData(object):
         self.session2 = self.gp2.create_next_session()
         self.player1 = models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
         self.player2 = models.Player.objects.create(gamer=self.gamer3, game=self.gp2)
+        self.player3 = models.Player.objects.create(gamer=self.gamer1, game=self.gp1)
         self.character1 = models.Character.objects.create(
             player=self.player1,
             name="Magic Brian",

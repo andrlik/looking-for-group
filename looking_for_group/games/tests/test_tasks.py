@@ -81,14 +81,14 @@ def test_child_occurrence_sync(game_testdata):
         )
         assert models.ChildOccurenceLink.objects.count() == 0
         tasks.create_or_update_linked_occurences_on_edit(occ_to_edit)
-        assert models.ChildOccurenceLink.objects.count() == 2
+        assert models.ChildOccurenceLink.objects.count() == 3
         occ_to_edit.move(
             new_start=occ_to_edit.start + timedelta(hours=1),
             new_end=occ_to_edit.end + timedelta(hours=1),
         )
         tasks.create_or_update_linked_occurences_on_edit(occ_to_edit)
         child_occ_links = models.ChildOccurenceLink.objects.all()
-        assert child_occ_links.count() == 2
+        assert child_occ_links.count() == 3
         for link in child_occ_links:
             assert link.master_event_occurence.start == link.child_event_occurence.start
             assert link.master_event_occurence.end == link.child_event_occurence.end
@@ -117,11 +117,11 @@ def test_calendar_sync_for_arriving_player(game_testdata):
         player3 = models.Player.objects.create(
             gamer=game_testdata.gamer4, game=game_testdata.gp1
         )
-        assert game_testdata.gp1.event.get_child_events().count() == 2
-        assert models.ChildOccurenceLink.objects.count() == 2
-        tasks.sync_calendar_for_arriving_player(player3)
         assert game_testdata.gp1.event.get_child_events().count() == 3
         assert models.ChildOccurenceLink.objects.count() == 3
+        tasks.sync_calendar_for_arriving_player(player3)
+        assert game_testdata.gp1.event.get_child_events().count() == 4
+        assert models.ChildOccurenceLink.objects.count() == 4
 
 
 def test_calendar_clear_for_departing_player(game_testdata):
@@ -147,17 +147,17 @@ def test_calendar_clear_for_departing_player(game_testdata):
         player3 = models.Player.objects.create(
             gamer=game_testdata.gamer4, game=game_testdata.gp1
         )
-        assert game_testdata.gp1.event.get_child_events().count() == 2
-        assert models.ChildOccurenceLink.objects.count() == 2
-        tasks.sync_calendar_for_arriving_player(player3)
         assert game_testdata.gp1.event.get_child_events().count() == 3
         assert models.ChildOccurenceLink.objects.count() == 3
+        tasks.sync_calendar_for_arriving_player(player3)
+        assert game_testdata.gp1.event.get_child_events().count() == 4
+        assert models.ChildOccurenceLink.objects.count() == 4
         # since we aren't useing the delete signal here, we can't just delete
         # the player.
         tasks.clear_calendar_for_departing_player(player3)
         player3.delete()
-        assert models.ChildOccurenceLink.objects.count() == 2
-        assert game_testdata.gp1.event.get_child_events().count() == 2
+        assert models.ChildOccurenceLink.objects.count() == 3
+        assert game_testdata.gp1.event.get_child_events().count() == 3
 
 
 class GamesNotifyTData(GamesTData):
