@@ -2,8 +2,20 @@ import logging
 
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.shortcuts import get_object_or_404
+from rules.contrib.rest_framework import AutoPermissionViewSetMixin as LegacyAutoPermissionViewSetMixin
 
 logger = logging.getLogger("rules")
+
+
+class AutoPermissionViewSetMixin(LegacyAutoPermissionViewSetMixin):
+    """
+    A mixin that supports the metadata action.
+    """
+
+    permission_type_map = {
+        **LegacyAutoPermissionViewSetMixin.permission_type_map,
+        "metadata": None,
+    }
 
 
 class ParentObjectAutoPermissionViewSetMixin:
@@ -20,6 +32,7 @@ class ParentObjectAutoPermissionViewSetMixin:
         "partial_update": "change",
         "retrieve": "view",
         "update": "change",
+        "metadata": None,
     }
     parent_dependent_actions = [
         "list",

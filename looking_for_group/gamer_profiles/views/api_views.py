@@ -9,9 +9,8 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
-from rules.contrib.rest_framework import AutoPermissionViewSetMixin
 
-from looking_for_group.mixins import ParentObjectAutoPermissionViewSetMixin
+from looking_for_group.mixins import AutoPermissionViewSetMixin, ParentObjectAutoPermissionViewSetMixin
 
 from .. import models, serializers
 from ..models import AlreadyInCommunity, CurrentlySuspended, NotInCommunity

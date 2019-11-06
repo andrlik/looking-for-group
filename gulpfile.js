@@ -9,7 +9,7 @@ var gulp = require('gulp'),
       gutil = require('gulp-util'),
       sass = require('gulp-sass'),
       autoprefixer = require('gulp-autoprefixer'),
-      cssnano = require('gulp-cssnano'),
+      postcss = require('gulp-postcss'),
       rename = require('gulp-rename'),
       del = require('del'),
       plumber = require('gulp-plumber'),
@@ -96,6 +96,6 @@ gulp.task('cluster', function() {
 });
 
 // Default task
-gulp.task('default', function() {
-    runSequence(['scripts', 'imgCompression'], ['runServer', 'browserSync', 'watch', 'cluster']);
-});
+gulp.task('default', gulp.parallel('scripts', 'imgCompression', 'runServer', 'browserSync', 'watch', 'cluster', function (done){
+    done();
+}));
