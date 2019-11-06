@@ -3,8 +3,12 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg import openapi
+from drf_yasg.openapi import Parameter, Schema
+from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,12 +22,132 @@ from ..rules import is_membership_subject
 
 logger = logging.getLogger("api")
 
+parent_lookup_community = Parameter(
+    name="parent_lookup_community",
+    in_="path",
+    type="string",
+    format=openapi.FORMAT_SLUG,
+)
+parent_lookup_profile = Parameter(
+    name="parent_lookup_gamer", in_="path", type="string", format=openapi.FORMAT_SLUG
+)
 
+
+@method_decorator(
+    name="create",
+    decorator=swagger_auto_schema(
+        operation_id="communities_create",
+        operation_summary="Community create",
+        operation_description="Creates a new `GamerCommunity`",
+    ),
+)
+@method_decorator(
+    name="apply",
+    decorator=swagger_auto_schema(
+        operation_id="communities_apply",
+        operation_summary="Community apply",
+        operation_description="Apply to a given community",
+        request_body=serializers.CommunityApplicationSerializer,
+        responses={
+            201: serializers.CommunityApplicationSerializer,
+            400: "You are already a member of this community.",
+            403: "You are either currently banned or suspended from the community.",
+        },
+    ),
+)
+@method_decorator(
+    name="leave",
+    decorator=swagger_auto_schema(
+        operation_summary="Community leave",
+        operation_description="Leave this community",
+        request_body=no_body,
+        responses={
+            204: "Indicates that you have been removed from the community.",
+            400: "You are not a member of the community or you are the community owner and cannot leave without transferring ownership.",
+        },
+    ),
+)
+@method_decorator(
+    name="transfer",
+    decorator=swagger_auto_schema(
+        operation_summary="Community transfer ownership",
+        operation_description="Transfer ownership of the community to another admin.",
+        request_body=Schema(
+            title="User",
+            description="Username of the admin to transfer ownership",
+            type="object",
+            properties={"username": "someuser"},
+            required=["username"],
+        ),
+        responses={
+            "200": serializers.GamerCommunitySerializer,
+            400: "Either the username doesn't exist or they aren't an admin for the community yet.",
+            403: "You are not the owner of the community.",
+        },
+    ),
+)
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List communities",
+        operation_description="View a list of communities.",
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Delete community",
+        operation_description="Delete a community object.",
+        responses={204: "Deleted.", 403: "You are not the owner of this community."},
+        request_body=no_body,
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(operation_summary="Community details"),
+)
+@method_decorator(
+    name="join",
+    decorator=swagger_auto_schema(
+        operation_summary="Join community",
+        operation_description="Join a public community.",
+        request_body=no_body,
+        responses={
+            201: serializers.CommunityMembershipSerializer,
+            400: "You are already a member of this community.",
+            403: "This is either a private community or you are on an active ban or suspension from the community.",
+        },
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Update community details",
+        operation_description="Update the community details.",
+        responses={
+            200: serializers.GamerCommunitySerializer,
+            400: "Your data was invalid.",
+            403: "You are not a community admin.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Update community details",
+        operation_description="Update the community details.",
+        responses={
+            200: serializers.GamerCommunitySerializer,
+            400: "Your data was invalid.",
+            403: "You are not a community admin.",
+        },
+    ),
+)
 class GamerCommunityViewSet(
     AutoPermissionViewSetMixin, NestedViewSetMixin, viewsets.ModelViewSet
 ):
     """
-    A view set of GamerCommunity functions.
+    A view of a `GamerCommunity` instance.
     """
 
     permission_classes = (permissions.IsAuthenticated,)
@@ -174,6 +298,42 @@ class GamerCommunityViewSet(
         )
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: List banned users",
+        operation_description="Lists all banned users for the given community. (admins only)",
+        manual_parameters=[parent_lookup_community],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Banned user details",
+        operation_description="Details of the banned user for this community (admin only)",
+        responses={
+            200: serializers.BannedUserSerializer,
+            403: "You are not an admin for this community",
+        },
+        manual_parameters=[parent_lookup_community],
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Remove ban",
+        operation_description="Remove the community ban indicated.",
+        responses={204: "The ban was removed.", 403: "You are not a community admin."},
+        manual_parameters=[
+            Parameter(
+                name="parent_lookup_community",
+                in_="path",
+                type="string",
+                format=openapi.FORMAT_SLUG,
+            )
+        ],
+    ),
+)
 class BannedUserViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     mixins.ListModelMixin,
@@ -206,6 +366,62 @@ class BannedUserViewSet(
         ).select_related("banner", "banned_user")
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: List kicked users",
+        operation_description="List the kicked (supended) users from a community. (admin only)",
+        manual_parameters=[parent_lookup_community],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Kicked user details",
+        operation_description="Details of a kicked(suspended) user",
+        manual_parameters=[parent_lookup_community],
+        responses={
+            200: serializers.KickedUserSerializer,
+            403: "You are not an admin for this community.",
+        },
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Update kicked user details",
+        operation_description="Update a kicked (suspended) user details, e.g. change the suspension date end.",
+        manual_parameters=[parent_lookup_community],
+        responses={
+            200: serializers.KickedUserSerializer,
+            403: "You are not an admin for this community.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Update kicked user details",
+        operation_description="Update a kicked (suspended) user details, e.g. change the suspension date end.",
+        manual_parameters=[parent_lookup_community],
+        responses={
+            200: serializers.KickedUserSerializer,
+            403: "You are not an admin for this community.",
+        },
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Delete kicked user",
+        operation_description="Remove a kick (suspension).",
+        manual_parameters=[parent_lookup_community],
+        responses={
+            204: "Kick was removed.",
+            403: "You are not an admin for this community.",
+        },
+    ),
+)
 class KickedUserViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -215,6 +431,10 @@ class KickedUserViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
+    """
+    Detail view for a kicked user.
+    """
+
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.KickedUserSerializer
     # filter_backends = [DjangoFilterBackend]
@@ -241,6 +461,76 @@ class KickedUserViewSet(
         ).select_related("kicker", "kicked_user")
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: View members",
+        operation_description="View the list of members for this community.",
+        manual_parameters=[parent_lookup_community],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: View member details",
+        operation_description="View the details for a community member.",
+        manual_parameters=[parent_lookup_community],
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Update member",
+        operation_description="Update a member record, e.g. change their role.",
+        manual_parameters=[parent_lookup_community],
+        responses={
+            200: serializers.CommunityMembershipSerializer,
+            400: "This is not a valid member of the community.",
+            403: "You are not a community admin or you are trying to edit your own record.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Update member",
+        operation_description="Update a member record, e.g. change their role.",
+        manual_parameters=[parent_lookup_community],
+        responses={
+            200: serializers.CommunityMembershipSerializer,
+            400: "This is not a valid community member",
+            403: "You are not a community admin or you are trying to edit your own record.",
+        },
+    ),
+)
+@method_decorator(
+    name="kick",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Kick member",
+        operation_description="Kick (suspend) this user from the community.",
+        manual_parameters=[parent_lookup_community],
+        request_body=serializers.KickedUserSerializer,
+        responses={
+            201: serializers.KickedUserSerializer,
+            400: "This is not a valid member of the community.",
+            403: "Either you are not a community admin or you are trying to kick your own record.",
+        },
+    ),
+)
+@method_decorator(
+    name="ban",
+    decorator=swagger_auto_schema(
+        operation_summary="Community: Ban member",
+        operation_description="Ban this member from the community permanently.",
+        manual_parameters=[parent_lookup_community],
+        request_body=serializers.BannedUserSerializer,
+        responses={
+            201: serializers.BannedUserSerializer,
+            400: "This is not a valid member of the community.",
+            403: "You are either not a community admin, or you are trying to ban yourself.",
+        },
+    ),
+)
 class CommunityMembershipViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     mixins.ListModelMixin,
@@ -356,6 +646,95 @@ class CommunityMembershipViewSet(
         return Response(ban_record.data, status=status.HTTP_201_CREATED)
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Profiles",
+        operation_description="List the basic profile information of for gamers based on the utilized filters.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile details",
+        operation_description="Show details for the gamer profile in question. **NOTE**: If the active user is not connected to the gamer, they will only be able to see basic information.",
+        responses={
+            200: serializers.GamerProfileSerializer,
+            403: "You are current blocked from seeing this user.",
+        },
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Update details",
+        operation_description="Update the given profile. (Only the owner may do this.)",
+        responses={
+            200: serializers.GamerProfileSerializer,
+            403: "You are not the owner of this profile.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Update details",
+        operation_description="Update the given profile. (Only the owner may do this.)",
+        responses={
+            200: serializers.GamerProfileSerializer,
+            403: "You are not the owner of this profile.",
+        },
+    ),
+)
+@method_decorator(
+    name="friend",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Send friend request",
+        operation_description="Send a friend request to this user.",
+        request_body=no_body,
+        responses={
+            201: serializers.FriendRequestSerializer,
+            400: "You are already friends with this user.",
+            403: "You are currently blocked by this user.",
+        },
+    ),
+)
+@method_decorator(
+    name="unfriend",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Unfriend user",
+        operation_description="Unfriend the indicated user.",
+        request_body=no_body,
+        responses={
+            200: "You successfully unfriended this user.",
+            400: "You aren't currently friends with this user.",
+        },
+    ),
+)
+@method_decorator(
+    name="block",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Block this user",
+        operation_description="Block this user so that they cannot see your information, contact you, or interact with you in any way.",
+        request_body=no_body,
+        responses={
+            201: serializers.BlockedUserSerializer,
+            400: "You've already blocked this user.",
+        },
+    ),
+)
+@method_decorator(
+    name="mute",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Mute user",
+        operation_description="Silently mute this user so that if they contact you their messages will be silently dropped.",
+        request_body=no_body,
+        responses={
+            201: serializers.MuteduserSerializer,
+            400: "You've alredy muted this user.",
+        },
+    ),
+)
 class GamerProfileViewSet(
     AutoPermissionViewSetMixin,
     DetailSerializerMixin,
@@ -380,8 +759,6 @@ class GamerProfileViewSet(
         "campaigns",
         "online_games",
         "local_games",
-        "preferred_games",
-        "preferred_systems",
         "adult_themes",
     )
     lookup_field = "username"
@@ -509,6 +886,54 @@ class GamerProfileViewSet(
         )
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: List notes",
+        operation_description="List your notes on this user.",
+        manual_parameters=[parent_lookup_profile],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Note details",
+        operation_description="Show details for your note on this user.",
+        manual_parameters=[parent_lookup_profile],
+    ),
+)
+@method_decorator(
+    name="create",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Add note",
+        operation_description="Add a personal note about this user (only visible to you).",
+        manual_parameters=[parent_lookup_profile],
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Update note details",
+        operation_description="Updaet the details for your note about this user.",
+        manual_parameters=[parent_lookup_profile],
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Update note details",
+        operation_description="Update the details for your note about this user.",
+        manual_parameters=[parent_lookup_profile],
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Profile: Delete note",
+        operation_description="Delete your note about this user.",
+        manual_parameters=[parent_lookup_profile],
+    ),
+)
 class GamerNoteViewSet(
     ParentObjectAutoPermissionViewSetMixin, NestedViewSetMixin, viewsets.ModelViewSet
 ):

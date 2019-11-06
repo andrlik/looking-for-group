@@ -8,7 +8,7 @@ from . import models, serializers
 
 class GamePublisherViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    List and detail views for :class:`game_catalog.models.GamePublisher`.
+    List and detail views for `GamePublisher`.
     """
 
     lookup_field = "slug"
@@ -21,7 +21,7 @@ class GamePublisherViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 class GameSystemViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    Provides list and details for :class:`game_catalog.models.GameSystem`.
+    Provides list and details for `GameSystem`.
     """
 
     lookup_field = "slug"
@@ -41,7 +41,7 @@ class GameSystemViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 class GameEditionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    Provides list and detail view for :class:`game_catalog.models.GameEdition`.
+    Provides list and detail view for `GameEdition`.
     """
 
     lookup_field = "slug"
@@ -63,7 +63,7 @@ class GameEditionViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 class SourcebookViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    Provides list and detail view for sourcebooks.
+    Provides list and detail view for `Sourcebook`.
     """
 
     lookup_field = "slug"
@@ -81,7 +81,7 @@ class SourcebookViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 class PublishedGameViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    Provides list and detail view for :class:`game_catalog.models.PublishedGame`.
+    Provides list and detail view for `PublishedGame`.
     """
 
     lookup_field = "slug"
@@ -96,7 +96,7 @@ class PublishedGameViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 class PublishedModuleViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    Provides list and detail views for :class:`game_catalog.models.PublishedModule`.
+    Provides list and detail views for `PublishedModule`.
     """
 
     lookup_field = "slug"
