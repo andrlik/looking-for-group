@@ -7,10 +7,11 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
-from drf_yasg.openapi import Parameter, Schema
+from drf_yasg.openapi import TYPE_STRING, Parameter, Schema
 from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import mixins, permissions, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, parser_classes
+from rest_framework.parsers import FileUploadParser, FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
 
@@ -27,9 +28,36 @@ parent_lookup_community = Parameter(
     in_="path",
     type="string",
     format=openapi.FORMAT_SLUG,
+    description="Slug of related community.",
 )
 parent_lookup_profile = Parameter(
-    name="parent_lookup_gamer", in_="path", type="string", format=openapi.FORMAT_SLUG
+    name="parent_lookup_gamer",
+    in_="path",
+    type="string",
+    format=openapi.FORMAT_SLUG,
+    description="Username of related user.",
+)
+
+ban_reason_schema = Schema(
+    title="Ban submission",
+    type="object",
+    description="Simple object to send for banning a user from a community.",
+    properties={"reason": {"type": TYPE_STRING, "required": True}},
+    required=["reason"],
+)
+
+kick_reason_schema = Schema(
+    title="Kick submission",
+    type="object",
+    description="Initial data object to send to kick a user from a community.",
+    properties={
+        "end_date": {
+            "type": TYPE_STRING,
+            "format": openapi.FORMAT_DATETIME,
+            "required": True,
+        },
+        "reason": {"type": TYPE_STRING, "required": True},
+    },
 )
 
 
@@ -76,7 +104,7 @@ parent_lookup_profile = Parameter(
             title="User",
             description="Username of the admin to transfer ownership",
             type="object",
-            properties={"username": "someuser"},
+            properties={"username": {"type": "string", "format": openapi.FORMAT_SLUG}},
             required=["username"],
         ),
         responses={
@@ -143,6 +171,7 @@ parent_lookup_profile = Parameter(
         },
     ),
 )
+@parser_classes([FormParser, MultiPartParser, FileUploadParser])
 class GamerCommunityViewSet(
     AutoPermissionViewSetMixin, NestedViewSetMixin, viewsets.ModelViewSet
 ):
@@ -175,7 +204,7 @@ class GamerCommunityViewSet(
             )
         return Response(data=submitted_data.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[JSONParser])
     def apply(self, request, **kwargs):
         """
         Apply to this community.
@@ -208,7 +237,7 @@ class GamerCommunityViewSet(
         )
         return super().partial_update(request, **kwargs)
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def join(self, request, *args, **kwargs):
         """
         If a community is not private, you can skip the application process and join directly via this method.
@@ -230,7 +259,7 @@ class GamerCommunityViewSet(
         member_data = serializers.CommunityMembershipSerializer(member_record)
         return Response(data=member_data.data, status=status.HTTP_201_CREATED)
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def leave(self, request, *args, **kwargs):
         """
         Leave the community. Must already be a member.
@@ -261,7 +290,7 @@ class GamerCommunityViewSet(
         member.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def transfer(self, request, *args, **kwargs):
         """
         Transfer ownership of the community to another community admin specified by username.
@@ -509,7 +538,7 @@ class KickedUserViewSet(
         operation_summary="Community: Kick member",
         operation_description="Kick (suspend) this user from the community.",
         manual_parameters=[parent_lookup_community],
-        request_body=serializers.KickedUserSerializer,
+        request_body=kick_reason_schema,
         responses={
             201: serializers.KickedUserSerializer,
             400: "This is not a valid member of the community.",
@@ -523,7 +552,7 @@ class KickedUserViewSet(
         operation_summary="Community: Ban member",
         operation_description="Ban this member from the community permanently.",
         manual_parameters=[parent_lookup_community],
-        request_body=serializers.BannedUserSerializer,
+        request_body=ban_reason_schema,
         responses={
             201: serializers.BannedUserSerializer,
             400: "This is not a valid member of the community.",
@@ -669,6 +698,7 @@ class CommunityMembershipViewSet(
     decorator=swagger_auto_schema(
         operation_summary="Profile: Update details",
         operation_description="Update the given profile. (Only the owner may do this.)",
+        request_body=serializers.GamerProfileSerializer,
         responses={
             200: serializers.GamerProfileSerializer,
             403: "You are not the owner of this profile.",
@@ -680,6 +710,7 @@ class CommunityMembershipViewSet(
     decorator=swagger_auto_schema(
         operation_summary="Profile: Update details",
         operation_description="Update the given profile. (Only the owner may do this.)",
+        request_body=serializers.GamerProfileSerializer,
         responses={
             200: serializers.GamerProfileSerializer,
             403: "You are not the owner of this profile.",

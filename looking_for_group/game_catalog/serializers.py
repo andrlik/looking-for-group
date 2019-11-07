@@ -201,6 +201,7 @@ class GameEditionSerializer(TaggitSerializer, NestedHyperlinkedModelSerializer):
             "game",
             "game_title",
             "name",
+            "image",
             "publisher",
             "publisher_name",
             "game_system",

@@ -2,6 +2,7 @@ import logging
 import re
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import ugettext_lazy as _
 from drf_writable_nested.mixins import NestedUpdateMixin
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -61,7 +62,8 @@ class GameApplicationSerializer(catalog_serializers.NestedHyperlinkedModelSerial
             "api_url": {
                 "view_name": "api-mygameapplication-detail",
                 "lookup_field": "slug",
-            }
+            },
+            "status": {"read_only": True, "required": False},
         }
 
 
@@ -198,6 +200,7 @@ class CharacterSerializer(catalog_serializers.NestedHyperlinkedModelSerializer):
             "game",
             "player",
             "player_username",
+            "sheet",
         )
         read_only_fields = ("api_url", "slug", "game", "player", "player_username")
         extra_kwargs = {
@@ -489,7 +492,13 @@ class GameDataListSerializer(catalog_serializers.NestedHyperlinkedModelSerialize
     game_system_name = serializers.SerializerMethodField(read_only=True)
     published_module_title = serializers.SerializerMethodField(read_only=True)
     communities = serializers.SlugRelatedField(
-        slug_field="slug", many=True, queryset=GamerCommunity.objects.all()
+        slug_field="slug",
+        many=True,
+        queryset=GamerCommunity.objects.all(),
+        required=False,
+        help_text=_(
+            "The communities this should also be posted in as an array of slugs."
+        ),
     )
     current_players = serializers.SerializerMethodField(read_only=True)
 
@@ -739,6 +748,9 @@ class GameDataSerializer(GameDataListSerializer):
             "title",
             "gm",
             "gm_stats",
+            "featured_image",
+            "featured_image_description",
+            "featured_image_cw",
             "game_description",
             "game_description_rendered",
             "game_type",

@@ -10,6 +10,7 @@ from drf_yasg.utils import no_body, swagger_auto_schema
 from notifications.signals import notify
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FileUploadParser, FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
@@ -26,18 +27,21 @@ parent_lookup_game__slug = Parameter(
     in_="path",
     type="string",
     format=openapi.FORMAT_SLUG,
+    description="Slug of related game object.",
 )
 parent_lookup_session__slug = Parameter(
     name="parent_lookup_session__slug",
     in_="path",
     type="string",
     format=openapi.FORMAT_SLUG,
+    description="Slug of related session object.",
 )
 parent_lookup_session__game__slug = Parameter(
     name="parent_lookup_session__game__slug",
     in_="path",
     type="string",
     format=openapi.FORMAT_SLUG,
+    description="Slug of related game object.",
 )
 
 
@@ -138,6 +142,7 @@ class GamePostingViewSet(
     """
 
     permission_classes = (IsAuthenticated,)
+    parser_classes = [FormParser, MultiPartParser, FileUploadParser]
     model = models.GamePosting
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
@@ -188,7 +193,7 @@ class GamePostingViewSet(
             self.serializer_detail_class = serializers.GameDataListSerializer
         return super().retrieve(request, *args, **kwargs)
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def apply(self, request, *args, **kwargs):
         obj = self.get_object()
         logger.debug("Retrieved game object of {}".format(obj))
@@ -224,7 +229,7 @@ class GamePostingViewSet(
             status=status.HTTP_201_CREATED,
         )
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def leave(self, request, *args, **kwargs):
         obj = self.get_object()
         if request.user == obj.gm.user:
@@ -1049,6 +1054,7 @@ class CharacterViewSet(
     """
 
     permission_classes = (IsAuthenticated,)
+    parser_classes = [FormParser, MultiPartParser, FileUploadParser]
     parent_object_lookup_field = "slug"
     parent_object_url_kwarg = "parent_lookup_game__slug"
     parent_lookup_field = "game"
@@ -1094,7 +1100,7 @@ class CharacterViewSet(
         char_ser.save()
         return Response(data=char_ser.data, status=status.HTTP_201_CREATED)
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def approve(self, request, *args, **kwargs):
         """
         Approves the proposed character.
@@ -1107,7 +1113,7 @@ class CharacterViewSet(
             status=status.HTTP_200_OK,
         )
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def reject(self, request, *args, **kwargs):
         """
         Rejects the proposed character.
@@ -1120,7 +1126,7 @@ class CharacterViewSet(
             status=status.HTTP_200_OK,
         )
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def deactivate(self, request, *args, **kwargs):
         """
         Make a character inactive.
@@ -1133,7 +1139,7 @@ class CharacterViewSet(
             status=status.HTTP_200_OK,
         )
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def reactivate(self, request, *args, **kwargs):
         """
         Reactivate an inactive character.
@@ -1233,13 +1239,14 @@ class MyCharacterViewSet(
         "reactivate": "delete",
     }
     permission_type_map["retrieve"] = "delete"
+    parser_classes = [FormParser, MultiPartParser, FileUploadParser]
 
     def get_queryset(self):
         return models.Character.objects.filter(
             player__gamer=self.request.user.gamerprofile
         )
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def deactivate(self, request, *args, **kwargs):
         """
         Make a character inactive.
@@ -1252,7 +1259,7 @@ class MyCharacterViewSet(
             status=status.HTTP_200_OK,
         )
 
-    @action(methods=["post"], detail=True)
+    @action(methods=["post"], detail=True, parser_classes=[FormParser, JSONParser])
     def reactivate(self, request, *args, **kwargs):
         """
         Reactivate an inactive character.
