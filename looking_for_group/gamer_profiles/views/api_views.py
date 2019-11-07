@@ -995,6 +995,28 @@ class GamerNoteViewSet(
         )
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Blocked users",
+        operation_description="Fetches the list of your currently blocked users.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Blocked User: Details",
+        operation_description="Details on a block record you created for a given user.",
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Blocked User: Unblock",
+        operation_description="Unblock a given user by deleting the block record.",
+        responses={204: "The user was unblocked."},
+    ),
+)
 class BlockedUserViewSet(
     AutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -1017,6 +1039,28 @@ class BlockedUserViewSet(
         ).select_related("blocker", "blockee")
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Muted users",
+        operation_description="Fetches the list of your currently muted users.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Muted User: Details",
+        operation_description="Details on a mute record you created for a given user.",
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Muted User: Unmute",
+        operation_description="Unblock a given user by deleting the block record.",
+        responses={204: "The user was unmuted."},
+    ),
+)
 class MutedUserViewSet(
     AutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -1039,6 +1083,28 @@ class MutedUserViewSet(
         ).select_related("muter", "mutee")
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Your Community Applications",
+        operation_description="Fetch a list of all your applications to various communities.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Community Application: Details",
+        operation_description="Details of one of your community applications.",
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Community Application: Withdraw",
+        operation_description="Withdraw your community application by deleting the record.",
+        responses={204: "Application was successfully withdrawn."},
+    ),
+)
 class CommunityApplicationViewSet(
     AutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -1063,6 +1129,52 @@ class CommunityApplicationViewSet(
         ).select_related("community")
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Community Applicants",
+        operation_description="Fetch a list of applicants for the current community. (admins only)",
+        manual_parameters=[parent_lookup_community],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Community Applicant: Details",
+        operation_description="Get details of the applicantion to the community.",
+        manual_parameters=[parent_lookup_community],
+        responses={
+            200: serializers.CommunityApplicationSerializer,
+            403: "You are not an admin for the community.",
+        },
+    ),
+)
+@method_decorator(
+    name="approve",
+    decorator=swagger_auto_schema(
+        operation_summary="Community Applicant: Approve",
+        operation_description="Approve this application and add the user to the community.",
+        manual_parameters=[parent_lookup_community],
+        request_body=no_body,
+        responses={
+            201: serializers.CommunityMembershipSerializer,
+            403: "You are not an admin for this community.",
+        },
+    ),
+)
+@method_decorator(
+    name="reject",
+    decorator=swagger_auto_schema(
+        operation_summary="Community Applicant: Reject",
+        operation_description="Reject this application.",
+        manual_parameters=[parent_lookup_community],
+        request_body=no_body,
+        responses={
+            200: serializers.CommunityApplicationSerializer,
+            403: "You are not an admin for this community.",
+        },
+    ),
+)
 class CommunityAdminApplicationViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -1148,6 +1260,29 @@ class CommunityAdminApplicationViewSet(
         return Response(status=status.HTTP_202_ACCEPTED)
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Sent Friend Requests",
+        operation_description="Fetch a list of your pending sent friend requests.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Sent Friend Request: Details",
+        operation_description="Retrieve details of a specific pending friend request.",
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Sent Friend Request: Withdraw",
+        operation_description="Withdraw you friend request by deleting the record.",
+        request_body=no_body,
+        reponses={204: "The friend request was successfully withdrawn."},
+    ),
+)
 class SentFriendRequestViewSet(
     AutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -1169,6 +1304,38 @@ class SentFriendRequestViewSet(
         ).select_related("recipient")
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Received Friend Requests",
+        operation_description="Fetch a list of your pending received friend requests.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Received Friend Request: Detail",
+        operation_description="Get the details of a received friend request.",
+    ),
+)
+@method_decorator(
+    name="accept",
+    decorator=swagger_auto_schema(
+        operation_summary="Received Friend Request: Accept",
+        operation_description="Accept this pending friend request and add the sender to your friends list.",
+        request_body=None,
+        responses={200: "Friend request accepted."},
+    ),
+)
+@method_decorator(
+    name="ignore",
+    decorator=swagger_auto_schema(
+        operation_summary="Received Friend Request: Ignore",
+        operation_description="Ignore this received friend request.",
+        request_body=no_body,
+        responses={200: "Friend request ignored."},
+    ),
+)
 class ReceivedFriendRequestViewset(
     AutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -1200,7 +1367,7 @@ class ReceivedFriendRequestViewset(
         """
         req = self.get_object()
         req.accept()
-        return Response({"errors": "Accepted"}, status=status.HTTP_202_ACCEPTED)
+        return Response(status=status.HTTP_200_OK)
 
     @action(methods=["post"], detail=True)
     def ignore(self, request, *args, **kwargs):
@@ -1209,4 +1376,4 @@ class ReceivedFriendRequestViewset(
         """
         req = self.get_object()
         req.deny()
-        return Response({"errors": "Ignored"}, status=status.HTTP_202_ACCEPTED)
+        return Response({"errors": "Ignored"}, status=status.HTTP_200_OK)
