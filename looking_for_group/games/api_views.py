@@ -660,6 +660,41 @@ class AdventureLogViewSet(
         )
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Your Game Applications",
+        operation_description="Fetch a list of all your game applications.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Game Application: Details",
+        operation_description="Fetch the details of your game application.",
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Game Application: Update",
+        operation_description="Update the details of your game application.",
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Game Application: Update",
+        operation_description="Update the details of your game application.",
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Game Application: Withdraw",
+        operation_description="Withdraw your game application by deleting the record.",
+    ),
+)
 class GameApplicationViewSet(
     AutoPermissionViewSetMixin,
     mixins.ListModelMixin,
@@ -695,6 +730,50 @@ class GameApplicationViewSet(
         return qs
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Applicants for Game",
+        operation_description="List the applicants for the current game. (GM Only)",
+        manual_parameters=[parent_lookup_game__slug],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Applicant: Details",
+        operation_description="Fetch details for a given game application. (GM Only)",
+        manual_parameters=[parent_lookup_game__slug],
+        reponses={
+            200: serializers.GameApplicationGMSerializer,
+            403: "You are not the GM for this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="approve",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Applicant: Approve",
+        operation_description="Approve the game applicant and add as a player to game.",
+        request_body=no_body,
+        responses={
+            201: serializers.PlayerSerializer,
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="reject",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Applicant: Reject",
+        operation_description="Reject the game applicant.",
+        request_body=no_body,
+        responses={
+            200: serializers.GameApplicationGMSerializer,
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
 class GMGameApplicationViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -774,6 +853,39 @@ class GMGameApplicationViewSet(
         )
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Player List",
+        operation_description="List players for a given game",
+        manual_parameters=[parent_lookup_game__slug],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Player: Details",
+        operation_description="Details for a player record in a given game.",
+        manual_parameters=[parent_lookup_game__slug],
+        responses={
+            200: serializers.PlayerSerializer,
+            403: "You are not a member of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="kick",
+    decorator=swagger_auto_schema(
+        operation_summary="Player: Kick from game",
+        operation_description="Kick the player out of the game.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            204: "Player was removed from the game.",
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
 class PlayerViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -807,13 +919,128 @@ class PlayerViewSet(
         return models.Player.objects.filter(game=self.get_parent_game())
 
     @action(methods=["post"], detail=True)
-    def kick(self, requests, *args, **kwargs):
+    def kick(self, request, *args, **kwargs):
         obj = self.get_object()
         player_kicked.send(request.user, player=obj)
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: List Characters",
+        operation_description="Fetch the list of characters for a given game.",
+        manual_parameters=[parent_lookup_game__slug],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Character Details",
+        operation_description="Fetch the details of a character for a given game.",
+        manual_parameters=[parent_lookup_game__slug],
+        responses={
+            200: serializers.CharacterSerializer,
+            403: "You are not a member of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Update Character Details",
+        operation_description="Update the character for the given game.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=serializers.CharacterSerializer,
+        responses={
+            200: serializers.CharacterSerializer,
+            403: "You are not the owner of this character or the GM of the game.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Update Character Details",
+        operation_description="Update the character for the given game.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=serializers.CharacterSerializer,
+        responses={
+            200: serializers.CharacterSerializer,
+            403: "You are not the owner of this character or the GM of the game.",
+        },
+    ),
+)
+@method_decorator(
+    name="deactivate",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Deactivate Character",
+        operation_description="Mark the character as inactive.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.CharacterSerializer,
+            400: "This character is already inactive.",
+            403: "You are not the owner of this character or the GM of the game.",
+        },
+    ),
+)
+@method_decorator(
+    name="reactivate",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Reactivate Character",
+        operation_description="Mark the character as active.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.CharacterSerializer,
+            400: "This character is already active.",
+            403: "You are not the owner of this character or the GM of the game.",
+        },
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Delete Character",
+        operation_description="Delete the character.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            204: "Character was deleted.",
+            403: "You are not the owner of this character.",
+        },
+    ),
+)
+@method_decorator(
+    name="approve",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Approve Character",
+        operation_description="Mark the character as approved (GM Only).",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.CharacterSerializer,
+            400: "This character is already approved.",
+            403: "You are not the GM of the game.",
+        },
+    ),
+)
+@method_decorator(
+    name="reject",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Reject Character",
+        operation_description="Mark the character as rejected (GM Only).",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.CharacterSerializer,
+            400: "This character is already rejected.",
+            403: "You are not the GM of the game.",
+        },
+    ),
+)
 class CharacterViewSet(
     ParentObjectAutoPermissionViewSetMixin, NestedViewSetMixin, viewsets.ModelViewSet
 ):
@@ -920,6 +1147,67 @@ class CharacterViewSet(
         )
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Your Characters",
+        operation_description="Fetch a list of all of your characters.",
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Character: Details",
+        operation_description="Fetch the details of your character.",
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Character: Update",
+        operation_description="Update the details of your character.",
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Character: Update",
+        operation_description="Update the details of your character.",
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Character: Delete",
+        operation_description="Delete your character.",
+        request_body=no_body,
+        responses={204: "Character was deleted."},
+    ),
+)
+@method_decorator(
+    name="deactivate",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Character: Deactivate",
+        operation_description="Mark your character as inactive.",
+        request_body=no_body,
+        responses={
+            200: "Character was marked as inactive.",
+            400: "Character was already inactive.",
+        },
+    ),
+)
+@method_decorator(
+    name="reactivate",
+    decorator=swagger_auto_schema(
+        operation_summary="Your Character: Reactivate",
+        operation_description="Mark your character as active.",
+        request_body=no_body,
+        responses={
+            200: "Character was marked as active.",
+            400: "Character was already active.",
+        },
+    ),
+)
 class MyCharacterViewSet(
     AutoPermissionViewSetMixin,
     NestedViewSetMixin,
