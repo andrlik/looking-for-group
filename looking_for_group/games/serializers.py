@@ -613,7 +613,11 @@ class GameDataSerializer(GameDataListSerializer):
         if self.instance:
             self._session_gm = self.instance.gm
             self.fields["communities"].queryset = self._session_gm.communities.all()
-        elif self.context["request"] and self.context["request"].user.is_authenticated:
+        elif (
+            "request" in self.context.keys()
+            and self.context["request"]
+            and self.context["request"].user.is_authenticated
+        ):
             self._session_gm = self.context["request"].user.gamerprofile
             self.fields["communities"].queryset = self._session_gm.communities.all()
         else:

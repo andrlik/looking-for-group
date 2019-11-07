@@ -2,7 +2,11 @@ import logging
 
 from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg import openapi
+from drf_yasg.openapi import Parameter
+from drf_yasg.utils import no_body, swagger_auto_schema
 from notifications.signals import notify
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -17,7 +21,112 @@ from .signals import player_kicked, player_left
 
 logger = logging.getLogger("api")
 
+parent_lookup_game__slug = Parameter(
+    name="parent_lookup_game__slug",
+    in_="path",
+    type="string",
+    format=openapi.FORMAT_SLUG,
+)
+parent_lookup_session__slug = Parameter(
+    name="parent_lookup_session__slug",
+    in_="path",
+    type="string",
+    format=openapi.FORMAT_SLUG,
+)
+parent_lookup_session__game__slug = Parameter(
+    name="parent_lookup_session__game__slug",
+    in_="path",
+    type="string",
+    format=openapi.FORMAT_SLUG,
+)
 
+
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="List Games",
+        operation_description="Fetch a list of game records. **NOTE**: You will probably want to filter by status at least.",
+    ),
+)
+@method_decorator(
+    name="create",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Create",
+        operation_description="Create a new game posting.",
+        request_body=serializers.GameDataSerializer,
+        responses={201: serializers.GameDataSerializer},
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Details",
+        operation_description="Fetch the details for the given game. **NOTE**: If you are not a member of the game, only a subset of the available information will be displayed.",
+        responses={
+            200: serializers.GameDataSerializer,
+            403: "You are not authorized to view this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Update",
+        operation_description="Update the details of this game. (Only available to GM)",
+        request_body=serializers.GameDataSerializer,
+        responses={
+            200: serializers.GameDataSerializer,
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Update",
+        operation_description="Update the details of this game. (Only available to GM)",
+        request_body=serializers.GameDataSerializer,
+        responses={
+            200: serializers.GameDataSerializer,
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Delete",
+        operation_description="Delete the given game. (Only available to GM.)",
+        request_body=no_body,
+        responses={204: "Game was deleted.", 403: "You are not the GM of this game."},
+    ),
+)
+@method_decorator(
+    name="leave",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Leave",
+        operation_description="Leave the current game. (Players only.)",
+        request_body=no_body,
+        reponses={
+            204: "You have successfully left the game.",
+            400: "You are not a member of this game.",
+            403: "You are the GM and cannot leave.",
+        },
+    ),
+)
+@method_decorator(
+    name="apply",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: Apply",
+        operation_description="Apply to join this game.",
+        request_body=serializers.GameApplicationSerializer,
+        responses={
+            201: serializers.GameApplicationSerializer,
+            400: "You are already a member of this game.",
+            403: "You are not permitted to apply to this game either due to your access rights or the game's status.",
+        },
+    ),
+)
 class GamePostingViewSet(
     AutoPermissionViewSetMixin,
     DetailSerializerMixin,
@@ -129,6 +238,149 @@ class GamePostingViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_summary="Game: List Sessions",
+        operation_description="List the sessions for the given game.",
+        manual_parameters=[parent_lookup_game__slug],
+    ),
+)
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Details",
+        operation_description="Get the details for the given session. **NOTE**: If the user is just a player, the GM notes and player details will not be included.",
+        manual_parameters=[parent_lookup_game__slug],
+        responses={
+            200: serializers.GameApplicationGMSerializer,
+            403: "You are not a member of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Update",
+        operation_description="Update details of the game session.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=serializers.GameSessionGMSerializer,
+        responses={
+            200: serializers.GameSessionGMSerializer,
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Update",
+        operation_description="Update details of the game session.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=serializers.GameSessionGMSerializer,
+        responses={
+            200: serializers.GameSessionGMSerializer,
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Delete",
+        operation_description="Delete the game session.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=serializers.GameSessionGMSerializer,
+        responses={
+            204: "Session was deleted.",
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="cancel",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Cancel",
+        operation_description="Cancel the game session.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.GameSessionGMSerializer,
+            400: "This session is already canceled or complete.",
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="uncancel",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Uncancel",
+        operation_description="Uncancel the game session.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.GameSessionGMSerializer,
+            400: "This session is not canceled.",
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="complete",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Mark Complete",
+        operation_description="Mark the game session as complete.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.GameSessionGMSerializer,
+            400: "This session is already canceled or complete.",
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="uncomplete",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Uncomplete",
+        operation_description="Undo the completion status of the session.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=no_body,
+        responses={
+            200: serializers.GameSessionGMSerializer,
+            400: "This session isn't marked as complete.",
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="reschedule",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Reschedule",
+        operation_description="Reschedule the game session to another date/time.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=serializers.ScheduleSerializer,
+        responses={
+            200: serializers.GameSessionGMSerializer,
+            400: "Your date and time were invalid or the session is already marked as complete or canceled.",
+            403: "You are not the GM of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="addlog",
+    decorator=swagger_auto_schema(
+        operation_summary="Game Session: Add Adventure Log",
+        operation_description="Add an adventure log to this session.",
+        manual_parameters=[parent_lookup_game__slug],
+        request_body=serializers.AdventureLogSerializer,
+        responses={
+            201: serializers.AdventureLogSerializer,
+            400: "This session already has an adventure log. You should update that instead.",
+            403: "You don't have permission to add an adventure log.",
+        },
+    ),
+)
 class GameSessionViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
@@ -143,7 +395,6 @@ class GameSessionViewSet(
     """
 
     model = models.GameSession
-    permission_required = "game.can_view_listing_details"
     serializer_class = serializers.GameSessionSerializer
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
@@ -309,6 +560,69 @@ class GameSessionViewSet(
         )
 
 
+@method_decorator(
+    name="retrieve",
+    decorator=swagger_auto_schema(
+        operation_summary="Adventure Log: Details",
+        operation_description="Fetch the details for a given adventure log.",
+        manual_parameters=[
+            parent_lookup_session__game__slug,
+            parent_lookup_session__slug,
+        ],
+        responses={
+            200: serializers.AdventureLogSerializer,
+            403: "You are not a member of this game.",
+        },
+    ),
+)
+@method_decorator(
+    name="update",
+    decorator=swagger_auto_schema(
+        operation_summary="Adventure Log: Update",
+        operation_description="Update the details for a given adventure log.",
+        manual_parameters=[
+            parent_lookup_session__game__slug,
+            parent_lookup_session__slug,
+        ],
+        request_body=serializers.AdventureLogSerializer,
+        responses={
+            200: serializers.AdventureLogSerializer,
+            403: "You don't have permissions to edit this adventure log.",
+        },
+    ),
+)
+@method_decorator(
+    name="partial_update",
+    decorator=swagger_auto_schema(
+        operation_summary="Adventure Log: Update",
+        operation_description="Update the details for a given adventure log.",
+        manual_parameters=[
+            parent_lookup_session__game__slug,
+            parent_lookup_session__slug,
+        ],
+        request_body=serializers.AdventureLogSerializer,
+        responses={
+            200: serializers.AdventureLogSerializer,
+            403: "You don't have permissions to edit this adventure log.",
+        },
+    ),
+)
+@method_decorator(
+    name="destroy",
+    decorator=swagger_auto_schema(
+        operation_summary="Adventure Log: Delete",
+        operation_description="Delete a given adventure log.",
+        manual_parameters=[
+            parent_lookup_session__game__slug,
+            parent_lookup_session__slug,
+        ],
+        request_body=no_body,
+        responses={
+            204: "The adventure log was successfully deleted.",
+            403: "You don't have permissions to edit this adventure log.",
+        },
+    ),
+)
 class AdventureLogViewSet(
     ParentObjectAutoPermissionViewSetMixin,
     NestedViewSetMixin,
