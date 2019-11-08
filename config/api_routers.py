@@ -29,7 +29,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path("", include(api_router.urls)),
     path(
-        "swagger.<str:format>",
+        "swagger<str:format>",
         schema_view.without_ui(cache_timeout=0),
         name="schema-json",
     ),

@@ -1693,7 +1693,7 @@ def test_api_openapi_views(
         gamer = getattr(game_testdata, gamertouse)
         apiclient.force_login(gamer.user)
     if viewname == "schema-json":
-        url = reverse(viewname, kwargs={"format": "json"})
+        url = reverse(viewname, kwargs={"format": ".json"})
     else:
         url = reverse(viewname)
     print(url)
