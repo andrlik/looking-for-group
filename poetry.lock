@@ -576,6 +576,19 @@ pytz = "*"
 
 [[package]]
 category = "main"
+description = "OAuth2 Provider for Django"
+name = "django-oauth-toolkit"
+optional = false
+python-versions = "*"
+version = "1.2.0"
+
+[package.dependencies]
+django = ">=2.0"
+oauthlib = ">=2.0.3"
+requests = ">=2.13.0"
+
+[[package]]
+category = "main"
 description = "A pluggable framework for adding two-factor authentication to Django using one-time passwords."
 name = "django-otp"
 optional = false
@@ -1764,7 +1777,7 @@ setuptools = "*"
 "zope.interface" = "*"
 
 [metadata]
-content-hash = "c7bbcf91bad22ff2a4d3f80293bc3ad5dd92b0296d8ac5eab5a4130f70b7d9f5"
+content-hash = "52831ce2140656ac4291de584518981eea92a1809dca988dcd034259b5aa6cf6"
 python-versions = "~3.6 || ^3.7 || ^3.8"
 
 [metadata.hashes]
@@ -1820,6 +1833,7 @@ django-markdownify = ["882b956052ae3142bbef00bdf9eaa58c530e4654b63d5ca0ed8a2a01b
 django-model-utils = ["2c057f3bf0859aba27f04389f0cedd2d48f8c9b3848acb86fd9970794e58f477", "8cd377744aa45f9f131d652ec460c57d1aaa88d3e9b586c8e27eb709341b9084"]
 django-node-assets = ["c8a37bad6dc9f2cc7a7eecff3eee2d41a2bb3104e39c03efeddd8a7b27ed39cf", "c994d3dd30b1c6c55a204bcc98629f58084ec0bdf0db3935cf12b20e3362a088"]
 django-notifications-hq = ["0332f10d10135301587b2bec9b69984c5484354b1365728939c1f2d8b33a9b16", "8ed19d2172876d8821e3e3ecf842323bfa09c5a6f9312995bfc9d01708b926e3"]
+django-oauth-toolkit = ["ad1b76275950ebbff708222cec57bbdb879f89bac7df6b9dee0f4b9db485c264"]
 django-otp = ["79c8253be97246df86540d551dc705e8fe6ca76af8e8c77f78314cd1b513c2cf", "c5bf3916dca5d53cb377aa6dea40aa785c164013fbf750384137362dfa278cf5"]
 django-picklefield = ["9052f2dcf4882c683ce87b4356f29b4d014c0dad645b6906baf9f09571f52bc8", "f1733a8db1b6046c0d7d738e785f9875aa3c198215de11993463a9339aa4ea24"]
 django-postman = ["73bc0eb1e601ac0c5cde91fa3407d9ce157163303f9367e792763d79a6a58943"]

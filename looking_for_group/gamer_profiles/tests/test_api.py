@@ -17,19 +17,19 @@ pytestmark = pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize(
     "gamertouse,viewname,expected_get_response",
     [
-        (None, "api-community-list", 403),
+        (None, "api-community-list", 401),
         ("gamer1", "api-community-list", 200),
-        (None, "api-profile-list", 403),
+        (None, "api-profile-list", 401),
         ("gamer1", "api-profile-list", 200),
-        (None, "api-my-application-list", 403),
+        (None, "api-my-application-list", 401),
         ("gamer1", "api-my-application-list", 200),
-        (None, "api-my-sent-request-list", 403),
+        (None, "api-my-sent-request-list", 401),
         ("gamer1", "api-my-sent-request-list", 200),
-        (None, "api-my-received-request-list", 403),
+        (None, "api-my-received-request-list", 401),
         ("gamer1", "api-my-received-request-list", 200),
-        (None, "api-block-list", 403),
+        (None, "api-block-list", 401),
         ("gamer1", "api-block-list", 200),
-        (None, "api-mute-list", 403),
+        (None, "api-mute-list", 401),
         ("gamer1", "api-mute-list", 200),
     ],
 )
@@ -66,7 +66,7 @@ def test_top_list_views(
                 "description": "Itsa me, Community!",
                 "url": "https://www.google.com",
             },
-            403,
+            401,
         ),
         (
             "gamer1",
@@ -92,7 +92,7 @@ def test_top_list_views(
                 "description": "Itsa me, Community!",
                 "url": "https://www.google.com",
             },
-            403,
+            401,
         ),
         (
             "gamer2",
@@ -128,7 +128,7 @@ def test_top_list_views(
                 "description": "Itsa me, Community!",
                 "url": "https://www.google.com",
             },
-            403,
+            401,
         ),
         (
             "gamer5",
@@ -142,7 +142,7 @@ def test_top_list_views(
             },
             200,
         ),
-        (None, "api-community-detail", "delete", "community", {}, 403),
+        (None, "api-community-detail", "delete", "community", {}, 401),
         ("gamer2", "api-community-detail", "delete", "community", {}, 403),
         ("gamer5", "api-community-detail", "delete", "community", {}, 204),
     ],
@@ -173,12 +173,10 @@ def test_community_destructive_edits(
     else:
         url = reverse(viewname)
     with django_assert_max_num_queries(50):
-        if httpmethod not in ["get", "delete"]:
-            response = getattr(apiclient, httpmethod)(
-                url, format="multipart", data=post_data
-            )
-        else:
-            response = getattr(apiclient, httpmethod)(url, data=post_data)
+        format = "json"
+        if httpmethod not in ["get"]:
+            format = "multipart"
+        response = getattr(apiclient, httpmethod)(url, format=format, data=post_data)
     print(response.data)
     assert response.status_code == expected_post_response
     if expected_post_response == 201:
@@ -203,22 +201,22 @@ def test_community_destructive_edits(
 @pytest.mark.parametrize(
     "gamertouse,viewname,filterstr,communitytouse,expected_get_response",
     [
-        (None, "api-member-list", None, "community1", 403),
+        (None, "api-member-list", None, "community1", 401),
         ("gamer1", "api-member-list", None, "community1", 200),
         ("gamer5", "api-member-list", None, "community1", 403),
-        (None, "api-member-list", "community_role=admin", "community1", 403),
+        (None, "api-member-list", "community_role=admin", "community1", 401),
         ("gamer1", "api-member-list", "community_role=admin", "community1", 200),
         ("gamer5", "api-member-list", "community_role=admin", "community1", 403),
-        (None, "api-member-list", "community_role=moderator", "community1", 403),
+        (None, "api-member-list", "community_role=moderator", "community1", 401),
         ("gamer1", "api-member-list", "community_role=moderator", "community1", 200),
         ("gamer5", "api-member-list", "community_role=moderator", "community1", 403),
-        (None, "api-comm-ban-list", None, "community1", 403),
+        (None, "api-comm-ban-list", None, "community1", 401),
         ("gamer1", "api-comm-ban-list", None, "community1", 200),
         ("gamer5", "api-comm-ban-list", None, "community1", 403),
-        (None, "api-comm-kick-list", None, "community1", 403),
+        (None, "api-comm-kick-list", None, "community1", 401),
         ("gamer1", "api-comm-kick-list", None, "community1", 200),
         ("gamer5", "api-comm-kick-list", None, "community1", 403),
-        (None, "api-comm-application-list", None, "community1", 403),
+        (None, "api-comm-application-list", None, "community1", 401),
         ("gamer1", "api-comm-application-list", None, "community1", 200),
         ("gamer5", "api-comm-application-list", None, "community1", 403),
     ],
@@ -249,10 +247,10 @@ def test_community_sublists(
 @pytest.mark.parametrize(
     "gamertouse,viewname,communitytouse,targetobject,expected_get_response",
     [
-        (None, "api-member-detail", "community1", "gamer1", 403),
-        (None, "api-comm-ban-detail", "community", "banned1", 403),
-        (None, "api-comm-kick-detail", "community1", "kick1", 403),
-        (None, "api-comm-application-detail", "community1", "application", 403),
+        (None, "api-member-detail", "community1", "gamer1", 401),
+        (None, "api-comm-ban-detail", "community", "banned1", 401),
+        (None, "api-comm-kick-detail", "community1", "kick1", 401),
+        (None, "api-comm-application-detail", "community1", "application", 401),
         ("gamer5", "api-member-detail", "community", "gamer1", 200),
         ("gamer1", "api-member-detail", "community", "gamer5", 200),
         ("gamer1", "api-comm-ban-detail", "community", "banned1", 403),
@@ -309,14 +307,14 @@ def test_community_sublist_details(
 @pytest.mark.parametrize(
     "gamertouse,viewname,object_to_use,expected_get_response",
     [
-        (None, "api-community-detail", "community1", 403),
-        (None, "api-profile-detail", "gamer1", 403),
+        (None, "api-community-detail", "community1", 401),
+        (None, "api-profile-detail", "gamer1", 401),
         ("gamer1", "api-community-detail", "community1", 200),
         ("gamer5", "api-community-detail", "community1", 200),
         ("gamer1", "api-profile-detail", "gamer1", 200),
         ("gamer1", "api-profile-detail", "gamer3", 200),
         ("blocked_gamer", "api-profile-detail", "gamer1", 403),
-        (None, "api-my-application-detail", "application", 403),
+        (None, "api-my-application-detail", "application", 401),
         ("gamer1", "api-my-application-detail", "application", 404),
         ("gamer5", "api-my-application-detail", "application", 404),
         ("new_gamer", "api-my-application-detail", "application", 200),
@@ -353,10 +351,10 @@ def test_top_detail_views(
 @pytest.mark.parametrize(
     "gamertouse,gamertoedit,httpmethod,post_data,expected_post_response",
     [
-        (None, "gamer1", "put", {"player_status": "available"}, 403),
+        (None, "gamer1", "put", {"player_status": "available"}, 401),
         ("gamer2", "gamer1", "put", {"player_status": "available"}, 403),
         ("gamer1", "gamer1", "put", {"player_status": "available"}, 200),
-        (None, "gamer1", "patch", {"player_status": "available"}, 403),
+        (None, "gamer1", "patch", {"player_status": "available"}, 401),
         ("gamer2", "gamer1", "patch", {"player_status": "available"}, 403),
         ("gamer1", "gamer1", "patch", {"player_status": "available"}, 200),
     ],
@@ -401,8 +399,8 @@ def test_gamer_profile_update_views(
 @pytest.mark.parametrize(
     "gamertouse,targetgamer,friendviewname,friendaction,expected_get_response,expected_post_response",
     [
-        (None, "gamer2", "api-profile-friend", None, 403, 403),
-        (None, "gamer2", "api-profile-unfriend", None, 403, 403),
+        (None, "gamer2", "api-profile-friend", None, 403, 401),
+        (None, "gamer2", "api-profile-unfriend", None, 403, 401),
         ("gamer1", "gamer2", "api-profile-friend", "accept", 200, 201),
         ("gamer1", "gamer2", "api-profile-friend", "reject", 200, 201),
         ("gamer1", "gamer3", "api-profile-unfriend", None, 200, 200),
@@ -469,12 +467,12 @@ def test_friend_request_create_receipt(
 @pytest.mark.parametrize(
     "gamertouse,viewname,expected_post_response",
     [
-        (None, "api-comm-application-approve", 403),
+        (None, "api-comm-application-approve", 401),
         ("gamer5", "api-comm-application-approve", 404),
-        ("gamer1", "api-comm-application-approve", 202),
-        (None, "api-comm-application-reject", 403),
+        ("gamer1", "api-comm-application-approve", 201),
+        (None, "api-comm-application-reject", 401),
         ("gamer5", "api-comm-application-reject", 404),
-        ("gamer1", "api-comm-application-reject", 202),
+        ("gamer1", "api-comm-application-reject", 200),
     ],
 )
 def test_community_application_approval(
@@ -514,8 +512,8 @@ def test_community_application_approval(
 @pytest.mark.parametrize(
     "gamertouse,communitytouse,viewname,post_data,targetgamer,expected_post_response",
     [
-        (None, "community", "api-member-kick", {"reason": "Obnoxious"}, "gamer1", 403),
-        (None, "community", "api-member-ban", {"reason": "Obnoxious"}, "gamer1", 403),
+        (None, "community", "api-member-kick", {"reason": "Obnoxious"}, "gamer1", 401),
+        (None, "community", "api-member-ban", {"reason": "Obnoxious"}, "gamer1", 401),
         (
             "gamer1",
             "community",
@@ -621,10 +619,10 @@ def test_kick_ban_community_member(
 @pytest.mark.parametrize(
     "gamertouse,httpmethod,communitytouse,targetmember,post_data,expected_post_response",
     [
-        (None, "put", "community", "gamer1", {"community_role": "admin"}, 403),
+        (None, "put", "community", "gamer1", {"community_role": "admin"}, 401),
         ("gamer1", "put", "community", "gamer1", {"community_role": "admin"}, 403),
         ("gamer5", "put", "community", "gamer1", {"community_role": "admin"}, 200),
-        (None, "patch", "community", "gamer1", {"community_role": "admin"}, 403),
+        (None, "patch", "community", "gamer1", {"community_role": "admin"}, 401),
         ("gamer1", "patch", "community", "gamer1", {"community_role": "admin"}, 403),
         ("gamer5", "patch", "community", "gamer1", {"community_role": "admin"}, 200),
         ("gamer5", "put", "community", "gamer5", {"community_role": "moderator"}, 403),
@@ -678,8 +676,8 @@ def test_edit_community_role(
 @pytest.mark.parametrize(
     "gamertouse,communitytouse,viewname,expected_post_response",
     [
-        (None, "community_public", "api-community-join", 403),
-        (None, "community_public", "api-community-leave", 403),
+        (None, "community_public", "api-community-join", 401),
+        (None, "community_public", "api-community-leave", 401),
         ("gamer4", "community_public", "api-community-join", 201),
         ("gamer4", "community_public", "api-community-leave", 403),
         ("gamer1", "community_public", "api-community-leave", 204),
@@ -715,7 +713,7 @@ def test_join_leave_community(
 @pytest.mark.parametrize(
     "gamertouse,communitytouse,targetgamer,expected_post_response",
     [
-        (None, "community2", "gamer2", 403),
+        (None, "community2", "gamer2", 401),
         ("gamer2", "community2", "gamer2", 403),
         ("gamer5", "community2", "gamer3", 400),
         ("gamer5", "community2", "gamer1", 400),
@@ -753,7 +751,7 @@ def test_transfer_ownership(
 @pytest.mark.parametrize(
     "gamertouse,communitytouse,viewname,httpmethod,targetobject,post_data,expected_post_response",
     [
-        (None, "community2", "api-comm-kick-detail", "delete", "kick1", {}, 403),
+        (None, "community2", "api-comm-kick-detail", "delete", "kick1", {}, 401),
         (
             None,
             "community2",
@@ -761,7 +759,7 @@ def test_transfer_ownership(
             "put",
             "kick1",
             {"reason": "He's super annoying."},
-            403,
+            401,
         ),
         (
             None,
@@ -770,9 +768,9 @@ def test_transfer_ownership(
             "patch",
             "kick1",
             {"reason": "He's super annoying."},
-            403,
+            401,
         ),
-        (None, "community", "api-comm-ban-detail", "delete", "banned1", {}, 403),
+        (None, "community", "api-comm-ban-detail", "delete", "banned1", {}, 401),
         (
             None,
             "community",
@@ -780,7 +778,7 @@ def test_transfer_ownership(
             "put",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            401,
         ),
         (
             None,
@@ -789,7 +787,7 @@ def test_transfer_ownership(
             "patch",
             "banned1",
             {"reason": "harrassment extreme"},
-            403,
+            401,
         ),
         ("gamer4", "community2", "api-comm-kick-detail", "delete", "kick1", {}, 404),
         (
@@ -955,8 +953,8 @@ def test_kick_ban_edits(
 @pytest.mark.parametrize(
     "gamertouse,viewname,targetgamer,notetouse,expected_get_response,expected_length",
     [
-        (None, "api-gamernote-list", "gamer3", None, 403, None),
-        (None, "api-gamernote-detail", "gamer3", "gn", 403, None),
+        (None, "api-gamernote-list", "gamer3", None, 401, None),
+        (None, "api-gamernote-detail", "gamer3", "gn", 401, None),
         ("gamer2", "api-gamernote-list", "gamer3", None, 200, 0),
         ("gamer2", "api-gamernote-detail", "gamer3", "gn", 404, None),
         ("gamer4", "api-gamernote-list", "gamer3", None, 200, 0),
@@ -1003,7 +1001,7 @@ def test_gamernote_list_detail(
             "post",
             None,
             {"body": "This guy's wise", "title": "I like him"},
-            403,
+            401,
         ),
         (
             "gamer2",
@@ -1030,7 +1028,7 @@ def test_gamernote_list_detail(
             "put",
             "gn",
             {"body": "This guy's wise", "title": "I like him"},
-            403,
+            401,
         ),
         (
             "gamer2",
@@ -1057,7 +1055,7 @@ def test_gamernote_list_detail(
             "patch",
             "gn",
             {"body": "This guy's wise", "title": "I like him"},
-            403,
+            401,
         ),
         (
             "gamer2",
@@ -1077,7 +1075,7 @@ def test_gamernote_list_detail(
             {"body": "This guy's wise", "title": "I like him"},
             200,
         ),
-        (None, "gamer3", "api-gamernote-detail", "delete", "gn", {}, 403),
+        (None, "gamer3", "api-gamernote-detail", "delete", "gn", {}, 401),
         ("gamer2", "gamer3", "api-gamernote-detail", "delete", "gn", {}, 404),
         ("gamer1", "gamer3", "api-gamernote-detail", "delete", "gn", {}, 204),
     ],
@@ -1150,8 +1148,8 @@ def test_gamernote_create_update(
 @pytest.mark.parametrize(
     "gamertouse,targetgamer,viewname,expected_post_response",
     [
-        (None, "gamer1", "api-profile-block", 403),
-        (None, "gamer1", "api-profile-mute", 403),
+        (None, "gamer1", "api-profile-block", 401),
+        (None, "gamer1", "api-profile-mute", 401),
         ("gamer1", "muted_gamer", "api-profile-mute", 400),
         ("gamer1", "blocked_gamer", "api-profile-block", 400),
         ("gamer1", "gamer3", "api-profile-mute", 201),
@@ -1213,10 +1211,10 @@ def test_block_mute_gamer(
 @pytest.mark.parametrize(
     "gamertouse,recordtouse,viewname,httpmethod,expected_response",
     [
-        (None, "mute_record", "api-mute-detail", "get", 403),
-        (None, "block_record", "api-block-detail", "get", 403),
-        (None, "mute_record", "api-mute-detail", "delete", 403),
-        (None, "block_record", "api-block-detail", "delete", 403),
+        (None, "mute_record", "api-mute-detail", "get", 401),
+        (None, "block_record", "api-block-detail", "get", 401),
+        (None, "mute_record", "api-mute-detail", "delete", 401),
+        (None, "block_record", "api-block-detail", "delete", 401),
         ("gamer2", "mute_record", "api-mute-detail", "get", 404),
         ("gamer2", "block_record", "api-block-detail", "get", 404),
         ("gamer2", "mute_record", "api-mute-detail", "delete", 404),

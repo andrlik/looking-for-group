@@ -841,10 +841,10 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, RulesModel):
 
         if self.validate_application():
             with transaction.atomic():
-                self.community.add_member(self.gamer)
+                new_member = self.community.add_member(self.gamer)
                 self.status = "approve"
                 self.save()
-            return True
+            return new_member
         return False  # Actually an exception gets passed up.
 
     def reject_application(self):

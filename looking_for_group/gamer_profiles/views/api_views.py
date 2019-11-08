@@ -1274,12 +1274,19 @@ class CommunityAdminApplicationViewSet(
         """
         app = self.get_object()
         try:
-            app.approve_application()
+            new_member = app.approve_application()
         except AlreadyInCommunity:
-            return Response(status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         except CurrentlySuspended:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_202_ACCEPTED)
+        except models.CurrentlyBanned:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            data=serializers.CommunityMembershipSerializer(
+                new_member, context={"request": request}
+            ).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(methods=["post"], detail=True)
     def reject(self, request, *args, **kwargs):
@@ -1288,7 +1295,7 @@ class CommunityAdminApplicationViewSet(
         """
         app = self.get_object()
         app.reject_application()
-        return Response(status=status.HTTP_202_ACCEPTED)
+        return Response(status=status.HTTP_200_OK)
 
 
 @method_decorator(

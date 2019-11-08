@@ -24,7 +24,7 @@ tz = pytz.timezone("US/Eastern")
             "api-game-detail",
             "patch",
             {"title": "I am a brand new game"},
-            403,
+            401,
             False,
         ),
         (
@@ -33,10 +33,10 @@ tz = pytz.timezone("US/Eastern")
             "api-game-detail",
             "put",
             {"title": "I am a brand new game"},
-            403,
+            401,
             False,
         ),
-        (None, "gp1", "api-game-detail", "delete", {}, 403, False),
+        (None, "gp1", "api-game-detail", "delete", {}, 401, False),
         (
             "gamer1",
             "gp1",
@@ -129,7 +129,7 @@ tz = pytz.timezone("US/Eastern")
                 "created": "",
                 "modified": "",
             },
-            403,
+            401,
             False,
         ),
         (
@@ -170,7 +170,7 @@ tz = pytz.timezone("US/Eastern")
             201,
             True,
         ),
-        (None, "gp1", "api-game-leave", "post", {}, 403, False),
+        (None, "gp1", "api-game-leave", "post", {}, 401, False),
         ("gamer4", "gp1", "api-game-leave", "post", {}, 400, False),
         ("gamer1", "gp1", "api-game-leave", "post", {}, 204, False),
         (
@@ -179,7 +179,7 @@ tz = pytz.timezone("US/Eastern")
             "api-game-apply",
             "post",
             {"api_url": "", "game": "", "gamer": "", "message": "Test"},
-            403,
+            401,
             False,
         ),
         (
@@ -267,7 +267,7 @@ def test_game_crud_views(
             if viewname not in [
                 "api-game-apply",
                 "api-game-leave",
-            ] and httpmethod not in ["get", "delete"]:
+            ] and httpmethod not in ["get"]:
                 format = "multipart"
             print(
                 "Submitting request with post data of {} using renderer {}".format(
@@ -318,8 +318,8 @@ def test_game_crud_views(
 @pytest.mark.parametrize(
     "gamertouse,gametouse,viewname,expected_response,see_players",
     [
-        (None, None, "api-game-list", 403, False),
-        (None, "gp1", "api-game-detail", 403, False),
+        (None, None, "api-game-list", 401, False),
+        (None, "gp1", "api-game-detail", 401, False),
         ("gamer1", None, "api-game-list", 200, True),
         ("gamer1", "gp1", "api-game-detail", 200, True),
         ("gamer3", None, "api-game-list", 200, False),
@@ -364,10 +364,10 @@ def test_list_retrieve_games(
 @pytest.mark.parametrize(
     "gamertouse,gametouse,viewname, httpmethod, applicationtouse,expected_response",
     [
-        (None, "gp5", "api-gameapplication-list", "get", None, 403),
-        (None, "gp5", "api-gameapplication-detail", "get", "app1", 403),
-        (None, "gp5", "api-gameapplication-approve", "post", "app1", 403),
-        (None, "gp5", "api-gameapplication-reject", "post", "app1", 403),
+        (None, "gp5", "api-gameapplication-list", "get", None, 401),
+        (None, "gp5", "api-gameapplication-detail", "get", "app1", 401),
+        (None, "gp5", "api-gameapplication-approve", "post", "app1", 401),
+        (None, "gp5", "api-gameapplication-reject", "post", "app1", 401),
         ("gamer3", "gp5", "api-gameapplication-list", "get", None, 403),
         ("gamer3", "gp5", "api-gameapplication-detail", "get", "app1", 403),
         ("gamer3", "gp5", "api-gameapplication-approve", "post", "app1", 403),
@@ -430,15 +430,15 @@ def test_gm_application_view_approve_reject(
 @pytest.mark.parametrize(
     "gamertouse,viewname,httpmethod,applicationtouse,post_data,expected_response",
     [
-        (None, "api-mygameapplication-list", "get", None, {}, 403),
-        (None, "api-mygameapplication-detail", "get", "app1", {}, 403),
+        (None, "api-mygameapplication-list", "get", None, {}, 401),
+        (None, "api-mygameapplication-detail", "get", "app1", {}, 401),
         (
             None,
             "api-mygameapplication-detail",
             "put",
             "app1",
             {"message": "I'm feeling strong today"},
-            403,
+            401,
         ),
         (
             None,
@@ -446,9 +446,9 @@ def test_gm_application_view_approve_reject(
             "patch",
             "app1",
             {"message": "I'm feeling strong today"},
-            403,
+            401,
         ),
-        (None, "api-mygameapplication-detail", "delete", "app1", {}, 403),
+        (None, "api-mygameapplication-detail", "delete", "app1", {}, 401),
         ("gamer4", "api-mygameapplication-list", "get", None, {}, 200),
         ("gamer4", "api-mygameapplication-detail", "get", "app1", {}, 404),
         (
@@ -563,7 +563,7 @@ def test_player_application_viewset(
 @pytest.mark.parametrize(
     "gamertouse,gametouse,viewname,httpmethod,chartouse,post_data,expected_response",
     [
-        (None, "gp2", "api-character-list", "get", None, {}, 403),
+        (None, "gp2", "api-character-list", "get", None, {}, 401),
         (
             None,
             "gp2",
@@ -576,9 +576,9 @@ def test_player_application_viewset(
                 "sheet": "",
                 "status": "pending",
             },
-            403,
+            401,
         ),
-        (None, "gp2", "api-character-detail", "get", "character1", {}, 403),
+        (None, "gp2", "api-character-detail", "get", "character1", {}, 401),
         (
             None,
             "gp2",
@@ -586,7 +586,7 @@ def test_player_application_viewset(
             "patch",
             "character1",
             {"description": "Barry bluejeans is my co-pilot"},
-            403,
+            401,
         ),
         (
             None,
@@ -595,13 +595,13 @@ def test_player_application_viewset(
             "put",
             "character1",
             {"description": "Barry bluejeans is my co-pilot"},
-            403,
+            401,
         ),
-        (None, "gp2", "api-character-approve", "post", "character1", {}, 403),
-        (None, "gp2", "api-character-reject", "post", "character1", {}, 403),
-        (None, "gp2", "api-character-deactivate", "post", "character1", {}, 403),
-        (None, "gp2", "api-character-reactivate", "post", "character1", {}, 403),
-        (None, "gp2", "api-character-detail", "delete", "character1", {}, 403),
+        (None, "gp2", "api-character-approve", "post", "character1", {}, 401),
+        (None, "gp2", "api-character-reject", "post", "character1", {}, 401),
+        (None, "gp2", "api-character-deactivate", "post", "character1", {}, 401),
+        (None, "gp2", "api-character-reactivate", "post", "character1", {}, 401),
+        (None, "gp2", "api-character-detail", "delete", "character1", {}, 401),
         ("gamer2", "gp2", "api-character-list", "get", None, {}, 403),
         (
             "gamer2",
@@ -806,7 +806,7 @@ def test_character_game_viewset(
     )
     with django_assert_max_num_queries(50):
         format = "json"
-        if httpmethod not in ["get", "delete"] and viewname not in [
+        if httpmethod not in ["get"] and viewname not in [
             "api-character-deactivate",
             "api-character-reactivate",
             "api-character-reject",
@@ -842,15 +842,15 @@ def test_character_game_viewset(
 @pytest.mark.parametrize(
     "gamertouse,viewname,httpmethod,chartouse,post_data,expected_response",
     [
-        (None, "api-mycharacter-list", "get", None, {}, 403),
-        (None, "api-mycharacter-detail", "get", "character1", {}, 403),
+        (None, "api-mycharacter-list", "get", None, {}, 401),
+        (None, "api-mycharacter-detail", "get", "character1", {}, 401),
         (
             None,
             "api-mycharacter-detail",
             "patch",
             "character1",
             {"description": "Barry bluejeans is my co-pilot."},
-            403,
+            401,
         ),
         (
             None,
@@ -858,11 +858,11 @@ def test_character_game_viewset(
             "put",
             "character1",
             {"description": "Barry bluejeans is my co-pilot."},
-            403,
+            401,
         ),
-        (None, "api-mycharacter-detail", "delete", "character1", {}, 403),
-        (None, "api-mycharacter-deactivate", "post", "character1", {}, 403),
-        (None, "api-mycharacter-reactivate", "post", "character1", {}, 403),
+        (None, "api-mycharacter-detail", "delete", "character1", {}, 401),
+        (None, "api-mycharacter-deactivate", "post", "character1", {}, 401),
+        (None, "api-mycharacter-reactivate", "post", "character1", {}, 401),
         ("gamer2", "api-mycharacter-list", "get", None, {}, 200),
         ("gamer2", "api-mycharacter-detail", "get", "character1", {}, 404),
         (
@@ -970,7 +970,7 @@ def test_my_character_viewset(
     )
     with django_assert_max_num_queries(50):
         format = "json"
-        if httpmethod in ["post", "put", "patch"] and viewname not in [
+        if httpmethod in ["post", "put", "patch", "delete"] and viewname not in [
             "api-mycharacter-reactivate",
             "api-mycharacter-deactivate",
         ]:
@@ -999,8 +999,8 @@ def test_my_character_viewset(
 @pytest.mark.parametrize(
     "gamertouse,gametouse,viewname,httpmethod,sessiontouse,post_data,expected_response",
     [
-        (None, "gp2", "api-session-list", "get", None, {}, 403),
-        (None, "gp2", "api-session-detail", "get", "session2", {}, 403),
+        (None, "gp2", "api-session-list", "get", None, {}, 401),
+        (None, "gp2", "api-session-detail", "get", "session2", {}, 401),
         (
             None,
             "gp2",
@@ -1012,7 +1012,7 @@ def test_my_character_viewset(
                 "players_expected": ["player1", "player2"],
                 "players_missing": ["player2"],
             },
-            403,
+            401,
         ),
         (
             None,
@@ -1025,9 +1025,9 @@ def test_my_character_viewset(
                 "players_expected": ["player1", "player2"],
                 "players_missing": ["player2"],
             },
-            403,
+            401,
         ),
-        (None, "gp2", "api-session-detail", "delete", "session2", {}, 403),
+        (None, "gp2", "api-session-detail", "delete", "session2", {}, 401),
         (
             None,
             "gp2",
@@ -1039,12 +1039,12 @@ def test_my_character_viewset(
                 .astimezone(tz)
                 .strftime("%Y-%m-%dT%H:%M:%S%z")
             },
-            403,
+            401,
         ),
-        (None, "gp2", "api-session-cancel", "post", "session2", {}, 403),
-        (None, "gp2", "api-session-uncancel", "post", "session2", {}, 403),
-        (None, "gp2", "api-session-complete", "post", "session2", {}, 403),
-        (None, "gp2", "api-session-uncomplete", "post", "session2", {}, 403),
+        (None, "gp2", "api-session-cancel", "post", "session2", {}, 401),
+        (None, "gp2", "api-session-uncancel", "post", "session2", {}, 401),
+        (None, "gp2", "api-session-complete", "post", "session2", {}, 401),
+        (None, "gp2", "api-session-uncomplete", "post", "session2", {}, 401),
         (
             None,
             "gp2",
@@ -1052,7 +1052,7 @@ def test_my_character_viewset(
             "post",
             "session2",
             {"title": "We had some fun", "body": "Didn't we, boys?"},
-            403,
+            401,
         ),
         (
             None,
@@ -1061,7 +1061,7 @@ def test_my_character_viewset(
             "post",
             "session1",
             {"title": "We had some fun", "body": "Didn't we, boys?"},
-            403,
+            401,
         ),
         ("gamer2", "gp2", "api-session-list", "get", None, {}, 403),
         ("gamer2", "gp2", "api-session-detail", "get", "session2", {}, 403),
@@ -1401,7 +1401,7 @@ def test_game_session_viewset(
 @pytest.mark.parametrize(
     "gamertouse,gametouse,sessiontouse,logtouse,viewname,httpmethod,post_data,expected_response",
     [
-        (None, "gp2", "session2", "log1", "api-adventurelog-detail", "get", {}, 403),
+        (None, "gp2", "session2", "log1", "api-adventurelog-detail", "get", {}, 401),
         (
             None,
             "gp2",
@@ -1412,7 +1412,7 @@ def test_game_session_viewset(
             {
                 "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
             },
-            403,
+            401,
         ),
         (
             None,
@@ -1424,9 +1424,9 @@ def test_game_session_viewset(
             {
                 "body": "We got to all the secret rooms and stole mad loot. Murderhobos for life!"
             },
-            403,
+            401,
         ),
-        (None, "gp2", "session2", "log1", "api-adventurelog-detail", "delete", {}, 403),
+        (None, "gp2", "session2", "log1", "api-adventurelog-detail", "delete", {}, 401),
         (
             "gamer2",
             "gp2",
@@ -1639,8 +1639,8 @@ def test_adventure_log_viewset(
 @pytest.mark.parametrize(
     "gamertouse,gametouse,viewname,playertouse,expected_response",
     [
-        (None, "gp2", "api-player-list", None, 403),
-        (None, "gp2", "api-player-detail", "player1", 403),
+        (None, "gp2", "api-player-list", None, 401),
+        (None, "gp2", "api-player-detail", "player1", 401),
         ("gamer2", "gp2", "api-player-list", None, 403),
         ("gamer2", "gp2", "api-player-detail", "player1", 403),
         ("gamer4", "gp2", "api-player-list", None, 200),
@@ -1690,10 +1690,10 @@ def test_player_viewset(
 @pytest.mark.parametrize(
     "gamertouse,viewname,url_kwargs,expected_response",
     [
-        (None, "schema-json", {"format": ".json"}, 403),
-        (None, "schema-json", {"format": ".yaml"}, 403),
-        (None, "schema-swagger-ui", {}, 403),
-        (None, "schema-redoc", {}, 403),
+        (None, "schema-json", {"format": ".json"}, 401),
+        (None, "schema-json", {"format": ".yaml"}, 401),
+        (None, "schema-swagger-ui", {}, 401),
+        (None, "schema-redoc", {}, 401),
         ("gamer1", "schema-json", {"format": ".json"}, 403),
         ("gamer1", "schema-json", {"format": ".yaml"}, 403),
         ("gamer1", "schema-swagger-ui", {}, 403),
