@@ -445,7 +445,7 @@ def test_friend_request_create_receipt(
                     "api-my-received-request-accept", kwargs={"pk": fr_request.pk}
                 )
                 response = apiclient.post(action_url)
-                assert response.status_code == 202
+                assert response.status_code == 200
                 gamer.refresh_from_db()
                 assert gamer.friends.count() - friend_count == 1
             else:
@@ -453,7 +453,7 @@ def test_friend_request_create_receipt(
                     "api-my-received-request-ignore", kwargs={"pk": fr_request.pk}
                 )
                 response = apiclient.post(action_url)
-                assert response.status_code == 202
+                assert response.status_code == 200
                 fr_request.refresh_from_db()
                 assert fr_request.status == "reject"
     elif expected_post_response == 200:

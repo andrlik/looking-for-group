@@ -18,6 +18,9 @@ class GamerCommunitySerializer(serializers.ModelSerializer):
             "slug",
             "name",
             "description",
+            "community_logo",
+            "community_logo_description",
+            "community_logo_cw",
             "url",
             "linked_with_discord",
             "private",
@@ -246,7 +249,7 @@ class BannedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.BannedUser
         fields = ("id", "community", "banner", "banned_user", "reason")
-        read_only_fields = fields
+        read_only_fields = ("id", "community", "banner", "banned_user")
 
 
 class FriendRequestSerializer(serializers.ModelSerializer):

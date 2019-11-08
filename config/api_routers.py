@@ -1,7 +1,7 @@
 from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 
 from looking_for_group.game_catalog.routers import catalog_router
@@ -23,13 +23,13 @@ schema_view = get_schema_view(
         license=openapi.License(name="BSD License"),
     ),
     public=True,
-    permission_classes=(IsAuthenticated,),
+    permission_classes=(IsAdminUser,),
 )
 
 urlpatterns = [
     path("", include(api_router.urls)),
     path(
-        "swagger.<str:format>",
+        "swagger<str:format>",
         schema_view.without_ui(cache_timeout=0),
         name="schema-json",
     ),
