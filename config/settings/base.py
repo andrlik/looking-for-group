@@ -96,6 +96,7 @@ THIRD_PARTY_APPS = [
     "allauth_2fa",
     "django_filters",
     "drf_yasg",
+    "oauth2_provider",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -130,14 +131,9 @@ AUTHENTICATION_BACKENDS = [
     "rules.permissions.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
+    "oauth2_provider.backends.OAuth2Backend",
 ]
 
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.AcceptHeaderVersioning",
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 100,
-}
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_AUTHENTICATION_METHOD = "username"
@@ -152,6 +148,37 @@ AUTH_USER_MODEL = "users.User"
 LOGIN_REDIRECT_URL = "/dashboard/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "account_login"
+
+# REST FRAMEWORK
+# ------------------------------------------------------------------------------
+#
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.AcceptHeaderVersioning",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 100,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+}
+OAUTH2_PROVIDER = {"SCOPES": {"full": "Access to read and write data in your account."}}
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "basic": {
+            "type": "basic",
+            "description": "When using the API from within the same domain using the JavaScript API, it can use the existing session.",
+        },
+        "oauth2": {
+            "type": "oauth2",
+            "description": "Any external application needs to register their application with us and use OAuth for authentication.",
+            "flow": "accessCode",
+            "authorizationUrl": "https://app.lfg.directory/o/authorize/",
+            "tokenUrl": "https://app.lfg.directory/o/token/",
+            "scopes": OAUTH2_PROVIDER["SCOPES"],
+        },
+    }
+}
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -188,6 +215,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django_otp.middleware.OTPMiddleware",
     "allauth_2fa.middleware.AllauthTwoFactorMiddleware",
+    "oauth2_provider.middleware.OAuth2TokenMiddleware",
     "looking_for_group.users.middleware.TimezoneSessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -277,6 +305,11 @@ TEMPLATES = [
         },
     },
 ]
+
+# Workaround for drf_yasg, which expects to find the django template engine with the key "django" instead of "default"
+django_template = TEMPLATES[0].copy()
+django_template["NAME"] = "django"
+TEMPLATES.append(django_template)
 
 # FIXTURES
 # ------------------------------------------------------------------------------

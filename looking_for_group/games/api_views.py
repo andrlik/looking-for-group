@@ -10,6 +10,7 @@ from drf_yasg.utils import no_body, swagger_auto_schema
 from notifications.signals import notify
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.decorators import parser_classes as dparser_classes
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -1271,3 +1272,8 @@ class MyCharacterViewSet(
             data=self.serializer_class(obj, context={"request": request}).data,
             status=status.HTTP_200_OK,
         )
+
+    @dparser_classes([FormParser, JSONParser])
+    def destroy(self, request, *args, **kwargs):
+        self.parser_classes = [FormParser, JSONParser]
+        return super().destroy(request, *args, **kwargs)

@@ -66,6 +66,7 @@ urlpatterns = [
     # path("ratings/", include(rating_urls, namespace="ratings")),
     path("api-auth/", include("rest_framework.urls")),
     path("api/", include(api_routers)),
+    path("o/", include("oauth2_provider.urls")),
     path(
         "messages/", include("looking_for_group.mailnotify.urls", namespace="postman")
     ),

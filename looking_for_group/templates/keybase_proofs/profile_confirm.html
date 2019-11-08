@@ -1,5 +1,5 @@
 {% extends "keybase_proofs/_base.html" %}
-{% load i18n %}
+{% load i18n avatar_tags static %}
 
 {% block subtitle %}{% trans "Confirm your Keybase proof" %} - {% endblock %}
 {% block sectiontitle %}{% trans "Confirm your Keybase proof" %}{% endblock %}
@@ -11,31 +11,50 @@
 
 {% block content %}
 <div class="grid-x grid-margin-x">
-  <div class="cell medium-3"></div>
-  <div class="cell medium-auto">
+  <div class="cell medium-1"></div>
+  <div class="cell medium-4">
     <div class="card">
-      <div class="card-divider"><h2>{% trans "Confirm your new Keybase proof" %}</h2></div>
+      <div class="card-divider"><h2>{% trans "Authorize this cryptographic connection?" %}</h2></div>
       <div class="card-section">
 {% if error %}
-        <div class="callout alert"><h3>{% trans "Something isn't right" %}</h3>
-          <p>{{ error }}</p>
-        </div>
+         <div class="callout alert"><h3>{% trans "Something isn't right" %}</h3>
+        <p>{{ error }}</p>
+      </div>
         {% else %}
+      <div class="grid-x grid-margin-x"><div class="cell medium-auto"></div><div class="cell medium-8"> <div class="text-center"> <p>{% avatar user 100 class="avatar" %}</p>
         <p>
-          {% trans "Link" %} <strong>{{ user.get_username }}</strong> {% trans "with" %} <strong>{{ kb_username }}</strong> {% trans "via signature" %} <strong>{{ sig_hash }}</strong>?
+          <strong>{% blocktrans with username=user.get_username %}I am {{ username }} on LFG Directory.{% endblocktrans %}</strong>
+        </p></div>
+        <hr />
+      </div><div class="cell medium-auto"></div>
+      </div>
+      </div>
+      <div class="card-section">
+        <div class="grid-x grid-margin-x"><div class="cell medium-auto"></div><div class="cell medium-8">
+          <div class="text-center"> <img src="{% static 'images/keybase-logo-100.png' %}" />
+        <p>
+          <strong>{% blocktrans with kbuser=kb_username %}I am {{ kbuser }} on Keybase.{% endblocktrans %}</strong>
         </p>
+          </div></div>
+        <div class="cell medium-auto"></div>
+      </div>
+      <div class="card-section">
         <form method="post" action="">
           {% csrf_token %}
           <input type="hidden" name="kb_username" value="{{ kb_username }}" />
           <input type="hidden" name="username" value="{{ user.get_username }}" />
           <input type="hidden" name="sig_hash" value="{{ sig_hash }}"/>
           <input type="hidden" name="kb_ua" value="{{ kb_ua }}"/>
-          <input type="submit" class="button success" value="{% trans 'Submit' %}" />
+          <div class="clearfix">
+            <a href="{{ request.user.gamerprofile.get_absolute_url }}" class="button float-left secondary">{% trans "No, don't authorize" %}</a>
+            <input type="submit" class="button success float-right" value="{% trans 'Yes, authorize' %}" />
+          </div>
         </form>
-        {% endif %}
+       {% endif %}
       </div>
     </div>
-  </div>
+</div>
+<div class="medium-auto"></div>
 </div>
 {% endblock %}
 {% comment %}

@@ -112,4 +112,7 @@ HAYSTACK_CONNECTIONS = {
     }
 }
 GITLAB_PROJECT_ID = env("GITLAB_TEST_PROJECT_ID", default=None)
-REST_FRAMEWORK["TEST_REQUEST_DEFAULT_FORMAT"] = "json"
+REST_FRAMEWORK["TEST_REQUEST_DEFAULT_FORMAT"] = "json"  # noqa: F405
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"].append(  # noqa: F405
+    "rest_framework.authentication.BasicAuthentication"
+)

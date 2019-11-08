@@ -247,3 +247,12 @@ if es.username:
     HAYSTACK_CONNECTIONS["default"]["KWARGS"] = {
         "http_auth": es.username + ":" + es.password
     }
+
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = [  # noqa: F405
+    "rest_framework.throttling.AnonRateThrottle",
+    "rest_framework.throttling.UserRateThrottle",
+]
+
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = (  # noqa: F405
+    {"anon": "15/min", "user": "60/min"},
+)

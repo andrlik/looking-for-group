@@ -69,14 +69,14 @@ class GameCatalogAbstractTestCase(APITestCase):
 class PublisherViews(GameCatalogAbstractTestCase):
     def test_list_retrieval(self):
         self.get("api-publisher-list", extra=self.extra)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publisher-list", extra=self.extra)
 
     def test_detail_retrieval(self):
         url_kwargs = {"slug": self.mcg.slug, **self.extra}
         self.get("api-publisher-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publisher-detail", **url_kwargs)
             serialized_data = GamerPublisherSerializer(
@@ -90,14 +90,14 @@ class GameSystemViews(GameCatalogAbstractTestCase):
     def test_list_view(self):
         url_kwargs = self.extra
         self.get("api-system-list", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-system-list", **url_kwargs)
 
     def test_detail_view(self):
         url_kwargs = {"slug": self.cypher.slug, **self.extra}
         self.get("api-system-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-system-detail", **url_kwargs)
             serialized_object = GameSystemSerializer(
@@ -111,7 +111,7 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
     def test_list_view(self):
         url_kwargs = self.extra
         self.get("api-publishedgame-list", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publishedgame-list", **url_kwargs)
 
@@ -119,7 +119,7 @@ class PublishedGameViews(GameCatalogAbstractTestCase):
         url_kwargs = {"slug": self.numensource.slug, **self.extra}
         print(type(self.numensource))
         self.get("api-publishedgame-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             print(reverse("api-publishedgame-detail", kwargs=url_kwargs))
             self.get("api-publishedgame-detail", **url_kwargs)
@@ -134,7 +134,7 @@ class EditionViews(GameCatalogAbstractTestCase):
     def test_list_view(self):
         url_kwargs = {"parent_lookup_game__slug": self.numensource.slug, **self.extra}
         self.get("api-edition-list", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-edition-list", **url_kwargs)
 
@@ -145,7 +145,7 @@ class EditionViews(GameCatalogAbstractTestCase):
             **self.extra,
         }
         self.get("api-edition-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-edition-detail", **url_kwargs)
             serialized_object = GameEditionSerializer(
@@ -166,7 +166,7 @@ class SourcebookViews(GameCatalogAbstractTestCase):
 
     def test_list_view(self):
         self.get("api-sourcebook-list", **self.url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-sourcebook-list", **self.url_kwargs)
 
@@ -174,7 +174,7 @@ class SourcebookViews(GameCatalogAbstractTestCase):
         url_kwargs = self.url_kwargs.copy()
         url_kwargs["slug"] = self.discovery.slug
         self.get("api-sourcebook-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-sourcebook-detail", **url_kwargs)
             request_used = self.last_response.wsgi_request
@@ -196,7 +196,7 @@ class PublishedModuleViews(GameCatalogAbstractTestCase):
 
     def test_list_view(self):
         self.get("api-publishedmodule-list", **self.url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publishedmodule-list", **self.url_kwargs)
 
@@ -204,7 +204,7 @@ class PublishedModuleViews(GameCatalogAbstractTestCase):
         url_kwargs = self.url_kwargs.copy()
         url_kwargs["slug"] = self.vv.slug
         self.get("api-publishedmodule-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publishedmodule-detail", **url_kwargs)
             serialized_object = PublishedModuleSerializer(
