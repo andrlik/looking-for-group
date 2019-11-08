@@ -95,6 +95,7 @@ LOGGING = {
         "discord": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "games": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "api": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "helpdesk": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }
@@ -111,3 +112,7 @@ HAYSTACK_CONNECTIONS = {
     }
 }
 GITLAB_PROJECT_ID = env("GITLAB_TEST_PROJECT_ID", default=None)
+REST_FRAMEWORK["TEST_REQUEST_DEFAULT_FORMAT"] = "json"  # noqa: F405
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"].append(  # noqa: F405
+    "rest_framework.authentication.BasicAuthentication"
+)

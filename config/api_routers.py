@@ -1,60 +1,42 @@
-from django.conf import settings
-from rest_framework.routers import DefaultRouter
+from django.urls import include, path
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework.permissions import IsAdminUser
+from rest_framework_extensions.routers import ExtendedDefaultRouter
 
-from looking_for_group.game_catalog import api_views as catalog_api_views
-from looking_for_group.gamer_profiles import api_views as profile_api_views
+from looking_for_group.game_catalog.routers import catalog_router
+from looking_for_group.gamer_profiles.routers import social_router
+from looking_for_group.games.routers import games_app_router
 
-# API Router
-router = DefaultRouter()
-router.register(
-    r"catalog/publishers",
-    catalog_api_views.GamePublisherViewSet,
-    base_name="api-publisher",
+api_router = ExtendedDefaultRouter()
+api_router.registry.extend(catalog_router.registry)
+api_router.registry.extend(social_router.registry)
+api_router.registry.extend(games_app_router.registry)
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="LFG Directory API",
+        default_version="v1",
+        description="LFG API for group finding, communities, and campaign management.",
+        terms_of_service="https://www.lfg.directory/terms/",
+        contact=openapi.Contact(email="daniel@mg.lfg.directory"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=(IsAdminUser,),
 )
-router.register(
-    r"catalog/systems", catalog_api_views.GameSystemViewSet, base_name="api-system"
-)
-router.register(
-    r"catalog/publishedgames",
-    catalog_api_views.PublishedGameViewSet,
-    base_name="api-publishedgame",
-)
-router.register(
-    r"catalog/editions", catalog_api_views.GameEditionViewSet, base_name="api-edition"
-)
-router.register(
-    r"catalog/sourcebooks",
-    catalog_api_views.SourcebookViewSet,
-    base_name="api-sourcebook",
-)
-router.register(
-    r"catalog/publishedmodules",
-    catalog_api_views.PublishedModuleViewSet,
-    base_name="api-publishedmodule",
-)
-if settings.DEBUG:
-    router.register(
-        r"social/communities",
-        profile_api_views.GamerCommunityViewSet,
-        base_name="api-community",
-    )
-    router.register(
-        r"social/profiles",
-        profile_api_views.GamerProfileViewSet,
-        base_name="api-profile",
-    )
-    router.register(
-        r"social/memberships",
-        profile_api_views.CommunityMembershipViewSet,
-        base_name="api-memberships",
-    )
-    router.register(
-        r"social/applications",
-        profile_api_views.CommunityApplicationViewSet,
-        base_name="api-comm_applications",
-    )
-    router.register(
-        r"social/gamernotes",
-        profile_api_views.GamerNoteViewSet,
-        base_name="api-gamernotes",
-    )
+
+urlpatterns = [
+    path("", include(api_router.urls)),
+    path(
+        "swagger<str:format>",
+        schema_view.without_ui(cache_timeout=0),
+        name="schema-json",
+    ),
+    path(
+        "swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+]

@@ -52,7 +52,7 @@ def test_generate_single_email_body(up_task_testdata):
     notifications = Notification.objects.filter(
         recipient=user, unread=True, emailed=False
     )
-    assert notifications.count() == 3
+    assert notifications.count() == 4
     txt_body, html_body = tasks.form_email_body(user, notifications)
 
 

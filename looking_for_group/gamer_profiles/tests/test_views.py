@@ -213,7 +213,7 @@ def test_member_list_paginated(client, social_testdata, django_assert_max_num_qu
     for x in range(40):
         tempgamer = factories.GamerProfileFactory()
         social_testdata.community1.add_member(tempgamer)
-    with django_assert_max_num_queries(80):
+    with django_assert_max_num_queries(200):
         response = client.get(url)
     assert response.status_code == 200
 

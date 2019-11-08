@@ -1,9 +1,10 @@
 from rest_framework import serializers
 
-from . import models
+from ..game_catalog.serializers import APIURLMixin
 from ..games.models import GamePosting, Player
 from ..games.serializers import GameDataSerializer
 from ..users.models import User
+from . import models
 
 
 class GamerCommunitySerializer(serializers.ModelSerializer):
@@ -14,9 +15,12 @@ class GamerCommunitySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GamerCommunity
         fields = (
-            "id",
+            "slug",
             "name",
             "description",
+            "community_logo",
+            "community_logo_description",
+            "community_logo_cw",
             "url",
             "linked_with_discord",
             "private",
@@ -25,7 +29,7 @@ class GamerCommunitySerializer(serializers.ModelSerializer):
             "modified",
         )
         read_only_fields = (
-            "id",
+            "slug",
             "private",
             "linked_with_discord",
             "member_count",
@@ -34,42 +38,13 @@ class GamerCommunitySerializer(serializers.ModelSerializer):
         )
 
 
-class CommunityListingField(serializers.RelatedField):
+class GamerProfileListSerializer(serializers.ModelSerializer):
     """
-    Text-friendly representation for community.
-    """
-    queryset = models.GamerCommunity.objects.all()
-
-    def to_representation(self, value):
-        return value.name
-
-
-class UserListingField(serializers.RelatedField):
-    """
-    Text-friendly representation for community.
-    """
-    queryset = User.objects.all()
-
-    def to_representation(self, value):
-        return value.display_name
-
-
-class GamerProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer for :class:`gamer_profiles.models.GamerProfile`.
+    Serializer for list views of gamer profile, and so that less private data is displayed
     """
 
-    user = UserListingField()
+    user = serializers.SlugRelatedField(slug_field="username", read_only=True)
     timezone = serializers.SerializerMethodField()
-    communities = CommunityListingField(many=True)
-    player_game_list = serializers.SerializerMethodField()
-    gmed_games = GameDataSerializer(many=True, read_only=True)
-    preferred_games = serializers.StringRelatedField(many=True, read_only=True)
-    preferred_systems = serializers.StringRelatedField(many=True, read_only=True)
-
-    def get_player_game_list(self, obj):
-        games_played = GamePosting.objects.filter(id__in=[p.game.id for p in Player.objects.filter(gamer=obj)])
-        return [{'title': g.title, 'gm': str(g.gm), 'sessions': g.sessions} for g in games_played]
 
     def get_timezone(self, obj):
         return obj.user.timezone
@@ -77,6 +52,48 @@ class GamerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.GamerProfile
         fields = (
+            "user",
+            "private",
+            "timezone",
+            "will_gm",
+            "online_games",
+            "local_games",
+            "player_status",
+        )
+        read_only_fields = fields
+
+
+class GamerProfileSerializer(APIURLMixin, serializers.HyperlinkedModelSerializer):
+    """
+    Serializer for GamerProfile objects.
+    """
+
+    user = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    timezone = serializers.SerializerMethodField()
+    communities = serializers.SlugRelatedField(
+        slug_field="slug", read_only=True, many=True
+    )
+    gmed_games = serializers.StringRelatedField(many=True, read_only=True)
+    player_game_list = serializers.SerializerMethodField()
+    preferred_games = serializers.StringRelatedField(many=True, read_only=True)
+    preferred_systems = serializers.StringRelatedField(many=True, read_only=True)
+
+    def get_player_game_list(self, obj):
+        games_played = GamePosting.objects.filter(
+            id__in=[p.game.id for p in Player.objects.filter(gamer=obj)]
+        )
+        return [
+            {"title": g.title, "gm": str(g.gm), "sessions": g.sessions}
+            for g in games_played
+        ]
+
+    def get_timezone(self, obj):
+        return obj.user.timezone
+
+    class Meta:
+        model = models.GamerProfile
+        fields = (
+            "api_url",
             "user",
             "private",
             "playstyle",
@@ -97,10 +114,16 @@ class GamerProfileSerializer(serializers.ModelSerializer):
             "timezone",
         )
         read_only_fields = (
-            "id",
+            "api_url",
             "user",
             "communities",
+            "gmed_games",
+            "player_game_list",
+            "reputation_score",
         )
+        extra_kwargs = {
+            "api_url": {"view_name": "api-profile-detail", "lookup_field": "username"}
+        }
 
 
 class CommunityMembershipSerializer(serializers.ModelSerializer):
@@ -108,8 +131,8 @@ class CommunityMembershipSerializer(serializers.ModelSerializer):
     Serializer for membership object.
     """
 
-    community = CommunityListingField()
-    gamer = GamerProfileSerializer()
+    community = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    gamer = GamerProfileListSerializer(read_only=True)
 
     class Meta:
         model = models.CommunityMembership
@@ -118,8 +141,8 @@ class CommunityMembershipSerializer(serializers.ModelSerializer):
             "community",
             "gamer",
             "community_role",
-            "median_community_rating",
-            "comm_reputation_score",
+            # "median_community_rating",
+            # "comm_reputation_score",
             "created",
             "modified",
         )
@@ -127,8 +150,8 @@ class CommunityMembershipSerializer(serializers.ModelSerializer):
             "id",
             "community",
             "gamer",
-            "median_community_rating",
-            "comm_reputation_score",
+            # "median_community_rating",
+            # "comm_reputation_score",
             "created",
             "modified",
         )
@@ -139,8 +162,8 @@ class CommunityApplicationSerializer(serializers.ModelSerializer):
     Serializer for :class:`gamer_profiles.models.CommunityApplication`
     """
 
-    community = CommunityListingField()
-    gamer = GamerProfileSerializer()
+    community = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    gamer = serializers.SlugRelatedField(slug_field="username", read_only=True)
 
     class Meta:
         model = models.CommunityApplication
@@ -161,8 +184,8 @@ class GamerNoteSerializer(serializers.ModelSerializer):
     Serializer for :class:`gamer_profiles.models.GamerNote`
     """
 
-    author = GamerProfileSerializer()
-    gamer = GamerProfileSerializer()
+    author = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    gamer = serializers.SlugRelatedField(slug_field="username", read_only=True)
 
     class Meta:
         model = models.GamerNote
@@ -175,8 +198,8 @@ class BlockedUserSerializer(serializers.ModelSerializer):
     A serializer for :class:`gamer_profiles.models.BlockedUser`
     """
 
-    blocker = GamerProfileSerializer()
-    blockee = GamerProfileSerializer()
+    blocker = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    blockee = serializers.SlugRelatedField(slug_field="username", read_only=True)
 
     class Meta:
         model = models.BlockedUser
@@ -189,8 +212,8 @@ class MuteduserSerializer(serializers.ModelSerializer):
     A serializer for :class:`gamer_profiles.models.MutedUser`
     """
 
-    muter = GamerProfileSerializer()
-    mutee = GamerProfileSerializer()
+    muter = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    mutee = serializers.SlugRelatedField(slug_field="username", read_only=True)
 
     class Meta:
         model = models.MutedUser
@@ -203,14 +226,15 @@ class KickedUserSerializer(serializers.ModelSerializer):
     A serializer for :class:`gamer_profiles.models.KickedUser`
     """
 
-    community = CommunityListingField()
-    kicker = GamerProfileSerializer()
-    kicked_user = GamerProfileSerializer()
+    community = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    kicker = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    kicked_user = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    end_date = serializers.DateTimeField(allow_null=True)
 
     class Meta:
         model = models.KickedUser
         fields = ("id", "community", "kicker", "kicked_user", "end_date", "reason")
-        read_only_fields = ("id", "community", "kicked_user")
+        read_only_fields = ("id", "community", "kicker", "kicked_user", "end_date")
 
 
 class BannedUserSerializer(serializers.ModelSerializer):
@@ -218,11 +242,32 @@ class BannedUserSerializer(serializers.ModelSerializer):
     A serializer for :class:`gamer_profiles.models.BannedUser`
     """
 
-    community = CommunityListingField()
-    banner = GamerProfileSerializer()
-    banned_user = GamerProfileSerializer()
+    community = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    banner = serializers.SlugRelatedField("username", read_only=True)
+    banned_user = serializers.SlugRelatedField(slug_field="username", read_only=True)
 
     class Meta:
         model = models.BannedUser
         fields = ("id", "community", "banner", "banned_user", "reason")
-        read_only_fields = fields
+        read_only_fields = ("id", "community", "banner", "banned_user")
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    """
+    A serializer for friend request objects.
+    """
+
+    requestor = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    recipient = serializers.SlugRelatedField(slug_field="username", read_only=True)
+
+    class Meta:
+        model = models.GamerFriendRequest
+        fields = ("id", "created", "modified", "requestor", "recipient", "status")
+        read_only_fields = (
+            "id",
+            "created",
+            "modified",
+            "requestor",
+            "recipient",
+            "status",
+        )

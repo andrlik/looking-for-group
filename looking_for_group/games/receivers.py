@@ -4,18 +4,19 @@ from datetime import timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
-from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete, pre_save
+from django.db.models.signals import m2m_changed, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django_q.tasks import async_task
 from markdown import markdown
 from notifications.signals import notify
-from schedule.models import Calendar, Event, Occurrence, Rule
+from schedule.models import Calendar, Occurrence, Rule
 
 from ..invites.models import Invite
 from ..invites.signals import invite_accepted
 from . import models
+from .signals import player_kicked, player_left
 from .tasks import (
     calculate_player_attendance,
     clear_calendar_for_departing_player,
@@ -252,10 +253,17 @@ def clear_calendar_on_player_remove(sender, instance, *args, **kwargs):
     async_task(clear_calendar_for_departing_player, instance)
 
 
-@receiver(post_delete, sender=models.Player)
-def update_games_left(sender, instance, *args, **kwargs):
-    gamer = instance.gamer
+@receiver(player_left)
+def update_games_left(sender, player, *args, **kwargs):
+    gamer = player.gamer
     gamer.games_left = F("games_left") + 1
+    gamer.save()
+
+
+@receiver(player_kicked)
+def update_games_kicked(sender, player, *args, **kwargs):
+    gamer = player.gamer
+    gamer.games_kicked = F("games_kicked") + 1
     gamer.save()
 
 

@@ -27,8 +27,10 @@ class SocialTData(object):
             muter=self.gamer1, mutee=self.muted_gamer
         )
         self.community = factories.GamerCommunityFactory(owner=self.gamer5)
+        self.community.set_role(self.gamer5, "admin")
         self.community.add_member(self.gamer1)
         self.community1 = factories.GamerCommunityFactory(owner=self.gamer1)
+        self.community1.set_role(self.gamer1, "admin")
         self.community1.add_member(self.blocked_gamer)
         self.community2 = factories.GamerCommunityFactory(
             owner=self.gamer5, private=False
@@ -45,7 +47,7 @@ class SocialTData(object):
             requestor=self.prospective_friend, recipient=self.gamer1, status="new"
         )
         self.gn = models.GamerNote.objects.create(
-            gamer=self.gamer4,
+            gamer=self.gamer3,
             author=self.gamer1,
             title="Test note",
             body="This is someone new.",
@@ -85,6 +87,13 @@ class SocialTDataKicks(SocialTData):
         )
         assert models.BannedUser.objects.filter(
             banned_user=self.gamer4, community=self.community
+        )
+        self.new_gamer = factories.GamerProfileFactory()
+        self.application = models.CommunityApplication.objects.create(
+            community=self.community1,
+            gamer=self.new_gamer,
+            message="Hi there. Can I play too?",
+            status="review",
         )
 
 

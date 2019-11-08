@@ -5,12 +5,13 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from isbn_field import ISBNField
 from model_utils.models import TimeStampedModel
+from rules.contrib.models import RulesModel
 
-from .utils import AbstractTaggedLinkedModel, AbstractUUIDModel, AbstractUUIDWithSlugModel
+from . import rules
+from .utils import AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel
 
 # Create your models here.
 logger = logging.getLogger("catalog")
@@ -23,7 +24,7 @@ SUGGESTION_STATUS_CHOICES = (
 )
 
 
-class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
+class GamePublisher(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     A publisher of games.
     """
@@ -42,7 +43,7 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:pub-detail", kwargs={"publisher": self.id})
+        return reverse("game_catalog:pub-detail", kwargs={"publisher": self.slug})
 
     def get_correction_url(self):
         return reverse(
@@ -53,10 +54,16 @@ class GamePublisher(TimeStampedModel, AbstractUUIDModel, models.Model):
     class Meta:
         ordering = ["name"]
         verbose_name = _("Publisher")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class GameSystem(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     A root rule system potentially used for multiple games.
@@ -99,7 +106,7 @@ class GameSystem(
         return self.name  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:system-detail", kwargs={"system": self.id})
+        return reverse("game_catalog:system-detail", kwargs={"system": self.slug})
 
     @property
     def release_date(self):
@@ -114,10 +121,16 @@ class GameSystem(
     class Meta:
         ordering = ["name", "-publication_date"]
         verbose_name = _("Game System")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class PublishedGame(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     A published game.
@@ -145,7 +158,7 @@ class PublishedGame(
         return self.title  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:game-detail", kwargs={"game": self.id})
+        return reverse("game_catalog:game-detail", kwargs={"game": self.slug})
 
     def get_correction_url(self):
         return reverse(
@@ -156,10 +169,16 @@ class PublishedGame(
     class Meta:
         ordering = ["title", "-publication_date"]
         verbose_name = _("Published Game")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class GameEdition(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     Record of editons as a child object of PublishedGame.
@@ -231,10 +250,16 @@ class GameEdition(
     class Meta:
         order_with_respect_to = "game"
         verbose_name = _("Game Edition")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class SourceBook(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     Source book (as opposed to a module/adventure) published for a given edition.
@@ -293,10 +318,16 @@ class SourceBook(
     class Meta:
         order_with_respect_to = "edition"
         verbose_name = _("Source Book")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
 class PublishedModule(
-    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDModel, models.Model
+    TimeStampedModel, AbstractTaggedLinkedModel, AbstractUUIDWithSlugModel, RulesModel
 ):
     """
     A published campaign/adventure module that might be used as the basis for gameplay.
@@ -341,7 +372,7 @@ class PublishedModule(
         return self.title  # pragma: no cover
 
     def get_absolute_url(self):
-        return reverse("game_catalog:module-detail", kwargs={"module": self.id})
+        return reverse("game_catalog:module-detail", kwargs={"module": self.slug})
 
     def get_correction_url(self):
         return reverse(
@@ -352,9 +383,15 @@ class PublishedModule(
     class Meta:
         ordering = ["title", "-publication_date"]
         verbose_name = _("Module/Adventure")
+        rules_permissions = {
+            "add": rules.is_rpgeditor,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }
 
 
-class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     A suggested change to an existing listing.
     """
@@ -451,9 +488,15 @@ class SuggestedCorrection(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mo
     class Meta:
         ordering = ["-created", "status"]
         verbose_name = _("Suggested Correction")
+        rules_permissions = {
+            "add": None,
+            "change": rules.is_rpgeditor,
+            "view": rules.is_rpgeditor,
+            "delete": rules.is_rpgeditor,
+        }
 
 
-class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Model):
+class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, RulesModel):
     """
     A suggested new entry to the catalog.
     """
@@ -558,3 +601,9 @@ class SuggestedAddition(TimeStampedModel, AbstractUUIDWithSlugModel, models.Mode
     class Meta:
         ordering = ["-created", "status"]
         verbose_name = _("Suggested Addition")
+        rules_permissions = {
+            "add": None,
+            "change": rules.is_rpgeditor,
+            "view": None,
+            "delete": rules.is_rpgeditor,
+        }

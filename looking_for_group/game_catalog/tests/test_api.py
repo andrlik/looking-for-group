@@ -1,12 +1,14 @@
 from django.urls import reverse
 from test_plus import APITestCase
 
-from ..models import GamePublisher, GameSystem, PublishedGame, GameEdition, PublishedModule
+from ..models import GameEdition, GamePublisher, GameSystem, PublishedGame, PublishedModule, SourceBook
 from ..serializers import (
+    GameEditionSerializer,
     GamerPublisherSerializer,
     GameSystemSerializer,
     PublishedGamerSerializer,
-    PublishedModuleSerializer
+    PublishedModuleSerializer,
+    SourcebookSerializer
 )
 
 
@@ -27,19 +29,18 @@ class GameCatalogAbstractTestCase(APITestCase):
         self.fivesrd.save()
         self.cypher.tags.add("player focused", "streamlined")
         self.fivesrd.tags.add("crunchy", "traditional")
-        self.dd = PublishedGame.objects.create(
-            title="Dungeons & Dragons")
+        self.dd = PublishedGame.objects.create(title="Dungeons & Dragons")
         self.ddfive = GameEdition(name="5E", game=self.dd, publisher=self.wotc)
         self.ddfive.save()
         self.ddfive.tags.add("fantasy")
-        self.numensource = PublishedGame.objects.create(
-            title="Numenera"
-        )
-        self.numen = GameEdition(name='1', game=self.numensource, publisher=self.mcg)
+        self.numensource = PublishedGame.objects.create(title="Numenera")
+        self.numen = GameEdition(name="1", game=self.numensource, publisher=self.mcg)
         self.numen.save()
         self.numen.tags.add("weird", "future", "science fantasy")
         self.cos = PublishedModule(
-            title="Curse of Strahd", publisher=self.wotc, parent_game_edition=self.ddfive
+            title="Curse of Strahd",
+            publisher=self.wotc,
+            parent_game_edition=self.ddfive,
         )
         self.cos.save()
         self.cos.tags.add("horror")
@@ -49,13 +50,18 @@ class GameCatalogAbstractTestCase(APITestCase):
         self.tiamat.save()
         self.tiamat.tags.add("dragons")
         self.vv = PublishedModule(
-            title="Into the Violet Vale", publisher=self.mcg, parent_game_edition=self.numen
+            title="Into the Violet Vale",
+            publisher=self.mcg,
+            parent_game_edition=self.numen,
         )
         self.vv.save()
-        self.strangesource = PublishedGame.objects.create(
-            title="The Strange"
+        self.discovery = SourceBook.objects.create(
+            edition=self.numen, title="Numenera Discovery", publisher=self.mcg
         )
-        self.strange = GameEdition(name='1', game=self.strangesource, publisher=self.mcg)
+        self.strangesource = PublishedGame.objects.create(title="The Strange")
+        self.strange = GameEdition(
+            name="1", game=self.strangesource, publisher=self.mcg
+        )
         self.strange.save()
         self.user1 = self.make_user("u1")
 
@@ -63,75 +69,146 @@ class GameCatalogAbstractTestCase(APITestCase):
 class PublisherViews(GameCatalogAbstractTestCase):
     def test_list_retrieval(self):
         self.get("api-publisher-list", extra=self.extra)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publisher-list", extra=self.extra)
 
     def test_detail_retrieval(self):
-        url_kwargs = {"pk": self.mcg.pk}
-        self.get("api-publisher-detail", **url_kwargs, extra=self.extra)
-        self.response_403()
+        url_kwargs = {"slug": self.mcg.slug, **self.extra}
+        self.get("api-publisher-detail", **url_kwargs)
+        self.response_401()
         with self.login(username=self.user1.username):
-            self.get("api-publisher-detail", **url_kwargs, extra=self.extra)
-            serialized_data = GamerPublisherSerializer(self.mcg)
+            self.get("api-publisher-detail", **url_kwargs)
+            serialized_data = GamerPublisherSerializer(
+                self.mcg,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_data.data == self.last_response.data
 
 
 class GameSystemViews(GameCatalogAbstractTestCase):
     def test_list_view(self):
-        url_kwargs = {"extra": self.extra}
+        url_kwargs = self.extra
         self.get("api-system-list", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-system-list", **url_kwargs)
 
     def test_detail_view(self):
-        url_kwargs = {"pk": self.cypher.pk, "extra": self.extra}
+        url_kwargs = {"slug": self.cypher.slug, **self.extra}
         self.get("api-system-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-system-detail", **url_kwargs)
-            serialized_object = GameSystemSerializer(self.cypher)
+            serialized_object = GameSystemSerializer(
+                self.cypher,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_object.data == self.last_response.data
 
 
 class PublishedGameViews(GameCatalogAbstractTestCase):
     def test_list_view(self):
-        url_kwargs = {"extra": self.extra}
+        url_kwargs = self.extra
         self.get("api-publishedgame-list", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publishedgame-list", **url_kwargs)
 
     def test_detail_view(self):
-        url_kwargs = {"pk": self.numensource.pk, "extra": self.extra}
+        url_kwargs = {"slug": self.numensource.slug, **self.extra}
+        print(type(self.numensource))
         self.get("api-publishedgame-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
-            print(
-                reverse(
-                    "api-publishedgame-detail",
-                    kwargs={"pk": self.numen.pk, "format": "json"},
-                )
-            )
+            print(reverse("api-publishedgame-detail", kwargs=url_kwargs))
             self.get("api-publishedgame-detail", **url_kwargs)
-            serialized_object = PublishedGamerSerializer(self.numensource)
+            serialized_object = PublishedGamerSerializer(
+                self.numensource,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
+            assert serialized_object.data == self.last_response.data
+
+
+class EditionViews(GameCatalogAbstractTestCase):
+    def test_list_view(self):
+        url_kwargs = {"parent_lookup_game__slug": self.numensource.slug, **self.extra}
+        self.get("api-edition-list", **url_kwargs)
+        self.response_401()
+        with self.login(username=self.user1.username):
+            self.get("api-edition-list", **url_kwargs)
+
+    def test_detail_view(self):
+        url_kwargs = {
+            "parent_lookup_game__slug": self.numensource.slug,
+            "slug": self.numen.slug,
+            **self.extra,
+        }
+        self.get("api-edition-detail", **url_kwargs)
+        self.response_401()
+        with self.login(username=self.user1.username):
+            self.get("api-edition-detail", **url_kwargs)
+            serialized_object = GameEditionSerializer(
+                self.numen,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
+            assert serialized_object.data == self.last_response.data
+
+
+class SourcebookViews(GameCatalogAbstractTestCase):
+    def setUp(self):
+        super().setUp()
+        self.url_kwargs = {
+            "parent_lookup_edition__game__slug": self.numensource.slug,
+            "parent_lookup_edition__slug": self.numen.slug,
+            **self.extra,
+        }
+
+    def test_list_view(self):
+        self.get("api-sourcebook-list", **self.url_kwargs)
+        self.response_401()
+        with self.login(username=self.user1.username):
+            self.get("api-sourcebook-list", **self.url_kwargs)
+
+    def test_detail_view(self):
+        url_kwargs = self.url_kwargs.copy()
+        url_kwargs["slug"] = self.discovery.slug
+        self.get("api-sourcebook-detail", **url_kwargs)
+        self.response_401()
+        with self.login(username=self.user1.username):
+            self.get("api-sourcebook-detail", **url_kwargs)
+            request_used = self.last_response.wsgi_request
+            serialized_object = SourcebookSerializer(
+                self.discovery,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_object.data == self.last_response.data
 
 
 class PublishedModuleViews(GameCatalogAbstractTestCase):
+    def setUp(self):
+        super().setUp()
+        self.url_kwargs = {
+            "parent_lookup_parent_game_edition__game__slug": self.numensource.slug,
+            "parent_lookup_parent_game_edition__slug": self.numen.slug,
+            **self.extra,
+        }
+
     def test_list_view(self):
-        url_kwargs = {"extra": self.extra}
-        self.get("api-publishedmodule-list", **url_kwargs)
-        self.response_403()
+        self.get("api-publishedmodule-list", **self.url_kwargs)
+        self.response_401()
         with self.login(username=self.user1.username):
-            self.get("api-publishedmodule-list", **url_kwargs)
+            self.get("api-publishedmodule-list", **self.url_kwargs)
 
     def test_detail_view(self):
-        url_kwargs = {"pk": self.vv.pk, "extra": self.extra}
+        url_kwargs = self.url_kwargs.copy()
+        url_kwargs["slug"] = self.vv.slug
         self.get("api-publishedmodule-detail", **url_kwargs)
-        self.response_403()
+        self.response_401()
         with self.login(username=self.user1.username):
             self.get("api-publishedmodule-detail", **url_kwargs)
-            serialized_object = PublishedModuleSerializer(self.vv)
+            serialized_object = PublishedModuleSerializer(
+                self.vv,
+                context={"request": self.last_response.wsgi_request, "format": "json"},
+            )
             assert serialized_object.data == self.last_response.data

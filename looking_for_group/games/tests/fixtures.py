@@ -5,10 +5,16 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import m2m_changed
 from django.utils import timezone
 from factory.django import mute_signals
+from rest_framework.test import APIClient
 from schedule.models import Calendar, Rule
 
 from ...gamer_profiles.tests import factories
 from .. import models
+
+
+@pytest.fixture
+def apiclient():
+    yield APIClient()
 
 
 class GamesTData(object):
@@ -24,6 +30,9 @@ class GamesTData(object):
         self.gamer2 = factories.GamerProfileFactory()
         self.gamer3 = factories.GamerProfileFactory()
         self.gamer4 = factories.GamerProfileFactory()
+        self.gamer_admin = factories.GamerProfileFactory()
+        self.gamer_admin.user.is_staff = True
+        self.gamer_admin.user.save()
         self.blocked_gamer = factories.GamerProfileFactory()
         self.blocked_gamer.block(self.gamer1)
         self.comm1 = factories.GamerCommunityFactory(owner=self.gamer1)
@@ -88,6 +97,15 @@ class GamesTData(object):
             session_length=2.5,
             game_description="We are fond of rolling dice.",
         )
+        self.app1 = models.GamePostingApplication.objects.create(
+            game=self.gp5, gamer=self.gamer1, message="Hi There", status="pending"
+        )
+        self.app2 = models.GamePostingApplication.objects.create(
+            game=self.gp5,
+            gamer=self.gamer2,
+            message="I've got some dice...",
+            status="pending",
+        )
         self.gp_irl = models.GamePosting.objects.create(
             game_type="campaign",
             status="open",
@@ -113,6 +131,7 @@ class GamesTData(object):
         self.session2 = self.gp2.create_next_session()
         self.player1 = models.Player.objects.create(gamer=self.gamer4, game=self.gp2)
         self.player2 = models.Player.objects.create(gamer=self.gamer3, game=self.gp2)
+        self.player3 = models.Player.objects.create(gamer=self.gamer1, game=self.gp1)
         self.character1 = models.Character.objects.create(
             player=self.player1,
             name="Magic Brian",

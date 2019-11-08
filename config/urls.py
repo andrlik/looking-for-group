@@ -17,8 +17,7 @@ from looking_for_group.user_preferences.views import (
 )
 
 # from star_ratings import urls as rating_urls
-from . import rating_url_override
-from .api_routers import router
+from . import api_routers, rating_url_override
 
 
 def trigger_error(request):
@@ -66,7 +65,8 @@ urlpatterns = [
     path("utils/", include("looking_for_group.adminutils.urls")),
     # path("ratings/", include(rating_urls, namespace="ratings")),
     path("api-auth/", include("rest_framework.urls")),
-    path("api/", include(router.urls)),
+    path("api/", include(api_routers)),
+    path("o/", include("oauth2_provider.urls")),
     path(
         "messages/", include("looking_for_group.mailnotify.urls", namespace="postman")
     ),

@@ -11,12 +11,14 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
+from rules.contrib.models import RulesModel
 from star_ratings.models import AbstractBaseRating
 
 from ..game_catalog.models import GameSystem, PublishedGame
 from ..game_catalog.utils import AbstractUUIDModel
 from ..invites.models import Invite
 from ..locations.models import Location
+from . import rules
 
 
 class NotInCommunity(Exception):
@@ -85,7 +87,7 @@ COMMUNITY_ROLES = (
 )
 
 
-class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
+class GamerCommunity(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Represents a player community, e.g. GeeklyInc.
     """
@@ -312,9 +314,18 @@ class GamerCommunity(TimeStampedModel, AbstractUUIDModel, models.Model):
         ordering = ["name"]
         verbose_name_plural = "Communities"
         verbose_name = "Community"
+        rules_permissions = {
+            "add": rules.is_user,
+            "change": rules.is_community_admin,
+            "view": rules.is_user,
+            "delete": rules.is_community_owner,
+            "apply": rules.is_eligible_applicant,
+            "join": rules.is_joinable,
+            "leave": rules.is_community_member,
+        }
 
 
-class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):
+class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     An object representing a symmetrical friendship.
     """
@@ -359,8 +370,17 @@ class GamerFriendRequest(TimeStampedModel, AbstractUUIDModel, models.Model):
         self.status = "reject"
         self.save()
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_possible_friend,
+            "change": rules.is_request_author,
+            "view": rules.is_request_author | rules.is_request_recipient,
+            "delete": rules.is_request_author,
+            "approve": rules.is_request_recipient,
+        }
 
-class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
+
+class GamerProfile(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     A profile of game preferences and history.
     """
@@ -464,6 +484,10 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
         help_text=_(
             "How many times has this user left a game before it was completed?"
         ),
+    )
+    games_kicked = models.PositiveIntegerField(
+        default=0,
+        help_text=_("How many times has this user been kicked out of a game by a GM?"),
     )
     gm_games_finished = models.PositiveIntegerField(
         default=0, help_text=_("How many games has this GM completed?")
@@ -599,12 +623,25 @@ class GamerProfile(TimeStampedModel, AbstractUUIDModel, models.Model):
             ]
         )
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_user,
+            "change": rules.is_profile_owner,
+            "view": rules.is_user,
+            "view_details": rules.is_profile_viewer,
+            "delete": rules.is_profile_owner,
+            "friend": rules.is_possible_friend,
+            "unfriend": rules.is_friend,
+            "block": rules.is_user,
+            "mute": rules.is_user,
+        }
+
 
 class MyRating(AbstractBaseRating):
     object_id = models.CharField(max_length=50)
 
 
-class GamerNote(TimeStampedModel, AbstractUUIDModel, models.Model):
+class GamerNote(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Private gamer notes about other gamers.
     """
@@ -634,8 +671,16 @@ class GamerNote(TimeStampedModel, AbstractUUIDModel, models.Model):
     def get_absolute_url(self):
         return reverse("gamer_profiles:note_detail", kwargs={"note": self.pk})
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_user,
+            "change": rules.is_note_author,
+            "view": rules.is_note_author,
+            "delete": rules.is_note_author,
+        }
 
-class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
+
+class CommunityMembership(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Represents the community and role that a gamer profile has.
     """
@@ -717,9 +762,18 @@ class CommunityMembership(TimeStampedModel, AbstractUUIDModel, models.Model):
     class Meta:
         unique_together = ["gamer", "community"]
         order_with_respect_to = "community"
+        rules_permissions = {
+            "add": rules.is_community_admin,
+            "change": rules.is_community_superior,
+            "view": rules.is_community_member,
+            "delete": rules.is_community_superior,
+            "kick": rules.is_community_superior,
+            "ban": rules.is_community_superior,
+            "changerole": rules.is_community_superior,
+        }
 
 
-class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
+class CommunityApplication(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Application to join a community.
     """
@@ -787,10 +841,10 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
 
         if self.validate_application():
             with transaction.atomic():
-                self.community.add_member(self.gamer)
+                new_member = self.community.add_member(self.gamer)
                 self.status = "approve"
                 self.save()
-            return True
+            return new_member
         return False  # Actually an exception gets passed up.
 
     def reject_application(self):
@@ -802,9 +856,17 @@ class CommunityApplication(TimeStampedModel, AbstractUUIDModel, models.Model):
 
     class Meta:
         ordering = ["community__name", "modified"]
+        rules_permissions = {
+            "add": rules.is_eligible_applicant,
+            "change": rules.is_applicant,
+            "view": rules.is_applicant | rules.is_application_approver,
+            "delete": rules.is_applicant,
+            "approve": rules.is_application_approver,
+            "reviewlist": rules.is_community_admin,
+        }
 
 
-class BlockedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
+class BlockedUser(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Captures user-initiated blocks, as opposed to by community.
     """
@@ -824,8 +886,16 @@ class BlockedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
     def __str__(self):
         return "{0} blocked {1}".format(self.blocker.username, self.blockee.username)
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_user,
+            "change": rules.is_blocker,
+            "view": rules.is_blocker,
+            "delete": rules.is_blocker,
+        }
 
-class MutedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
+
+class MutedUser(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Captures mute moderations from users as opposed to by community.
     """
@@ -843,8 +913,16 @@ class MutedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
     def __str__(self):
         return "{0} muted {1}".format(self.muter.username, self.mutee.username)
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_user,
+            "change": rules.is_muter,
+            "view": rules.is_muter,
+            "delete": rules.is_muter,
+        }
 
-class KickedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
+
+class KickedUser(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Capture users kicked/suspended from a community.
     """
@@ -874,8 +952,16 @@ class KickedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
             self.end_date,
         )
 
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_community_admin,
+            "change": rules.is_community_admin,
+            "view": rules.is_community_admin,
+            "delete": rules.is_community_admin,
+        }
 
-class BannedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
+
+class BannedUser(TimeStampedModel, AbstractUUIDModel, RulesModel):
     """
     Capture users kicked/suspended from a community.
     """
@@ -902,3 +988,11 @@ class BannedUser(TimeStampedModel, AbstractUUIDModel, models.Model):
             self.community.name,
             self.created,
         )
+
+    class Meta:
+        rules_permissions = {
+            "add": rules.is_community_admin,
+            "change": rules.is_community_admin,
+            "view": rules.is_community_admin,
+            "delete": rules.is_community_admin,
+        }
