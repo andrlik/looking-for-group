@@ -17,5 +17,5 @@
   "profile_url": "https://app.lfg.directory/keybase-proofs/profile/%{username}",
   "check_url": "https://app.lfg.directory/keybase-proofs/api/%{username}",
   "check_path": ["keybase_sigs"],
-  "contact": ["daniel@mg.lfg.directory", "joshblum@keybase"]
+  "contact": ["daniel@mg.lfg.directory", "andrlik@keybase"]
 }
