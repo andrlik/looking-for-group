@@ -1672,18 +1672,24 @@ def test_player_viewset(
 
 
 @pytest.mark.parametrize(
-    "gamertouse,viewname,expected_response",
+    "gamertouse,viewname,url_kwargs,expected_response",
     [
-        (None, "schema-json", 403),
-        (None, "schema-swagger-ui", 403),
-        (None, "schema-redoc", 403),
-        ("gamer1", "schema-json", 200),
-        ("gamer1", "schema-swagger-ui", 200),
-        ("gamer1", "schema-redoc", 200),
+        (None, "schema-json", {"format": ".json"}, 403),
+        (None, "schema-json", {"format": ".yaml"}, 403),
+        (None, "schema-swagger-ui", {}, 403),
+        (None, "schema-redoc", {}, 403),
+        ("gamer1", "schema-json", {"format": ".json"}, 403),
+        ("gamer1", "schema-json", {"format": ".yaml"}, 403),
+        ("gamer1", "schema-swagger-ui", {}, 403),
+        ("gamer1", "schema-redoc", {}, 403),
+        ("gamer_admin", "schema-json", {"format": ".json"}, 200),
+        ("gamer_admin", "schema-json", {"format": ".yaml"}, 200),
+        ("gamer_admin", "schema-swagger-ui", {}, 200),
+        ("gamer_admin", "schema-redoc", {}, 200),
     ],
 )
 def test_api_openapi_views(
-    apiclient, game_testdata, gamertouse, viewname, expected_response
+    apiclient, game_testdata, gamertouse, viewname, url_kwargs, expected_response
 ):
     """
     Tests to ensure our swagger generated views load.
@@ -1692,10 +1698,7 @@ def test_api_openapi_views(
     if gamertouse:
         gamer = getattr(game_testdata, gamertouse)
         apiclient.force_login(gamer.user)
-    if viewname == "schema-json":
-        url = reverse(viewname, kwargs={"format": ".json"})
-    else:
-        url = reverse(viewname)
+    url = reverse(viewname, kwargs=url_kwargs)
     print(url)
     response = apiclient.get(url)
     assert response.status_code == expected_response

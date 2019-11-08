@@ -30,6 +30,9 @@ class GamesTData(object):
         self.gamer2 = factories.GamerProfileFactory()
         self.gamer3 = factories.GamerProfileFactory()
         self.gamer4 = factories.GamerProfileFactory()
+        self.gamer_admin = factories.GamerProfileFactory()
+        self.gamer_admin.user.is_staff = True
+        self.gamer_admin.user.save()
         self.blocked_gamer = factories.GamerProfileFactory()
         self.blocked_gamer.block(self.gamer1)
         self.comm1 = factories.GamerCommunityFactory(owner=self.gamer1)
