@@ -103,29 +103,22 @@ tz = pytz.timezone("US/Eastern")
                 "api_url": "",
                 "slug": "",
                 "title": "Dancing in the card",
-                "gm": "testuser",
-                "gm_stats": {
-                    "games_created": 1,
-                    "active_games": 1,
-                    "games_finished": 0,
-                },
                 "game_description": "toga",
-                "game_description_rendered": "<p>toga</p>",
                 "game_type": "oneshot",
                 "status": "open",
                 "game_mode": "online",
                 "privacy_level": "private",
                 "adult_themes": False,
-                "content_warning": None,
-                "published_game": None,
-                "published_game_title": None,
-                "game_system": None,
-                "game_system_name": None,
-                "published_module": None,
-                "published_module_title": None,
+                "content_warning": "",
+                "published_game": "",
+                "published_game_title": "",
+                "game_system": "",
+                "game_system_name": "",
+                "published_module": "",
+                "published_module_title": "",
                 "start_time": "2022-12-17T21:00:00-05:00",
                 "session_length": "3.00",
-                "end_date": None,
+                "end_date": "",
                 "communities": [],
                 "current_players": 0,
                 "min_players": 1,
@@ -148,29 +141,22 @@ tz = pytz.timezone("US/Eastern")
                 "api_url": "",
                 "slug": "",
                 "title": "Dancing in the card",
-                "gm": "testuser",
-                "gm_stats": {
-                    "games_created": 1,
-                    "active_games": 1,
-                    "games_finished": 0,
-                },
                 "game_description": "toga",
-                "game_description_rendered": "<p>toga</p>",
                 "game_type": "oneshot",
                 "status": "open",
                 "game_mode": "online",
                 "privacy_level": "private",
                 "adult_themes": False,
-                "content_warning": None,
-                "published_game": None,
-                "published_game_title": None,
-                "game_system": None,
-                "game_system_name": None,
-                "published_module": None,
-                "published_module_title": None,
+                "content_warning": "",
+                "published_game": "",
+                "published_game_title": "",
+                "game_system": "",
+                "game_system_name": "",
+                "published_module": "",
+                "published_module_title": "",
                 "start_time": "2022-12-17T21:00:00-05:00",
                 "session_length": "3.00",
-                "end_date": None,
+                "end_date": "",
                 "communities": [],
                 "current_players": 0,
                 "min_players": 1,
@@ -267,14 +253,30 @@ def test_game_crud_views(
                 "game_system_name",
                 "published_game_title",
                 "current_players",
+                "featured_image",
             ]:
-                data_to_post[k] = v
+                if k == "communities":
+                    data_to_post[k] = [] if not v else v
+                else:
+                    data_to_post[k] = "" if not v else v
     url = reverse(viewname, kwargs=url_kwargs)
     print(url)
     with django_assert_max_num_queries(50):
         with mute_signals(post_delete, pre_delete, post_save):
-            print("Submitting request with post data of {}".format(data_to_post))
-            response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+            format = "json"
+            if viewname not in [
+                "api-game-apply",
+                "api-game-leave",
+            ] and httpmethod not in ["get", "delete"]:
+                format = "multipart"
+            print(
+                "Submitting request with post data of {} using renderer {}".format(
+                    data_to_post, format
+                )
+            )
+            response = getattr(apiclient, httpmethod)(
+                url, format=format, data=data_to_post
+            )
     print(response.data)
     assert response.status_code == expected_response
     if "list" in viewname and expected_response == 201:
@@ -571,7 +573,7 @@ def test_player_application_viewset(
             {
                 "name": "Tommy",
                 "description": "Just a jerk",
-                "character_sheet": "",
+                "sheet": "",
                 "status": "pending",
             },
             403,
@@ -610,7 +612,7 @@ def test_player_application_viewset(
             {
                 "name": "Tommy",
                 "description": "Just a jerk",
-                "character_sheet": "",
+                "sheet": "",
                 "status": "pending",
             },
             403,
@@ -649,7 +651,7 @@ def test_player_application_viewset(
             {
                 "name": "Tommy",
                 "description": "Just a jerk",
-                "character_sheet": "",
+                "sheet": "",
                 "status": "pending",
             },
             201,
@@ -688,8 +690,8 @@ def test_player_application_viewset(
             {
                 "name": "Tommy",
                 "description": "Just a jerk",
-                "character_sheet": "",
                 "status": "pending",
+                "sheet": "",
             },
             201,
         ),
@@ -727,7 +729,7 @@ def test_player_application_viewset(
             {
                 "name": "Tommy",
                 "description": "Just a jerk",
-                "character_sheet": "",
+                "sheet": "",
                 "status": "pending",
             },
             403,
@@ -788,7 +790,7 @@ def test_character_game_viewset(
             character, context={"request": None}
         ).data.items():
             if k not in post_data.keys() and k not in ["created", "modified", "player"]:
-                data_to_post[k] = v
+                data_to_post[k] = "" if not v else v
     if character:
         url = reverse(
             viewname,
@@ -803,7 +805,15 @@ def test_character_game_viewset(
         )
     )
     with django_assert_max_num_queries(50):
-        response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+        format = "json"
+        if httpmethod not in ["get", "delete"] and viewname not in [
+            "api-character-deactivate",
+            "api-character-reactivate",
+            "api-character-reject",
+            "api-character-approve",
+        ]:
+            format = "multipart"
+        response = getattr(apiclient, httpmethod)(url, format=format, data=data_to_post)
     print(response.data)
     assert response.status_code == expected_response
     if character:
@@ -949,7 +959,7 @@ def test_my_character_viewset(
                 "player_username",
                 "game",
             ]:
-                data_to_post[k] = v
+                data_to_post[k] = "" if not v else v
     if character:
         url = reverse(viewname, kwargs={"slug": character.slug})
     else:
@@ -959,7 +969,13 @@ def test_my_character_viewset(
         "Preparing to submit {} to url {} for {}".format(data_to_post, url, gamertouse)
     )
     with django_assert_max_num_queries(50):
-        response = getattr(apiclient, httpmethod)(url, data=data_to_post)
+        format = "json"
+        if httpmethod in ["post", "put", "patch"] and viewname not in [
+            "api-mycharacter-reactivate",
+            "api-mycharacter-deactivate",
+        ]:
+            format = "multipart"
+        response = getattr(apiclient, httpmethod)(url, format=format, data=data_to_post)
     print(response.data)
     assert response.status_code == expected_response
     if expected_response == 204:

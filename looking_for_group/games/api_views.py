@@ -10,7 +10,7 @@ from drf_yasg.utils import no_body, swagger_auto_schema
 from notifications.signals import notify
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import FileUploadParser, FormParser, JSONParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
@@ -142,7 +142,7 @@ class GamePostingViewSet(
     """
 
     permission_classes = (IsAuthenticated,)
-    parser_classes = [FormParser, MultiPartParser, FileUploadParser]
+    parser_classes = [FormParser, MultiPartParser]
     model = models.GamePosting
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
@@ -1054,7 +1054,7 @@ class CharacterViewSet(
     """
 
     permission_classes = (IsAuthenticated,)
-    parser_classes = [FormParser, MultiPartParser, FileUploadParser]
+    parser_classes = [FormParser, MultiPartParser]
     parent_object_lookup_field = "slug"
     parent_object_url_kwarg = "parent_lookup_game__slug"
     parent_lookup_field = "game"
@@ -1239,7 +1239,7 @@ class MyCharacterViewSet(
         "reactivate": "delete",
     }
     permission_type_map["retrieve"] = "delete"
-    parser_classes = [FormParser, MultiPartParser, FileUploadParser]
+    parser_classes = [FormParser, MultiPartParser]
 
     def get_queryset(self):
         return models.Character.objects.filter(

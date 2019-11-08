@@ -131,10 +131,10 @@ def test_direct_query(
 @pytest.mark.parametrize(
     "cal_to_use, gamer_to_use, expected_matches",
     [
-        ("cal1", "gamer1", 2),
-        ("cal2", "gamer2", 3),
-        ("cal3", "gamer3", 3),
-        ("cal4", "gamer4", 4),
+        ("cal1", "gamer1", 3),
+        ("cal2", "gamer2", 4),
+        ("cal3", "gamer3", 4),
+        ("cal4", "gamer4", 5),
     ],
 )
 def test_list_query(avail_testdata, cal_to_use, gamer_to_use, expected_matches):

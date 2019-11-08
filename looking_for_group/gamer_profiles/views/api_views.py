@@ -11,7 +11,7 @@ from drf_yasg.openapi import TYPE_STRING, Parameter, Schema
 from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action, parser_classes
-from rest_framework.parsers import FileUploadParser, FormParser, JSONParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import DetailSerializerMixin, NestedViewSetMixin
 
@@ -171,7 +171,7 @@ kick_reason_schema = Schema(
         },
     ),
 )
-@parser_classes([FormParser, MultiPartParser, FileUploadParser])
+@parser_classes([FormParser, MultiPartParser])
 class GamerCommunityViewSet(
     AutoPermissionViewSetMixin, NestedViewSetMixin, viewsets.ModelViewSet
 ):

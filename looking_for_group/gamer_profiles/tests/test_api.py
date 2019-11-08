@@ -173,7 +173,12 @@ def test_community_destructive_edits(
     else:
         url = reverse(viewname)
     with django_assert_max_num_queries(50):
-        response = getattr(apiclient, httpmethod)(url, data=post_data)
+        if httpmethod not in ["get", "delete"]:
+            response = getattr(apiclient, httpmethod)(
+                url, format="multipart", data=post_data
+            )
+        else:
+            response = getattr(apiclient, httpmethod)(url, data=post_data)
     print(response.data)
     assert response.status_code == expected_post_response
     if expected_post_response == 201:

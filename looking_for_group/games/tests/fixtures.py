@@ -14,7 +14,7 @@ from .. import models
 
 @pytest.fixture
 def apiclient():
-    return APIClient()
+    yield APIClient()
 
 
 class GamesTData(object):
