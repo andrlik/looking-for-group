@@ -115,3 +115,12 @@ LOGGING = {
 }
 
 GITLAB_PROJECT_ID = env("GITLAB_TEST_PROJECT_ID", default=None)
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = [  # noqa: F405
+    "rest_framework.throttling.AnonRateThrottle",
+    "rest_framework.throttling.UserRateThrottle",
+]
+
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
+    "anon": "15/minute",
+    "user": "60/minute",
+}
