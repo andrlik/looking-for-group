@@ -1,7 +1,7 @@
 {% load i18n markdownify %}
 {% if tour and user.is_authenticated %}
 <script type="text/javascript">
-  let tour_{{ tour.name }} = new Shepherd.Tour({
+  const tour_{{ tour.name }} = new Shepherd.Tour({
     tourName: "{{ tour.name }}",
     defaultStepOptions: {
       scrollTo: true,
@@ -10,7 +10,7 @@
 
   });
 
-  tour_{{ tour.name }}.addStep("intro_{{ tour.slug }}", {
+  tour_{{ tour.name }}.addStep({
 
     title: "{{ tour.name|capfirst }}",
     text: "{{ tour.description|safe|markdownify|safe }}",
@@ -22,9 +22,12 @@
     ]
   });
   {% for step in tour.steps.all %}
-  tour_{{ tour.name }}.addStep("{{ tour.name }}_{{ forloop.counter0 }}", {
+  tour_{{ tour.name }}.addStep({
     title: "{{ step.title }}",
-    attachTo: "#{{ step.target_id }} {{ step.placement|default_if_none:'bottom' }}",
+    attachTo: {
+      element: "#{{ step.target_id }}",
+      on: "{{ step.placement|default_if_none:'bottom' }}"
+    },
     text: "{{ step.guide_text|safe|markdownify|safe }}",
     {% if not forloop.first and not forloop.last %}
     buttons:  [
@@ -59,15 +62,15 @@
   });
   {% empty %}
   {% endfor %}
-  tour_{{ tour.name }}.on("complete", function() {
+  Shepherd.on("complete", function() {
     document.getElementById("top-nav-bar").scrollIntoView();
     jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
   });
-  tour_{{ tour.name }}.on("cancel", function() {
+  Shepherd.on("cancel", function() {
     document.getElementById("top-nav-bar").scrollIntoView();
     jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
   });
-  tour_{{ tour.name }}.on("hide", function() {
+  Shepherd.on("hide", function() {
     document.getElementById("top-nav-bar").scrollIntoView();
     jQuery("#content").animate({ scrollTop: jQuery("main").offset().top}, 2000);
   });
