@@ -259,7 +259,7 @@ class GamePostingViewSet(
         operation_description="Get the details for the given session. **NOTE**: If the user is just a player, the GM notes and player details will not be included.",
         manual_parameters=[parent_lookup_game__slug],
         responses={
-            200: serializers.GameApplicationGMSerializer,
+            200: serializers.GameSessionGMSerializer,
             403: "You are not a member of this game.",
         },
     ),
