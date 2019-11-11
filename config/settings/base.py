@@ -165,10 +165,10 @@ REST_FRAMEWORK = {
 OAUTH2_PROVIDER = {"SCOPES": {"full": "Access to read and write data in your account."}}
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
-        "basic": {
-            "type": "basic",
-            "description": "When using the API from within the same domain using the JavaScript API, it can use the existing session.",
-        },
+        # "basic": {
+        #     "type": "basic",
+        #     "description": "When using the API from within the same domain using the JavaScript API, it can use the existing session.",
+        # },
         "oauth2": {
             "type": "oauth2",
             "description": "Any external application needs to register their application with us and use OAuth for authentication.",
@@ -176,7 +176,7 @@ SWAGGER_SETTINGS = {
             "authorizationUrl": "https://app.lfg.directory/o/authorize/",
             "tokenUrl": "https://app.lfg.directory/o/token/",
             "scopes": OAUTH2_PROVIDER["SCOPES"],
-        },
+        }
     }
 }
 
