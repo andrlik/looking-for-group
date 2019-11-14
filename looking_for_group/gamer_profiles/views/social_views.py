@@ -1351,10 +1351,20 @@ class GamerProfileDetailView(
     template_name = "gamer_profiles/profile_detail.html"
 
     def get_object(self, queryset=None):
-        obj = cache.get_or_set(
-            "profile_{}".format(self.kwargs["gamer"]), super().get_object(queryset)
+        if not queryset:
+            queryset = self.get_queryset()
+        obj = get_object_or_404(
+            models.GamerProfile, username__iexact=self.kwargs["gamer"]
         )
         return obj
+
+    def get_queryset(self):
+        try:
+            self.kwargs["gamer"] = self.kwargs["gamer"].lower()
+        except Exception as err:
+            logger.error(str(err))
+        queryset = self.model.objects.filter(username__iexact=self.kwargs["gamer"])
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

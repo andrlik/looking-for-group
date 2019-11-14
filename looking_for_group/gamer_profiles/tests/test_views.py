@@ -1766,3 +1766,33 @@ def test_community_invite_view(
         assert assert_login_redirect(response)
     else:
         assert response.status_code == expected_get_response
+
+
+def test_case_insensitive_profile_url(client, keybase_testdata):
+    """
+    Ensure that we can find a user's profile even if it's submitted in a case insensitive manner.
+    """
+    client.force_login(keybase_testdata.gamer1.user)
+    url = reverse(
+        "gamer_profiles:profile-detail",
+        kwargs={"gamer": keybase_testdata.kb_user1.username},
+    )
+    response = client.get(url)
+    assert response.status_code == 200
+    first_gamer_retrieved = response.context["gamer"]
+    assert first_gamer_retrieved == keybase_testdata.kb_user1
+    response = client.get(url.lower())
+    assert response.status_code == 200
+    assert response.context["gamer"] == first_gamer_retrieved
+
+
+@pytest.mark.parametrize("target_user", ["kb_user1", "kb_user2"])
+def test_keybase_proof_filter(client, keybase_testdata, target_user):
+    client.force_login(keybase_testdata.gamer1.user)
+    kb_user = getattr(keybase_testdata, target_user)
+    url = reverse("gamer_profiles:profile-detail", kwargs={"gamer": kb_user.username})
+    response = client.get(url)
+    assert response.status_code == 200
+    proofs = response.context["kb_proofs"]
+    assert len(proofs) == 1
+    assert proofs[0].user == kb_user.user

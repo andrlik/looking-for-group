@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.utils import timezone
+from keybase_proofs.models import KeybaseProof
 
 from .. import models
 from ..tests import factories
@@ -115,3 +116,29 @@ def social_community_slug(social_testdata):
 @pytest.fixture
 def social_gamer_to_check(social_testdata):
     return social_testdata.gamer1
+
+
+@pytest.fixture
+def keybase_testdata(social_testdata):
+    social_testdata.kb_user1 = factories.GamerProfileFactory()
+    social_testdata.kb_user2 = factories.GamerProfileFactory()
+    social_testdata.kb_user1.user.username = "johntheWizard"
+    social_testdata.kb_user1.user.save()
+    social_testdata.kb_user1.refresh_from_db()
+    assert social_testdata.kb_user1.username == social_testdata.kb_user1.user.username
+    social_testdata.kb_proof1 = KeybaseProof.objects.create(
+        user=social_testdata.kb_user1.user,
+        kb_username="oogao",
+        sig_hash="kdfjsdijowdfjdo",
+        is_verified=True,
+    )
+    social_testdata.kb_proof2 = KeybaseProof.objects.create(
+        user=social_testdata.kb_user2.user,
+        kb_username="charlie",
+        sig_hash="fjidjfwodjdofj",
+        is_verified=True,
+    )
+    social_testdata.gamer1.friends.add(
+        social_testdata.kb_user1, social_testdata.kb_user2
+    )
+    yield social_testdata
