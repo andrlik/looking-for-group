@@ -1368,7 +1368,9 @@ class GamerProfileDetailView(
         context["week_availability"] = avail_calendar.get_weekly_availability(
             user_timezone
         )
-        context["kb_proofs"] = kb_models.KeybaseProof.objects.filter(is_verified=True)
+        context["kb_proofs"] = kb_models.KeybaseProof.objects.filter(
+            is_verified=True, user=context["gamer"].user
+        )
         return context
 
     def handle_no_permission(self):
