@@ -1,6 +1,4 @@
-from django.db import migrations, models
-
-from ..utils import get_latest_rn_version
+from django.db import migrations
 
 
 def populate_missing_releasenotice_stubs(apps, schema_editor):
@@ -9,7 +7,7 @@ def populate_missing_releasenotice_stubs(apps, schema_editor):
     x = 0
     print("Preparing to add stubs for users...")
     for u in User.objects.all():
-        RN.objects.create(user=u, latest_version_seen=get_latest_rn_version())
+        RN.objects.create(user=u)
         x += 1
     print("Added {} release notices stubs!".format(x))
 
@@ -21,7 +19,7 @@ def remove_releasenotice_slugs(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = ["releasenotes", "0001_initial"]
+    dependencies = [("releasenotes", "0001_initial")]
 
     operations = [
         migrations.RunPython(

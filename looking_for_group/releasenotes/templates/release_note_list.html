@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block subtitle %}{% trans "Release Notes" %}{% endblock %}
+{% block sectiontitle %}{% trans "Release Notes" %}{% endblock %}
+{% block mobileheader %}{% trans "Release Notes" %}{% endblock %}
+{% block content %}
+<p>{% blocktrans %}Check out what's changed below.{% endblocktrans %}</p>
+<ul>
+  {% for rn in rn_list %}
+  <li><strong>{{ rn.version }}</strong> ({{ rn.release_date }})
+    {{ rn.notes_rendered|safe }}
+  </li>
+{% empty %}
+{% endfor %}
+</ul>
+{% endblock %}

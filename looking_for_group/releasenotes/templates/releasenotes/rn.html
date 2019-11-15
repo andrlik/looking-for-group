@@ -1,0 +1,11 @@
+{% extends "releasenotes/base.html" %}
+{% block rn_content %}
+<ul>
+  {% for rn in notes_to_render %}
+  <li><strong>{{ rn.version }}</strong> ({{rn.release_date }})
+   {{ rn.notes_rendered|safe }}
+  </li>
+{% empty %}
+{% endfor %}
+</ul>
+{% endblock %}

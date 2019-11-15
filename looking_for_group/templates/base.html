@@ -1,4 +1,4 @@
-{% load static i18n compress avatar_tags notifications_tags cookielaw_tags %}<!DOCTYPE html>
+{% load static i18n compress avatar_tags notifications_tags cookielaw_tags releasenote_tags %}<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -208,6 +208,14 @@
       <h1 class="hide-for-medium">{% block mobileheader %}{% endblock %}</h1>
       <p></p>
       <div class="clearfix">
+        <div class="reveal" id="rn-modal" data-reveal>
+          <button class="close-button" data-close aria-label="Close modal" type="button">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          {% if request.user.is_authenticated and request.session.release_notes %}
+          {% render_release_notes request.session.release_notes %}
+          {% endif %}
+        </div>
       {% block content %}
       <h1>{% trans "Welcome to LFG Directory!" %}</h1>
       <p>{% blocktrans %}LFG Directory provides a service where GMs can post games for players to find, and even manage the schedule for those games through the site. Game times automatically are displayed in the player's calendar in their timezone. Games can either be publically visible for any player to apply to join, limited to friends and community members, or even unlisted with a private invitation link. All games, communities, and user profiles on LFG are {% endblocktrans %}<strong>{% trans "private by default" %}</strong>.</p>
@@ -353,6 +361,12 @@
         });
 
       </script>
+      {% if request.user.is_authenticated and request.session.release_notes %}
+      <script type="text/javascript">
+        jQuery("#rn-modal").foundation('open');
+        {% update_latest_seen request.session.release_notes %}
+      </script>
+      {% endif %}
 
       {% block simplemde %}
       {% endblock %}

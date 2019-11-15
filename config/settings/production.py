@@ -211,6 +211,7 @@ LOGGING = {
         "helpdesk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "locations": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "api": {"level": "ERROR", "handlers": ["console"], "propagate": False},
+        "releasenotes": {"level": "ERROR", "handlers": ["console"], "propagate": False},
     },
 }
 
