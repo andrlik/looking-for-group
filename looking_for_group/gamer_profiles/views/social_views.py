@@ -23,6 +23,7 @@ from django.utils.http import is_safe_url
 from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from keybase_proofs import models as kb_models
+from keybase_proofs import views as kb_views
 from notifications.signals import notify
 from rest_framework.renderers import JSONRenderer
 from rules.contrib.views import PermissionRequiredMixin
@@ -2301,3 +2302,27 @@ class ExportProfileView(
             context["gamer"].username
         )
         return response
+
+
+class CaseInsensitiveKBOverrideMixin:
+    """
+    Overrides the default case sensitive Keybase search
+    """
+
+    def get_queryset(self):
+        username = self.kwargs.get("username", "")
+        user = get_object_or_404(get_user_model(), username__iexact=username)
+        queryset = self.model.objects.filter(user=user)
+        return queryset
+
+
+class KeybaseProofProfileOverridenView(
+    CaseInsensitiveKBOverrideMixin, kb_views.KeybaseProofProfileView
+):
+    pass
+
+
+class KeybaseProofListOverrideView(
+    CaseInsensitiveKBOverrideMixin, kb_views.KeybaseProofListView
+):
+    pass

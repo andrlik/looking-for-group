@@ -13,7 +13,7 @@
     <nav>
       <ul class="menu align-right">
         {% block innernavmenu %}
-        <li{% block profileactive %}{% endblock %}><a href="{% url 'keybase_proofs:profile' %}"><i class="fas fa-user"></i> {% trans "Keybase profile" %}</a></li>
+        <li{% block profileactive %}{% endblock %}><a href="{% url 'keybase-profile' request.user.username %}"><i class="fas fa-user"></i> {% trans "Your Keybase profile" %}</a></li>
         {% endblock %}
       </ul>
     </nav>

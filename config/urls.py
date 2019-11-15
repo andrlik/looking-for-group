@@ -6,7 +6,9 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
+from keybase_proofs.views import KeybaseProofView
 
+from looking_for_group.gamer_profiles.views import KeybaseProofListOverrideView, KeybaseProofProfileOverridenView
 from looking_for_group.user_preferences.views import (
     Dashboard,
     HomeView,
@@ -32,7 +34,21 @@ urlpatterns = [
         SiteSocialStatsView.as_view(),
         name="site-social-stats",
     ),
-    path("keybase-proofs/", include("keybase_proofs.urls")),
+    path(
+        "keybase-proofs/api/<slug:username>/",
+        KeybaseProofListOverrideView.as_view(),
+        name="keybase-proofs-api",
+    ),
+    path(
+        "keybase-proofs/profile/<slug:username>/",
+        KeybaseProofProfileOverridenView.as_view(),
+        name="keybase-profile",
+    ),
+    path(
+        "keybase-proofs/new-proof",  # Here we don't have the trailing slash because of how the app works.
+        KeybaseProofView.as_view(),
+        name="keybase-new-proof",
+    ),
     path(
         "dashboard/stats/catalog/",
         SiteCatalogStatsView.as_view(),
