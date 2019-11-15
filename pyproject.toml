@@ -69,6 +69,8 @@ drf-writable-nested = "^0.5.1"
 drf_yasg = "^1.17"
 django-oauth-toolkit = "^1.2"
 semantic_version = "^2.8"
+rst_to_md = {git = "https://github.com/sixty-north/rst_to_md"}
+ipython = "^7.9"
 
 [tool.poetry.dev-dependencies]
 sphinx = "~2.1.1"
