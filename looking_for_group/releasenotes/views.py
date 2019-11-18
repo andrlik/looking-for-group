@@ -27,4 +27,4 @@ class ReleaseNotesJSONView(generic.ListView):
         return rn_serial.data
 
     def render_to_response(self, context, **kwargs):
-        return JsonResponse(self.get_data())
+        return JsonResponse(data=self.get_data(), safe=False)

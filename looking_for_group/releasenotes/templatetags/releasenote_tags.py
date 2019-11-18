@@ -2,6 +2,8 @@ import logging
 
 from django.template import Library
 
+from ..signals import user_specific_notes_displayed
+
 logger = logging.getLogger("releasenotes")
 
 register = Library()
@@ -12,12 +14,22 @@ def render_release_notes(release_note_list):
     return {"notes_to_render": release_note_list}
 
 
-@register.simple_tag()
-def update_latest_seen(user, release_note_list):
-    if user.is_authenticated:
+@register.simple_tag(takes_context=True)
+def update_latest_seen(context, user, release_note_list=None):
+    logger.debug("Received call to update latest version shown...")
+    if user.is_authenticated and release_note_list:
         logger.debug(
-            "Received call to update lastest version shown for {}".format(user.username)
+            "Firing signal to update user records based on note set {}".format(
+                release_note_list
+            )
         )
-        latest_note = release_note_list.latest("release_date")
-        user.releasenotice.latest_vesion_shown = latest_note
-        user.releasenotice.save()
+        user_specific_notes_displayed.send(
+            sender=type(user),
+            user=user,
+            note_list=release_note_list,
+            request=context["request"],
+        )
+    else:
+        logger.debug(
+            "User is not authenticated or there are no missing release notes to show them."
+        )

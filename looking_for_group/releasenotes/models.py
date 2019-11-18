@@ -51,4 +51,4 @@ class ReleaseNote(TimeStampedModel, AbstractUUIDModel, models.Model):
         return str(self.version)
 
     class Meta:
-        ordering = ["-version"]
+        ordering = ["-release_date"]

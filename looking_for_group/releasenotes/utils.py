@@ -7,7 +7,6 @@ import pytz
 import semantic_version
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import timezone
 from docutils.parsers import rst
 from rst_to_md.writer import Writer as MDWriter
 
