@@ -70,6 +70,9 @@ def test_release_note_context(
         gamer = getattr(rn_testdata, gamertouse)
         notice = getattr(rn_testdata, "gn{}".format(gamertouse[-1]))
         client.force_login(gamer.user)
+        expected_notes = ReleaseNote.objects.filter(
+            release_date__gt=notice.latest_version_shown.release_date
+        ).order_by("-release_date", "-version")
         with mute_signals(user_specific_notes_displayed):
             user_logged_in.send(
                 sender=type(gamer.user),
@@ -83,5 +86,16 @@ def test_release_note_context(
     if expected_get_location:
         assert expected_get_location in response["Location"]
     else:
+        # if expected_note_count > 0:
+        #     assert "<li><strong>1.10.1" in str(response.content.decode("utf8"))
+        # else:
+        #     assert "<li><strong>1.10.1" not in str(response.content.decode("utf8"))
+        if expected_notes:
+            user_specific_notes_displayed.send(
+                sender=type(gamer.user),
+                user=gamer.user,
+                note_list=ReleaseNoteSerializer(expected_notes, many=True).data,
+                request=response.wsgi_request,
+            )
         notice.refresh_from_db()
         assert notice.latest_version_shown == ReleaseNote.objects.latest("release_date")

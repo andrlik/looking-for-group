@@ -20,11 +20,17 @@ class ReleaseNotice(TimeStampedModel, AbstractUUIDModel, models.Model):
     )
 
     def __str__(self):
-        return _(
-            "{} saw notes for version {} at {}".format(
-                self.user, self.latest_version_shown, self.created
-            )
-        )
+        str_response = "{} saw notes for version {} at {}"
+        str_args = None
+        if self.latest_version_shown:
+            str_args = [
+                self.user.username,
+                self.latest_version_shown.version,
+                self.modified,
+            ]
+        else:
+            str_args = [self.user.username, None, self.created]
+        return str_response.format(*str_args)
 
 
 class ReleaseNote(TimeStampedModel, AbstractUUIDModel, models.Model):

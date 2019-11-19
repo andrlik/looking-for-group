@@ -8,6 +8,7 @@ from markdown import markdown
 
 from ..users.models import User
 from .models import ReleaseNote, ReleaseNotice
+from .serializers import ReleaseNoteSerializer
 from .signals import user_specific_notes_displayed
 
 logger = logging.getLogger("releasenotes")
@@ -36,7 +37,7 @@ def render_markdown_to_field(sender, instance, *args, **kwargs):
 
 
 @receiver(user_logged_in)
-def check_for_release_notes_to_show(sender, instance, request, user, *args, **kwargs):
+def check_for_release_notes_to_show(sender, request, user, *args, **kwargs):
     """
     Check to see what the last set of release notes was to show this user.
     """
@@ -75,7 +76,9 @@ def check_for_release_notes_to_show(sender, instance, request, user, *args, **kw
             .exclude(version=user.releasenotice.latest_version_shown.version)
             .order_by("-release_date")
         )
-        request.session["release_notes"] = notes_to_display
+        request.session["release_notes"] = ReleaseNoteSerializer(
+            notes_to_display, many=True
+        ).data
         logger.debug(
             "Updated session and set release notes to {}".format(
                 request.session["release_notes"]
@@ -90,9 +93,7 @@ def check_for_release_notes_to_show(sender, instance, request, user, *args, **kw
 
 
 @receiver(user_specific_notes_displayed)
-def update_latest_release_note_scene(
-    sender, instance, user, note_list, request, *args, **kwargs
-):
+def update_latest_release_note_scene(sender, user, note_list, request, *args, **kwargs):
     """
     Update the latest note seen.
     """
@@ -102,7 +103,7 @@ def update_latest_release_note_scene(
                 user.username, note_list
             )
         )
-        latest_note = note_list.latest("release_date")
+        latest_note = ReleaseNote.objects.get(version=note_list[0]["version"])
         user.releasenotice.latest_version_shown = latest_note
         user.releasenotice.save()
         logger.debug(
@@ -110,5 +111,7 @@ def update_latest_release_note_scene(
                 user.username, latest_note.version
             )
         )
-        del request.session["release_notes"]
+        # This check is just to support the django test client
+        if "release_notes" in request.session.keys():
+            del request.session["release_notes"]
         logger.debug("Removed extraneous release notest from session.")

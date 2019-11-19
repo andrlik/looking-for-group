@@ -56,6 +56,11 @@ def load_release_notes_from_file(filename=None):
         notes_to_use = mdwriter.write(
             node_doc, docutils.io.StringOutput(encoding="utf8")
         ).decode("utf8")
+        # We need to add a hack here because the mdwriter object isn't creating the sublist correctly
+        # TODO: Fork and patch the rst_to_md package.
+        notes_to_use = notes_to_use.replace("\n  +", "\n    +").replace(
+            "\n    *", "\n        *"
+        )
         logger.debug(
             "Converted {} to {} for version {}".format(v["notes"], notes_to_use, k)
         )

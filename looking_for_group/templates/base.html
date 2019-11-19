@@ -292,7 +292,7 @@
             <li><a href="https://www.lfg.directory/privacy/">{% trans "Privacy policy" %}</a></li>
             <li><a href="https://www.lfg.directory/terms/">{% trans "Terms and Conditions" %}</a></li>
 	    <li><a href="{% url 'helpdesk:issue-list' %}" title="Feature requests/Bug tracker" target="_blank">{% trans "Support" %}</a></li>
-              <li><a href="https://www.lfg.directory/release-notes/" target="_blank" title="Release notes for app">v{{APP_VERSION}}</a></li>
+              <li><a href="{% url 'releasenotes:note-list' %}" title="Release notes for app">v{{APP_VERSION}}</a></li>
           </ul>
         </div>
       </div>
@@ -364,7 +364,7 @@
       {% if request.user.is_authenticated and request.session.release_notes %}
       <script type="text/javascript">
         jQuery("#rn-modal").foundation('open');
-        {% update_latest_seen request.session.release_notes %}
+        {% update_latest_seen request.user request.session.release_notes %}
       </script>
       {% endif %}
 

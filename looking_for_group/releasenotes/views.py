@@ -13,14 +13,14 @@ class ReleaseNotesView(generic.ListView):
     context_object_name = "rn_list"
 
     def get_queryset(self):
-        return self.model.objects.all().order_by("-version")
+        return self.model.objects.all().order_by("-release_date", "-version")
 
 
 class ReleaseNotesJSONView(generic.ListView):
     model = models.ReleaseNote
 
     def get_queryset(self):
-        return self.model.objects.all().order_by("-version")
+        return self.model.objects.all().order_by("-release_date", "-version")
 
     def get_data(self):
         rn_serial = serializers.ReleaseNoteSerializer(self.get_queryset(), many=True)

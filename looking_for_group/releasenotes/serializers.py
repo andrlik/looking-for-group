@@ -9,6 +9,6 @@ class ReleaseNoteSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        fields = ("version", "notes", "notes_rendered")
+        fields = ("version", "release_date", "notes", "notes_rendered")
         read_only_fields = fields
         model = ReleaseNote
