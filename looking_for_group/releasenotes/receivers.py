@@ -21,10 +21,10 @@ def add_placeholder_version_shown(sender, instance, created, *args, **kwargs):
     """
     if created:
         try:
-            latest_note = ReleaseNote.objects.lastest("date_released")
+            latest_note = ReleaseNote.objects.latest("release_date")
         except ObjectDoesNotExist:
             latest_note = None
-        ReleaseNotice.objects.create(user=instance, latest_version_seen=latest_note)
+        ReleaseNotice.objects.create(user=instance, latest_version_shown=latest_note)
 
 
 @receiver(pre_save, sender=ReleaseNote)
@@ -114,4 +114,4 @@ def update_latest_release_note_scene(sender, user, note_list, request, *args, **
         # This check is just to support the django test client
         if "release_notes" in request.session.keys():
             del request.session["release_notes"]
-        logger.debug("Removed extraneous release notest from session.")
+        logger.debug("Removed extraneous release notes from session.")
