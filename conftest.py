@@ -12,6 +12,7 @@ from looking_for_group.games.tests.fixtures import *  # noqa
 from looking_for_group.helpdesk.tests.fixtures import *  # noqa
 from looking_for_group.invites.tests.fixtures import *  # noqa
 from looking_for_group.locations.tests.fixtures import *  # noqa
+from looking_for_group.releasenotes.tests.fixtures import *  # noqa
 from looking_for_group.rpgcollections.tests.fixtures import *  # noqa
 
 

@@ -111,6 +111,7 @@ LOGGING = {
         "locations": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "helpdesk": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
         "api": {"level": "DEBUG", "handlers": ["console"], "propagate": True},
+        "releasenotes": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
     },
 }
 

@@ -49,6 +49,7 @@ urlpatterns = [
         KeybaseProofView.as_view(),
         name="keybase-new-proof",
     ),
+    path("releasenotes/", include("looking_for_group.releasenotes.urls")),
     path(
         "dashboard/stats/catalog/",
         SiteCatalogStatsView.as_view(),
