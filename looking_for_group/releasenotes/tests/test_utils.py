@@ -11,8 +11,8 @@ def test_load_release_notes_empty():
     all_notes, new_notes, updated_notes = load_release_notes_from_file(
         filename="looking_for_group/releasenotes/tests/test_changelog.rst"
     )
-    assert ReleaseNote.objects.count() == 51
-    assert all_notes == 51
+    assert ReleaseNote.objects.count() == 52
+    assert all_notes == 52
     assert new_notes == all_notes
     assert updated_notes == 0
     # missing_note = ReleaseNote.objects.filter(notes_rendered__isnull=True)[0]
