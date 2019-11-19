@@ -7,6 +7,15 @@ Release Notes
 You’ll find a changelog for our code updates here.
 
 **************************
+1.11.0 (2019-11-18)
+**************************
+
+- Enhancements
+  + ✨ Release notes are now embedded into the app to reduce double documentation.
+  + ✨ New updates are shown to a user on login based on the last set of release notes they saw.
+  + 🚀 Update to Django 2.2.7 bugfix release.
+
+**************************
 1.10.4 (2019-11-14)
 **************************
 
