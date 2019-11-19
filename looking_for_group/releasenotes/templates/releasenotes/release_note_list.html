@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block subtitle %}{% trans "Release Notes" %} {% endblock %}
+
+{% block content %}
+<h1>{% trans "Release Notes" %}</h1>
+<div class="grid-x grid-margin-x">
+  <div class="cell medium-1"></div>
+  <div class="cell medium-8">
+    <div class="card">
+      <div class="card-divider"><h2>{% trans "Changelog" %}</h2></div>
+      <div class="card-section">
+        <p>{% blocktrans %}Check out what's changed below.{% endblocktrans %}</p>
+        <table class="hover scroll">
+          <thead>
+            <tr>
+              <th class="text-right">{% trans "Version" %}</th>
+              <th class="text-right" width="200">{% trans "Release Date" %}</th>
+              <th>{% trans "What's new" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rn in rn_list %}
+            <tr>
+            <td class="text-right"><strong>{{ rn.version }}</strong></td>
+            <td class="text-right" width="200">{{ rn.release_date }}</td>
+            <td class="rn-list-cell">{{ rn.notes_rendered|safe }}</td>
+            </tr>
+            {% empty %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="cell auto"></div>
+</div>
+{% endblock %}

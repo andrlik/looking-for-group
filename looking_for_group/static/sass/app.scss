@@ -888,3 +888,20 @@ span.social_stat_detail {
 span.social_loading {
   display:block;
 }
+.rn-list-cell ul {
+  list-style-type: none;
+  font-weight: bold;
+
+  li ul {
+    font-weight: normal;
+  }
+}
+
+ul.rn-list li ul {
+  list-style-type: none;
+  font-weight: bold;
+
+  li ul {
+    font-weight: normal;
+  }
+}
