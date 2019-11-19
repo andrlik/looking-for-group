@@ -7,6 +7,13 @@ Release Notes
 You’ll find a changelog for our code updates here.
 
 **************************
+1.10.4 (2019-11-14)
+**************************
+
+- Bug Fixes
+  + 🐛 Addiitonal Keybase fixes as we move towards full integration with the Keybase production client.
+
+**************************
 1.10.3 (2019-11-13)
 **************************
 
