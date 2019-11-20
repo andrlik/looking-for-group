@@ -7,6 +7,14 @@ Release Notes
 You’ll find a changelog for our code updates here.
 
 **************************
+1.11.1 (2019-11-19)
+**************************
+
+- Enhancements
+  + 🎨 Improve mobile version of release notes view.
+  + ✅ ♿ Add accessibility tests for the release notes.
+
+**************************
 1.11.0 (2019-11-18)
 **************************
 

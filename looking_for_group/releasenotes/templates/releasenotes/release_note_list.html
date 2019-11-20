@@ -12,19 +12,19 @@
       <div class="card-divider"><h2>{% trans "Changelog" %}</h2></div>
       <div class="card-section">
         <p>{% blocktrans %}Check out what's changed below.{% endblocktrans %}</p>
-        <table class="hover scroll">
+        <table class="hover stack">
           <thead>
             <tr>
               <th class="text-right">{% trans "Version" %}</th>
-              <th class="text-right" width="200">{% trans "Release Date" %}</th>
+              <th class="text-right" width="150">{% trans "Release Date" %}</th>
               <th>{% trans "What's new" %}</th>
             </tr>
           </thead>
           <tbody>
             {% for rn in rn_list %}
             <tr>
-            <td class="text-right"><strong>{{ rn.version }}</strong></td>
-            <td class="text-right" width="200">{{ rn.release_date }}</td>
+              <td><div class="show-for-medium text-right"><strong>{{ rn.version }}</strong></div><div class="show-for-small-only text-center"><strong>{{ rn.version }}</strong></div></td>
+             <td><div class="show-for-medium text-right">{{ rn.release_date }}</div><div class="show-for-small-only text-center">{{ rn.release_date }}</div></td>
             <td class="rn-list-cell">{{ rn.notes_rendered|safe }}</td>
             </tr>
             {% empty %}
