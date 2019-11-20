@@ -13,6 +13,8 @@ You’ll find a changelog for our code updates here.
 - Enhancements
   + 🎨 Improve mobile version of release notes view.
   + ✅ ♿ Add accessibility tests for the release notes.
+- Bug Fixes
+  + 🐛 Fix for mobile header display on helpdesk views.
 
 **************************
 1.11.0 (2019-11-18)
