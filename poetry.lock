@@ -402,6 +402,17 @@ django-classy-tags = ">=0.3.0"
 pytest-runner = ">=2.11.1"
 
 [[package]]
+category = "main"
+description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
+name = "django-cors-headers"
+optional = false
+python-versions = ">=3.5"
+version = "3.2.0"
+
+[package.dependencies]
+Django = ">=1.11"
+
+[[package]]
 category = "dev"
 description = "Django template coverage.py plugin"
 name = "django-coverage-plugin"
@@ -1929,7 +1940,7 @@ setuptools = "*"
 "zope.interface" = "*"
 
 [metadata]
-content-hash = "052a29d8fe7079b4bd799769ffcb39c0e123f099d46d1cd8b5f764f96592ce4f"
+content-hash = "d2a39cdbce23a866a0def5d724aa43ccfbd7cb9c755629028380a952be27d656"
 python-versions = "~3.6 || ^3.7 || ^3.8"
 
 [metadata.hashes]
@@ -1971,6 +1982,7 @@ django-braces = ["a457d74ea29478123c0c4652272681b3cea0bf1232187fd9f9b6f1d97d32a8
 django-classy-tags = ["38b4546a8053499e2fef7af679a58d7c868298717d645b8b8227acba5fd4bf2b"]
 django-compressor = ["47c86347f75c64954a06afbbfc820a750619e10c23a49272b865020a407b7edd", "da9ee5ce4fc8b9211dcecd2229520514a4ba9ac3bcdc59b48092ec4d7f6b96b0"]
 django-cookie-law = ["60613b202ca882746c86cd5e09c015667fd316ed7320c2ea4cdd651c58380be8", "9aa148b901e8c96256f513e5b4d9eb4be9541e995727aa41eb30bf52dc2f6c87"]
+django-cors-headers = ["84933651fbbde8f2bc084bef2f077b79db1ec1389432f21dd661eaae6b3d6a95", "a8b2772582e8025412f4d4b54b617d8b707076ffd53a2b961bd24f10ec207a7c"]
 django-coverage-plugin = ["8810678115ea541f85f4fdfa248e2bf703f05ac6740f6dbd9860d11a9861672f"]
 django-debug-toolbar = ["89d75b60c65db363fb24688d977e5fbf0e73386c67acf562d278402a10fc3736", "c2b0134119a624f4ac9398b44f8e28a01c7686ac350a12a74793f3dd57a9eea0"]
 django-environ = ["6c9d87660142608f63ec7d5ce5564c49b603ea8ff25da595fd6098f6dc82afde", "c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"]
