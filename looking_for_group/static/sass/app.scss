@@ -1,11 +1,9 @@
 @charset 'utf-8';
 
+// Mode selector
+
 @import 'sass/settings';
 @import 'libs/foundation-sites/scss/foundation';
-$alert-color: #c44031;
-$dark-gray: #767676;
-$tab-active-color: #006ca9;
-$switch-background: $dark-gray;
 
 
 @include foundation-global-styles;
@@ -54,18 +52,194 @@ $switch-background: $dark-gray;
 @include foundation-flex-classes;
 // @include foundation-prototype-classes;
 
+:root {
+  @each $name, $color in $foundation-palette {
+    --color-#{$name}: #{$color};
+  }
+}
 
-/********* Project Scss **************/
+@media (prefers-color-scheme: dark) {
+  :root {
+    @each $name, $color in $foundation-palette-dark {
+      --color-#{$name}: #{$color};
+    }
+  }
+}
+
+@function getCSSColor($color-name) {
+  @return var(--color-#{$color-name});
+}
+
+body{
+  background-color: getCSSColor(body-background);
+  color: getCSSColor(body-font-color);
+}
+  $alert-color: #c44031;
+  $dark-gray: #767676;
+  $tab-active-color: #006ca9;
+  $switch-background: $dark-gray;
+
+  .qrcode {
+    background-color: $white;
+  }
+  .callout {
+    background-color: getCSSColor(body-background);
+    color: getCSSColor(body-font-color);
+  .error
+  {
+    background-color: #fce6e2;
+    color: $black;
+  }
+
+  .info
+  {
+    background-color: #ebebeb;
+    color: $black;
+  }
+
+  .debug
+  {
+    background-color: #d6e9c6;
+    color: $black;
+  }
+  }
+  a {
+    color: getCSSColor(anchor);
+  }
+  a.button, .button {
+    background-color: getCSSColor(default-button);
+    color: getCSSColor(default-button-text);
+
+
+    &.primary{
+      background-color: getCSSColor(default-button);
+      color: getCSSColor(default-button-text);
+
+    }
+
+    &.alert {
+      background-color: #c44031;
+
+    }
+  }
+
+  button[disabled], .button.disabled.primary {
+    background-color: getCSSColor(default-button);
+    color: getCSSColor(default-button-text);
+  }
+
+  .editor-toolbar {
+    button {
+      color: getCSSColor(body-font-color);
+      background-color: getCSSColor(body-background);
+      &:hover {
+        color: getCSSColor(body-background);
+        background-color: getCSSColor(body-font-color);
+      }
+    }
+  }
+  .app-dashboard-sidebar {
+    background-color: getCSSColor(body-background);
+  }
+  .app-dashboard-sidebar-footer {
+    background-color: getCSSColor(body-background);
+  }
+  tbody{
+    tr {
+      &:hover {
+        background: #fcf7da;
+      }
+    }
+  }
+  table.hover {
+    thead {
+      tr {
+        background-color: getCSSColor(body-background);
+        color: getCSSColor(body-font-color);
+
+        &:hover {
+          background-color: getCSSColor(body-background);
+          color: getCSSColor(body-font-color);
+        }
+      th a {
+         color: getCSSColor(anchor);
+            }
+    }
+  }
+    tbody {
+      tr {
+        background-color: getCSSColor(body-background);
+        color: getCSSColor(body-font-color);
+
+        &:hover {
+          background-color: getCSSColor(body-font-color);
+          color: getCSSColor(body-background);
+          td blockquote p {
+            background-color: getCSSColor(blockquote-inverted);
+            color: getCSSColor(body-background);
+          }
+
+        }
+
+        td{
+          blockquote p {
+            background-color: getCSSColor(tertiary);
+            color: getCSSColor(body-font-color);
+          }
+        a {
+            color: getCSSColor(anchor);
+          }
+
+        }
+        &:nth-child(even) {
+          background-color: getCSSColor(table-stripe);
+          td a {
+            color: #5089c1;
+            &.primary {
+              color: getCSSColor(default-button-text);
+              background-color: getCSSColor(primary);
+            }
+              &.alert{
+                color: $white !important;
+              }
+
+          }
+        }
+      }
+    }
+  }
+
+
+  label{
+    color: getCSSColor(body-font-color);
+  }
+  input{
+    background-color: getCSSColor(body-background);
+    color: getCSSColor(body-font-color)
+  }
+
+
+  /********* Project Scss **************/
 
 ul.breadcrumbs, ul.pagination {
 
- li.disabled {
-  color: #767676;
+  li {
+    color: getCSSColor(body-font-color);
+    a {
+      color: getCSSColor(anchor);
+    }
+ &.disabled {
+   color: #7d7d7d;
  }
+  }
+}
+
+.primary {
+  background-color: getCSSColor(primary);
 }
 
 form span.fake-label {
-  color: $form-label-color;
+  color: getCSSColor(body-font-color);
   font-size: $form-label-font-size;
   font-weight: $form-label-font-weight;
   line-height: $form-label-line-height;
@@ -80,29 +254,8 @@ form span.fake-label {
 }
 
 /******** Colouring for messages from Django messages framework **********/
-
-.callout.error
-{
-  background-color: #fce6e2;
-}
-
-.callout.info
-{
-  background-color: #ebebeb;
-}
-
-.callout.debug
-{
-  background-color: #d6e9c6;;
-}
 $app-dashboard-top-nav-color: #2c3840;
 $app-dashboard-top-nav-height: 60px;
-
-.button {
-  &.alert {
-    background-color: #c44031;
-  }
-}
 
 .notify-container {
   vertical-align: top;
@@ -296,7 +449,7 @@ $app-dashboard-top-nav-height: 60px;
 }
 
 .app-dashboard-sidebar {
-  background-color: $white;
+  background-color: getCSSColor(body-background);
   min-height: 100%;
   overflow-x: visible;
   overflow-y: auto;
@@ -327,6 +480,7 @@ $app-dashboard-top-nav-height: 60px;
     -webkit-overflow-scrolling: touch;
     .menu > li > a {
       align-items: center;
+      color: getCSSColor(sidebar-control);
     }
   }
   .fa.large {
@@ -350,7 +504,6 @@ $app-dashboard-top-nav-height: 60px;
 }
 
 .app-dashboard-sidebar-footer {
-  background: rgba(42, 57, 79, 0.8);
   bottom: 0;
   left: 0;
   padding: 1rem;
@@ -369,10 +522,10 @@ $app-dashboard-top-nav-height: 60px;
   flex: 1 1 0;
   min-height:100%;
   padding: 20px;
-  background-color: $white;
+  background-color: getCSSColor(body-background);
 
   .title-bar {
-    background-color: $primary-color;
+    background-color: getCSSColor(blue-color);
     li.menu-text{color: $white;}
     a {color: $white;}
     a:hover {color: $white;}
@@ -405,6 +558,7 @@ $app-dashboard-top-nav-height: 60px;
   .off-canvas-content {
     margin-left: 80px;
     width: calc(100% - 80px);
+
   }
 
   .navigation {
@@ -504,7 +658,7 @@ $app-dashboard-top-nav-height: 60px;
   }
 }
 .dashboard-nav-card {
-  background: $primary-color;
+  background-color: getCSSColor(blue-color);
   border-radius: $card-border-radius;
   color: $white;
   display: block;
@@ -517,7 +671,7 @@ $app-dashboard-top-nav-height: 60px;
   &:hover {
     .dashboard-nav-card-title,
     .dashboard-nav-card-icon {
-      color: $white;
+    color: $white;
     }
 
     .dashboard-nav-card-icon {
@@ -530,15 +684,17 @@ $app-dashboard-top-nav-height: 60px;
 .dashboard-nav-card-stat{
   vertical-align: middle;
   font-size:2rem;
-  color:$white;
+ // color:$body-font-color;
   font-weight:bold;
   text-align:center;
   width: 100%;
   margin:auto;
+  color: getCSSColor(body-font-color);
 }
 
 .dashboard-nav-card-icon {
   font-size: rem-calc(20);
+ // color: getCSSColor(body-font-color);
   left: 1rem;
   opacity: 0.5;
   position: absolute;
@@ -549,6 +705,7 @@ $app-dashboard-top-nav-height: 60px;
 
 .dashboard-nav-card-title {
   bottom: 0;
+ // color: getCSSColor(body-font-color);
   position: absolute;
   right: 1rem;
   text-align: right;
@@ -603,7 +760,7 @@ $app-dashboard-top-nav-height: 60px;
       transition: all 0.5s ease;
 
       &:hover {
-        background: #fcf7da;
+
         transition: all 0.5s ease;
       }
       &:nth-child(even) {
@@ -637,7 +794,12 @@ $app-dashboard-top-nav-height: 60px;
 }
 
 .card-divider {
-  background: get-color('primary');
+  background: getCSSColor(blue-color);
+  color: $white;
+}
+
+.card {
+  background-color: $black;
   color: $white;
 }
 
@@ -680,7 +842,7 @@ table {
 }
 h2 {
   .fa-discord {
-  color: #6577be;
+  color: getCSSColor(discord);
   }
 }
 footer{
@@ -688,7 +850,7 @@ footer{
 }
 
 .footer {
-  color:get-color(secondary);
+  color:getCSSColor(secondary);
   flex-shrink: 0;
 }
 
@@ -701,6 +863,9 @@ ul.footer-list {
   li {
     display:inline-block;
     padding-left:2em;
+    a {
+      color: getCSSColor(anchor);
+    }
   }
 }
 
@@ -803,15 +968,6 @@ a.anchor {
   }
 }
 
-table {
-  thead th a {
-    color: #0b77b9;
-  }
-  tbody td a {
-    color: #0073b4;
-  }
-}
-
 .fc-state-disabled {
   &:disabled {
   color: #727272 !important;
@@ -837,7 +993,7 @@ table {
 }
 
 blockquote p {
-  color: $dark-gray !important;
+  color: getCSSColor(blockquote-default-text);
 }
 
 div#CookielawBanner {
@@ -860,10 +1016,27 @@ div#CookielawBanner {
   color: #757674 !important;
 }
 
-ul.tabs li.tabs-title a.truly-selected {
-  background:#e6e6e6;
-  color: #006ca9;
+ul.tabs{
+  background-color: getCSSColor(body-background);
+  li.tabs-title a{
+    color: getCSSColor(anchor);
+    .truly-selected {
+  background-color: getCSSColor(tertiary);
+  color: getCSSColor(tab-selected-anchor);
+    }
+
+  }
+  li.tabs-title a[aria-selected='true']{
+    background-color: getCSSColor(tertiary);
+    color: getCSSColor(tab-selected-anchor);
+  }
 }
+
+div.tabs-content {
+  background-color: getCSSColor(body-background);
+  color: getCSSColor(body-font-color);
+}
+
 
 div.striped {
   background-color: $table-striped-background;
@@ -904,4 +1077,7 @@ ul.rn-list li ul {
   li ul {
     font-weight: normal;
   }
+}
+.reveal {
+  color: $black;
 }

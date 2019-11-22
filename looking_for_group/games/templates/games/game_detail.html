@@ -270,7 +270,7 @@
             {% if game.next_session_time %}
           {% if game.get_next_session and game.get_next_session.scheduled_time == game.next_session_time %}
           <p>{% blocktrans %}You have a session pending completion before you can create the next regular session.{% endblocktrans %}</p>
-          <button class="button float-left disabled" disabled>{% trans "Create next regular session" %}</button>
+          <button class="button primary float-left disabled" disabled>{% trans "Create next regular session" %}</button>
           {% else %}
           <form action="{% url 'games:session_create' gameid=game.slug %}" method="post">
             {% csrf_token %}

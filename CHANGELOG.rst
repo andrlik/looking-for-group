@@ -7,6 +7,14 @@ Release Notes
 You’ll find a changelog for our code updates here.
 
 **************************
+1.11.2 (2019-11-22)
+**************************
+
+- Enhancements
+  + 🎨 Support for Dark Mode! If your OS or browser indicates that you prefer a dark color scheme, the colors of the site will automatically adopt it.
+  + ♿ Accessibility work for Dark Mode. Our Dark Mode, like our standard interface should still be WCAG2AA compliant. If you do find an issue, `please let us know <https://app.lfg.directory/helpdesk/issues>`__.
+
+**************************
 1.11.1 (2019-11-19)
 **************************
 
