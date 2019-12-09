@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-looking-for-group"
-version = "1.11.2"
+version = "1.11.3"
 description = "An RPG group finding and campaign management application."
 authors = ["Daniel Andrlik <daniel@andrlik.org>"]
 
