@@ -12,7 +12,6 @@ pillow = "=6.0.0"
 rcssmin = "~1.0.6"
 rjsmin = "~1.1.0"
 argon2-cffi = "-19.1.0"
-whitenoise = "~4.1.2"
 redis = "<3.0"
 django-environ = "~0.4.5"
 django-model-utils = "~3.1.2"
@@ -72,6 +71,7 @@ semantic_version = "^2.8"
 rst_to_md = {git = "https://github.com/sixty-north/rst_to_md"}
 ipython = "^7.9"
 django-cors-headers = "^3.2"
+whitenoise = {version = "^4.1",extras = ["brotli"]}
 
 [tool.poetry.dev-dependencies]
 sphinx = "~2.1.1"
