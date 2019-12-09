@@ -97,6 +97,7 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "drf_yasg",
     "oauth2_provider",
+    "corsheaders",
 ]
 LOCAL_APPS = [
     "looking_for_group.users.apps.UsersConfig",
@@ -207,6 +208,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "config.middleware.forwarded_host.SetRemoteAddrFromForwardedFor",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -458,3 +460,10 @@ GITLAB_DEFAULT_REMOTE_USERNAME = env(
 )
 KEYBASE_PROOFS_DOMAIN = "app.lfg.directory"
 RELEASE_NOTES_FILENAME = "CHANGELOG.rst"
+
+# ----------------------------------------------------------------------------
+# CORS Settings
+# ----------------------------------------------------------------------------
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_URLS_REGEX = r"^/api/.*$"
