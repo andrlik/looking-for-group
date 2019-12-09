@@ -7,6 +7,15 @@ Release Notes
 You’ll find a changelog for our code updates here.
 
 **************************
+1.11.3 (2019-12-08)
+**************************
+
+- Enhancements
+  + 🚀 Update to Django 2.2.8 bugfix release.
+  + 🚀 Support for `brotli <https://en.wikipedia.org/wiki/Brotli>`__ compression.
+  + 🔒 Add CORS headers.
+
+**************************
 1.11.2 (2019-11-22)
 **************************
 
