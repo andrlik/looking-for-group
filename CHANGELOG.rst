@@ -7,6 +7,13 @@ Release Notes
 You’ll find a changelog for our code updates here.
 
 **************************
+1.11.4 (2019-12-17)
+**************************
+
+- Enhancements
+  + 🚀 Update to Django 2.2.9 security release.
+
+**************************
 1.11.3 (2019-12-08)
 **************************
 
