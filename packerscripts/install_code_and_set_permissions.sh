@@ -33,7 +33,7 @@ echo "Installing application requirements to pyenv site packages..."
 . /home/ubuntu/.poetry/env
 
 export PIP_DISABLE_PIP_VERSION_CHECK=1
-poetry config settings.virtualenvs.create false
+poetry config virtualenvs.create false
 
 . /opt/lfg/env
 
