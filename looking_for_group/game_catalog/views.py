@@ -1181,6 +1181,8 @@ class SuggestedAdditionApproveDenyView(
                 )
                 if not obj.publisher:
                     new_obj.publisher = obj.edition.publisher
+                else:
+                    new_obj.publisher = obj.publisher
                 new_obj.save()
                 obj.transfer_image(new_obj)
                 if obj.suggested_tags:
