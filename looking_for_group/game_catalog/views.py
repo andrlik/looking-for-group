@@ -16,8 +16,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.views import generic
 from rules.contrib.views import PermissionRequiredMixin
 
-from ..rpgcollections.forms import BookForm
 from . import forms
+from ..rpgcollections.forms import BookForm
 from .models import (
     GameEdition,
     GamePublisher,
@@ -1174,7 +1174,7 @@ class SuggestedAdditionApproveDenyView(
                     return self.form_invalid(form)
                 new_obj = SourceBook(
                     title=obj.title,
-                    corebook=obj.corebook,
+                    corebook=False,
                     edition=obj.edition,
                     release_date=obj.release_date,
                     isbn=obj.isbn,
