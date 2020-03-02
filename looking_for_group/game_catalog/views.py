@@ -1184,7 +1184,10 @@ class SuggestedAdditionApproveDenyView(
                 else:
                     new_obj.publisher = obj.publisher
                 new_obj.save()
-                obj.transfer_image(new_obj)
+                try:
+                    obj.transfer_image(new_obj)
+                except ValueError:
+                    pass
                 if obj.suggested_tags:
                     if "," in obj.suggested_tags:
                         new_obj.tags.add(*obj.suggested_tags.split(","))
