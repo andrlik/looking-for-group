@@ -8,8 +8,8 @@ from django.urls import reverse
 from django.utils import timezone
 from factory.django import mute_signals
 
-from ...invites.models import Invite
 from .. import models
+from ...invites.models import Invite
 from ..utils import mkfirstOfmonth, mkLastOfMonth
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -648,7 +648,7 @@ def test_adhoc_session_create_test(
             game_testdata.session2.save()
             game_testdata.gp2.status = "closed"
             game_testdata.gp2.save()
-    with django_assert_max_num_queries(50):
+    with django_assert_max_num_queries(60):
         response = client.get(url)
     if not gamer_to_use:
         assert assert_login_redirect(response)

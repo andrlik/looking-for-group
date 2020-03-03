@@ -13,15 +13,16 @@ from markdown import markdown
 from notifications.signals import notify
 from schedule.models import Calendar, Occurrence, Rule
 
+from . import models
 from ..invites.models import Invite
 from ..invites.signals import invite_accepted
-from . import models
 from .signals import player_kicked, player_left
 from .tasks import (
     calculate_player_attendance,
     clear_calendar_for_departing_player,
     create_game_player_events,
     notify_subscribers_of_new_game,
+    remove_event_and_descendants,
     sync_calendar_for_arriving_player,
     undo_player_attendence_for_incomplete_session,
     update_child_events_for_master,
@@ -29,6 +30,24 @@ from .tasks import (
 )
 
 logger = logging.getLogger("games")
+
+
+@receiver(pre_delete, sender=models.GameEvent)
+def remove_child_events_on_delete(sender, instance, *args, **kwargs):
+    logger.debug(
+        "Event with id {} is being deleted. Checking to see if it is a master event...".format(
+            instance.id
+        )
+    )
+    if instance.is_master_event() and instance.get_child_events().count() > 0:
+        logger.error(
+            "Event is a master event with child events. You are attempting to delete it while leaving them in. This WILL cause and issue."
+        )
+        raise ValueError(
+            _(
+                "You are trying to delete a master event without removing its child events!!!"
+            )
+        )
 
 
 @receiver(pre_save, sender=models.GamePosting)
@@ -188,9 +207,14 @@ def create_update_event_for_game(sender, instance, *args, **kwargs):
         logger.debug("Insufficient data for an event.")
         if instance.event:
             logger.debug("There is an event associated with this. Deleting it.")
+            logger.debug("Event to delete has id of {}".format(instance.event.id))
             event_to_kill = instance.event
+            logger.debug("Setting game instance event to null...")
             instance.event = None
-            event_to_kill.delete()
+            logger.debug(
+                "Sending async task to delete event with id {}".format(event_to_kill.id)
+            )
+            async_task(remove_event_and_descendants, event_to_kill)
 
 
 @receiver(post_save, sender=models.GamePosting)
@@ -405,4 +429,4 @@ def remove_event_for_cancelled_game(sender, instance, *args, **kwargs):
             instance.end_date = None
             ev = instance.event
             instance.event = None
-            ev.delete()
+            async_task(remove_event_and_descendants, ev)

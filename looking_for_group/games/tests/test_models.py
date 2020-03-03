@@ -97,10 +97,8 @@ def test_event_cascade_delete(game_testdata, game_player_group_calendars):
     ids_to_check = [
         e.id for e in game_player_group_calendars["master_event"].get_child_events()
     ]
-    game_player_group_calendars["master_event"].delete()
-    for idu in ids_to_check:
-        with pytest.raises(ObjectDoesNotExist):
-            models.GameEvent.objects.get(pk=idu)
+    with pytest.raises(ValueError):
+        game_player_group_calendars["master_event"].delete()
 
 
 def test_update_child_events(game_testdata, game_player_group_calendars):

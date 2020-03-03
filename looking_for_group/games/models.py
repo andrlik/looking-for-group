@@ -5,7 +5,7 @@ import pytz
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models, transaction
+from django.db import connection, models, transaction
 from django.db.models.query_utils import Q
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -358,14 +358,12 @@ class GameEvent(Event):
 
     def get_child_events(self):
         ct = ContentType.objects.get_for_model(self)
+        logger.debug("Fetching child events for event with id {}".format(self.id))
         eventrelations = GameEventRelation.objects.filter(
             content_type=ct, object_id=self.id, distinction="playerevent"
-        )
+        ).values_list("event__pk", flat=True)
         logger.debug("Found {} event relations".format(eventrelations.count()))
-        child_events = GameEvent.objects.filter(
-            id__in=[er.event.id for er in eventrelations]
-        )
-        return child_events
+        return GameEvent.objects.filter(id__in=eventrelations)
 
     def update_child_events(self):
         existing_events = self.get_child_events()
@@ -385,7 +383,17 @@ class GameEvent(Event):
         return updated_rows
 
     def remove_child_events(self):
-        return self.get_child_events().delete()
+        logger.debug(
+            "Received request to delete child events. Starting with retrieval of child events..."
+        )
+        child_events = self.get_child_events()
+        if child_events.count() > 0:
+            num_deleted, details = child_events.delete()
+            logger.debug(
+                "Deleted {} child events with details {}!".format(num_deleted, details)
+            )
+            return num_deleted
+        return 0
 
     def generate_missing_child_events(self, calendarlist):
         """
@@ -431,8 +439,8 @@ class GameEvent(Event):
                             distinction="playerevent",
                         )
                         logger.debug(
-                            "Created event relation {} for child event {}".format(
-                                ch_rel.pk, child_event.pk
+                            "Created event relation {} to master event {} for child event {}".format(
+                                ch_rel.pk, self.pk, child_event.pk
                             )
                         )
                         logger.debug(
@@ -443,24 +451,35 @@ class GameEvent(Event):
                         events_added += 1
         return events_added
 
-    def delete(self, *args, **kwargs):
-        if self.is_master_event:
-            self.remove_child_events()
-        return super().delete()
-
     @property
     def child_events(self):
         return self.get_child_events()
 
+    def delete(self, *args, **kwargs):
+        logger.debug("entered delete method for event with id {}".format(self.id))
+        return super().delete(*args, **kwargs)
+
     def get_master_event(self):
         ct = ContentType.objects.get_for_model(self)
         try:
-            masterevent = GameEventRelation.objects.get(
+            logger.debug(
+                "Trying to find an event relation from event with id {} to a master event...".format(
+                    self.id
+                )
+            )
+            mastereventrelation = GameEventRelation.objects.get(
                 event=self, content_type=ct, distinction="playerevent"
             )
         except ObjectDoesNotExist:
+            logger.debug("No corresponding relation found, returning false")
             return False
-        return masterevent.content_object
+        masterevent = mastereventrelation.content_object
+        logger.debug(
+            "Returning master event with id {} for child event {}".format(
+                masterevent.id, self.id
+            )
+        )
+        return masterevent
 
     @property
     def master_event(self):
@@ -475,8 +494,11 @@ class GameEvent(Event):
         return self.get_related_game().game_location
 
     def is_master_event(self):
+        logger.debug("Checking if this event has a master event.")
         if not self.get_master_event():
+            logger.debug("This does not have a master event, so it IS a master event.")
             return True
+        logger.debug("This is a child event.")
         return False
 
     def is_player_event(self):
