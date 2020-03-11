@@ -5,11 +5,12 @@ import pytz
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection, models, transaction
+from django.db import models, transaction
 from django.db.models.query_utils import Q
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+from django_q.tasks import async_task
 from model_utils.models import TimeStampedModel
 from rules.contrib.models import RulesModel
 from schedule.models import Calendar, Event, EventManager, EventRelation, EventRelationManager, Occurrence, Rule
@@ -22,6 +23,7 @@ from ..gamer_profiles.models import GamerCommunity, GamerProfile
 from ..games import rules
 from ..invites.models import Invite
 from ..locations.models import Location
+from .tasks import remove_event_and_descendants
 from .utils import check_table_exists
 
 logger = logging.getLogger("games")
@@ -457,6 +459,37 @@ class GameEvent(Event):
 
     def delete(self, *args, **kwargs):
         logger.debug("entered delete method for event with id {}".format(self.id))
+        logger.debug("Testing to see if this is a master event...")
+        if self.is_master_event() and self.get_child_events().count() > 0:
+            with transaction.atomic():
+                logger.debug(
+                    "This is bad news. This is a master event with child events. This should have been handled separately."
+                )
+                logger.debug("Starting deletion of occurrences in child events...")
+                for event in self.get_child_events():
+                    occ_deleted, details = Occurrence.objects.filter(
+                        event=event
+                    ).delete()
+                    logger.debug(
+                        "Deleted {} occurrence records with details {}".format(
+                            occ_deleted, details
+                        )
+                    )
+                    logger.debug("Now deleting child event with id {}".format(event.id))
+                    event.delete()
+                    logger.debug("Child event deleted!")
+        else:
+            logger.debug(
+                "This is either a child event or a master event with no descendants."
+            )
+        logger.debug("Removing child occurrences")
+        occ_deleted, details = Occurrence.objects.filter(event=self).delete()
+        logger.debug(
+            "Deleted {} occurrence related records with details {}".format(
+                occ_deleted, details
+            )
+        )
+        logger.debug("Proceeding with normal delete...")
         return super().delete(*args, **kwargs)
 
     def get_master_event(self):
@@ -794,11 +827,15 @@ class GamePosting(
         ).count()
 
     def generate_player_events_from_master_event(self):
+        logger.debug(
+            "Received request to generate player events for game master event..."
+        )
         events_generated = 0
         if self.event:
             events_generated = self.event.generate_missing_child_events(
                 self.get_player_calendars()
             )
+            logger.debug("Events generated: {}".format(events_generated))
         return events_generated
 
     def get_next_scheduled_session_occurrence(self):
@@ -899,7 +936,7 @@ class GamePosting(
 
     def delete(self, *args, **kwargs):
         if self.event:
-            self.event.delete()
+            async_task(remove_event_and_descendants, self.event)
         return super().delete(*args, **kwargs)
 
     class Meta:

@@ -80,7 +80,7 @@ LOGGING = {
         }
     },
     "loggers": {
-        "django.db": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
+        "django.db": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "catalog": {"level": "DEBUG", "handlers": ["console"], "propagate": False},
         "gamer_profiles": {
             "level": "DEBUG",

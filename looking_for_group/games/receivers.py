@@ -48,6 +48,16 @@ def remove_child_events_on_delete(sender, instance, *args, **kwargs):
                 "You are trying to delete a master event without removing its child events!!!"
             )
         )
+    else:
+        logger.debug(
+            "This is empty master or a child event. Proceeding to collect occurrences to delete first."
+        )
+        num_deleted, details = Occurrence.objects.filter(event=instance).delete()
+        logger.debug(
+            "Deleted {} related occurrence records with details of {}".format(
+                num_deleted, details
+            )
+        )
 
 
 @receiver(pre_save, sender=models.GamePosting)
