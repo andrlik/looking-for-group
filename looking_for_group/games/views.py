@@ -691,11 +691,11 @@ class GamePostingUpdateView(
             context["location_form"] = LocationForm(
                 self.request.POST,
                 prefix="location",
-                instance=self.get_object().game_location,
+                instance=context["game"].game_location,
             )
         else:
             context["location_form"] = LocationForm(
-                prefix="location", instance=self.get_object().game_location
+                prefix="location", instance=context["game"].game_location
             )
         return context
 
