@@ -153,6 +153,11 @@ def in_same_community_as_gamer(user, gamer):
 def is_in_same_game_as_gamer(user, gamer):
     user_gamer = user.gamerprofile
     user_gm_games = user_gamer.gmed_games.exclude(status__in=["closed", "cancel"])
+    gamer_apps = games.models.GamePostingApplication.objects.filter(
+        gamer=gamer, status="pending", game__in=user_gm_games
+    )
+    if gamer_apps.count() > 0:
+        return True
     user_player_games = games.models.Player.objects.select_related("game").filter(
         gamer=user_gamer, game__status__in=["open", "started", "replace"]
     )
@@ -165,18 +170,9 @@ def is_in_same_game_as_gamer(user, gamer):
             id__in=[p.game.id for p in gamer_player_games]
         )
     )
-    gamer_apps = games.models.GamePostingApplication.objects.filter(
-        gamer=gamer, status="pending", game__in=user_gm_games
-    )
-    if gamer_apps.count() > 0:
+    if user_gm_games.filter(id__in=[g.id for g in gamer_games]).count() > 0:
         return True
-    user_games = user_gm_games.union(
-        games.models.GamePosting.objects.filter(
-            id__in=[p.game.id for p in user_player_games]
-        )
-    )
-    matching_games = user_games.filter(id__in=[g.id for g in gamer_games])
-    if matching_games.count() > 0:
+    if user_player_games.filter(id__in=[g.id for g in gamer_games]).count() > 0:
         return True
     return False
 

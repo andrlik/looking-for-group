@@ -295,7 +295,7 @@ def notify_subscribers_of_new_game(communities, game):
         if len(communities) > 1:
             new_length = max_length - 17
             if len(communities[0].name) > new_length:
-                comm_name = "{}...".format(communities[0].name[0:new_length - 4])
+                comm_name = "{}...".format(communities[0].name[0 : new_length - 4])
                 if len(communities) > 2:
                     pluralizer = "s"
             else:
@@ -306,7 +306,7 @@ def notify_subscribers_of_new_game(communities, game):
         else:
             if len(communities[0].name) > max_length:
                 community_string = "{}...".format(
-                    communities[0].name[0:max_length - 4]
+                    communities[0].name[0 : max_length - 4]
                 )
             else:
                 community_string = communities[0].name
@@ -316,3 +316,23 @@ def notify_subscribers_of_new_game(communities, game):
             verb=_("posted to community {}".format(community_string)),
             target=game,
         )
+
+
+def remove_event_and_descendants(game_event_to_delete):
+    """
+    For a given game event, check if it is a master event and if so delete its child
+    events before finally deleting it.
+    """
+    logger.debug(
+        "Received task call to delete event with id {}".format(game_event_to_delete.pk)
+    )
+    logger.debug("Checking if it is a master event...")
+    if game_event_to_delete.is_master_event():
+        logger.debug("Event {} IS a master event. Proceeding to delete child events...")
+        game_event_to_delete.remove_child_events()
+        logger.debug("Child events removed.")
+    logger.debug(
+        "Now deleting individual event with id {}".format(game_event_to_delete)
+    )
+    game_event_to_delete.delete()
+    logger.debug("Event deleted!")

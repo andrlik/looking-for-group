@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 import pytest
@@ -11,6 +12,8 @@ from .. import models, tasks
 from ..tests.fixtures import GamesTData
 
 pytestmark = pytest.mark.django_db(transaction=True)
+
+logger = logging.getLogger("games")
 
 
 def test_eventedit_update_child_events(game_testdata):
@@ -79,15 +82,27 @@ def test_child_occurrence_sync(game_testdata):
             new_start=occ_to_edit.start + timedelta(days=1),
             new_end=occ_to_edit.end + timedelta(days=1),
         )
-        assert models.ChildOccurenceLink.objects.count() == 0
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 0
+        )
         tasks.create_or_update_linked_occurences_on_edit(occ_to_edit)
-        assert models.ChildOccurenceLink.objects.count() == 3
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 3
+        )
         occ_to_edit.move(
             new_start=occ_to_edit.start + timedelta(hours=1),
             new_end=occ_to_edit.end + timedelta(hours=1),
         )
         tasks.create_or_update_linked_occurences_on_edit(occ_to_edit)
-        child_occ_links = models.ChildOccurenceLink.objects.all()
+        child_occ_links = models.ChildOccurenceLink.objects.filter(
+            master_event_occurence=occ_to_edit
+        ).all()
         assert child_occ_links.count() == 3
         for link in child_occ_links:
             assert link.master_event_occurence.start == link.child_event_occurence.start
@@ -112,16 +127,31 @@ def test_calendar_sync_for_arriving_player(game_testdata):
             new_start=occ_to_edit.start + timedelta(days=1),
             new_end=occ_to_edit.end + timedelta(days=1),
         )
-        assert models.ChildOccurenceLink.objects.count() == 0
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 0
+        )
         tasks.create_or_update_linked_occurences_on_edit(occ_to_edit)
         player3 = models.Player.objects.create(
             gamer=game_testdata.gamer4, game=game_testdata.gp1
         )
         assert game_testdata.gp1.event.get_child_events().count() == 3
-        assert models.ChildOccurenceLink.objects.count() == 3
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 3
+        )
         tasks.sync_calendar_for_arriving_player(player3)
         assert game_testdata.gp1.event.get_child_events().count() == 4
-        assert models.ChildOccurenceLink.objects.count() == 4
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 4
+        )
 
 
 def test_calendar_clear_for_departing_player(game_testdata):
@@ -129,34 +159,70 @@ def test_calendar_clear_for_departing_player(game_testdata):
         start_time = timezone.now() + timedelta(days=2)
         game_testdata.gp1.start_time = start_time
         game_testdata.gp1.game_frequency = "weekly"
+        logger.debug("TESTS: Calling save on gp1 to trigger event creation...")
         game_testdata.gp1.save()
         assert game_testdata.gp1.event
+        logger.debug(
+            "TESTS: Creating additional players, which should NOT generate events for them yet."
+        )
         models.Player.objects.create(gamer=game_testdata.gamer2, game=game_testdata.gp1)
         models.Player.objects.create(gamer=game_testdata.gamer3, game=game_testdata.gp1)
+        logger.debug("TESTS: Now explicitly generating events for players...")
         tasks.create_game_player_events(game_testdata.gp1)
         occurences = game_testdata.gp1.event.occurrences_after(
             after=timezone.now() + timedelta(weeks=2)
         )
         occ_to_edit = next(occurences)
+        logger.debug(
+            "TESTS: Moving occurrence. Since post_save is muted this should not create player occurrences yet."
+        )
         occ_to_edit.move(
             new_start=occ_to_edit.start + timedelta(days=1),
             new_end=occ_to_edit.end + timedelta(days=1),
         )
-        assert models.ChildOccurenceLink.objects.count() == 0
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 0
+        )
+        logger.debug("TESTS: Now explicitly generating player occurrences and links.")
         tasks.create_or_update_linked_occurences_on_edit(occ_to_edit)
+        logger.debug(
+            "TESTS: Now additing an additional player... which should not create additional events yet."
+        )
         player3 = models.Player.objects.create(
             gamer=game_testdata.gamer4, game=game_testdata.gp1
         )
         assert game_testdata.gp1.event.get_child_events().count() == 3
-        assert models.ChildOccurenceLink.objects.count() == 3
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 3
+        )
+        logger.debug("TESTS: Now explicitly creating events for player.")
         tasks.sync_calendar_for_arriving_player(player3)
         assert game_testdata.gp1.event.get_child_events().count() == 4
-        assert models.ChildOccurenceLink.objects.count() == 4
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 4
+        )
         # since we aren't useing the delete signal here, we can't just delete
         # the player.
+        logger.debug(
+            "TESTS: Now explicitly removing player events and deleting player."
+        )
         tasks.clear_calendar_for_departing_player(player3)
         player3.delete()
-        assert models.ChildOccurenceLink.objects.count() == 3
+        assert (
+            models.ChildOccurenceLink.objects.filter(
+                master_event_occurence=occ_to_edit
+            ).count()
+            == 3
+        )
         assert game_testdata.gp1.event.get_child_events().count() == 3
 
 

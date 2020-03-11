@@ -7,6 +7,14 @@ Release Notes
 You’ll find a changelog for our code updates here.
 
 **************************
+1.12.0 (2020-03-10)
+**************************
+
+- Enhancements
+  +  🚀 Update to Django 3.0.
+  +  🚀 Improved performance when handling game scheduling.
+
+**************************
 1.11.5 (2020-03-01)
 **************************
 

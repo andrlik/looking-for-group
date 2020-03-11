@@ -375,6 +375,7 @@ STATICFILES_FINDERS += [
 ]
 NODE_PACKAGE_JSON = str(ROOT_DIR("package.json"))
 NODE_MODULES_ROOT = str(ROOT_DIR("node_modules"))
+COMPRESS_ENABLED = True
 
 # django-libsass
 COMPRESS_PRECOMPILERS = [("text/x-scss", "django_libsass.SassCompiler")]
