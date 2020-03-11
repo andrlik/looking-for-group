@@ -3,7 +3,7 @@
     "vpc_to_use": "vpc-02a48aa867267d915",
     "subnet_to_use": "subnet-0557280ba5463f531",
     "tag_to_use": "",
-    "base_ami": "ami-0bdfc2c25d59e0b2c",
+    "base_ami": "ami-0b89cc70ea5809c32",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
     "database_url": "{{env `PROD_DATABASE_URL`}}",
