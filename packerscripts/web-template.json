@@ -138,14 +138,6 @@
       "script": "install_code_and_set_permissions.sh"
     },
     {
-      "type": "breakpoint",
-      "note": "pausing before collecting static"
-    },
-    {
-      "type": "shell",
-      "script": "prepare_static_and_wsgi_files.sh"
-    },
-    {
       "type": "shell",
       "execute_command": "echo 'ubuntu' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
       "inline": [
