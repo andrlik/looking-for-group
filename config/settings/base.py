@@ -94,6 +94,7 @@ THIRD_PARTY_APPS = [
     "django_otp.plugins.otp_totp",
     "django_otp.plugins.otp_static",
     "allauth_2fa",
+    "crispy_forms",
     "django_filters",
     "drf_yasg",
     "oauth2_provider",

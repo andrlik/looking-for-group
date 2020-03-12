@@ -8,8 +8,8 @@ export PATH=/home/ubuntu/.pyenv/bin:"$PATH"
 eval "$(pyenv init  -)"
 eval "$(pyenv virtualenv-init -)"
 pyenv update
-pyenv install 3.7.0
-pyenv global 3.7.0
+pyenv install 3.7.6
+pyenv global 3.7.6
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
 
 echo "Installing poetry for python3.7..."

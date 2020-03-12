@@ -66,7 +66,7 @@ description = "ASGI specs, helper code, and adapters"
 name = "asgiref"
 optional = false
 python-versions = ">=3.5"
-version = "3.2.4"
+version = "3.2.5"
 
 [package.extras]
 tests = ["pytest (>=4.3.0,<4.4.0)", "pytest-asyncio (>=0.10.0,<0.11.0)"]
@@ -164,10 +164,10 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = "*"
-version = "1.12.17"
+version = "1.12.19"
 
 [package.dependencies]
-botocore = ">=1.15.17,<1.16.0"
+botocore = ">=1.15.19,<1.16.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.3.0,<0.4.0"
 
@@ -177,7 +177,7 @@ description = "Low-level, data-driven core of boto 3."
 name = "botocore"
 optional = false
 python-versions = "*"
-version = "1.15.17"
+version = "1.15.19"
 
 [package.dependencies]
 docutils = ">=0.10,<0.16"
@@ -484,6 +484,14 @@ coverage = ">=4.0"
 six = ">=1.4.0"
 
 [[package]]
+category = "main"
+description = "Best way to have Django DRY forms"
+name = "django-crispy-forms"
+optional = false
+python-versions = "*"
+version = "1.9.0"
+
+[[package]]
 category = "dev"
 description = "A configurable set of panels that display various debug information about the current request/response."
 name = "django-debug-toolbar"
@@ -723,18 +731,18 @@ tests = ["tox"]
 
 [[package]]
 category = "main"
-description = ""
+description = "User-to-User messaging system for Django, with gateway to AnonymousUser, moderation and thread management, user & exchange filters, inbox/sent/archives/trash folders, support for apps: auto-complete, notification, mailer."
 name = "django-postman"
 optional = false
 python-versions = "*"
-version = "3.6.2"
+version = "3.6.2.post1"
 
 [package.dependencies]
-django = "^3.0.4"
-six = "^1.14.0"
+Django = "*"
+six = "*"
 
 [package.source]
-reference = "2ea354d72c4c7ab9a79d424a81edc4f442fef7f9"
+reference = "9cb2d252ba33c6b8c515ad4436356f537c706961"
 type = "git"
 url = "https://gitlab.com/andrlik/django-postman.git"
 [[package]]
@@ -1566,7 +1574,7 @@ description = "pytest plugin for generating HTML reports"
 name = "pytest-html"
 optional = false
 python-versions = ">=3.6"
-version = "2.0.1"
+version = "2.1.0"
 
 [package.dependencies]
 pytest = ">=5.0"
@@ -2256,7 +2264,7 @@ docs = ["sphinx", "repoze.sphinx.autointerface"]
 test = ["zope.security", "zope.testrunner"]
 
 [metadata]
-content-hash = "c00f0813a10f73d4c66f095e1294bee91dc85e09ce0d925bdf86176642e312af"
+content-hash = "ceb762a9d9ba3926342e4052839f049c9f8c1b79522ab352f386a0dac1b71fc6"
 python-versions = "~3.6 || ^3.7 || ^3.8"
 
 [metadata.files]
@@ -2301,8 +2309,8 @@ arrow = [
     {file = "arrow-0.15.5.tar.gz", hash = "sha256:5390e464e2c5f76971b60ffa7ee29c598c7501a294bc9f5e6dadcb251a5d027b"},
 ]
 asgiref = [
-    {file = "asgiref-3.2.4-py2.py3-none-any.whl", hash = "sha256:5e60ea919b37e5b9d8896d802c0dbbe41b16ea6719e5695a43496ef43e5b19ac"},
-    {file = "asgiref-3.2.4.tar.gz", hash = "sha256:f07043512078c76bb28a62fd1e327876599062b5f0aea60ed1d9cabc42e95fe2"},
+    {file = "asgiref-3.2.5-py2.py3-none-any.whl", hash = "sha256:3e4192eaec0758b99722f0b0666d5fbfaa713054d92e8de5b58ba84ec5ce696f"},
+    {file = "asgiref-3.2.5.tar.gz", hash = "sha256:c8f49dd3b42edcc51d09dd2eea8a92b3cfc987ff7e6486be734b4d0cbfd5d315"},
 ]
 atomicwrites = [
     {file = "atomicwrites-1.3.0-py2.py3-none-any.whl", hash = "sha256:03472c30eb2c5d1ba9227e4c2ca66ab8287fbfbbda3888aa93dc2e28fc6811b4"},
@@ -2335,12 +2343,12 @@ blessed = [
     {file = "blessed-1.17.2-py2.py3-none-any.whl", hash = "sha256:401e6116c2e34f6c11dd9f5f24e820afd4a4892d2904fcdc8f0b70c618eb099f"},
 ]
 boto3 = [
-    {file = "boto3-1.12.17-py2.py3-none-any.whl", hash = "sha256:ef2d050e0c37e00dab6ff1135befe7ed4b9e1ec26c752b8ad01d043e184ea6d1"},
-    {file = "boto3-1.12.17.tar.gz", hash = "sha256:13ac5526d80e1f1c9f7adcaeae7237f8bd1a5f268e918ca16e770eb865d3292b"},
+    {file = "boto3-1.12.19-py2.py3-none-any.whl", hash = "sha256:6a45d2b777821b9b4b69656f628b498b86f6906c6643eca7759c660b26eb541e"},
+    {file = "boto3-1.12.19.tar.gz", hash = "sha256:5cfe1e609af34e1641402e016047e2d12452992b52dccd3e5caea0990f225dc3"},
 ]
 botocore = [
-    {file = "botocore-1.15.17-py2.py3-none-any.whl", hash = "sha256:17a70c5d8743237896907d00f3de0f51d31aeca863ab0da8d0d8c178608b7ce1"},
-    {file = "botocore-1.15.17.tar.gz", hash = "sha256:b09aed94cd7a01fbccbbf5746b69ca62ed37c0feaed42e0420f9a121ae7df755"},
+    {file = "botocore-1.15.19-py2.py3-none-any.whl", hash = "sha256:914059286a560ccca6c5c9fa7edd8de8533176090230676193a2e3fbcf214a9e"},
+    {file = "botocore-1.15.19.tar.gz", hash = "sha256:19c11d11aa4f5eee6a21aef85d311dd758dc6df59306e72176c980c3259db71f"},
 ]
 brotli = [
     {file = "Brotli-1.0.7-cp27-cp27m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:50dd9ad2a2bb12da4e9002a438672d182f98e546e99952de80280a1e1729664f"},
@@ -2527,6 +2535,10 @@ django-cors-headers = [
 ]
 django-coverage-plugin = [
     {file = "django_coverage_plugin-1.6.0.tar.gz", hash = "sha256:8810678115ea541f85f4fdfa248e2bf703f05ac6740f6dbd9860d11a9861672f"},
+]
+django-crispy-forms = [
+    {file = "django-crispy-forms-1.9.0.tar.gz", hash = "sha256:67e73ac863d3159500029fbbcdcb788f287a3fd357becebc1a0b51f73896dce3"},
+    {file = "django_crispy_forms-1.9.0-py2.py3-none-any.whl", hash = "sha256:50032184708ce351e3c9f0008ac35d659d9d5973fa2db218066f2e0a76eb41d9"},
 ]
 django-debug-toolbar = [
     {file = "django-debug-toolbar-2.2.tar.gz", hash = "sha256:eabbefe89881bbe4ca7c980ff102e3c35c8e8ad6eb725041f538988f2f39a943"},
@@ -3004,8 +3016,8 @@ pytest-forked = [
     {file = "pytest_forked-1.1.3-py2.py3-none-any.whl", hash = "sha256:1ae25dba8ee2e56fb47311c9638f9e58552691da87e82d25b0ce0e4bf52b7d87"},
 ]
 pytest-html = [
-    {file = "pytest-html-2.0.1.tar.gz", hash = "sha256:933da7a5e71e5eace9e475441ed88a684f20f6198aa36516cb947ac05edd9921"},
-    {file = "pytest_html-2.0.1-py2.py3-none-any.whl", hash = "sha256:bc40553ca2a1835479c2caf7d48604502cd66d0c5db58ddbca53d74946ee71bd"},
+    {file = "pytest-html-2.1.0.tar.gz", hash = "sha256:8645a8616c8ed7414678e0aeebc3b2fd7d44268773ef5e7289289ad8632c9e91"},
+    {file = "pytest_html-2.1.0-py2.py3-none-any.whl", hash = "sha256:0317a0a589db59c26091ab6068b3edac8d9bc1a8bb9727ade48f806797346956"},
 ]
 pytest-metadata = [
     {file = "pytest-metadata-1.8.0.tar.gz", hash = "sha256:2071a59285de40d7541fde1eb9f1ddea1c9db165882df82781367471238b66ba"},

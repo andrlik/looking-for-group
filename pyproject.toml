@@ -70,9 +70,10 @@ ipython = "^7.9"
 django-cors-headers = "^3.2"
 whitenoise = {version = "^4.1",extras = ["brotli"]}
 django-scheduler = "^0.9.3"
-django-postman = {git = "https://gitlab.com/andrlik/django-postman.git", rev = "2ea354d72c4c7ab9a79d424a81edc4f442fef7f9"}
+django-postman = {git = "https://gitlab.com/andrlik/django-postman.git", rev = "9cb2d252ba33c6b8c515ad4436356f537c706961"}
 django-keybase-proofs = {git = "https://github.com/andrlik/django-keybase-proofs.git", rev = "master"}
 django-jsonview = {git = "https://github.com/andrlik/django-jsonview.git", rev = "master"}
+django-crispy-forms = "^1.9.0"
 
 [tool.poetry.dev-dependencies]
 sphinx = "~2.1.1"
