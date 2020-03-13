@@ -382,6 +382,17 @@ COMPRESS_ENABLED = True
 COMPRESS_PRECOMPILERS = [("text/x-scss", "django_libsass.SassCompiler")]
 
 COMPRESS_CACHEABLE_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
+LIBSASS_SOURCEMAPS = True
+
+# Minification
+# if not DEBUG:
+COMPRESS_FILTERS = {
+    "css": [
+        "compressor.filters.css_default.CssAbsoluteFilter",
+        "compressor.filters.cssmin.rCSSMinFilter",
+    ],
+    "js": ["compressor.filters.jsmin.JSMinFilter"],
+}
 
 # Your stuff...
 # ------------------------------------------------------------------------------
